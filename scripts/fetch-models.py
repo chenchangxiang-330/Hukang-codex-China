@@ -154,7 +154,7 @@ def validate_config(det_bytes, rec_bytes):
     dictionary = rec["PostProcess"]["character_dict"]
     if not isinstance(dictionary, list) or len(dictionary) < 1000:
         raise ValueError("Official Chinese dictionary is missing or too short")
-    # Preserve every entry and its index, including the official empty first item.
+    # Preserve every entry and index; the fixed official dictionary starts with U+3000.
     if any(entry is not None and not isinstance(entry, str) for entry in dictionary):
         raise ValueError("Dictionary entries must preserve official string/empty values")
     characters = ["" if entry is None else entry for entry in dictionary]

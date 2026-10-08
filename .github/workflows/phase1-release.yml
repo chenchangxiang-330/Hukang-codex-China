@@ -3,6 +3,11 @@ name: Phase 1 official PaddleOCR release
 on:
   push:
     branches: [codex/mainland-v2]
+    paths-ignore:
+      - docs/**
+      - tests/fixtures/**
+      - artifacts/**
+      - README.md
   workflow_dispatch:
 
 permissions:
@@ -79,13 +84,33 @@ jobs:
           npm ci --include=dev
           npm run typecheck
           npm test
+          python -B -m unittest discover -s tests -p test_model_acquisition.py -v
           npm run verify:assets
 
       - name: Install fixed Android build components
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
+          sdk_dir="$(printenv ANDROID_HOME || printenv ANDROID_SDK_ROOT || true)"
+          if [[ -z "$sdk_dir" || ! -d "$sdk_dir" ]]; then
+            echo "Runner Android SDK directory is missing." >&2
+            exit 1
+          fi
+          sdk_manager=""
+          for candidate in "$sdk_dir/cmdline-tools/latest/bin/sdkmanager" "$sdk_dir"/cmdline-tools/*/bin/sdkmanager "$sdk_dir/tools/bin/sdkmanager"; do
+            if [[ -x "$candidate" ]]; then
+              sdk_manager="$candidate"
+              break
+            fi
+          done
+          if [[ -z "$sdk_manager" ]]; then
+            echo "No sdkmanager executable exists under the runner Android SDK: $sdk_dir" >&2
+            exit 1
+          fi
+          echo "Using runner SDK manager: $sdk_manager"
+          echo "ANDROID_HOME=$sdk_dir" >> "$GITHUB_ENV"
+          echo "$sdk_dir/platform-tools" >> "$GITHUB_PATH"
+          "$sdk_manager" --sdk_root="$sdk_dir" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
 
       - name: Create an ephemeral Phase 1 test certificate
         shell: bash
@@ -111,6 +136,73 @@ jobs:
           set -euo pipefail
           python scripts/verify-apk.py
           cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase1-arm64-release.apk
+
+      - name: Split the verified APK for trusted developer transfer
+        shell: bash
+        run: python scripts/split-apk.py
+
+      - name: Publish transfer manifest
+        if: hashFiles('artifacts/apk-transfer/manifest.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-manifest
+          path: artifacts/apk-transfer/manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 1
+        if: hashFiles('artifacts/apk-transfer/part001.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part001
+          path: artifacts/apk-transfer/part001.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 2
+        if: hashFiles('artifacts/apk-transfer/part002.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part002
+          path: artifacts/apk-transfer/part002.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 3
+        if: hashFiles('artifacts/apk-transfer/part003.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part003
+          path: artifacts/apk-transfer/part003.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 4
+        if: hashFiles('artifacts/apk-transfer/part004.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part004
+          path: artifacts/apk-transfer/part004.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 5
+        if: hashFiles('artifacts/apk-transfer/part005.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part005
+          path: artifacts/apk-transfer/part005.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 6
+        if: hashFiles('artifacts/apk-transfer/part006.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase1-apk-${{ github.sha }}-part006
+          path: artifacts/apk-transfer/part006.bin
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Publish APK and build evidence
         if: always()
