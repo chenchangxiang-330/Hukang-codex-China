@@ -1,0 +1,86 @@
+Extracted original logcat excerpt; NOT the full original log.
+Source: artifacts/device-attempt-37774801831/final-logcat.txt
+Source SHA-256: 05f67b0326f8f087e02c330736f783f195093e34e93c2ccdd804dd22789bb213
+Original source lines (1-based, inclusive): 29398-29475
+Build APK SHA-256: 4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3
+Test Actions run: 37774801831
+Original excerpt follows without text edits:
+
+10-08 12:11:22.950  4512  4512 W SoLoader: Initializing SoLoader: 0
+10-08 12:11:22.951  4512  4512 W SoLoader: Recording new base apk path: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk
+10-08 12:11:22.951  4512  4512 W SoLoader: Previously recorded 0 base apk paths.
+10-08 12:11:22.952  4512  4512 I SoLoader: Preparing SO source: DirectorySoSource[root = /vendor/lib64 flags = 2]
+10-08 12:11:22.952  4512  4512 I SoLoader: Preparing SO source: DirectorySoSource[root = /system/lib64 flags = 2]
+10-08 12:11:22.952  4512  4512 I SoLoader: Preparing SO source: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.957  4512  4512 I SoLoader: Preparing SO source: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.957  4512  4512 I SoLoader: init finish: 4 SO sources prepared
+10-08 12:11:22.957  4512  4512 W SoLoader: SoLoader initialized: 8
+10-08 12:11:22.959  4512  4512 W SoLoader: Running a recovery step for libreactnative.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so
+10-08 12:11:22.959  4512  4512 W SoLoader: 	existing SO sources: 
+10-08 12:11:22.959  4512  4512 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.959  4512  4512 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.959  4512  4512 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 2]
+10-08 12:11:22.959  4512  4512 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 2]
+10-08 12:11:22.959  4512  4512 W SoLoader: 	Native lib dir: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64
+10-08 12:11:22.962  4512  4512 W soloader.recovery.CheckBaseApkExists: Base apk exists: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk
+10-08 12:11:22.962  4512  4512 W SoLoader: Running a recovery step for libreactnative.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so
+10-08 12:11:22.962  4512  4512 W SoLoader: 	existing SO sources: 
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 2]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 2]
+10-08 12:11:22.962  4512  4512 W SoLoader: 	Native lib dir: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64
+10-08 12:11:22.962  4512  4512 E SoLoader: Checking /data/app missing libraries.
+10-08 12:11:22.962  4512  4512 E SoLoader: Successfully recovered from /data/app disk failure.
+10-08 12:11:22.962  4512  4512 W SoLoader: Running a recovery step for libreactnative.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so
+10-08 12:11:22.962  4512  4512 W SoLoader: 	existing SO sources: 
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+10-08 12:11:22.962  4512  4512 W SoLoader: 	Native lib dir: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64
+10-08 12:11:22.962  4512  4512 E SoLoader: Checking /data/data missing libraries.
+10-08 12:11:22.962  4512  4512 E SoLoader: No libraries missing from unpacking so paths while recovering /data/data failure
+10-08 12:11:22.962  4512  4512 W SoLoader: Running a recovery step for libreactnative.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so
+10-08 12:11:22.962  4512  4512 W SoLoader: 	existing SO sources: 
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+10-08 12:11:22.962  4512  4512 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+10-08 12:11:22.962  4512  4512 W SoLoader: 	Native lib dir: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64
+10-08 12:11:22.962  4512  4512 W SoLoader: Failed to recover
+10-08 12:11:22.962  4512  4512 D AndroidRuntime: Shutting down VM
+--------- beginning of crash
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: FATAL EXCEPTION: main
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: Process: com.hukang.china, PID: 4512
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	existing SO sources: 
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64 flags = 0]]
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/base.apk!/lib/x86_64]]
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	Native lib dir: /data/app/~~r_Jqpa98vA99FHpiqhgVPA==/com.hukang.china-dQ7OXzSVYZJJFGUQOdO5Dg==/lib/arm64
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxInterop.<clinit>(ReactNativeFeatureFlagsCxxInterop.kt:28)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsCxxAccessor.override(ReactNativeFeatureFlagsCxxAccessor.kt:945)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.internal.featureflags.ReactNativeFeatureFlags.override(ReactNativeFeatureFlags.kt:600)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load(DefaultNewArchitectureEntryPoint.kt:101)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load(DefaultNewArchitectureEntryPoint.kt:43)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative(ReactNativeApplicationEntryPoint.java:31)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.hukang.china.MainApplication.onCreate(MainApplication.kt:37)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.app.Instrumentation.callApplicationOnCreate(Instrumentation.java:1192)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:6712)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.app.ActivityThread.access$1300(ActivityThread.java:237)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1913)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:223)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:7656)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:592)
+10-08 12:11:22.964  4512  4512 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:947)

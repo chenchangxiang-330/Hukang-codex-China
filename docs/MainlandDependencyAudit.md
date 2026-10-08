@@ -19,9 +19,10 @@ acceptance gates; source configuration alone does not prove device behavior.
 
 ## Runtime inventory
 
-Versions below reflect the project's declarations; npm's resolved patch
-versions are locked in `package-lock.json`, and Gradle resolution must be
-checked against the release dependency report.
+JavaScript versions are locked in `package-lock.json`. Android versions below
+include the actual local `releaseRuntimeClasspath` resolution recorded on
+2026-10-08, rather than only direct Gradle declarations. The original report is
+preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt).
 
 | Component | Version / location | Category | Phase 1 behavior |
 | --- | --- | --- | --- |
@@ -32,12 +33,17 @@ checked against the release dependency report.
 | ONNX Runtime Android | 1.21.1 | `FOREIGN_OFFLINE_LIBRARY` | CPU inference only; no upload, downloader, telemetry or Play Services dependency in application path |
 | OpenCV Android | 4.5.3.0 | `FOREIGN_OFFLINE_LIBRARY` | Bundled native image operations; no cloud recognition |
 | AndroidX ExifInterface | 1.4.1 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
-| React / React Native / Hermes | 19.2.3 / 0.86.3 / RN-managed | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution |
+| React / React Native / Hermes | 19.2.3 / 0.86.3 / 250829098.0.17 | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution; Hermes version is the actual resolved Android artifact |
 | Expo core and module infrastructure | 57.0.27 / SDK-managed modules | `FOREIGN_OFFLINE_LIBRARY` | Custom APK; Expo Go and Expo-hosted JavaScript not needed |
 | Expo Router / linking | SDK 57 modules | `FOREIGN_OFFLINE_LIBRARY` | Local route navigation; no remote route/provider configuration |
 | Expo image picker | SDK 57 module | `FOREIGN_OFFLINE_LIBRARY` | User selects a photo through Android; app imports a local copy |
 | Expo file system | SDK 57 module | `FOREIGN_OFFLINE_LIBRARY` | Local evidence files only; its generic download APIs are not invoked |
 | Expo sharing | SDK 57 module | `FOREIGN_OFFLINE_LIBRARY` | User-initiated local evidence export through OS share sheet; no automatic upload |
+| OkHttp / OkHttp URLConnection | 4.9.2 / 4.9.2 | `FOREIGN_OFFLINE_LIBRARY` | Transitive generic HTTP infrastructure; no configured OCR, food, AI or other remote provider is invoked |
+| Okio / Okio JVM | 3.16.0 / 3.16.0 | `FOREIGN_OFFLINE_LIBRARY` | Transitive local buffering and I/O utilities; presence does not imply a server dependency |
+| Fresco / imagepipeline-okhttp3 | 3.6.0 / 3.6.0 | `FOREIGN_OFFLINE_LIBRARY` | React Native image infrastructure; OCR Lab displays imported local images, not remote image URLs |
+| Glide | 5.0.5 | `FOREIGN_OFFLINE_LIBRARY` | Expo image-loader transitive image infrastructure; Phase 1 uses local photo resources |
+| Expo WebView | 57.0.1 | `FOREIGN_OFFLINE_LIBRARY` | Resolved Expo module infrastructure; OCR Lab does not render or open a remote WebView |
 | Splash/status bar, safe-area and screens | SDK-compatible pinned lockfile | `FOREIGN_OFFLINE_LIBRARY` | Local rendering and lifecycle |
 | `ChinaFoodRepository` / `MedicineRepository` | TypeScript contracts only | `LOCAL` | No provider, HTTP client, seed catalog or cloud storage implementation |
 | Future `HukangChinaFoodService` | Interface only | — | Not a configured dependency; mainland hosting and data rights need separate approval before implementation |
@@ -46,10 +52,40 @@ There is **no active `CHINA_SERVICE` in Phase 1**. Local records are not uploade
 to a future central database. SQLite food storage and ZXing scanning are later
 phase work; neither is claimed as implemented in this inventory.
 
-Libraries may contain generic networking code transitively (for example React
-Native's standard HTTP infrastructure). This is distinct from a configured
-production service. App-owned code must not invoke it, and the release app's
-network permission is removed as an additional operating-system boundary.
+The actual graph contains generic networking-capable libraries, including
+OkHttp and image-loading adapters. Their capability is distinct from a
+configured production service; this APK must not be described as containing
+no HTTP-capable code. App-owned Phase 1 code uses local image/file resources,
+and the release app's network permission is removed as an additional
+operating-system boundary. Neither a dependency name nor successful Gradle
+resolution proves absence of traffic; device observations are a separate gate.
+
+### Actual Android release dependency graph
+
+The following command ran locally with the existing Java 17 / Android SDK /
+Gradle environment and its configured proxy; it did not rebuild the APK:
+
+```text
+./gradlew :app:dependencies --configuration releaseRuntimeClasspath --console=plain --no-daemon --max-workers=2
+```
+
+Result: exit code 0, `BUILD SUCCESSFUL in 1m`, with no dependency-tree `FAILED`
+or unresolved `(n)` nodes. The preserved raw report is 94,037 bytes with SHA-256
+`d57d33e056827d4fc66d759ad4bd70526f1e115cfd43b44b55f6ecd022131dd0`.
+It contains 200 distinct resolved Maven coordinates plus local project
+dependencies; repeated branches and constraints are not counted as extra
+libraries. Dependency metadata resolution is not proof that every binary was
+downloaded locally, and it is separate from the recorded GitHub Actions release
+compilation and APK inspection.
+
+The actual graph contains no `com.google.android.gms`, `com.google.firebase`,
+`com.google.mlkit`, Google Cloud Vision, Gemini/GenAI, OpenAI, Open Food Facts or
+Wikidata SDK coordinates. No Sentry, Firebase Analytics/Crashlytics/Remote
+Config, Bugsnag, App Center, Mixpanel, Amplitude, Segment, OpenTelemetry or New
+Relic coordinates were found. This establishes the checked graph's dependency
+inventory, not a universal claim about every internal code path or device
+packet. Google Material, Gson, annotations and Guava's listenable-future utility
+are local libraries and do not constitute Google Play Services or Google OCR.
 
 ## Prohibited production integrations
 
@@ -113,11 +149,12 @@ settings, not evidence that the app has telemetry.
 
 ## Verification status
 
-Source configuration and declared dependency review are complete for this
-document's scope. Release dependency resolution, artifact Manifest check,
-model bundling verification, real-device execution and traffic observation
-must be reported with their actual status in the Phase 1 acceptance report.
-No device test is asserted by this audit document.
+Source configuration, declared dependency review and actual local release
+dependency-graph resolution are complete for this document's scope. Artifact
+Manifest checks, model bundling verification, GitHub Actions compilation,
+Android execution and traffic observations retain their individually recorded
+statuses in the Phase 1 acceptance report. The dependency-tree execution does
+not assert a successful device OCR run or a packet-capture result.
 
 Future Paddle Lite / Paddle-native runtime evaluation is recorded as an
 optional optimization. It does not block the fixed ONNX Runtime baseline.
