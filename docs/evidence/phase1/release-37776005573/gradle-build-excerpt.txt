@@ -1,0 +1,55 @@
+Excerpt of GitHub Actions release job 113307547677, run 37776005573.
+Build source: 339a66991af93c488e1f1426a3f240edd82fc3ca.
+Selected original log lines; this is not the full job log or Android OCR output.
+2026-10-08T12:25:35.3733657Z > Task :hukang-vision:verifyBundledOcrModels
+2026-10-08T12:25:35.4724852Z > Task :hukang-vision:copyBundledOcrModels
+2026-10-08T12:25:35.4727987Z > Task :hukang-vision:preBuild
+2026-10-08T12:25:36.1783856Z > Task :hukang-vision:preReleaseBuild
+2026-10-08T12:25:36.1784167Z > Task :hukang-vision:mergeReleaseJniLibFolders
+2026-10-08T12:25:36.1784523Z > Task :hukang-vision:mergeReleaseNativeLibs NO-SOURCE
+2026-10-08T12:25:36.1784884Z > Task :hukang-vision:copyReleaseJniLibsProjectOnly
+2026-10-08T12:28:34.6724642Z > Task :hukang-vision:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-10-08T12:28:34.6725155Z > Task :hukang-vision:generateReleaseBuildConfig
+2026-10-08T12:28:34.6725523Z > Task :hukang-vision:generateReleaseResValues
+2026-10-08T12:28:34.9724586Z > Task :hukang-vision:generateReleaseResources
+2026-10-08T12:28:34.9725033Z > Task :hukang-vision:packageReleaseResources
+2026-10-08T12:28:34.9725630Z > Task :hukang-vision:parseReleaseLocalResources
+2026-10-08T12:28:35.0723385Z > Task :hukang-vision:generateReleaseRFile
+2026-10-08T12:28:36.5749666Z > Task :hukang-vision:compileReleaseKotlin
+2026-10-08T12:28:36.5757692Z > Task :hukang-vision:javaPreCompileRelease
+2026-10-08T12:28:36.7723583Z > Task :hukang-vision:compileReleaseJavaWithJavac
+2026-10-08T12:28:36.7746150Z > Task :hukang-vision:bundleLibCompileToJarRelease
+2026-10-08T12:28:41.4768012Z > Task :hukang-vision:bundleLibRuntimeToDirRelease
+2026-10-08T12:28:43.4735894Z > Task :hukang-vision:writeReleaseAarMetadata
+2026-10-08T12:28:43.7727960Z > Task :hukang-vision:extractDeepLinksRelease
+2026-10-08T12:28:43.7728315Z > Task :hukang-vision:processReleaseManifest
+2026-10-08T12:28:44.4723741Z > Task :hukang-vision:compileReleaseLibraryResources
+2026-10-08T12:28:44.5733690Z > Task :hukang-vision:prepareReleaseArtProfile
+2026-10-08T12:28:51.7788090Z > Task :hukang-vision:bundleLibRuntimeToJarRelease
+2026-10-08T12:28:52.3027455Z > Task :hukang-vision:mergeReleaseShaders
+2026-10-08T12:28:52.3031992Z > Task :hukang-vision:compileReleaseShaders NO-SOURCE
+2026-10-08T12:28:52.3068150Z > Task :hukang-vision:generateReleaseAssets UP-TO-DATE
+2026-10-08T12:28:52.3745719Z > Task :hukang-vision:mergeReleaseAssets
+2026-10-08T12:28:58.5723402Z > Task :hukang-vision:processReleaseJavaRes
+2026-10-08T12:28:58.5723842Z > Task :hukang-vision:createFullJarRelease
+2026-10-08T12:28:58.5724338Z > Task :hukang-vision:extractProguardFiles
+2026-10-08T12:28:59.4723551Z > Task :hukang-vision:generateReleaseLintModel
+2026-10-08T12:28:59.4724013Z > Task :hukang-vision:prepareLintJarForPublish
+2026-10-08T12:29:04.8803651Z > Task :app:packageReleaseResources
+2026-10-08T12:29:42.9729423Z > Task :hukang-vision:stripReleaseDebugSymbols NO-SOURCE
+2026-10-08T12:29:42.9731059Z > Task :hukang-vision:copyReleaseJniLibsProjectAndLocalJars
+2026-10-08T12:29:42.9731565Z > Task :hukang-vision:extractDeepLinksForAarRelease
+2026-10-08T12:29:42.9733550Z > Task :hukang-vision:extractReleaseAnnotations
+2026-10-08T12:29:42.9734048Z > Task :hukang-vision:mergeReleaseGeneratedProguardFiles
+2026-10-08T12:29:42.9734564Z > Task :hukang-vision:mergeReleaseConsumerProguardFiles
+2026-10-08T12:29:42.9735547Z > Task :hukang-vision:mergeReleaseJavaResource
+2026-10-08T12:29:42.9738783Z > Task :hukang-vision:syncReleaseLibJars
+2026-10-08T12:29:42.9740212Z > Task :hukang-vision:bundleReleaseLocalLintAar
+2026-10-08T12:29:43.0723416Z > Task :hukang-vision:writeReleaseLintModelMetadata
+2026-10-08T12:29:55.2723930Z > Task :hukang-vision:lintVitalAnalyzeRelease
+2026-10-08T12:30:10.4751671Z > Task :hukang-vision:generateReleaseLintVitalModel
+2026-10-08T12:30:13.1725335Z > Task :app:validateSigningRelease
+2026-10-08T12:30:24.1723556Z > Task :app:packageRelease
+2026-10-08T12:30:24.1725547Z > Task :app:assembleRelease
+2026-10-08T12:30:24.2730730Z BUILD SUCCESSFUL in 7m 16s
+2026-10-08T12:30:26.0375585Z   "extractNativeLibs": true,
