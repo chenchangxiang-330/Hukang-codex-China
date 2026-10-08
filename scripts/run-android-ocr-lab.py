@@ -193,7 +193,10 @@ def main():
         fixtures = args.fixture or sorted((ROOT / "tests/fixtures/china-food").glob("*.jpg"))
         if not fixtures:
             raise RuntimeError("No actual photo fixtures supplied")
-        photo_dir = "/sdcard/Pictures/HukangOcrLab"
+        # Android 11 MediaProvider rejects the /sdcard alias during scanning
+        # and _data insertion. Use its canonical primary-volume path for every
+        # push, scan broadcast and content insert.
+        photo_dir = "/storage/emulated/0/Pictures/HukangOcrLab"
         shell("mkdir", "-p", photo_dir)
         for photo in fixtures:
             if not re.fullmatch(r"[\w.-]+", photo.name):
