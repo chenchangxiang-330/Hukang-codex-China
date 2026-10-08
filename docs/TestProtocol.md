@@ -139,6 +139,21 @@ python3 scripts/android-device-evidence.py \
 
 如果使用 ARM64 native translation 的 x86_64 模拟器，必须记录 `ro.product.cpu.abilist`、`ro.dalvik.vm.native.bridge`、翻译库身份、宿主加速状态，以及实际安装的 APK 摘要。实际成功执行可证明该 Android 仿真环境运行了 ARM64 库；它不能替代 ARM64 真机兼容性和性能测量，也不能称为原生 ARM64 模拟器。
 
+在已经正常启动、支持 `adb root` 的测试模拟器上，可自动走生产 UI 的相册导入和识别路径：
+
+```sh
+python3 scripts/run-android-ocr-lab.py \
+  --serial emulator-5554 \
+  --apk artifacts/build/hukang-china-phase1-arm64-release.apk \
+  --output artifacts/device-evidence \
+  --repeats 2 --run-timeout 300
+node scripts/validate-ocr-evidence.mjs artifacts/device-evidence/photo-*-run-*/record.json
+```
+
+脚本实际核对安装包仅含 ARM64 原生库、模型摘要、设备 ABI／翻译库、安装后 `primaryCpuAbi`；在首次启动前设置飞行模式及关闭 Wi-Fi、禁用已安装的 GMS／GSF／Photos，再通过系统相册选择两张归档 JPEG。每次必须生成新的 native JSON 以及 JS 导出的原图、处理图和记录，实际源图摘要应与输入一致。识别空文本、图库未索引、UI 元素缺失、原生错误或导出失败均退出非零，不生成替代 OCR 文字。
+
+运行前可在测试模拟器设置 IPv4／IPv6 OUTPUT DROP；脚本记录实际 iptables 规则，但本身不修改防火墙。工作流应验证 ADB 通道仍可用，并在失败时保存系统日志与 tombstone。两图各两次只提供初步冷／热记录，不满足五次性能统计或真机稳定性验收。`session.json`、实际原始输出、截图和 APK 身份才是结果；脚本存在或 Actions 作业配置存在均不能算运行通过。
+
 ## 7. 验收报告状态
 
 每项使用以下状态，证据文件必须可对应：

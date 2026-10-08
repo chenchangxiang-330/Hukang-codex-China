@@ -78,8 +78,8 @@ def main():
 
     def locate(root, pattern):
         for node in root.iter("node"):
-            label = node.attrib.get("text", "") + " " + node.attrib.get("content-desc", "")
-            if re.search(pattern, label):
+            labels = [node.attrib.get("text", "").strip(), node.attrib.get("content-desc", "").strip()]
+            if any(re.search(pattern, label) for label in labels if label) or re.search(pattern, " ".join(labels).strip()):
                 numbers = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
                 if len(numbers) == 4 and numbers[2] > numbers[0] and numbers[3] > numbers[1]:
                     return node, numbers
@@ -144,6 +144,7 @@ def main():
                 raise RuntimeError("Existing Android device did not finish boot; OCR was not executed")
             time.sleep(3)
         execute(["root"])
+        time.sleep(1)  # adbd can disconnect shortly after the root response.
         execute(["wait-for-device"])
         if "uid=0(" not in shell("id"):
             raise RuntimeError("Test evidence extraction requires an adb-root-capable test device")
