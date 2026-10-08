@@ -237,6 +237,9 @@ jobs:
             artifacts/device-evidence/build-identity.json
             artifacts/device-evidence/photo-*-native.json
             artifacts/device-evidence/photo-*-run-*/record.json
+            artifacts/device-evidence/processing-*-native.json
+            artifacts/device-evidence/processing-*-run/record.json
+            artifacts/device-evidence/processing-*-image.json
             artifacts/device-evidence/*.png
             artifacts/device-evidence/evidence-consistency.json
             artifacts/device-evidence/root-identity.txt
@@ -267,7 +270,10 @@ jobs:
               summary.write(f'- Build artifact run: {os.environ["BUILD_RUN_ID"] or os.environ["GITHUB_RUN_ID"]}\n')
               summary.write(f'- Exact device-test commit: {os.environ["TEST_SHA"]}\n')
               summary.write(f'- Device session status: {status}\n- Actual saved OCR runs: {actual_runs}\n')
-              summary.write('- Test device: API 30 Google APIs x86_64 emulator; official ARM64 translation is checked at runtime.\n')
+              device = record.get('device', {})
+              api = device.get('ro.build.version.sdk', 'not_recorded')
+              bridge = device.get('ro.ndk_translation.version', 'not_recorded')
+              summary.write(f'- Test device: recorded API {api} Google APIs x86_64 emulator; actual ARM64 translation version {bridge}.\n')
               summary.write('- Google packages are disabled for this test when installed; their absence is not claimed.\n')
               summary.write('- First app launch occurs after guest outbound IP is blocked and offline settings are applied.\n')
               summary.write('- Emulator timings and sampled memory do not establish real ARM64 phone performance.\n')

@@ -276,7 +276,7 @@ def main():
 
     def set_crop_field(label, value):
         pattern = r"^裁剪" + re.escape(label) + r"\s*$"
-        tap_match(pattern, scroll=True, direction="up")
+        tap_match(pattern, scroll=True, direction="down")
         shell("input", "keyevent", "KEYCODE_MOVE_END")
         shell("input", "keyevent", *(["KEYCODE_DEL"] * 7))
         shell("input", "text", str(value))
@@ -509,7 +509,7 @@ def main():
         screenshot("processing-baseline-ui")
 
         before = list_json(native_images)
-        tap_match(r"右转 90°", scroll=True, direction="up")
+        tap_match(r"右转 90°", scroll=True, direction="down")
         right = capture_prepared_image(before, "processing-right-90-image", expected_source)
         check_transformation(right, original, (height, width),
                              product([0, -1, height, 1, 0, 0, 0, 0, 1], original_matrix),
@@ -523,7 +523,7 @@ def main():
         save_summary()
 
         before = list_json(native_images)
-        tap_match(r"左转 90°", scroll=True, direction="up")
+        tap_match(r"左转 90°", scroll=True, direction="down")
         roundtrip = capture_prepared_image(before, "processing-roundtrip-image", expected_source)
         check_transformation(roundtrip, original, (width, height), original_matrix,
                              [{"kind": "rotate", "degreesClockwise": 90},
