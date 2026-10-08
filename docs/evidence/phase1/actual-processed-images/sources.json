@@ -22,6 +22,28 @@
       "bytes": 3090042,
       "width": 1512,
       "height": 2016
+    },
+    {
+      "actualDeviceRun": 37781340401,
+      "record": "processing-right-90-image",
+      "fixture": "tests/fixtures/china-food/6923644266066.jpg",
+      "sourceImageSha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "processedFile": "c4d5276838e6b8d6d0f098a6ce93750d5b65f51125f62dc9e909f835f31bbf71.png",
+      "processedImageSha256": "c4d5276838e6b8d6d0f098a6ce93750d5b65f51125f62dc9e909f835f31bbf71",
+      "bytes": 1997778,
+      "width": 1700,
+      "height": 1280
+    },
+    {
+      "actualDeviceRun": 37781340401,
+      "record": "processing-crop-image",
+      "fixture": "tests/fixtures/china-food/6923644266066.jpg",
+      "sourceImageSha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "processedFile": "3a90d9e6ddd6e89ebc135168d7bdafe42df2d281f7ce996b2f79f44384abc138.png",
+      "processedImageSha256": "3a90d9e6ddd6e89ebc135168d7bdafe42df2d281f7ce996b2f79f44384abc138",
+      "bytes": 1319692,
+      "width": 1024,
+      "height": 1360
     }
   ]
 }

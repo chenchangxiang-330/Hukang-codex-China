@@ -1,0 +1,58 @@
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT DROP
+-N bw_FORWARD
+-N bw_INPUT
+-N bw_OUTPUT
+-N bw_costly_shared
+-N bw_data_saver
+-N bw_global_alert
+-N bw_happy_box
+-N bw_penalty_box
+-N fw_FORWARD
+-N fw_INPUT
+-N fw_OUTPUT
+-N oem_fwd
+-N oem_out
+-N st_OUTPUT
+-N st_clear_caught
+-N st_clear_detect
+-N st_penalty_log
+-N st_penalty_reject
+-N tetherctrl_FORWARD
+-N tetherctrl_counters
+-A INPUT -j bw_INPUT
+-A INPUT -j fw_INPUT
+-A FORWARD -j oem_fwd
+-A FORWARD -j fw_FORWARD
+-A FORWARD -j bw_FORWARD
+-A FORWARD -j tetherctrl_FORWARD
+-A OUTPUT -j oem_out
+-A OUTPUT -j fw_OUTPUT
+-A OUTPUT -j st_OUTPUT
+-A OUTPUT -j bw_OUTPUT
+-A bw_INPUT -j bw_global_alert
+-A bw_INPUT -p esp -j RETURN
+-A bw_INPUT -m mark --mark 0x100000/0x100000 -j RETURN
+-A bw_INPUT -j MARK --set-xmark 0x100000/0x100000
+-A bw_OUTPUT -j bw_global_alert
+-A bw_costly_shared -j bw_penalty_box
+-A bw_data_saver -j RETURN
+-A bw_global_alert -m quota2 ! --name globalAlert  --quota 2097152 
+-A bw_happy_box -m bpf --object-pinned /sys/fs/bpf/netd_shared/prog_netd_skfilter_allowlist_xtbpf -j RETURN
+-A bw_happy_box -j bw_data_saver
+-A bw_penalty_box -m bpf --object-pinned /sys/fs/bpf/netd_shared/prog_netd_skfilter_denylist_xtbpf -j REJECT --reject-with icmp-port-unreachable
+-A bw_penalty_box -j bw_happy_box
+-A st_clear_detect -m connmark --mark 0x2000000/0x2000000 -j REJECT --reject-with icmp-port-unreachable
+-A st_clear_detect -m connmark --mark 0x1000000/0x1000000 -j RETURN
+-A st_clear_detect -p tcp -m u32 --u32 "0x0>>0x16&0x3c@0xc>>0x1a&0x3c@0x0&0xffff0000=0x16030000&&0x0>>0x16&0x3c@0xc>>0x1a&0x3c@0x4&0xff0000=0x10000" -j CONNMARK --set-xmark 0x1000000/0x1000000
+-A st_clear_detect -p udp -m u32 --u32 "0x0>>0x16&0x3c@0x8&0xffff0000=0x16fe0000&&0x0>>0x16&0x3c@0x14&0xff0000=0x10000" -j CONNMARK --set-xmark 0x1000000/0x1000000
+-A st_clear_detect -m connmark --mark 0x1000000/0x1000000 -j RETURN
+-A st_clear_detect -p tcp -m state --state ESTABLISHED -m u32 --u32 "0x0>>0x16&0x3c@0xc>>0x1a&0x3c@0x0&0x0=0x0" -j st_clear_caught
+-A st_clear_detect -p udp -j st_clear_caught
+-A st_penalty_log -j CONNMARK --set-xmark 0x1000000/0x1000000
+-A st_penalty_log -j NFLOG
+-A st_penalty_reject -j CONNMARK --set-xmark 0x2000000/0x2000000
+-A st_penalty_reject -j NFLOG
+-A st_penalty_reject -j REJECT --reject-with icmp-port-unreachable
+-A tetherctrl_FORWARD -j DROP

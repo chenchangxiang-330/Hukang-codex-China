@@ -77,3 +77,11 @@
 - 完整下载 artifact ZIP 30,991,029 bytes，摘要与 GitHub digest 一致；本地四份导出的图片及结果一致性检查全部通过。原始 JSON、截图、网络策略和失败状态已提交推送，见 [device-attempt-37779323597](evidence/phase1/device-attempt-37779323597/)。
 - 原文保留“%2”“钠钙”“2075千焦(k)”等实际识别或阅读顺序问题；未人工修正、未解析食品营养。confidence 不是准确率。模拟器 ARM 翻译耗时和 50 ms 采样内存不能代表手机性能或绝对峰值。
 - 整体 run 为 failure：后续旋转测试脚本向错误方向滚动，未找到“右转 90°”；`processingChecks=[]`，不能把四次 OCR 成功写成全部 Phase 1 通过。`a0c85d5` 已修复测试脚本滚动方向并推送，复测 [run 37781340401](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401) 尚在执行。
+
+## 验证里程碑 10：同一 APK 的六次离线 OCR 和旋转 / 裁剪实证（2026-10-08）
+
+- 上述 [run 37781340401](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401) 实际 **success**，session 为 `verified_android_emulated`，6 次 OCR 和 3 个实际图像操作检查通过。没有重编译待测 APK，继续使用当前 `339a669` / `3dd6e764…` 包。
+- 两张照片各 2 次全图 OCR；额外实际右转 / 左转往返后识别 39 块，裁剪 10/10/80/80 后识别 33 块。往返 PNG 字节摘要与旋转前一致；实际裁剪为 1024×1360、矩阵平移 (-128,-170)。OCR 48,382–86,121 ms，首次外层模型加载 1,384 ms；均为官方 ARM 翻译层仿真成绩。
+- 实际六份 JS 导出的原图 / 处理图摘要及模型 / OCR 字段在 CI 一致性校验全部通过。可信小型 artifact 下载后 ZIP 摘要一致；本地再次核对六份记录和保留的真实 PNG，不声称下载了超过 32 MiB 工具限额的完整 artifact。
+- 完整 JSON、网络规则、原始日志选段、截图与处理图身份已保留，见 [device-37781340401](evidence/phase1/device-37781340401/)。裁剪后有实际新错误 `860%28`，不覆盖旧原文、不把裁剪效果说成全面改善。
+- 当前达成本轮核心技术验证：官方国产模型在记录的 Android 环境完全离线运行，并实际经过生产相册 / 原生桥 / 旋转 / 裁剪 / JS 保存链路。ARM64 真机、Android 26、EXIF 2–8、长期内存及代表性准确率仍未验证；两张归档照片不能替代完整真实食品测试集。停留 Phase 1，不进入 Phase 2。

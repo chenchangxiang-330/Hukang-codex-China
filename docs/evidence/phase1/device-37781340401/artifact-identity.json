@@ -1,0 +1,20 @@
+{
+  "runId": 37781340401,
+  "jobId": 113324913574,
+  "testSource": "a0c85d544ed2bccea225ead8a4e063acccadb764",
+  "releaseSource": "339a66991af93c488e1f1426a3f240edd82fc3ca",
+  "downloadedSmallArtifact": {
+    "id": 11552408564,
+    "bytes": 15116060,
+    "sha256": "d6a5e6529c8fbf3804aa28692bb4285ceee3e0ccac0bf06a032cfa7c5ae50805",
+    "zipSha256Checked": true
+  },
+  "fullArtifact": {
+    "id": 11553038552,
+    "bytes": 48957940,
+    "sha256": "54ae589b9176d88a54b2b5db04d10bab6559817469e5ed025fb6d6c3fc1a8e10",
+    "downloadedLocally": false,
+    "reason": "exceeds 32 MiB download_file limit"
+  },
+  "source": "authenticated GitHub connector and Sediment"
+}
