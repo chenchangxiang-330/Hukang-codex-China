@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: phase1-release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -134,8 +134,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/verify-apk.py
           cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase1-arm64-release.apk
+          python scripts/verify-apk.py
 
       - name: Split the verified APK for trusted developer transfer
         shell: bash

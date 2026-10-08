@@ -28,7 +28,8 @@ errors = []
 for permission in ["INTERNET", "ACCESS_NETWORK_STATE", "CAMERA", "RECORD_AUDIO"]:
     if f"android.permission.{permission}" in permissions:
         errors.append(f"Unexpected permission: {permission}")
-if not re.search(r"sdkVersion:'26'", badging):
+min_sdk = re.search(r"^(?:minSdkVersion|sdkVersion):'([0-9]+)'$", badging, re.MULTILINE)
+if min_sdk is None or int(min_sdk.group(1)) != 26:
     errors.append("minSdk is not 26")
 if 'android:debuggable' in manifest and re.search(r'android:debuggable[^\n]*0xffffffff', manifest):
     errors.append("Release APK is debuggable")
