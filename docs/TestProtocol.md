@@ -45,9 +45,9 @@ adb shell getprop ro.build.version.release
 adb shell getprop ro.build.version.sdk
 adb shell getprop ro.product.cpu.abilist
 adb install -r artifacts/<实际release文件名>.apk
-adb shell mkdir -p /sdcard/Pictures/HukangOcrLab
-adb push tests/fixtures/china-food/6937003117814.jpg /sdcard/Pictures/HukangOcrLab/
-adb push tests/fixtures/china-food/6923644266066.jpg /sdcard/Pictures/HukangOcrLab/
+adb shell mkdir -p /storage/emulated/0/Pictures/HukangOcrLab
+adb push tests/fixtures/china-food/6937003117814.jpg /storage/emulated/0/Pictures/HukangOcrLab/
+adb push tests/fixtures/china-food/6923644266066.jpg /storage/emulated/0/Pictures/HukangOcrLab/
 ```
 
 图片若未被系统相册索引，使用设备文件管理器或系统文件选择器将其加入可选照片，不把“照片未出现在 picker”记为模型识别错误。

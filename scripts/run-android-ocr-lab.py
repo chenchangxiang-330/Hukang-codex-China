@@ -12,6 +12,7 @@ import math
 import pathlib
 import re
 import shlex
+import struct
 import subprocess
 import sys
 import time
@@ -44,10 +45,11 @@ def main():
     package = "com.hukang.china"
     files = f"/data/user/0/{package}/files"
     native_runs = files + "/ocr-lab/runs"
+    native_images = files + "/ocr-lab/images"
     expo_runs = files + "/ocr-evidence"
     actions = []
     summary = {"schemaVersion": 1, "startedAt": datetime.now(timezone.utc).isoformat(),
-               "serial": args.serial, "status": "running", "runs": [], "actions": actions,
+               "serial": args.serial, "status": "running", "runs": [], "processingChecks": [], "actions": actions,
                "limitation": "Emulated execution is not ARM64 phone compatibility or performance validation."}
 
     def execute(arguments, check=True, timeout=60):
@@ -85,8 +87,22 @@ def main():
                     return node, numbers
         return None
 
+    def require_app_process(wait_seconds=0):
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            pid = shell("pidof", package, check=False)
+            if pid:
+                return pid
+            if time.monotonic() >= deadline:
+                (output / "foreground-window.txt").write_text(shell("dumpsys", "window", "windows", check=False), encoding="utf-8")
+                raise RuntimeError("Production App process is not running; inspect actual logcat and foreground-window.txt")
+            time.sleep(1)
+
     def tap_match(pattern, tries=15, scroll=False, direction="down"):
         for _ in range(tries):
+            # A crashed App must not turn later swipes into system-settings
+            # interaction or get reported as an unrelated missing UI label.
+            require_app_process()
             root = hierarchy()
             found = locate(root, pattern)
             if found:
@@ -94,7 +110,7 @@ def main():
                 shell("input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
                 actions.append({"uiTap": node.attrib, "match": pattern})
                 return
-            error = locate(root, r"导入失败|本地 OCR 失败|Cannot find native module")
+            error = locate(root, r"导入失败|图片处理失败|恢复失败|本地 OCR 失败|Cannot find native module")
             if error:
                 raise RuntimeError("OCR Lab displayed an error: " + str(error[0].attrib))
             # Android may show a chooser for ACTION_GET_CONTENT.
@@ -125,6 +141,167 @@ def main():
 
     def remote_json(path):
         return json.loads(execute(["exec-out", "cat", path]).decode("utf-8"))
+
+    def choose_photo(photo):
+        tap_match(r"从相册(?:选择|更换)照片", scroll=True, direction="up")
+        # DocumentsUI can omit the extension from the visible title.
+        try:
+            tap_match(re.escape(photo.stem), tries=6, scroll=True)
+        except RuntimeError:
+            tap_match(r"Show roots|显示根目录|导航抽屉|Open navigation drawer", tries=3)
+            tap_match(r"^(Images|图片|图像)\s*$", tries=3)
+            try:
+                tap_match(r"HukangOcrLab", tries=3, scroll=True)
+            except RuntimeError:
+                pass  # Some Images roots list photos without buckets.
+            tap_match(re.escape(photo.stem), scroll=True)
+
+    def capture_prepared_image(before, label, expected_source):
+        """Wait for both the native PNG and sidecar to finish; preserve actual bytes."""
+        deadline = time.monotonic() + args.run_timeout
+        last_error = None
+        while time.monotonic() < deadline:
+            require_app_process()
+            added = {name for name in list_json(native_images) - before if name.endswith(".png.json")}
+            if len(added) > 1:
+                raise RuntimeError("Unexpected concurrent image operations; cannot attribute transformation")
+            if added:
+                filename = added.pop()
+                try:
+                    metadata = remote_json(native_images + "/" + filename)
+                    path = native_images + "/" + filename[:-5]
+                    image = execute(["exec-out", "cat", path])
+                    if metadata["uri"] != "file://" + path or metadata["sourceImageHash"] != expected_source:
+                        raise RuntimeError("Prepared image lineage does not match the actual selected photo")
+                    if digest(image) != metadata["processedImageHash"]:
+                        raise RuntimeError("Prepared image bytes do not match their native SHA-256")
+                    if len(image) < 24 or image[:8] != b"\x89PNG\r\n\x1a\n" or image[12:16] != b"IHDR":
+                        raise RuntimeError("Native transformed image is not a complete PNG header")
+                    dimensions = struct.unpack(">II", image[16:24])
+                    if dimensions != (metadata["width"], metadata["height"]):
+                        raise RuntimeError("Native metadata dimensions differ from actual PNG dimensions")
+                    (output / (label + ".png")).write_bytes(image)
+                    (output / (label + ".json")).write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                    return metadata
+                except (RuntimeError, json.JSONDecodeError) as error:
+                    # File presence may precede completion of the native writer.
+                    # No partial image or sidecar may count as verification.
+                    last_error = str(error)
+            time.sleep(1)
+        raise RuntimeError(f"Actual image operation did not produce complete evidence: {label}: {last_error}")
+
+    def product(left, right):
+        return [sum(left[row * 3 + k] * right[k * 3 + col] for k in range(3))
+                for row in range(3) for col in range(3)]
+
+    def check_transformation(actual, original, size, matrix, added_operations):
+        if (actual["width"], actual["height"]) != size:
+            raise RuntimeError("Image transformation returned unexpected actual dimensions")
+        for key in ["originalUri", "sourceImageHash", "sourceOrientation"]:
+            if actual[key] != original[key]:
+                raise RuntimeError("Image transformation changed original lineage: " + key)
+        for key in ["originalWidth", "originalHeight"]:
+            if actual["transform"][key] != original["transform"][key]:
+                raise RuntimeError("Image transformation changed original dimensions")
+        measured = actual["transform"]["matrix"]
+        if len(measured) != 9 or not all(math.isfinite(number) and math.isclose(number, expected, abs_tol=1e-4)
+                                       for number, expected in zip(measured, matrix)):
+            raise RuntimeError("Actual image transformation matrix does not match the UI operation")
+        if actual["transform"]["operations"] != original["transform"]["operations"] + added_operations:
+            raise RuntimeError("Actual image operations do not match the UI actions")
+
+    def set_crop_field(label, value):
+        pattern = r"^裁剪" + re.escape(label) + r"\s*$"
+        tap_match(pattern, scroll=True, direction="up")
+        shell("input", "keyevent", "KEYCODE_MOVE_END")
+        shell("input", "keyevent", *(["KEYCODE_DEL"] * 7))
+        shell("input", "text", str(value))
+        found = locate(hierarchy(), pattern)
+        if not found or found[0].attrib.get("text", "") != str(value):
+            raise RuntimeError("Crop field was not actually updated through the UI: " + label)
+        ime = shell("dumpsys", "input_method")
+        if re.search(r"mInputShown=true|mIsInputViewShown=true", ime):
+            shell("input", "keyevent", "KEYCODE_BACK")
+
+    def run_ocr(photo, label, repeat=0, variant="baseline", expected_image=None):
+        expected_source = digest(photo.read_bytes())
+        before_native = list_json(native_runs)
+        before_expo = list_directories(expo_runs)
+        tap_match(r"^开始离线识别\s*$", scroll=True)
+        deadline = time.monotonic() + args.run_timeout
+        native = None
+        native_filename = None
+        while time.monotonic() < deadline:
+            require_app_process()
+            added = list_json(native_runs) - before_native
+            if added:
+                if len(added) != 1:
+                    raise RuntimeError("Unexpected concurrent native runs; cannot attribute output")
+                native_filename = added.pop()
+                try:
+                    native = remote_json(native_runs + "/" + native_filename)
+                    break
+                except (RuntimeError, json.JSONDecodeError):
+                    # File presence can precede completion of the
+                    # native writer. Keep waiting for real JSON.
+                    pass
+            time.sleep(1)
+        if native is None:
+            raise RuntimeError(f"No actual native OCR output within timeout for {photo.name}")
+        if native["sourceImageHash"] != expected_source:
+            raise RuntimeError("Gallery imported a different photo or changed original bytes")
+        if not native["blocks"] or not native["rawText"].strip():
+            raise RuntimeError("Actual OCR returned no text; do not mark acceptance passed")
+        if native["rawText"] != "\n".join(block["text"] for block in native["blocks"]):
+            raise RuntimeError("OCR raw text differs from actual block text")
+        for block in native["blocks"]:
+            if not math.isfinite(block["confidence"]) or not 0 <= block["confidence"] <= 1:
+                raise RuntimeError("Invalid recognizer confidence")
+            if len(block["polygon"]) != 4 or not all(math.isfinite(v) for v in block["boundingBox"].values()):
+                raise RuntimeError("Invalid actual bounding boxes")
+        for key in ["detector", "recognizer"]:
+            if native["modelHashes"][key] != manifest["models"][key]["sha256"]:
+                raise RuntimeError("Native output used an unpinned model")
+        for key in ["modelLoadMs", "ocrMs", "totalMs"]:
+            if not math.isfinite(native[key]) or native[key] < 0:
+                raise RuntimeError("Invalid actual measured timing: " + key)
+        (output / (label + "-native.json")).write_text(json.dumps(native, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        # Preserve actual JS export too; native output alone does not
+        # attest the complete production UI bridge/save path.
+        expo_id = None
+        for _ in range(30):
+            added = list_directories(expo_runs) - before_expo
+            for candidate in sorted(added):
+                try:
+                    record = remote_json(expo_runs + "/" + candidate + "/record.json")
+                except (RuntimeError, json.JSONDecodeError):
+                    continue
+                if record["ocr"]["id"] == native["id"]:
+                    expo_id = candidate
+                    break
+            if expo_id:
+                break
+            time.sleep(1)
+        if not expo_id:
+            raise RuntimeError("Native OCR succeeded but production JS evidence save was not observed")
+        if expected_image is not None:
+            for key in ["sourceImageHash", "processedImageHash", "width", "height"]:
+                if native[key] != expected_image[key] or record["image"][key] != expected_image[key]:
+                    raise RuntimeError("Transformation/OCR evidence mismatch: " + key)
+            if native["imageUri"] != expected_image["uri"] or record["image"]["transform"] != expected_image["transform"]:
+                raise RuntimeError("OCR did not use the current transformed image")
+        execute(["pull", expo_runs + "/" + expo_id, str(output / label)], timeout=60)
+        summary["runs"].append({"fixture": photo.name, "repeat": repeat + 1, "variant": variant,
+            "nativeOutput": label + "-native.json", "expoDirectory": label,
+            "sourceImageHash": expected_source, "processedImageHash": native["processedImageHash"],
+            "blockCount": len(native["blocks"]), "modelLoadMs": native["modelLoadMs"],
+            "ocrMs": native["ocrMs"], "totalMs": native["totalMs"], "memory": native.get("memory")})
+        print(json.dumps({"actualAndroidRun": label, "sourceImageHash": expected_source,
+                          "rawText": native["rawText"], "blockCount": len(native["blocks"]),
+                          "modelLoadMs": native["modelLoadMs"], "ocrMs": native["ocrMs"],
+                          "totalMs": native["totalMs"], "memory": native.get("memory")}, ensure_ascii=False), flush=True)
+        save_summary()
+        return native
 
     try:
         manifest = json.loads((ROOT / "models/paddleocr/v5-mobile/manifest.json").read_text())
@@ -223,98 +400,95 @@ def main():
         shell("am", "force-stop", package)
         shell("am", "start", "-n", package + "/.MainActivity")
         time.sleep(3)
+        summary["appPidAfterInitialLaunch"] = require_app_process(wait_seconds=15)
         screenshot("first-offline-launch")
         for photo_index, photo in enumerate(fixtures):
-            tap_match(r"从相册(?:选择|更换)照片", scroll=True, direction="up")
-            # DocumentsUI can omit the extension from the visible title.
-            try:
-                tap_match(re.escape(photo.stem), tries=6, scroll=True)
-            except RuntimeError:
-                # Expand the native DocumentsUI roots and browse its local
-                # Images bucket. This is still a real gallery selection.
-                tap_match(r"Show roots|显示根目录|导航抽屉|Open navigation drawer", tries=3)
-                tap_match(r"^(Images|图片|图像)\s*$", tries=3)
-                try:
-                    tap_match(r"HukangOcrLab", tries=3, scroll=True)
-                except RuntimeError:
-                    pass  # Some Images roots list photos without buckets.
-                tap_match(re.escape(photo.stem), scroll=True)
-            expected_source = digest(photo.read_bytes())
+            choose_photo(photo)
             for repeat in range(args.repeats):
-                before_native = list_json(native_runs)
-                before_expo = list_directories(expo_runs)
-                tap_match(r"^开始离线识别\s*$", scroll=True)
-                deadline = time.monotonic() + args.run_timeout
-                native = None
-                native_filename = None
-                while time.monotonic() < deadline:
-                    added = list_json(native_runs) - before_native
-                    if added:
-                        if len(added) != 1:
-                            raise RuntimeError("Unexpected concurrent native runs; cannot attribute output")
-                        native_filename = added.pop()
-                        try:
-                            native = remote_json(native_runs + "/" + native_filename)
-                            break
-                        except (RuntimeError, json.JSONDecodeError):
-                            # File presence can precede completion of the
-                            # native writer. Keep waiting for real JSON.
-                            pass
-                    time.sleep(1)
-                if native is None:
-                    raise RuntimeError(f"No actual native OCR output within timeout for {photo.name}")
-                if native["sourceImageHash"] != expected_source:
-                    raise RuntimeError("Gallery imported a different photo or changed original bytes")
-                if not native["blocks"] or not native["rawText"].strip():
-                    raise RuntimeError("Actual OCR returned no text; do not mark acceptance passed")
-                if native["rawText"] != "\n".join(block["text"] for block in native["blocks"]):
-                    raise RuntimeError("OCR raw text differs from actual block text")
-                for block in native["blocks"]:
-                    if not math.isfinite(block["confidence"]) or not 0 <= block["confidence"] <= 1:
-                        raise RuntimeError("Invalid recognizer confidence")
-                    if len(block["polygon"]) != 4 or not all(math.isfinite(v) for v in block["boundingBox"].values()):
-                        raise RuntimeError("Invalid actual bounding boxes")
-                for key in ["detector", "recognizer"]:
-                    if native["modelHashes"][key] != manifest["models"][key]["sha256"]:
-                        raise RuntimeError("Native output used an unpinned model")
-                for key in ["modelLoadMs", "ocrMs", "totalMs"]:
-                    if not math.isfinite(native[key]) or native[key] < 0:
-                        raise RuntimeError("Invalid actual measured timing: " + key)
-                label = f"photo-{photo_index + 1}-run-{repeat + 1}"
-                (output / (label + "-native.json")).write_text(json.dumps(native, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-                # Preserve actual JS export too; native output alone does not
-                # attest the complete production UI bridge/save path.
-                expo_id = None
-                for _ in range(30):
-                    added = list_directories(expo_runs) - before_expo
-                    for candidate in sorted(added):
-                        try:
-                            record = remote_json(expo_runs + "/" + candidate + "/record.json")
-                        except (RuntimeError, json.JSONDecodeError):
-                            continue
-                        if record["ocr"]["id"] == native["id"]:
-                            expo_id = candidate
-                            break
-                    if expo_id:
-                        break
-                    time.sleep(1)
-                if not expo_id:
-                    raise RuntimeError("Native OCR succeeded but production JS evidence save was not observed")
-                execute(["pull", expo_runs + "/" + expo_id, str(output / label)], timeout=60)
-                summary["runs"].append({"fixture": photo.name, "repeat": repeat + 1,
-                    "nativeOutput": label + "-native.json", "expoDirectory": label,
-                    "sourceImageHash": expected_source, "processedImageHash": native["processedImageHash"],
-                    "blockCount": len(native["blocks"]), "modelLoadMs": native["modelLoadMs"],
-                    "ocrMs": native["ocrMs"], "totalMs": native["totalMs"], "memory": native.get("memory")})
-                print(json.dumps({"actualAndroidRun": label, "sourceImageHash": expected_source,
-                                  "rawText": native["rawText"], "blockCount": len(native["blocks"]),
-                                  "modelLoadMs": native["modelLoadMs"], "ocrMs": native["ocrMs"],
-                                  "totalMs": native["totalMs"], "memory": native.get("memory")}, ensure_ascii=False), flush=True)
-                save_summary()
+                run_ocr(photo, f"photo-{photo_index + 1}-run-{repeat + 1}", repeat)
             tap_match(r"^OCR 原文\s*$", scroll=True)
             screenshot(f"photo-{photo_index + 1}-actual-text")
             tap_match(r"02 图片与文字框", scroll=True, direction="up")
             screenshot(f"photo-{photo_index + 1}-actual-boxes")
+
+        # Preserve the four baseline OCR runs before exercising any image
+        # modification. Variants below are the same photograph, not new goods
+        # or new real-world capture conditions.
+        summary["baselineRunCount"] = len(summary["runs"])
+        summary["uniqueFixtureCount"] = len({run["fixture"] for run in summary["runs"]})
+        save_summary()
+        if summary["baselineRunCount"] < 4:
+            raise RuntimeError("Image processing checks require at least four actual baseline OCR runs")
+        photo = next((fixture for fixture in fixtures if fixture.stem == "6923644266066"), fixtures[0])
+        expected_source = digest(photo.read_bytes())
+        before = list_json(native_images)
+        choose_photo(photo)
+        original = capture_prepared_image(before, "processing-baseline-image", expected_source)
+        width, height = original["width"], original["height"]
+        original_matrix = original["transform"]["matrix"]
+        tap_match(r"02 图片与文字框", scroll=True, direction="up")
+        screenshot("processing-baseline-ui")
+
+        before = list_json(native_images)
+        tap_match(r"右转 90°", scroll=True, direction="up")
+        right = capture_prepared_image(before, "processing-right-90-image", expected_source)
+        check_transformation(right, original, (height, width),
+                             product([0, -1, height, 1, 0, 0, 0, 0, 1], original_matrix),
+                             [{"kind": "rotate", "degreesClockwise": 90}])
+        screenshot("processing-right-90-ui")
+        summary["processingChecks"].append({"operation": "manual_clockwise_90", "fixture": photo.name,
+            "status": "verified_android_ui_transform", "image": "processing-right-90-image.png",
+            "metadata": "processing-right-90-image.json", "width": right["width"], "height": right["height"],
+            "matrix": right["transform"]["matrix"], "processedImageHash": right["processedImageHash"],
+            "limitation": "Metadata, PNG dimensions, file SHA-256 and UI verified; rotated OCR and exact pixels not assessed."})
+        save_summary()
+
+        before = list_json(native_images)
+        tap_match(r"左转 90°", scroll=True, direction="up")
+        roundtrip = capture_prepared_image(before, "processing-roundtrip-image", expected_source)
+        check_transformation(roundtrip, original, (width, height), original_matrix,
+                             [{"kind": "rotate", "degreesClockwise": 90},
+                              {"kind": "rotate", "degreesClockwise": 270}])
+        screenshot("processing-roundtrip-ui")
+        run_ocr(photo, "processing-roundtrip-run", variant="rotation_roundtrip", expected_image=roundtrip)
+        summary["processingChecks"].append({"operation": "manual_counterclockwise_90_roundtrip", "fixture": photo.name,
+            "status": "verified_android_ui_transform_and_ocr", "image": "processing-roundtrip-image.png",
+            "metadata": "processing-roundtrip-image.json", "ocrRun": "processing-roundtrip-run",
+            "width": roundtrip["width"], "height": roundtrip["height"], "matrix": roundtrip["transform"]["matrix"],
+            "processedImageHash": roundtrip["processedImageHash"],
+            "roundTripEncodedHashMatches": roundtrip["processedImageHash"] == original["processedImageHash"],
+            "limitation": "PNG byte hash comparison is recorded; no independent pixel decoder or EXIF 2–8 test."})
+        save_summary()
+
+        tap_match(r"矩形裁剪", scroll=True, direction="up")
+        for field, value in [("左侧 %", 10), ("顶部 %", 10), ("宽度 %", 80), ("高度 %", 80)]:
+            set_crop_field(field, value)
+        screenshot("processing-crop-preview-ui")
+        before = list_json(native_images)
+        tap_match(r"^应用裁剪\s*$", scroll=True)
+        cropped = capture_prepared_image(before, "processing-crop-image", expected_source)
+        left, top = math.floor(width * .1 + .5), math.floor(height * .1 + .5)
+        crop_right, bottom = math.floor(width * .9 + .5), math.floor(height * .9 + .5)
+        crop = {"kind": "crop", "left": left, "top": top, "right": crop_right, "bottom": bottom}
+        check_transformation(cropped, original, (crop_right - left, bottom - top),
+                             product([1, 0, -left, 0, 1, -top, 0, 0, 1], original_matrix),
+                             [{"kind": "rotate", "degreesClockwise": 90},
+                              {"kind": "rotate", "degreesClockwise": 270}, crop,
+                              {"kind": "rotate", "degreesClockwise": 0}])
+        tap_match(r"02 图片与文字框", scroll=True, direction="up")
+        screenshot("processing-crop-ui")
+        run_ocr(photo, "processing-crop-run", variant="rectangle_crop", expected_image=cropped)
+        tap_match(r"^OCR 原文\s*$", scroll=True)
+        screenshot("processing-crop-actual-text")
+        tap_match(r"02 图片与文字框", scroll=True, direction="up")
+        screenshot("processing-crop-actual-boxes")
+        summary["processingChecks"].append({"operation": "rectangle_crop_10_10_80_80_percent", "fixture": photo.name,
+            "status": "verified_android_ui_transform_and_ocr", "image": "processing-crop-image.png",
+            "metadata": "processing-crop-image.json", "ocrRun": "processing-crop-run",
+            "crop": crop, "width": cropped["width"], "height": cropped["height"],
+            "matrix": cropped["transform"]["matrix"], "processedImageHash": cropped["processedImageHash"],
+            "limitation": "Actual native crop geometry, files and OCR verified; no independent exact-pixel comparison."})
+        save_summary()
         summary["status"] = "verified_android_emulated"
     except Exception as error:
         summary["status"] = "error"

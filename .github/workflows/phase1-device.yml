@@ -196,8 +196,8 @@ jobs:
             --apk artifacts/build/hukang-china-phase1-arm64-release.apk \
             --output "$destination" --repeats 2 --run-timeout 300
           shopt -s nullglob
-          records=("$destination"/photo-*-run-*/record.json)
-          test "${#records[@]}" -ge 4
+          records=("$destination"/photo-*-run-*/record.json "$destination"/processing-*-run/record.json)
+          test "${#records[@]}" -ge 6
           node scripts/validate-ocr-evidence.mjs "${records[@]}" | tee "$destination/evidence-consistency.json"
           SH
 
