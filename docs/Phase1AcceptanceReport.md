@@ -1,8 +1,8 @@
 # Hukang China Phase 1 验收报告
 
-报告日期：2026-10-08（Asia/Shanghai）。范围：Phase 0、Phase 1；没有开始 Phase 2。本文以 `codex/mainland-v2` 的 `32dd83d` 为已推送快照，最新已执行测试工具为 `64808a5`；当前 APK 来自 `3ef41988b322713e0d734344cf5a62820525ed1d`，三者分开记录。
+报告日期：2026-10-08（Asia/Shanghai）。范围：Phase 0、Phase 1；没有开始 Phase 2。本文以 `codex/mainland-v2` 的 `58a50d9` 为已推送文档/工具快照；当前 APK 构建 source 为 `339a66991af93c488e1f1426a3f240edd82fc3ca`。当前新包与历史 `3ef4198` 包的证据分开记录。
 
-**官方模型、release 编译和实际 APK 静态检查通过，但当前包在 API 30 x86_64 + ARM translation 模拟器上启动崩溃，Phase 1 尚未通过。** 可下载 APK 已取得并安装成功，实际首次离线启动暴露了 React Native `SoLoaderDSONotFoundError: libreactnative.so`。尚未进入 JS 页面或原生 OCR，没有中文识别输出。当前包为 94,746,723 bytes，SHA-256 为 `4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3`；真机尚未执行，不能据此推断真机也失败或成功。
+**新 release APK 的 native 库打包和实际安装解库均通过，旧 SoLoader 缺库问题已实证解决；API 30 的 ARM 翻译层随后出现 SIGILL，Phase 1 OCR 仍未通过。** 当前包为 **58,709,659 bytes**，SHA-256 为 **`3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`**，实际 Manifest `extractNativeLibs=true`，没有 INTERNET。新包安装后 4 个必需 ARM64 库摘要与 APK 一致，但该模拟器在 `libndk_translation` 解码指令时崩溃，未完成 OCR Lab 启动，没有识别输出。旧包缺库失败与新包翻译层失败分别保留；ARM64 真机未执行，不能外推手机结果。
 
 本文使用以下状态，避免把不同层级的证据混为一谈：
 
@@ -82,10 +82,16 @@ Hukang-codex-China/
 | `68beb10` | 修复 KVM 设备权限竞态、独立重测已检查 APK、保存当前 APK 实际复核证据 |
 | `64808a5` | 修复 Android 测试图片媒体索引的 `/sdcard` 别名路径问题 |
 | `32dd83d` | 保存实际 APK 交付和首次 Android 安装/媒体索引失败证据与报告 |
+| `a0a491a` | 正常开启 legacy native library packaging，新增旋转往返/裁剪实际 UI 测试路径 |
+| `339a669` | 严格检查实际 APK 解库配置、必需 ARM64 库和安装后逐库摘要 |
+| `cd6614c` | 保存 SoLoader 真实启动失败、原始日志截取和 resolved release 依赖审计 |
+| `58a50d9` | 文档入口、验证里程碑和 native packaging 待实证历史 |
 
 实际执行通过：TypeScript `tsc --noEmit`、Node 测试 15/15、官方模型导入安全测试 5/5、资产与 fixture 摘要核验、Gradle `help`、Expo Android autolinking。autolinking 实际解析到 `com.hukang.vision.HukangVisionModule`，与 Kotlin 类一致。
 
 这些测试属于 `verified_host_test`，不代表模型已在 Android 推理。archive 安全测试使用合成压缩包核验路径穿越、链接、重复成员和解压限额，没有生成伪 OCR 文本。
+
+本地实际执行 releaseRuntimeClasspath 依赖图检查：exit 0，`BUILD SUCCESSFUL in 1m`，200 个不同 resolved Maven coordinates，无 `FAILED` 或 unresolved `(n)` 节点。原始 [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt) 为 94,037 bytes，SHA-256 `d57d33e056827d4fc66d759ad4bd70526f1e115cfd43b44b55f6ecd022131dd0`。清单未出现 GMS、ML Kit、Firebase、在线 OCR/AI 或遥测 SDK coordinates；普通 Google/AndroidX utility 是本地库。依赖图解析不是二进制全部下载、网络抓包或设备推理实证，详见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
 
 ## 3. 原版图标 SHA-256 校验
 
@@ -133,27 +139,34 @@ Hukang-codex-China/
 
 ## 5. 实际 Android release APK 构建结果
 
-状态：`verified_host_test`，实际 APK 内容为 `verified_static`；实际 Android 安装为 `verified_android`，首次启动为 `error`，模型推理为 `not_run`。通过构建/静态检查不表示此包可在当前测试环境成功启动。
+状态：当前新包构建 `verified_host_test`、APK 内容 `verified_static`、Android 安装与实际库摘要 `verified_android`；当前 API 30 模拟器启动为 `error`，OCR 为 `not_run`。历史旧包另行保存，不混用包身份或错误原因。
 
-**当前实际交付包**来自 [Actions run 37740050254](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37740050254)，构建源码 `3ef41988b322713e0d734344cf5a62820525ed1d`。此 run 的 release 编译、APK 检查和 APK artifact 上传全部成功。设备作业另行计分，不因 release 成功而自动通过。
+**当前实际交付包**来自 [Actions run 37776005573](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573)，构建源码 `339a66991af93c488e1f1426a3f240edd82fc3ca`，release job `113307547677`。此 job 的 release 编译、完整 APK 检查、上传成功；本地取得实际 APK 并再次检查。Android 设备 job 另行计分，不因 release 成功而自动通过。
 
 | 项目 | 当前包实际结果 |
 | --- | --- |
-| Gradle | `:app:assembleRelease` 成功，`BUILD SUCCESSFUL in 10m 45s` |
+| Gradle | `:app:assembleRelease` 成功，`BUILD SUCCESSFUL in 7m 16s` |
 | 原生编译 | 完整构建实际执行 `:hukang-vision:compileReleaseKotlin` |
 | 模型打包门禁 | 实际执行 `:hukang-vision:verifyBundledOcrModels` |
 | 本地实际 APK | `/workspace/Hukang-codex-China/artifacts/hukang-china-phase1-arm64-release.apk` |
-| APK 大小 | **94,746,723 bytes**，94.75 MB / 90.36 MiB |
-| APK SHA-256 | `4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3` |
+| APK 大小 | **58,709,659 bytes**，58.71 MB / 55.99 MiB |
+| APK SHA-256 | `3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e` |
 | 签名 | APK Signature Scheme v2 校验通过，1 个 signer |
 | 分发签名性质 | 工作流临时实验签名，非正式商店/生产发布证书 |
-| 完整下载 artifact | [phase1 release APK artifact 11534180523](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37740050254/artifacts/11534180523) |
+| 完整下载 artifact | [phase1 release APK artifact 11550109995](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573/artifacts/11550109995) |
 | 本地独立复核 | 重组实际 APK 后执行 `scripts/verify-apk.py`，`errors: []` |
-| Android 实际运行 | `37774801831` 中安装成功；首次启动在 SoLoader 加载 React Native native library 时崩溃；不是可用性验收通过 |
+| 实际 Manifest 解库设置 | `android:extractNativeLibs=true` |
+| 必需 native 库 | `libreactnative.so`、`libopencv_java4.so`、`libonnxruntime.so`、`libonnxruntime4j_jni.so` 实际存在，均为 ZIP DEFLATED（compression 8），各摘要已核验 |
+| 新包 Android 安装 | job `113311498884` 实际安装成功，4 个必需 ARM64 native 库安装后逐个摘要与 APK 内一致 |
+| 新包 Android 运行 | 旧 SoLoader 缺库问题已解决；随后 API 30 `libndk_translation` 出现 SIGILL，未完成 OCR Lab 启动/执行 OCR |
 
-为可信取回这个 APK，构建机按固定顺序拆成四份，生成带 repository/commit/run 身份和各份摘要的 transfer manifest，分别上传 GitHub Actions artifact。本地核对 GitHub artifact metadata、每份字节及摘要后，顺序重组，再核对完整 APK 摘要，并重新解码 Manifest、校验模型及签名。四分片是开发产物传输，不是 App 运行时模型下载。完整 APK 没有提交进源码 Git。
+为可信取回新 APK，构建机按固定顺序拆成三份，生成带 repository/commit/run 身份和各份摘要的 transfer manifest，分别上传 GitHub Actions artifact。本地核对 GitHub artifact metadata、每份字节及摘要后，顺序重组，再核对完整 APK 摘要，重新解码 Manifest、校验模型、native 库及签名。三分片是开发产物传输，不是 App 运行时模型下载。完整 APK 没有提交进源码 Git。
 
-当前实际复核原始证据见 [apk-inspection-local.json](evidence/phase1/release-37740050254/apk-inspection-local.json)、[final-manifest.txt](evidence/phase1/release-37740050254/final-manifest.txt)、[apk-transfer-manifest.json](evidence/phase1/release-37740050254/apk-transfer-manifest.json)、[artifact-metadata.json](evidence/phase1/release-37740050254/artifact-metadata.json)。GitHub artifacts 为临时保留，当前记录到期时间为 2026-10-22；已将重要小型原始证据入库。
+当前实际复核原始证据见 [apk-inspection-local.json](evidence/phase1/release-37776005573/apk-inspection-local.json)、[final-manifest.txt](evidence/phase1/release-37776005573/final-manifest.txt)、[apk-transfer-manifest.json](evidence/phase1/release-37776005573/apk-transfer-manifest.json)、[artifact-metadata.json](evidence/phase1/release-37776005573/artifact-metadata.json)。native 库完整摘要在检查 JSON 中保留。GitHub artifacts 为临时保留，当前记录到期时间为 2026-10-22；应按实际 artifact metadata 留存，不依赖永久下载。
+
+native 库改为安装时解出的压缩打包后，实际 APK 从 94,746,723 bytes 变为 58,709,659 bytes；官方模型和字典字节未更换、未量化。该 APK 体积减少不代表运行内存或手机推理速度减少。
+
+**第一份交付包历史保留：** [run 37740050254](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37740050254) / `3ef4198` 曾编译成功（10m 45s），94,746,723 bytes，SHA `4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3`。旧包保存在 `artifacts/hukang-china-phase1-arm64-release-3ef4198.apk`，原始静态证据在 `docs/evidence/phase1/release-37740050254/`，已知 native translation 启动失败见第 8 项。不能用新包修复或摘要追溯改变旧包结论。
 
 **首次编译历史保持原样：** [run 37738623906](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37738623906) / `d4b2fcd202b8231691451f92840552435805a936` 曾实际编译成功（10m 50s），APK 同为 94,746,723 bytes，但 SHA 是 `659a487d7c842824601f471285c73ffa4cb681eeddfd65c0416cdb2c502166ba`。当时检查脚本只认识旧 `sdkVersion` 字段，误报 `minSdk is not 26`，导致该 APK 未上传。`3ef4198` 修复后，新包已通过完整检查；第一次错误 JSON 不修改，不拿第一次摘要标识当前包。
 
@@ -169,13 +182,13 @@ Hukang-codex-China/
 | 国外 OCR、AI 或食品网络供应商 | `verified_static`：没有启用；生产 `FOREIGN_NETWORK_SERVICE` 数量为 0 |
 | 原生推理实现本地 CPU 路径 | `verified_static`：本地 ORT/OpenCV；ORT 在创建 session 前明确禁用 telemetry |
 | App 网络权限 | `verified_static`：当前交付 APK 最终 Manifest 不含 INTERNET |
-| Android 离线测试环境设置 | `verified_android`：API 30 已记录飞行模式 1、Wi-Fi 0、IPv4/IPv6 OUTPUT 默认 DROP，首次 App 启动尝试前已设置 |
-| 首次离线启动 | `error`：真实启动尝试发生 SoLoader native library 加载崩溃，未进入 JS/OCR |
+| Android 离线测试环境设置 | `verified_android`：新包 API 30 session 记录飞行模式 1、Wi-Fi 0、IPv4/IPv6 OUTPUT 默认 DROP，首次 App 启动尝试前已设置 |
+| 首次离线启动 | `error`：新包 native 解库和加载已推进，但 API 30 ARM translation SIGILL 导致未完成 OCR Lab 启动；不判定启动成功 |
 | 完全离线中文 OCR | `not_run`：尚无 Android 实际 OCR JSON |
 | 运行时请求/流量观察 | `not_run`：尚无设备流量观测记录，不声称已抓包验证 |
-| 无 Google Play Services 的运行兼容性 | `not_run`：测试环境已实际禁用 GMS/GSF/Photos，但 App 在 React Native 启动阶段崩溃；未到 OCR 功能验收 |
+| 无 Google Play Services 的运行兼容性 | `not_run`：新包测试环境实际禁用 GMS/GSF/Photos，但翻译层崩溃发生在 OCR 前；没有功能通过证据 |
 
-当前可准确表述为“APK 已包含官方国产模型，生产网络服务为 0，实际 APK 没有 INTERNET 权限；离线推理路径已实现并编译；当前测试环境首次启动存在已观测崩溃”。**不能据此声称“App 可以正常打开”或“Android 完全离线中文 OCR 已实测成功”。**
+当前可准确表述为“新 APK 已包含官方国产模型，生产网络服务为 0，实际 APK 没有 INTERNET；本地 OCR 代码已编译，native 库安装解出与摘要已实测通过；API 30 翻译层出现已观测的后续启动崩溃”。**不能据此声称“新 App 可以正常打开”或“Android 完全离线中文 OCR 已实测成功”。**
 
 ONNX Runtime、OpenCV、React Native、Expo、AndroidX 等标为 `FOREIGN_OFFLINE_LIBRARY`。GitHub、npm、Maven、SDK、官方模型下载仅在开发/构建阶段使用，不计入 App 运行时海外服务。详见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
 
@@ -183,7 +196,7 @@ ONNX Runtime、OpenCV、React Native、Expo、AndroidX 等标为 `FOREIGN_OFFLIN
 
 ## 7. 实际最终 Manifest 是否存在 INTERNET
 
-状态：`verified_static`。结论来自当前交付 APK 在本地再次执行 aapt2 的解码输出，不是 `app.json` 的期望配置。当前 APK 摘要为 `4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3`。
+状态：`verified_static`。结论来自当前新 APK 在本地再次执行 aapt2 的解码输出，不是 `app.json` 的期望配置。当前 APK 摘要为 `3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`。
 
 | 检查 | 当前实际最终 APK |
 | --- | --- |
@@ -192,10 +205,11 @@ ONNX Runtime、OpenCV、React Native、Expo、AndroidX 等标为 `FOREIGN_OFFLIN
 | `android.permission.CAMERA` / `RECORD_AUDIO` | 不存在；Phase 1 只导入相册 |
 | 最低 SDK / target SDK | 26 / 36 |
 | native ABI | 仅 `arm64-v8a` |
+| `android:extractNativeLibs` | true；4 个必需 native 库压缩打包，通过实际 APK 门禁 |
 | Google Play Services 照片模块下载 metadata service | 配置插件去除；实际解码 Manifest 中没有该 service |
 | 模型配置和 ONNX | 打包后摘要全部一致 |
 
-该 APK 列出的权限是 `READ_EXTERNAL_STORAGE`（maxSdk 32）、`WRITE_EXTERNAL_STORAGE`（maxSdk 32）、`VIBRATE` 和 App 私有的 `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`。这些不是互联网权限。当前原始解码文本见 [final-manifest.txt](evidence/phase1/release-37740050254/final-manifest.txt)，权限和 ABI 输出见 [本地 APK 检查 JSON](evidence/phase1/release-37740050254/apk-inspection-local.json)。
+该 APK 列出的权限是 `READ_EXTERNAL_STORAGE`（maxSdk 32）、`WRITE_EXTERNAL_STORAGE`（maxSdk 32）、`VIBRATE` 和 App 私有的 `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`。这些不是互联网权限。当前原始解码文本见 [final-manifest.txt](evidence/phase1/release-37776005573/final-manifest.txt)，权限和 ABI 输出见 [本地 APK 检查 JSON](evidence/phase1/release-37776005573/apk-inspection-local.json)。
 
 每次后续 APK 都需重新检查，首次包的结果不能自动授予新包同样状态。
 
@@ -249,15 +263,31 @@ Native lib dir: .../lib/arm64
 
 实际 APK 只包含 `arm64-v8a`。该仿真环境的 SoLoader 直接 APK 加载源选择了 `lib/x86_64`，而 `extractNativeLibs=false` 下安装的 ARM64 native lib 目录没有解出的库，导致加载失败。日志在 React Native `MainApplication.onCreate` 的初始化阶段终止；JS 页面和 `HukangVision` 尚未执行，session 的 `runs` 仍为 `[]`。因此原文、框、confidence、模型加载和 OCR 性能仍是 `not_run`；不能把错误截图、人工真值或 UI 错误提示当作识别输出。
 
-这是当前 App/RN 打包与该 native translation 环境的启动兼容性问题，严重程度为 Phase 1 阻塞。ARM64 真机未执行，影响范围不能外推。目前正在评估正常启用 legacy native library packaging，使 Android 安装时解出 APK 内现有 ARM64 库；此时没有把候选修复写为已完成，也没有伪装 ABI、加入 x86 模型、改模型来源或在线兜底。
+这是旧 `3ef4198` App/RN 打包与该 native translation 环境的启动兼容性问题。ARM64 真机未执行，影响范围不能外推。`a0a491a` 已正常启用 legacy native library packaging，`339a669` 新包已在真实 APK 和实际安装检查中证明解库配置、ARM64 文件与摘要一致。没有伪装 ABI、加入 x86 模型、改模型来源或在线兜底。新包下述实际安装和加载记录已证明缺库问题实证修复；后续翻译层错误单独记录，不将“缺库修复”说成“启动整体成功”。
 
-该次原始 session/设备规则和从原始 logcat **截取**的崩溃文本保留于 `docs/evidence/phase1/device-attempt-37774801831/`。截取文件注明完整源日志 SHA-256 和行号，不冒充完整日志。本报告当前 APK 身份仍为 `3ef4198`，不能把后续候选修复算作这个包已具备的能力。
+该次原始 session/设备规则和从原始 logcat **截取**的崩溃文本保留于 `docs/evidence/phase1/device-attempt-37774801831/`。截取文件注明完整源日志 SHA-256 和行号，不冒充完整日志。这些历史失败仅属于旧 `3ef4198` / `4bf12e9e…` 包，不能用新包修复改变它的原始测试结论。
+
+**新包最新实际运行 [run 37776005573](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573)：** Android job `113311498884` 使用 build/test commit `339a66991af93c488e1f1426a3f240edd82fc3ca`，APK 是本报告 `3dd6e764…`，Android/API/翻译库与前次 API 30 环境一致。
+
+实际安装后，`libreactnative.so`、`libopencv_java4.so`、`libonnxruntime.so`、`libonnxruntime4j_jni.so` 均存在于 package 的 `/lib/arm64/`，4 个摘要逐一与实际 APK 匹配；原始 `installedNativeLibraries` 保留在 session。启动已越过旧 SoLoader 缺库失败，随后真实 logcat/tombstone 出现：
+
+```text
+ndk_translation: Undefined instruction 0x7ee1b800
+Fatal signal 4 (SIGILL) in tid ... (mqt_v_js), pid ... (com.hukang.china)
+libndk_translation.so (...DecodeSimdScalarTwoRegMisc...)
+```
+
+回溯指向该系统镜像的 ARM 指令翻译/解码，发生在 OCR 前。测试脚本立即记录 production App process 不再运行，未继续伪造点击或生成成绩；session 为 `error`，`runs=[]`、`processingChecks=[]`。这不是 Paddle 模型识别失败、联网失败或 confidence 为零，而是实际 Android 启动执行阻塞。不能仅由回溯断言所有手机受影响，亦不能断言换镜像一定解决。
+
+原始小型 session/安装库身份/前后规则以及注明完整源 SHA、行号的 tombstone 截取保留于 `docs/evidence/phase1/device-attempt-37776005573/`。脚本原计划 4 次全图基线、旋转往返后和矩形裁剪后 OCR，共 6 次；**6 次是计划，本次实际 OCR 次数为 0，未运行不计算识别准确率。** 原文、框、分数、模型加载时长、OCR 耗时和内存均未产生。
+
+下一轮正在研究使用更新的官方 API 33/34 Android 系统镜像重测**同一**已核验 `339a669` / `3dd6e764…` APK，不更换模型、不重编造包身份、不修改 App 以伪装 ABI。重测尚无实际结果，当前验收保持未通过。
 
 真实执行时须保存 Android 导出的原始 JSON、原图、处理图、截图、设备身份、离线设置、APK 摘要和执行日志。协议及脚本见 [TestProtocol.md](TestProtocol.md) 与 `scripts/run-android-ocr-lab.py`。证据格式验证脚本只核验一致性，不能自证执行真实性。
 
 ## 9. 模型加载、OCR 和总耗时
 
-状态：`not_run`。没有 Android 推理时长，未填写理论估算，也不把 10m 45s 的 Gradle 构建时长当 OCR 速度。
+状态：`not_run`。没有可引用的 Android 推理时长，未填写理论估算，也不把新包 7m 16s 的 Gradle 构建时长当 OCR 速度。
 
 | 测量项 | 结果 |
 | --- | --- |
@@ -289,7 +319,8 @@ Native lib dir: .../lib/arm64
 | 本地软件模拟器 zygote 重启 | 测试环境 | 未安装 APK、未产出 OCR；转为 KVM 测试，不能据此判定 App bug |
 | KVM 设备权限异步竞态 | 测试环境/CI 脚本 | `68beb10` 已修复；重测 KVM 步骤已通过，实际 OCR 输出仍待证据 |
 | fixture MediaProvider 路径 | 测试脚本 bug，已实证修复 | `37773783460` 在 App 启动前失败；`64808a5` 改为 `/storage/emulated/0`，`37774801831` 已证明两图均成功索引 |
-| React Native SoLoader 启动崩溃 | App/运行环境兼容性，阻塞 | `37774801831` 真实观测 `libreactnative.so` 加载失败；当前 x86_64 + ARM translation 环境无法进入 OCR Lab。候选 packaging 修复未实证，ARM64 真机未测 |
+| React Native SoLoader 缺库崩溃 | 旧包打包/运行环境兼容性，已实证修复 | 旧 `4bf…` 包真实失败；新 `339a669` / `3dd…` 包 4 个必需 ARM64 库实际安装摘要一致，启动已越过缺库加载失败。不是整体启动通过 |
+| API 30 native translation SIGILL | 仿真环境执行兼容性，当前阻塞 | 新包 `37776005573` 在 `mqt_v_js` 线程触发 `libndk_translation` 未定义指令，尚未完成 OCR Lab 启动；计划同一 APK 换更新官方镜像重测，未验证能解决，ARM64 真机未测 |
 | 原生推理、注册后设备调用和内存稳定性 | 未测 | 编译/autolinking 通过，实际初始化和调用尚无 Android 证据 |
 | EXIF 1–8、镜像、旋转/裁剪后的框位置 | 未测 | 实现和 host 几何测试存在；未逐项 Android 执行 |
 | 小字、倾斜、曲面、配料文字质量 | 未测 | 已有两张原图，尚无真实 Paddle 输出，不能宣称中文准确率达标 |
@@ -302,7 +333,7 @@ OCR 没有在线兜底。识别失败应保留错误和输入，不调用海外 
 
 ## 12. 下一阶段建议与停止边界
 
-通过构建和 APK 静态检查的可下载 release APK 已取得，但当前测试环境有真实启动崩溃。下一步首先修复并重新构建 **Phase 1 启动阻塞**，核对新包身份和全部静态检查，再完成离线首次启动、两图真实 OCR 导出，保存原图/处理图/原生 JSON/框/分数/时长/内存和设备信息；保留每次失败。还需至少一台 ARM64 真机，补测没有 Google Play Services、EXIF 多方向、手动旋转、裁剪与生命周期，补充有权使用的真实手机拍摄食品包装。
+新包已完成真实安装与 ARM64 库摘要门禁，旧缺库问题已实证解决；当前阻塞是 API 30 翻译层 SIGILL。下一步先在更新的官方 Android 仿真环境重测同一已核验 APK，或在真实 ARM64 手机完成 **Phase 1 实际启动和 OCR 证据**：首次离线启动、两图原始 OCR 导出、旋转/裁剪；保存原图/处理图/原生 JSON/框/分数/时长/内存与设备信息，保留失败，不因换镜像而跳过真实性检查。遇到新错误继续限于 Phase 1 处理，不进入食品业务。ARM64 真机、没有 Google Play Services、EXIF 多方向与生命周期仍需独立实测，并补充有权使用的真实手机拍摄食品包装。
 
 只有用户确认 Phase 2 后，才建议进入本地食品记录、营养表业务解析、用户确认/修改、SQLite 和独立条码扫描。解析记录应引用原始 OCR 证据，不能覆盖 `rawText` 或让 NRV% 推算值冒充包装原文。中国中央食品服务仅保留未来边界；本轮未建设云服务、批量录库、药品、AI、提醒或完整主页。
 
@@ -318,24 +349,28 @@ Phase 1 最终是否通过，要由实际 release APK 与 Android 证据共同�
 | 第一次真实 release Gradle 原始输出 | `docs/evidence/phase1/first-release-37738623906/gradle-release.txt` |
 | 第一次实际 APK 解码 Manifest | `docs/evidence/phase1/first-release-37738623906/final-manifest.txt` |
 | 第一次 APK 实测及原始检查错误 | `docs/evidence/phase1/first-release-37738623906/apk-inspection.json` |
-| 当前实际交付 APK 的本地完整复核 | `docs/evidence/phase1/release-37740050254/apk-inspection-local.json` |
-| 当前实际交付 APK 解码 Manifest | `docs/evidence/phase1/release-37740050254/final-manifest.txt` |
-| 当前 APK 分片及完整身份 | `docs/evidence/phase1/release-37740050254/apk-transfer-manifest.json` |
-| 可信 GitHub artifact 来源/提交/摘要 | `docs/evidence/phase1/release-37740050254/artifact-metadata.json` |
+| 第一份交付旧包的完整复核与身份 | `docs/evidence/phase1/release-37740050254/`，APK SHA `4bf12e9e…` |
+| 当前新 APK 的本地完整复核 | `docs/evidence/phase1/release-37776005573/apk-inspection-local.json` |
+| 当前新 APK 解码 Manifest | `docs/evidence/phase1/release-37776005573/final-manifest.txt` |
+| 当前新 APK 分片及完整身份 | `docs/evidence/phase1/release-37776005573/apk-transfer-manifest.json` |
+| 新包可信 GitHub artifact 来源/提交/摘要 | `docs/evidence/phase1/release-37776005573/artifact-metadata.json` |
 | 不重编译已检查 APK 的独立设备重测 | `.github/workflows/phase1-device-retest.yml` |
 | 实际 Android 安装成功、媒体索引失败 session | `docs/evidence/phase1/device-attempt-37773783460/session.json` |
 | 该次待测 APK/测试工具身份 | `docs/evidence/phase1/device-attempt-37773783460/build-identity.json` |
 | 该次 KVM、禁用服务和前后 OUTPUT 规则 | `docs/evidence/phase1/device-attempt-37773783460/` 下原始小型文本 |
 | 第二次真实启动失败和待测身份 | `docs/evidence/phase1/device-attempt-37774801831/{session.json,build-identity.json}` |
 | 第二次 RN 启动崩溃原始日志截取 | `docs/evidence/phase1/device-attempt-37774801831/startup-crash-excerpt.txt`，含源 SHA 与行号 |
+| 新包实际安装库摘要、SIGILL 前后 session | `docs/evidence/phase1/device-attempt-37776005573/{session.json,build-identity.json}` |
+| 新包翻译层崩溃原始 tombstone 截取 | `docs/evidence/phase1/device-attempt-37776005573/tombstone-excerpt.txt`，含完整源 SHA 与行号 |
+| 实际 resolved release 依赖原始报告 | `docs/evidence/phase1/release-dependencies-local-64808a5.txt` |
 | 图片原字节、归属与真实覆盖范围 | `tests/fixtures/china-food/manifest.json`、`README.md`、两份 `.source.json` |
 | Android 实测方法与证据要求 | `docs/TestProtocol.md` |
 | 生产与构建供应链分开审计 | `docs/MainlandDependencyAudit.md` |
 
-复核已推送修改范围：在新仓库运行 `git diff --name-status a3864c6 32dd83d`。本轮新增的启动失败 session/截取尚待统一提交；后续构建和设备证据应明确新的提交/run/APK 摘要，不覆盖上述原始失败证据。
+复核已推送修改范围：在新仓库运行 `git diff --name-status a3864c6 58a50d9`。旧启动失败 session/截取已保存提交；本轮新 release 37776005573 证据和报告更新等待统一提交。后续设备证据应明确待测提交/run/APK 摘要，不覆盖上述原始失败证据。
 
 <details>
-<summary>已推送快照 32dd83d：实际 153 个路径（新增 152，修改 1，删除 0）</summary>
+<summary>已推送快照 58a50d9：实际 165 个路径（新增 164，修改 1，删除 0）</summary>
 
 ```text
 A	.github/workflows/phase1-device-retest.yml
@@ -398,15 +433,27 @@ A	docs/evidence/phase1/device-attempt-37773783460/initial-ipv6-rules.txt
 A	docs/evidence/phase1/device-attempt-37773783460/kvm.txt
 A	docs/evidence/phase1/device-attempt-37773783460/root-identity.txt
 A	docs/evidence/phase1/device-attempt-37773783460/session.json
+A	docs/evidence/phase1/device-attempt-37774801831/build-identity.json
+A	docs/evidence/phase1/device-attempt-37774801831/disabled-packages.txt
+A	docs/evidence/phase1/device-attempt-37774801831/final-ipv4-rules.txt
+A	docs/evidence/phase1/device-attempt-37774801831/final-ipv6-rules.txt
+A	docs/evidence/phase1/device-attempt-37774801831/initial-ipv4-rules.txt
+A	docs/evidence/phase1/device-attempt-37774801831/initial-ipv6-rules.txt
+A	docs/evidence/phase1/device-attempt-37774801831/kvm.txt
+A	docs/evidence/phase1/device-attempt-37774801831/root-identity.txt
+A	docs/evidence/phase1/device-attempt-37774801831/session.json
+A	docs/evidence/phase1/device-attempt-37774801831/startup-crash-excerpt.txt
 A	docs/evidence/phase1/first-release-37738623906/apk-inspection.json
 A	docs/evidence/phase1/first-release-37738623906/final-manifest.txt
 A	docs/evidence/phase1/first-release-37738623906/gradle-release.txt
 A	docs/evidence/phase1/first-release-37738623906/official-model-acquisition.json
 A	docs/evidence/phase1/official-model-acquisition-37737586793.json
+A	docs/evidence/phase1/release-37740050254/apk-extraction-negative-control-339a669.json
 A	docs/evidence/phase1/release-37740050254/apk-inspection-local.json
 A	docs/evidence/phase1/release-37740050254/apk-transfer-manifest.json
 A	docs/evidence/phase1/release-37740050254/artifact-metadata.json
 A	docs/evidence/phase1/release-37740050254/final-manifest.txt
+A	docs/evidence/phase1/release-dependencies-local-64808a5.txt
 A	expo-env.d.ts
 A	models/paddleocr/v5-mobile/LICENSE-PaddleOCR.txt
 A	models/paddleocr/v5-mobile/NOTICE.md
@@ -493,6 +540,6 @@ A	tests/test_model_acquisition.py
 A	tsconfig.json
 ```
 
-本轮报告更新及 device-attempt-37774801831 的新增原始证据/日志截取不计入以上已推送快照。其他 agent 正在处理的未提交候选修复不视为已经构建或执行。
+本轮报告更新、release-37776005573 原始新包证据及 device-attempt-37776005573 安装/SIGILL 原始记录不计入以上已推送快照。后续重测不得覆盖这些原始失败。
 
 </details>

@@ -1,0 +1,43 @@
+Extracted original logcat excerpt; NOT the full original log.
+Source: artifacts/device-attempt-37776005573/final-logcat.txt
+Source SHA-256: c1acc9b29e69d3aed008709aca6bd86e0ca2a84ce89db809806a6bd7afb364fc
+Original source lines (1-based, inclusive): 32016-32050
+APK SHA-256: 3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e
+Actions run: 37776005573
+Original excerpt follows without text edits:
+
+10-08 12:33:52.242  4851  4879 E ndk_translation: Undefined instruction 0x7ee1b800 at 0x0000791d6efc5754
+--------- beginning of crash
+10-08 12:33:52.242  4851  4879 F libc    : Fatal signal 4 (SIGILL), code -6 (SI_TKILL) in tid 4879 (mqt_v_js), pid 4851 (om.hukang.china)
+10-08 12:33:52.248   500  4889 I system_server: The ClassLoaderContext is a special shared library.
+10-08 12:33:52.273   500  4889 I chatty  : uid=1000(system) Binder:500_3 identical 24 lines
+10-08 12:33:52.274   500  4889 I system_server: The ClassLoaderContext is a special shared library.
+10-08 12:33:52.275  4896  4896 I crash_dump64: obtaining output fd from tombstoned, type: kDebuggerdTombstone
+10-08 12:33:52.276   278   278 I tombstoned: received crash request for pid 4879
+10-08 12:33:52.276  4896  4896 I crash_dump64: performing dump of process 4851 (target tid = 4879)
+10-08 12:33:52.277   500  4889 I system_server: The ClassLoaderContext is a special shared library.
+10-08 12:33:52.277   500  4889 I BackgroundDexOptService: Pinning optimized code {android}
+10-08 12:33:52.277   500  4889 D IorapForwardingService: onPackagesUpdated: android
+10-08 12:33:52.281  4896  4896 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-08 12:33:52.281  4896  4896 F DEBUG   : Build fingerprint: 'google/sdk_gphone_x86_64/generic_x86_64_arm64:11/RSR1.240422.006/12134477:userdebug/dev-keys'
+10-08 12:33:52.281  4896  4896 F DEBUG   : Revision: '0'
+10-08 12:33:52.281  4896  4896 F DEBUG   : ABI: 'x86_64'
+10-08 12:33:52.282  4896  4896 F DEBUG   : Timestamp: 2026-10-08 12:33:52+0000
+10-08 12:33:52.282  4896  4896 F DEBUG   : pid: 4851, tid: 4879, name: mqt_v_js  >>> com.hukang.china <<<
+10-08 12:33:52.282  4896  4896 F DEBUG   : uid: 10167
+10-08 12:33:52.282  4896  4896 F DEBUG   : signal 4 (SIGILL), code -6 (SI_TKILL), fault addr --------
+10-08 12:33:52.282  4896  4896 F DEBUG   :     rax 0000000000000000  rbx 0000791d6f251fe8  rcx 00007924621f6c77  rdx 0000000000000004
+10-08 12:33:52.282  4896  4896 F DEBUG   :     r8  0000000000000001  r9  0000000000000001  r10 00007ffcb61cc0a8  r11 0000000000000202
+10-08 12:33:52.282  4896  4896 F DEBUG   :     r12 000000007ee1b800  r13 0000000000791d6e  r14 0000000000000058  r15 0000000000000008
+10-08 12:33:52.282  4896  4896 F DEBUG   :     rdi 00000000000012f3  rsi 000000000000130f
+10-08 12:33:52.282  4896  4896 F DEBUG   :     rbp 0000791d6f2513a0  rsp 0000791d6f251148  rip 00007924621f6c77
+10-08 12:33:52.287  4896  4896 F DEBUG   : backtrace:
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #00 pc 00000000000b1c77  /apex/com.android.runtime/lib64/bionic/libc.so (tgkill+7) (BuildId: edf0af8d613e7bdf6a416ec8f4edeb0d)
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #01 pc 00000000001473a2  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeSimdScalarTwoRegMisc()+642) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #02 pc 000000000013f066  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeDataProcessingSimdAndFp()+2374) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #03 pc 000000000013b2ca  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::Decode(unsigned int)+1114) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #04 pc 000000000013ae26  /system/lib64/libndk_translation.so (ndk_translation::InterpretInsn(ndk_translation::ProcessState*)+118) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+10-08 12:33:52.287  4896  4896 F DEBUG   :       #05 pc 0000000000170d3e  /system/lib64/libndk_translation.so (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+10-08 12:33:52.603     0     0 D logd    : logdr: UID=10167 GID=10167 PID=4896 n tail=50 logMask=8 pid=4851 start=0ns timeout=0ns
+10-08 12:33:52.605     0     0 D logd    : logdr: UID=10167 GID=10167 PID=4896 n tail=50 logMask=1 pid=4851 start=0ns timeout=0ns
+10-08 12:33:52.537   278   278 E tombstoned: Tombstone written to: /data/tombstones/tombstone_00

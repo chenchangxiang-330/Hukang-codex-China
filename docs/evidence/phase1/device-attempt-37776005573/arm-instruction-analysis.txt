@@ -1,0 +1,86 @@
+Actual Android emulator failure: ARM instruction analysis
+
+Workflow run: 37776005573
+Build/test source: 339a66991af93c488e1f1426a3f240edd82fc3ca
+Actual installed APK: hukang-china-phase1-arm64-release.apk
+APK bytes: 58709659
+APK SHA-256: 3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e
+Library: lib/arm64-v8a/libhermesvm.so
+ELF: 64-bit little-endian AArch64 (e_machine=183)
+Library bytes: 2477320
+Library SHA-256: bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa
+Actual complete GNU Build ID from ELF note: 7a3863f5a9f1dd547fc8ca55f153f75b274986ba
+Tombstone mapping's reported Build ID prefix: 7a3863f5a9f1dd547fc8ca55f153f75b274986
+The recorded prefix matches the actual ELF note, but omits its final byte ba; the two strings are not claimed identical.
+The actual 339a669 APK library is byte-for-byte identical to the local 3ef4198 APK library. Disassembly below uses the actual 339a669 APK bytes.
+
+Guest PC logged by ndk_translation: 0x791d6efc5754
+Hermes mapping base: 0x791d6ed81000; mapped file offset: 0
+Computed library offset: 0x244754
+Actual instruction bytes at that offset (little endian): 00b8e17e
+Instruction word: 0x7ee1b800
+Decoded instruction: fcvtzu d0, d0
+Meaning: convert floating-point to unsigned integer, round toward zero, scalar SIMD registers.
+
+Original source evidence:
+logcat.txt SHA-256: 99cf795e0c2447d7812e8cd5baa0b4e884fd048528087f1385011be27aae0adc
+tombstones/tombstone_00 SHA-256: 074ae6b6648c321999887893cfd8c272fe5118c3832a2ee831781888a41b7794
+logcat.txt:32016: 10-08 12:33:52.242  4851  4879 E ndk_translation: Undefined instruction 0x7ee1b800 at 0x0000791d6efc5754
+logcat.txt:32018: 10-08 12:33:52.242  4851  4879 F libc    : Fatal signal 4 (SIGILL), code -6 (SI_TKILL) in tid 4879 (mqt_v_js), pid 4851 (om.hukang.china)
+tombstones/tombstone_00:382:     0000791d'6ed81000-0000791d'6efd3fff r--         0    253000  /data/app/~~UnP2wLCA9aHuGgmwnMLbeg==/com.hukang.china-YTg61iCVYdpVf70uFFjMVQ==/lib/arm64/libhermesvm.so (BuildId: 7a3863f5a9f1dd547fc8ca55f153f75b274986)
+
+Original tombstone header/backtrace:
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'google/sdk_gphone_x86_64/generic_x86_64_arm64:11/RSR1.240422.006/12134477:userdebug/dev-keys'
+Revision: '0'
+ABI: 'x86_64'
+Timestamp: 2026-10-08 12:33:52+0000
+pid: 4851, tid: 4879, name: mqt_v_js  >>> com.hukang.china <<<
+uid: 10167
+signal 4 (SIGILL), code -6 (SI_TKILL), fault addr --------
+    rax 0000000000000000  rbx 0000791d6f251fe8  rcx 00007924621f6c77  rdx 0000000000000004
+    r8  0000000000000001  r9  0000000000000001  r10 00007ffcb61cc0a8  r11 0000000000000202
+    r12 000000007ee1b800  r13 0000000000791d6e  r14 0000000000000058  r15 0000000000000008
+    rdi 00000000000012f3  rsi 000000000000130f
+    rbp 0000791d6f2513a0  rsp 0000791d6f251148  rip 00007924621f6c77
+
+backtrace:
+      #00 pc 00000000000b1c77  /apex/com.android.runtime/lib64/bionic/libc.so (tgkill+7) (BuildId: edf0af8d613e7bdf6a416ec8f4edeb0d)
+      #01 pc 00000000001473a2  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeSimdScalarTwoRegMisc()+642) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #02 pc 000000000013f066  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeDataProcessingSimdAndFp()+2374) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #03 pc 000000000013b2ca  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::Decode(unsigned int)+1114) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #04 pc 000000000013ae26  /system/lib64/libndk_translation.so (ndk_translation::InterpretInsn(ndk_translation::ProcessState*)+118) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #05 pc 0000000000170d3e  /system/lib64/libndk_translation.so (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+
+Actual NDK 27.1.12297006 llvm-objdump result:
+Command: llvm-objdump --disassemble --demangle --start-address=0x244740 --stop-address=0x244770 -
+Input: actual APK libhermesvm.so bytes on stdin.
+Exit code: 0
+
+<stdin>:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000001ef964 <_sh_cache_template_object>:
+  244740: 910203e8     	add	x8, sp, #0x80
+  244744: 14000017     	b	0x2447a0 <_sh_cache_template_object+0x54e3c>
+  244748: fd41db60     	ldr	d0, [x27, #0x3b0]
+  24474c: f941e768     	ldr	x8, [x27, #0x3c8]
+  244750: f941eb69     	ldr	x9, [x27, #0x3d0]
+  244754: 7ee1b800     	fcvtzu	d0, d0
+  244758: 8b080128     	add	x8, x9, x8
+  24475c: 9e630101     	ucvtf	d1, x8
+  244760: 7e61d800     	ucvtf	d0, d0
+  244764: 1e601820     	fdiv	d0, d1, d0
+  244768: fd46e361     	ldr	d1, [x27, #0xdc0]
+  24476c: 1e612000     	fcmp	d0, d1
+
+Actual baseline-ISA assembler check:
+Command: clang --target=aarch64-linux-android26 -march=armv8-a -c -x assembler -o /dev/null -
+Input: fcvtzu d0, d0\n
+Exit code: 0
+Diagnostics: (none)
+
+Conclusion and limits:
+The recorded host backtrace ends in libndk_translation::Decoder::DecodeSimdScalarTwoRegMisc, followed by tgkill. The bridge explicitly reports this valid baseline AArch64 instruction as undefined while running Hermes on mqt_v_js before OCR. This is direct evidence of an API 30 ARM64 translation limitation in this execution; it is not an OCR/model/dictionary error. No App/framework/model modification was made for this analysis.
+This does not establish successful startup or OCR on native ARM64 devices, or prove other App paths bug-free. Retest the unchanged inspected APK on a newer official translation image or actual ARM64 Android, and preserve its actual output/failure. The nearest exported symbol printed by objdump is not claimed as the private Hermes function containing the instruction. No OCR output was generated or inferred.

@@ -1,0 +1,31 @@
+Extracted original tombstone excerpt; NOT the full original tombstone.
+Source: artifacts/device-attempt-37776005573/tombstones/tombstone_00
+Source SHA-256: 074ae6b6648c321999887893cfd8c272fe5118c3832a2ee831781888a41b7794
+Original source lines (1-based, inclusive): 1-22
+Build/test source: 339a66991af93c488e1f1426a3f240edd82fc3ca
+APK SHA-256: 3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e
+Actions run: 37776005573
+Original excerpt follows without text edits:
+
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'google/sdk_gphone_x86_64/generic_x86_64_arm64:11/RSR1.240422.006/12134477:userdebug/dev-keys'
+Revision: '0'
+ABI: 'x86_64'
+Timestamp: 2026-10-08 12:33:52+0000
+pid: 4851, tid: 4879, name: mqt_v_js  >>> com.hukang.china <<<
+uid: 10167
+signal 4 (SIGILL), code -6 (SI_TKILL), fault addr --------
+    rax 0000000000000000  rbx 0000791d6f251fe8  rcx 00007924621f6c77  rdx 0000000000000004
+    r8  0000000000000001  r9  0000000000000001  r10 00007ffcb61cc0a8  r11 0000000000000202
+    r12 000000007ee1b800  r13 0000000000791d6e  r14 0000000000000058  r15 0000000000000008
+    rdi 00000000000012f3  rsi 000000000000130f
+    rbp 0000791d6f2513a0  rsp 0000791d6f251148  rip 00007924621f6c77
+
+backtrace:
+      #00 pc 00000000000b1c77  /apex/com.android.runtime/lib64/bionic/libc.so (tgkill+7) (BuildId: edf0af8d613e7bdf6a416ec8f4edeb0d)
+      #01 pc 00000000001473a2  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeSimdScalarTwoRegMisc()+642) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #02 pc 000000000013f066  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::DecodeDataProcessingSimdAndFp()+2374) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #03 pc 000000000013b2ca  /system/lib64/libndk_translation.so (ndk_translation::Decoder<ndk_translation::SemanticsPlayer<ndk_translation::(anonymous namespace)::Interpreter> >::Decode(unsigned int)+1114) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #04 pc 000000000013ae26  /system/lib64/libndk_translation.so (ndk_translation::InterpretInsn(ndk_translation::ProcessState*)+118) (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+      #05 pc 0000000000170d3e  /system/lib64/libndk_translation.so (BuildId: 8d5bb5ddeee9364830ea3d7d46ef98b9)
+
