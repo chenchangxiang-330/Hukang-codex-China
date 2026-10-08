@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+.build-tools/
+.gradle/
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/**/build/
+modules/**/build/
+artifacts/*
+!artifacts/README.md
+*.tgz
+*.jks
+*.keystore
+.env*
+*.log
+dist/

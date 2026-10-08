@@ -1,0 +1,28 @@
+{
+  "fixtureId": "6923644266066",
+  "image": "6923644266066.jpg",
+  "width": 1280,
+  "height": 1700,
+  "sha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+  "source": {
+    "dataset": "Open Food Facts",
+    "productUrl": "https://world.openfoodfacts.org/product/6923644266066",
+    "imageUrl": "https://images.openfoodfacts.org/images/products/692/364/426/6066/nutrition_zh.15.full.jpg",
+    "imageId": "4",
+    "uploader": "macrofactor",
+    "license": "CC-BY-SA-3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "termsUrl": "https://world.openfoodfacts.org/terms-of-use",
+    "changes": "Unmodified source image; manual transcription and separate ROI coordinates added.",
+    "verifiedOn": "2026-09-26"
+  },
+  "groundTruthMethod": "Manual visual transcription of the packaged label, not OCR or database nutrient values.",
+  "manualTranscription": "营养成分表\n项目 每100mL NRV%\n能量 309kJ 4%\n蛋白质 3.6g 6%\n脂肪 4.4g 7%\n碳水化合物 5.0g 2%\n钠 58mg 3%\n钙 120mg 15%",
+  "basis": { "amount": 100, "unit": "mL" },
+  "fields": { "energy_kj": 309, "protein_g": 3.6, "fat_g": 4.4, "carbohydrate_g": 5, "sodium_mg": 58 },
+  "notVisibleFields": ["energy_kcal", "total_sugar_g", "added_sugar_g", "fiber_g"],
+  "additionalVisibleFields": { "calcium_mg": 120 },
+  "roi": { "originX": 280, "originY": 700, "width": 590, "height": 420 },
+  "roiMethod": "Manual experiment region in source pixels; not automatic table detection.",
+  "challenges": ["Nutrition table occupies a small part of packaging", "Perspective skew", "White text on dark blue", "Background products"]
+}

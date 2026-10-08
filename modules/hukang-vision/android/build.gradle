@@ -1,0 +1,64 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.hukang.vision'
+version = '0.1.0'
+
+def modelRoot = new File(rootProject.projectDir.parentFile, 'models/paddleocr/v5-mobile')
+def expectedModels = [
+  'detector.onnx': 'a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d',
+  'recognizer.onnx': 'da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092'
+]
+
+def verifyBundledOcrModels = tasks.register('verifyBundledOcrModels') {
+  inputs.dir(modelRoot)
+  doLast {
+    expectedModels.each { name, expected ->
+      def file = new File(modelRoot, name)
+      if (!file.isFile()) throw new GradleException("Missing bundled OCR model: ${file}. No runtime download is allowed.")
+      def digest = java.security.MessageDigest.getInstance('SHA-256')
+      file.withInputStream { stream ->
+        byte[] buffer = new byte[65536]
+        int count
+        while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count)
+      }
+      def actual = digest.digest().encodeHex().toString()
+      if (actual != expected) throw new GradleException("OCR model hash mismatch: ${name}")
+    }
+    ['inference.yml', 'manifest.json'].each { name ->
+      if (!new File(modelRoot, name).isFile()) throw new GradleException("Missing fixed OCR configuration: ${name}")
+    }
+  }
+}
+
+def copyBundledOcrModels = tasks.register('copyBundledOcrModels', Sync) {
+  dependsOn(verifyBundledOcrModels)
+  from(modelRoot)
+  into(layout.buildDirectory.dir('generated/modelAssets/models/paddleocr/v5-mobile'))
+  include '*.onnx', '*.yml', '*.json', '*.txt', '*.md'
+}
+
+android {
+  namespace 'com.hukang.vision'
+  defaultConfig {
+    minSdkVersion 26
+    ndk { abiFilters 'arm64-v8a' }
+    consumerProguardFiles 'consumer-rules.pro'
+  }
+  sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/modelAssets'))
+  androidResources { noCompress += ['onnx'] }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+tasks.named('preBuild').configure { dependsOn(copyBundledOcrModels) }
+
+dependencies {
+  implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.21.1'
+  implementation 'com.quickbirdstudios:opencv:4.5.3.0'
+  implementation 'androidx.exifinterface:exifinterface:1.3.7'
+}
