@@ -1,16 +1,25 @@
 {
   "schemaVersion": 1,
-  "note": "Model SHA-256 values were checked against official PaddlePaddle metadata. Null config hashes must first be acquired directly from official sources over TLS; offline uploads cannot establish them.",
+  "note": "Model and original config SHA-256 values were measured from official BOS downloads in the reviewed GitHub Actions run. Local files require separate verification.",
+  "officialAcquisition": {
+    "runId": "37737586793",
+    "runUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37737586793",
+    "commit": "304863e",
+    "source": "PaddlePaddle official baidu BOS archives over HTTPS",
+    "artifactId": "11531893631",
+    "artifactZipBytes": 18625900,
+    "artifactZipSha256": "543a762c650c9fad885863321b02a9e7e6df1082c45541c3b56ad3af9696374a"
+  },
   "models": {
     "detector": {
       "revision": "e6f4fa85f00e168c862bc462aebca69eef9b3d3d",
       "modelSha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
-      "configSha256": null
+      "configSha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
     },
     "recognizer": {
       "revision": "ed152b8b495f84de93cda5709d768548a9127622",
       "modelSha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
-      "configSha256": null
+      "configSha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
     }
   }
 }
