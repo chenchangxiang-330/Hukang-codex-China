@@ -25,6 +25,10 @@ permissions = run("aapt2", "dump", "permissions", apk)
 badging = run("aapt2", "dump", "badging", apk)
 manifest = run("aapt2", "dump", "xmltree", apk, "--file", "AndroidManifest.xml")
 errors = []
+extraction = re.search(r'android:extractNativeLibs[^=\n]*=(true|false)', manifest)
+extract_native_libs = extraction is not None and extraction.group(1) == 'true'
+if not extract_native_libs:
+    errors.append("Native library extraction is disabled; ARM64 translation cannot use the direct first-ABI loader")
 for permission in ["INTERNET", "ACCESS_NETWORK_STATE", "CAMERA", "RECORD_AUDIO"]:
     if f"android.permission.{permission}" in permissions:
         errors.append(f"Unexpected permission: {permission}")
@@ -41,6 +45,17 @@ with zipfile.ZipFile(apk) as archive:
     native_abis = sorted({name.split('/')[1] for name in archive.namelist() if name.startswith('lib/') and name.endswith('.so')})
     if native_abis != ["arm64-v8a"]:
         errors.append(f"Unexpected native ABIs: {native_abis}")
+    native_libraries = {}
+    for library in ['libreactnative.so', 'libopencv_java4.so', 'libonnxruntime.so', 'libonnxruntime4j_jni.so']:
+        name = 'lib/arm64-v8a/' + library
+        try:
+            entry = archive.getinfo(name)
+            native_libraries[library] = {'bytes': entry.file_size, 'compression': entry.compress_type,
+                                         'sha256': hashlib.sha256(archive.read(name)).hexdigest()}
+            if entry.compress_type != zipfile.ZIP_DEFLATED:
+                errors.append(f"Native library is not packaged for extraction: {library}")
+        except KeyError:
+            errors.append(f"Missing required ARM64 native library: {library}")
     required = {
         "assets/models/paddleocr/v5-mobile/detector.onnx": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
         "assets/models/paddleocr/v5-mobile/recognizer.onnx": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
@@ -84,6 +99,7 @@ report = {
     "apk": str(apk), "bytes": apk.stat().st_size,
     "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
     "nativeAbis": native_abis, "permissions": permissions, "badging": badging,
+    "extractNativeLibs": extract_native_libs, "nativeLibraries": native_libraries,
     "bundledModels": assets, "signatureVerification": signature,
     "errors": errors, "deviceExecutionVerified": False,
 }

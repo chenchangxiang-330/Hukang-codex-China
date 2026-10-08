@@ -367,6 +367,21 @@ def main():
         (output / "installed-package.txt").write_text(package_info, encoding="utf-8")
         if "primaryCpuAbi=arm64-v8a" not in package_info:
             raise RuntimeError("Installed package does not actually use ARM64")
+        installed_apks = shell("pm", "path", package).splitlines()
+        if len(installed_apks) != 1 or not installed_apks[0].startswith("package:/"):
+            raise RuntimeError("Expected the actual monolithic release APK installation")
+        native_directory = pathlib.PurePosixPath(installed_apks[0][8:]).parent / "lib" / "arm64"
+        installed_libraries = {}
+        with zipfile.ZipFile(args.apk) as archive:
+            for library in ["libreactnative.so", "libopencv_java4.so", "libonnxruntime.so", "libonnxruntime4j_jni.so"]:
+                path = str(native_directory / library)
+                shell("test", "-s", path)
+                actual_hash = shell("sha256sum", path).split()[0]
+                expected_hash = digest(archive.read("lib/arm64-v8a/" + library))
+                if actual_hash != expected_hash:
+                    raise RuntimeError("Installed ARM64 library differs from the actual release APK: " + library)
+                installed_libraries[library] = {"path": path, "sha256": actual_hash}
+        summary["installedNativeLibraries"] = installed_libraries
         fixtures = args.fixture or sorted((ROOT / "tests/fixtures/china-food").glob("*.jpg"))
         if not fixtures:
             raise RuntimeError("No actual photo fixtures supplied")
