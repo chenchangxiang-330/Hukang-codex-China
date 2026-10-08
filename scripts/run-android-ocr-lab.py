@@ -142,8 +142,72 @@ def main():
     def remote_json(path):
         return json.loads(execute(["exec-out", "cat", path]).decode("utf-8"))
 
+    def photo_picker(root):
+        return any("providers.media" in node.attrib.get("package", "")
+                   and node.attrib.get("resource-id", "").endswith("/picker_tab_recyclerview")
+                   for node in root.iter("node"))
+
+    def choose_photo_picker_tile(photo, root):
+        # Used only if the actual system picker offers no filename-based Browse
+        # route. Two visible fixture tiles and actual MediaStore ordering are
+        # required; the imported source SHA-256 must still match in run_ocr.
+        rows = shell("content", "query", "--uri", "content://media/external/images/media",
+                     "--projection", "_id:_display_name", "--sort", "_id DESC")
+        (output / ("picker-media-order-" + photo.stem + ".txt")).write_text(rows, encoding="utf-8")
+        indexed = [(int(row_id), filename.strip()) for row_id, filename in
+                   re.findall(r"_id=(\d+),\s*_display_name=([^,\n]+)", rows)]
+        names = [filename for _, filename in indexed]
+        expected_names = {fixture.name for fixture in fixtures}
+        if len(indexed) != 2 or len(expected_names) != 2 or set(names) != expected_names:
+            raise RuntimeError("PhotoPicker has no Browse route and MediaStore is not exactly the two actual fixtures")
+        tiles = []
+        for node in root.iter("node"):
+            if node.attrib.get("clickable") == "true" and re.match(r"Photo taken|照片拍摄|拍摄于", node.attrib.get("content-desc", "")):
+                bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
+                if len(bounds) == 4 and bounds[2] > bounds[0] and bounds[3] > bounds[1]:
+                    tiles.append((node, bounds))
+        tiles.sort(key=lambda tile: (tile[1][1], tile[1][0]))
+        if len(tiles) != len(indexed) or not any(node.attrib.get("selected") == "true"
+                                                and (node.attrib.get("text") == "Photos" or node.attrib.get("content-desc") == "Photos")
+                                                for node in root.iter("node")):
+            raise RuntimeError("Actual PhotoPicker grid cannot be attributed safely to the MediaStore fixture order")
+        target = names.index(photo.name)
+        node, bounds = tiles[target]
+        screenshot("picker-tile-selection-" + photo.stem)
+        actions.append({"photoPickerSelection": "visible_tile_by_actual_MediaStore_id_desc",
+                        "fixture": photo.name, "mediaStoreRows": indexed, "tileIndex": target,
+                        "uiTile": node.attrib, "sourceHashVerification": "required_after_actual_import"})
+        shell("input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+
     def choose_photo(photo):
         tap_match(r"从相册(?:选择|更换)照片", scroll=True, direction="up")
+        # Recent Android versions intercept ACTION_GET_CONTENT with the
+        # system PhotoPicker even when Expo legacy:true is requested. Prefer
+        # its real Browse menu to reach filename-based DocumentsUI.
+        root = hierarchy()
+        for _ in range(4):
+            if photo_picker(root) or locate(root, re.escape(photo.stem)):
+                break
+            time.sleep(1)
+            root = hierarchy()
+        if photo_picker(root):
+            overflow = locate(root, r"^More options$|^更多选项$|^更多$")
+            if not overflow:
+                raise RuntimeError("Actual system PhotoPicker has no visible overflow menu")
+            tap_match(r"^More options$|^更多选项$|^更多$", tries=2)
+            menu = hierarchy()
+            (output / ("picker-overflow-" + photo.stem + ".xml")).write_bytes(ET.tostring(menu, encoding="utf-8"))
+            screenshot("picker-overflow-" + photo.stem)
+            browse_pattern = r"^Browse(?:\s*[.\u2026]+)?$|^浏览(?:文件)?(?:\s*[.\u2026]+)?$"
+            if locate(menu, browse_pattern):
+                tap_match(browse_pattern, tries=3)
+            else:
+                shell("input", "keyevent", "KEYCODE_BACK")
+                root = hierarchy()
+                if not photo_picker(root):
+                    raise RuntimeError("Closing PhotoPicker overflow did not return to the actual photo grid")
+                choose_photo_picker_tile(photo, root)
+                return
         # DocumentsUI can omit the extension from the visible title.
         try:
             tap_match(re.escape(photo.stem), tries=6, scroll=True)
@@ -328,7 +392,7 @@ def main():
         properties = {name: shell("getprop", name) for name in [
             "ro.product.model", "ro.build.version.release", "ro.build.version.sdk",
             "ro.build.fingerprint", "ro.build.version.security_patch", "ro.product.cpu.abilist64",
-            "ro.product.cpu.abilist", "ro.dalvik.vm.native.bridge", "ro.kernel.qemu"]}
+            "ro.product.cpu.abilist", "ro.dalvik.vm.native.bridge", "ro.ndk_translation.version", "ro.kernel.qemu"]}
         summary["device"] = properties
         if "arm64-v8a" not in properties["ro.product.cpu.abilist"]:
             raise RuntimeError("This device cannot execute the ARM64 APK")
