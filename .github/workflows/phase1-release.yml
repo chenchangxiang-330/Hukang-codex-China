@@ -8,6 +8,10 @@ on:
       - tests/fixtures/**
       - artifacts/**
       - README.md
+      - .github/workflows/phase1-device.yml
+      - .github/workflows/phase1-device-retest.yml
+      - scripts/run-android-ocr-lab.py
+      - scripts/android-device-evidence.py
   workflow_dispatch:
 
 permissions:

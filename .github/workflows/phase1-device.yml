@@ -4,8 +4,13 @@ on:
   workflow_call:
     inputs:
       build_sha:
-        description: Exact source commit of the release artifact in the calling run
+        description: Exact source commit of the release artifact
         required: true
+        type: string
+      build_run_id:
+        description: Optional prior run in this repository; empty means the calling run
+        required: false
+        default: ""
         type: string
 
 permissions:
@@ -20,11 +25,13 @@ jobs:
       CI: "1"
       EXPO_NO_TELEMETRY: "1"
       BUILD_SHA: ${{ inputs.build_sha }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      TEST_SHA: ${{ github.sha }}
     steps:
-      - name: Checkout the exact release source
+      - name: Checkout the exact device-test source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ inputs.build_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Node 24
@@ -39,18 +46,22 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Download the inspected release from this workflow run
+      - name: Download the inspected release from the expected repository run
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: hukang-china-phase1-build-${{ inputs.build_sha }}
           path: artifacts/build
+          run-id: ${{ inputs.build_run_id || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Check source, APK identity and evidence tooling
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$BUILD_SHA"
-          test "$BUILD_SHA" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$TEST_SHA"
+          if [[ -z "$BUILD_RUN_ID" ]]; then
+            test "$BUILD_SHA" = "$TEST_SHA"
+          fi
           npm ci --include=dev
           node scripts/verify-fixtures.mjs
           mkdir -p artifacts/device-evidence
@@ -59,6 +70,17 @@ jobs:
           from pathlib import Path
           root = Path('artifacts/build')
           apk = root / 'hukang-china-phase1-arm64-release.apk'
+          receipt = json.loads((root / 'official-model-acquisition.json').read_text())
+          expected_run = os.environ['BUILD_RUN_ID'] or os.environ['GITHUB_RUN_ID']
+          github = receipt.get('github', {})
+          expected_identity = {'GITHUB_REPOSITORY': os.environ['GITHUB_REPOSITORY'],
+                               'GITHUB_RUN_ID': expected_run,
+                               'GITHUB_SHA': os.environ['BUILD_SHA'],
+                               'GITHUB_REF': 'refs/heads/codex/mainland-v2'}
+          if any(github.get(key) != value for key, value in expected_identity.items()):
+              raise SystemExit('Official acquisition receipt belongs to a different repository/run/commit/branch')
+          if receipt.get('status') != 'verified_artifacts':
+              raise SystemExit('Official acquisition receipt is not verified')
           report = json.loads((root / 'apk-inspection.json').read_text())
           actual = {'bytes': apk.stat().st_size, 'sha256': hashlib.sha256(apk.read_bytes()).hexdigest()}
           if report['errors'] or report['nativeAbis'] != ['arm64-v8a']:
@@ -70,32 +92,52 @@ jobs:
           with zipfile.ZipFile(apk) as archive:
               bundled = archive.read('assets/models/paddleocr/v5-mobile/manifest.json')
               manifest = json.loads(bundled)
+              pinned = json.loads(Path('models/paddleocr/v5-mobile/source-lock.json').read_text())
               if manifest['verification']['status'] != 'verified_artifacts':
                   raise SystemExit('Actual APK did not bundle verified official models')
               for key, filename in [('detector', 'detector.onnx'), ('recognizer', 'recognizer.onnx')]:
                   model = archive.read('assets/models/paddleocr/v5-mobile/' + filename)
-                  if hashlib.sha256(model).hexdigest() != manifest['models'][key]['sha256']:
+                  expected_model = pinned['models'][key]['modelSha256']
+                  if (hashlib.sha256(model).hexdigest() != expected_model
+                      or manifest['models'][key]['sha256'] != expected_model
+                      or receipt['models'][key]['sha256'] != expected_model):
                       raise SystemExit('Actual APK model SHA-256 mismatch: ' + key)
+                  config_name = 'detector.yml' if key == 'detector' else 'inference.yml'
+                  config = archive.read('assets/models/paddleocr/v5-mobile/' + config_name)
+                  expected_config = pinned['models'][key]['configSha256']
+                  if (hashlib.sha256(config).hexdigest() != expected_config
+                      or manifest['models'][key]['configSha256'] != expected_config
+                      or receipt['models'][key]['configSha256'] != expected_config):
+                      raise SystemExit('Actual APK official configuration SHA-256 mismatch: ' + key)
               # The Node consistency validator must use the actual bundled manifest.
               Path('models/paddleocr/v5-mobile/manifest.json').write_bytes(bundled)
           evidence = {'schemaVersion': 1, 'buildSha': os.environ['BUILD_SHA'],
-                      'workflowRunId': os.environ['GITHUB_RUN_ID'],
-                      'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'buildWorkflowRunId': expected_run,
+                      'testSha': os.environ['TEST_SHA'],
+                      'testWorkflowRunId': os.environ['GITHUB_RUN_ID'],
+                      'testWorkflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
                       'apk': actual, 'executionStatus': 'not_started',
                       'deviceKind': 'API 30 Google APIs x86_64 emulator with official ARM64 native translation',
                       'limitation': 'Hosted emulation cannot establish ARM64 phone speed or compatibility.'}
           Path('artifacts/device-evidence/build-identity.json').write_text(json.dumps(evidence, indent=2) + '\n')
-          print(json.dumps({'validatedReleaseArtifact': actual, 'buildSha': os.environ['BUILD_SHA']}))
+          print(json.dumps({'validatedReleaseArtifact': actual, 'buildSha': os.environ['BUILD_SHA'],
+                            'buildWorkflowRunId': expected_run, 'testSha': os.environ['TEST_SHA']}))
           PY
 
       - name: Enable and verify KVM for the test emulator
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test -c /dev/kvm
+          id
+          ls -l /dev/kvm
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-hukang-kvm.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+          sudo udevadm settle --timeout=30
+          # udev rules can be asynchronous on hosted runners. This changes only
+          # the local test device node and does not alter any network policy.
+          sudo chmod a+rw /dev/kvm
           test -r /dev/kvm
           test -w /dev/kvm
           ls -l /dev/kvm | tee artifacts/device-evidence/kvm.txt
@@ -222,6 +264,8 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
               summary.write('### Actual Android Phase 1 verification\n')
               summary.write(f'- Exact release commit: {os.environ["BUILD_SHA"]}\n')
+              summary.write(f'- Build artifact run: {os.environ["BUILD_RUN_ID"] or os.environ["GITHUB_RUN_ID"]}\n')
+              summary.write(f'- Exact device-test commit: {os.environ["TEST_SHA"]}\n')
               summary.write(f'- Device session status: {status}\n- Actual saved OCR runs: {actual_runs}\n')
               summary.write('- Test device: API 30 Google APIs x86_64 emulator; official ARM64 translation is checked at runtime.\n')
               summary.write('- Google packages are disabled for this test when installed; their absence is not claimed.\n')

@@ -1,0 +1,97 @@
+[
+  {
+    "id": 11534195381,
+    "name": "phase1-apk-3ef41988b322713e0d734344cf5a62820525ed1d-part002",
+    "size_in_bytes": 9681367,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11534195381",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11534195381/zip",
+    "expired": false,
+    "created_at": "2026-10-08T07:06:04Z",
+    "expires_at": "2026-10-22T07:06:02Z",
+    "updated_at": "2026-10-08T07:06:04Z",
+    "digest": "sha256:d8c08352874551d0091b38306010363ec50301a33d964db3ff22822e395791ef",
+    "workflow_run": {
+      "id": 37740050254,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "3ef41988b322713e0d734344cf5a62820525ed1d"
+    }
+  },
+  {
+    "id": 11533858267,
+    "name": "phase1-apk-3ef41988b322713e0d734344cf5a62820525ed1d-manifest",
+    "size_in_bytes": 821,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533858267",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533858267/zip",
+    "expired": false,
+    "created_at": "2026-10-08T07:05:59Z",
+    "expires_at": "2026-10-22T07:05:58Z",
+    "updated_at": "2026-10-08T07:05:59Z",
+    "digest": "sha256:d2a2e5bdc39d04ff4d2309ef21141bac06a47194dbc95c4cb40af2e9e7d7cefc",
+    "workflow_run": {
+      "id": 37740050254,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "3ef41988b322713e0d734344cf5a62820525ed1d"
+    }
+  },
+  {
+    "id": 11533743767,
+    "name": "phase1-apk-3ef41988b322713e0d734344cf5a62820525ed1d-part001",
+    "size_in_bytes": 18232338,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533743767",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533743767/zip",
+    "expired": false,
+    "created_at": "2026-10-08T07:06:02Z",
+    "expires_at": "2026-10-22T07:05:59Z",
+    "updated_at": "2026-10-08T07:06:02Z",
+    "digest": "sha256:6627320d583c6d544c831b7307b57094a9e61ece29c6559cbeb25ec21bc10e34",
+    "workflow_run": {
+      "id": 37740050254,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "3ef41988b322713e0d734344cf5a62820525ed1d"
+    }
+  },
+  {
+    "id": 11533673929,
+    "name": "phase1-apk-3ef41988b322713e0d734344cf5a62820525ed1d-part003",
+    "size_in_bytes": 11118875,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533673929",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533673929/zip",
+    "expired": false,
+    "created_at": "2026-10-08T07:06:07Z",
+    "expires_at": "2026-10-22T07:06:05Z",
+    "updated_at": "2026-10-08T07:06:07Z",
+    "digest": "sha256:364267b86ebfb67448e6781863d310b908969bad16dd5198454b47e34a9153c1",
+    "workflow_run": {
+      "id": 37740050254,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "3ef41988b322713e0d734344cf5a62820525ed1d"
+    }
+  },
+  {
+    "id": 11533439749,
+    "name": "phase1-apk-3ef41988b322713e0d734344cf5a62820525ed1d-part004",
+    "size_in_bytes": 17814239,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533439749",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11533439749/zip",
+    "expired": false,
+    "created_at": "2026-10-08T07:06:10Z",
+    "expires_at": "2026-10-22T07:06:07Z",
+    "updated_at": "2026-10-08T07:06:10Z",
+    "digest": "sha256:790aaaf73391547f4337106df30e25a21c3c0fe985a53109c9dd5021b7f1149d",
+    "workflow_run": {
+      "id": 37740050254,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "3ef41988b322713e0d734344cf5a62820525ed1d"
+    }
+  }
+]
