@@ -222,6 +222,15 @@ jobs:
             echo "- Commit: $GITHUB_SHA"
             echo "- Official model acquisition, Android compilation and APK inspection are separate steps."
             echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
-            echo "- This workflow does not execute OCR on an Android device."
+            echo "- Release compilation does not itself execute OCR; the separate device job records actual execution or failure."
             echo "- No OCR output, speed or memory result is claimed without separate device evidence."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  device:
+    needs: release
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/phase1-device.yml
+    with:
+      build_sha: ${{ github.sha }}

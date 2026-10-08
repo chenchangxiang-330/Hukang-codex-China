@@ -1,0 +1,232 @@
+name: Phase 1 actual offline Android OCR
+
+on:
+  workflow_call:
+    inputs:
+      build_sha:
+        description: Exact source commit of the release artifact in the calling run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  offline-android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+      BUILD_SHA: ${{ inputs.build_sha }}
+    steps:
+      - name: Checkout the exact release source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.build_sha }}
+          persist-credentials: false
+
+      - name: Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Download the inspected release from this workflow run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: hukang-china-phase1-build-${{ inputs.build_sha }}
+          path: artifacts/build
+
+      - name: Check source, APK identity and evidence tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$BUILD_SHA"
+          test "$BUILD_SHA" = "$GITHUB_SHA"
+          npm ci --include=dev
+          node scripts/verify-fixtures.mjs
+          mkdir -p artifacts/device-evidence
+          python3 - <<'PY'
+          import hashlib, json, os, zipfile
+          from pathlib import Path
+          root = Path('artifacts/build')
+          apk = root / 'hukang-china-phase1-arm64-release.apk'
+          report = json.loads((root / 'apk-inspection.json').read_text())
+          actual = {'bytes': apk.stat().st_size, 'sha256': hashlib.sha256(apk.read_bytes()).hexdigest()}
+          if report['errors'] or report['nativeAbis'] != ['arm64-v8a']:
+              raise SystemExit('Release inspection did not pass for the required ARM64 APK')
+          if any(actual[key] != report[key] for key in actual):
+              raise SystemExit('Downloaded APK does not match the actual build inspection')
+          if 'android.permission.INTERNET' in report['permissions']:
+              raise SystemExit('Offline device acceptance forbids INTERNET permission')
+          with zipfile.ZipFile(apk) as archive:
+              bundled = archive.read('assets/models/paddleocr/v5-mobile/manifest.json')
+              manifest = json.loads(bundled)
+              if manifest['verification']['status'] != 'verified_artifacts':
+                  raise SystemExit('Actual APK did not bundle verified official models')
+              for key, filename in [('detector', 'detector.onnx'), ('recognizer', 'recognizer.onnx')]:
+                  model = archive.read('assets/models/paddleocr/v5-mobile/' + filename)
+                  if hashlib.sha256(model).hexdigest() != manifest['models'][key]['sha256']:
+                      raise SystemExit('Actual APK model SHA-256 mismatch: ' + key)
+              # The Node consistency validator must use the actual bundled manifest.
+              Path('models/paddleocr/v5-mobile/manifest.json').write_bytes(bundled)
+          evidence = {'schemaVersion': 1, 'buildSha': os.environ['BUILD_SHA'],
+                      'workflowRunId': os.environ['GITHUB_RUN_ID'],
+                      'workflowRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'apk': actual, 'executionStatus': 'not_started',
+                      'deviceKind': 'API 30 Google APIs x86_64 emulator with official ARM64 native translation',
+                      'limitation': 'Hosted emulation cannot establish ARM64 phone speed or compatibility.'}
+          Path('artifacts/device-evidence/build-identity.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print(json.dumps({'validatedReleaseArtifact': actual, 'buildSha': os.environ['BUILD_SHA']}))
+          PY
+
+      - name: Enable and verify KVM for the test emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -c /dev/kvm
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-hukang-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -r /dev/kvm
+          test -w /dev/kvm
+          ls -l /dev/kvm | tee artifacts/device-evidence/kvm.txt
+
+      - name: Locate the runner Android SDK commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_dir="$(printenv ANDROID_HOME || printenv ANDROID_SDK_ROOT || true)"
+          test -n "$sdk_dir"
+          sdk_manager=""
+          for candidate in "$sdk_dir/cmdline-tools/latest/bin/sdkmanager" "$sdk_dir"/cmdline-tools/*/bin/sdkmanager; do
+            if [[ -x "$candidate" ]]; then
+              sdk_manager="$candidate"
+              break
+            fi
+          done
+          test -n "$sdk_manager"
+          echo "ANDROID_HOME=$sdk_dir" >> "$GITHUB_ENV"
+          dirname "$sdk_manager" >> "$GITHUB_PATH"
+          echo "$sdk_dir/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk_dir/emulator" >> "$GITHUB_PATH"
+
+      - name: Prepare fail-closed device execution and capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > artifacts/run-device.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          device="emulator-5554"
+          destination="artifacts/device-evidence"
+          capture_failure() {
+            result=$?
+            trap - EXIT
+            adb -s "$device" logcat -d -v threadtime > "$destination/final-logcat.txt" 2>&1 || true
+            adb -s "$device" shell getprop > "$destination/final-properties.txt" 2>&1 || true
+            adb -s "$device" shell dumpsys connectivity > "$destination/final-connectivity.txt" 2>&1 || true
+            adb -s "$device" shell iptables -L OUTPUT -n -v > "$destination/final-ipv4-rules.txt" 2>&1 || true
+            adb -s "$device" shell ip6tables -L OUTPUT -n -v > "$destination/final-ipv6-rules.txt" 2>&1 || true
+            adb -s "$device" pull /data/tombstones "$destination/tombstones" > "$destination/tombstones-pull.txt" 2>&1 || true
+            exit "$result"
+          }
+          trap capture_failure EXIT
+          adb -s "$device" root
+          adb -s "$device" wait-for-device
+          adb -s "$device" shell id | tee "$destination/root-identity.txt"
+          # ADB uses the emulator transport, while guest outbound IP is blocked.
+          # Never reopen guest Internet to make a failing test pass.
+          adb -s "$device" shell iptables -P OUTPUT DROP
+          adb -s "$device" shell ip6tables -P OUTPUT DROP
+          test "$(adb -s "$device" shell echo offline-adb-ready | tr -d '\r')" = offline-adb-ready
+          adb -s "$device" shell iptables -L OUTPUT -n -v | tee "$destination/initial-ipv4-rules.txt"
+          adb -s "$device" shell ip6tables -L OUTPUT -n -v | tee "$destination/initial-ipv6-rules.txt"
+          python3 scripts/run-android-ocr-lab.py --serial "$device" \
+            --apk artifacts/build/hukang-china-phase1-arm64-release.apk \
+            --output "$destination" --repeats 2 --run-timeout 300
+          shopt -s nullglob
+          records=("$destination"/photo-*-run-*/record.json)
+          test "${#records[@]}" -ge 4
+          node scripts/validate-ocr-evidence.mjs "${records[@]}" | tee "$destination/evidence-consistency.json"
+          SH
+
+      - name: Execute the actual ARM64 release offline on Android
+        uses: ReactiveCircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed # v2.34.0, official tag peeled to commit
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          avd-name: hukang-phase1-offline
+          cores: 2
+          ram-size: 3072M
+          heap-size: 512M
+          disk-size: 6G
+          disable-linux-hw-accel: false
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          script: bash artifacts/run-device.sh
+
+      - name: Preserve actual device evidence even when execution fails
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hukang-china-phase1-device-${{ inputs.build_sha }}
+          path: artifacts/device-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Preserve a small review bundle of actual Android records
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hukang-china-phase1-device-records-${{ inputs.build_sha }}
+          path: |
+            artifacts/device-evidence/session.json
+            artifacts/device-evidence/build-identity.json
+            artifacts/device-evidence/photo-*-native.json
+            artifacts/device-evidence/photo-*-run-*/record.json
+            artifacts/device-evidence/*.png
+            artifacts/device-evidence/evidence-consistency.json
+            artifacts/device-evidence/root-identity.txt
+            artifacts/device-evidence/kvm.txt
+            artifacts/device-evidence/*-rules.txt
+            artifacts/device-evidence/*-properties.txt
+            artifacts/device-evidence/*-connectivity.txt
+            artifacts/device-evidence/installed-package.txt
+            artifacts/device-evidence/meminfo-snapshot.txt
+            artifacts/device-evidence/last-window.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Report the actual validation boundary
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          file = Path('artifacts/device-evidence/session.json')
+          record = json.loads(file.read_text()) if file.exists() else {}
+          status = record.get('status', 'not_executed')
+          actual_runs = len(record.get('runs', []))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('### Actual Android Phase 1 verification\n')
+              summary.write(f'- Exact release commit: {os.environ["BUILD_SHA"]}\n')
+              summary.write(f'- Device session status: {status}\n- Actual saved OCR runs: {actual_runs}\n')
+              summary.write('- Test device: API 30 Google APIs x86_64 emulator; official ARM64 translation is checked at runtime.\n')
+              summary.write('- Google packages are disabled for this test when installed; their absence is not claimed.\n')
+              summary.write('- First app launch occurs after guest outbound IP is blocked and offline settings are applied.\n')
+              summary.write('- Emulator timings and sampled memory do not establish real ARM64 phone performance.\n')
+              summary.write('- Failed or absent execution is not accepted as completed OCR verification.\n')
+          print(json.dumps({'actualAndroidSessionStatus': status, 'actualSavedOcrRuns': actual_runs}))
+          PY

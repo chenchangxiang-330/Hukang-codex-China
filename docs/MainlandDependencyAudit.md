@@ -1,7 +1,7 @@
 # Mainland production dependency audit
 
 Scope: Hukang China Phase 0 / Phase 1, Android arm64-v8a release, minSdk 26.
-Audit date: 2026-10-07 (Asia/Shanghai).
+Audit date: 2026-10-08 (Asia/Shanghai).
 
 **Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** This counts active
 services in the app's runtime path, not foreign-origin offline libraries or
@@ -31,7 +31,7 @@ checked against the release dependency report.
 | Reviewed PaddleOCR Android engine source | v3.7.0 baseline | `LOCAL` | Local inference; no model API endpoint |
 | ONNX Runtime Android | 1.21.1 | `FOREIGN_OFFLINE_LIBRARY` | CPU inference only; no upload, downloader, telemetry or Play Services dependency in application path |
 | OpenCV Android | 4.5.3.0 | `FOREIGN_OFFLINE_LIBRARY` | Bundled native image operations; no cloud recognition |
-| AndroidX ExifInterface | 1.3.7 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
+| AndroidX ExifInterface | 1.4.1 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
 | React / React Native / Hermes | 19.2.3 / 0.86.3 / RN-managed | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution |
 | Expo core and module infrastructure | 57.0.27 / SDK-managed modules | `FOREIGN_OFFLINE_LIBRARY` | Custom APK; Expo Go and Expo-hosted JavaScript not needed |
 | Expo Router / linking | SDK 57 modules | `FOREIGN_OFFLINE_LIBRARY` | Local route navigation; no remote route/provider configuration |
@@ -68,6 +68,16 @@ network permission is removed as an additional operating-system boundary.
 Model provenance URLs and license URLs in documentation are not runtime
 requests. App name `hukang-vision` denotes the local native module, not Google,
 OpenAI, or another remote Vision service.
+
+ONNX Runtime telemetry is explicitly disabled before session creation; failure
+to disable it aborts engine initialization. Expo image-picker's optional Google
+Play Services photo-picker backport metadata service is removed by the project
+config plugin. Neither check substitutes for inspecting the resulting APK.
+
+Two CC-BY-SA-3.0 photographs in `tests/fixtures/china-food/` retain historical
+Open Food Facts attribution from the read-only archive. They are test inputs,
+are not packaged as a food catalog, and do not enable a lookup/API/import path
+in the production App. No network request is made to obtain them at runtime.
 
 ## Manifest and network gates
 
