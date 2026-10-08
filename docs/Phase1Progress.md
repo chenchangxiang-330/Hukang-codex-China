@@ -62,3 +62,18 @@
 - 原始报告 [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt) 为 94,037 bytes，SHA-256 `d57d33e056827d4fc66d759ad4bd70526f1e115cfd43b44b55f6ecd022131dd0`。审计详情见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
 - 所检查依赖图没有 Google Play Services、ML Kit、Firebase、在线 OCR/AI 和遥测 SDK coordinates。普通 Google/AndroidX 工具类不是联网服务；React Native 标准 HTTP 基础代码不等于已经配置生产海外服务。
 - 该结果是依赖元数据解析和清单核验，不是重新编译 APK、二进制全部下载、网络抓包或设备推理成绩。当前生产 `FOREIGN_NETWORK_SERVICE` 配置数量仍为 0。
+
+## 验证里程碑 8：重新构建的 APK 实物及安装校验（2026-10-08）
+
+- `339a669` 的 [release run 37776005573](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573) 实际 `BUILD SUCCESSFUL in 7m 16s`。新 APK **58,709,659 bytes**，SHA-256 **`3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`**；这是当前交付包，替代历史包用于后续验收。
+- 已下载可信 artifact 分片并独立核对整体摘要，实际本地文件 `artifacts/hukang-china-phase1-arm64-release.apk`。本地 APK 检查 `errors: []`，实际 Manifest 没有 INTERNET / ACCESS_NETWORK_STATE；minSdk 26、targetSdk 36，仅 ARM64，`extractNativeLibs=true`，固定模型和配置摘要匹配，v2 签名通过。证据见 [release-37776005573](evidence/phase1/release-37776005573/)。
+- 随后的实际设备安装中，四个核心 native libraries 解出文件均与 APK 字节摘要一致。API 30 的启动却在 Hermes 合法 ARM 指令 `fcvtzu d0,d0` 触发翻译库 0.2.2 的 SIGILL；该 run 未运行 OCR。原始失败与实际反汇编见 [device-attempt-37776005573](evidence/phase1/device-attempt-37776005573/)。
+- 设备测试转用官方 API 35 Google APIs 镜像的 ARM64 translation 0.2.3；没有修改 APK / 模型 / 设备 ABI。新版环境实际成功启动 App。ARM64 真机及 Android 26 兼容性仍未执行。
+
+## 验证里程碑 9：四次实际离线中文 OCR（2026-10-08）
+
+- [device run 37779323597](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37779323597) 使用当前 `339a669` / `3dd6e764…` APK，测试脚本 `f113662`。首次启动前 IPv4 / IPv6 OUTPUT 默认 DROP、飞行模式 1、Wi-Fi 0、GMS / GSF / Photos 实际禁用；通过生产相册选择 UI 导入两张归档食品实拍照片。
+- 真实保存了四次 OCR：牛奶包装每次 39 块，OCR 88,554 / 85,057 ms；零食营养表每次 21 块，OCR 49,251 / 49,870 ms。首次模型加载 1,393 ms，后续加载 0 ms。每块原文、坐标、confidence、图片 / 模型 hash、计时和采样内存均由 Android 原生代码实际产生，App JS 实际导出。
+- 完整下载 artifact ZIP 30,991,029 bytes，摘要与 GitHub digest 一致；本地四份导出的图片及结果一致性检查全部通过。原始 JSON、截图、网络策略和失败状态已提交推送，见 [device-attempt-37779323597](evidence/phase1/device-attempt-37779323597/)。
+- 原文保留“%2”“钠钙”“2075千焦(k)”等实际识别或阅读顺序问题；未人工修正、未解析食品营养。confidence 不是准确率。模拟器 ARM 翻译耗时和 50 ms 采样内存不能代表手机性能或绝对峰值。
+- 整体 run 为 failure：后续旋转测试脚本向错误方向滚动，未找到“右转 90°”；`processingChecks=[]`，不能把四次 OCR 成功写成全部 Phase 1 通过。`a0c85d5` 已修复测试脚本滚动方向并推送，复测 [run 37781340401](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401) 尚在执行。

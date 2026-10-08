@@ -1,0 +1,27 @@
+{
+  "description": "Unmodified actual Android-exported PNG files, retained once by content hash. Originals remain in tracked fixtures. This does not modify native/JS evidence records.",
+  "images": [
+    {
+      "actualDeviceRun": 37779323597,
+      "record": "photo-1-run-1",
+      "fixture": "tests/fixtures/china-food/6923644266066.jpg",
+      "sourceImageSha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "processedFile": "ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a.png",
+      "processedImageSha256": "ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a",
+      "bytes": 2009156,
+      "width": 1280,
+      "height": 1700
+    },
+    {
+      "actualDeviceRun": 37779323597,
+      "record": "photo-2-run-1",
+      "fixture": "tests/fixtures/china-food/6937003117814.jpg",
+      "sourceImageSha256": "a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3",
+      "processedFile": "45b7133d873e7965306bd2caafa0752479617cd88d4857597fb203a9daf5e5ea.png",
+      "processedImageSha256": "45b7133d873e7965306bd2caafa0752479617cd88d4857597fb203a9daf5e5ea",
+      "bytes": 3090042,
+      "width": 1512,
+      "height": 2016
+    }
+  ]
+}

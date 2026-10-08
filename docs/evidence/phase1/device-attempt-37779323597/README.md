@@ -16,3 +16,5 @@ GitHub Actions [run 37779323597](https://github.com/chenchangxiang-330/Hukang-co
 工作流整体为 failure：四次 OCR 之后，旋转测试的脚本未找到“右转 90°”按钮，`processingChecks` 为空。本目录保留这个真实失败，不标为完整 Phase 1 验收通过。没有 ARM64 真机测试，没有 EXIF 2–8 测试，没有绝对内存峰值或准确率基准。模拟器 ARM 翻译耗时不能代表手机性能。
 
 完整原始设备文件：[artifact 11551632136](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37779323597/artifacts/11551632136)，ZIP 30,991,029 bytes，下载后独立核对 SHA-256 `a99ffb24e05548bc1c681ca208cbc29e2e093a61ede7777f53dce9395d96963b`。GitHub artifact 保留期 14 天；本目录的原始 JSON、截图和失败状态持续保存在 Git。
+
+两张原生实际导出的处理后 PNG 也按内容摘要保留在 [actual-processed-images](../actual-processed-images/)，未转换、未修改。`sources.json` 记录它们与原始 fixture / 原生输出的关系；原图由 fixture 持续保存。重复运行的相同图片只保留一份，本目录 JSON 不改写其原始运行时路径。
