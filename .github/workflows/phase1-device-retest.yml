@@ -12,12 +12,12 @@ on:
       build_run_id:
         description: Existing successful release run in this repository
         required: true
-        default: "37740050254"
+        default: "37776005573"
         type: string
       build_sha:
         description: Exact release source SHA matching that run's official receipt
         required: true
-        default: "3ef41988b322713e0d734344cf5a62820525ed1d"
+        default: "339a66991af93c488e1f1426a3f240edd82fc3ca"
         type: string
 
 permissions:
@@ -32,5 +32,5 @@ jobs:
   device:
     uses: ./.github/workflows/phase1-device.yml
     with:
-      build_run_id: ${{ inputs.build_run_id || '37740050254' }}
-      build_sha: ${{ inputs.build_sha || '3ef41988b322713e0d734344cf5a62820525ed1d' }}
+      build_run_id: ${{ inputs.build_run_id || '37776005573' }}
+      build_sha: ${{ inputs.build_sha || '339a66991af93c488e1f1426a3f240edd82fc3ca' }}

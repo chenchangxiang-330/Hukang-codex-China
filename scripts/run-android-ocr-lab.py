@@ -3,7 +3,7 @@
 
 Uses the system gallery and real native output, never a test Activity, mock,
 manual transcription, host inference or alternate APK ABI. Suitable for a
-Google APIs API 30 x86_64 emulator with official ARM64 native translation.
+Google APIs API 35 x86_64 emulator with official ARM64 native translation.
 """
 import argparse
 import hashlib
