@@ -50,6 +50,9 @@ d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2
 - [Mainland dependency audit](docs/MainlandDependencyAudit.md)
 - [OCR model manifest](docs/OcrModelManifest.md)
 - [Food and medicine source rights](docs/FoodDataSources.md)
+- [Phase 1 acceptance report](docs/Phase1AcceptanceReport.md)
+- [Android OCR evidence test protocol](docs/TestProtocol.md)
+- [Phase 1 verification milestones](docs/Phase1Progress.md)
 
 `Hukang-codex` 与 `Hukang-deepseek` 只读，不在其中开发、提交或删除文件。
 Phase 1 结束后停止，下一阶段需重新确认范围。APK 大小、实拍 OCR 输出、速度、

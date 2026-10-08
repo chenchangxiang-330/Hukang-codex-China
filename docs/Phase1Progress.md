@@ -1,6 +1,8 @@
 # Phase 1 验证进度
 
-## 阶段 1：配置与应用契约（2026-10-08）
+以下按验证里程碑记录各步骤发生时的历史状态；早期“尚未取得/构建”的记录不覆盖后续结果。里程碑编号不是产品 Phase 编号，所有工作仍限于 Phase 0 + Phase 1，未开始 Phase 2。总体验收与当前已知问题见 [Phase1AcceptanceReport.md](Phase1AcceptanceReport.md)。
+
+## 验证里程碑 1：配置与应用契约（2026-10-08）
 
 - 本地实际运行 Gradle 9.3.1 `help`：成功，1m 8s。修复了 Expo 57 library publication 所需的 `versionName` 和 `versionCode`。
 - 实际运行 Expo Android autolinking：指向 `com.hukang.vision.HukangVisionModule`，与 Kotlin 类一致。
@@ -11,7 +13,7 @@
 
 构建日志保存在本地 `.build-tools/phase1-gradle-config.log`；此目录不提交。
 
-## 阶段 2：官方模型实物校验（2026-10-08）
+## 验证里程碑 2：官方模型实物校验（2026-10-08）
 
 - GitHub Actions run `37737586793` 在 commit `304863e` 上，从官方 PaddlePaddle BOS 获取两个模型及原始 YAML；两个固定 ONNX SHA-256、配套配置及有序字典校验通过。
 - 已下载该 run 的官方模型 artifact，ZIP 实测 18,625,900 bytes，SHA-256 为 `543a762c650c9fad885863321b02a9e7e6df1082c45541c3b56ad3af9696374a`，与 GitHub 返回的 artifact digest 一致。
@@ -21,10 +23,42 @@
 - 首轮 Actions 后续构建因 `sdkmanager` 不在 PATH 失败；已在 `d4b2fcd` 修复绝对路径发现并推送。Release APK 和设备 OCR 等待后续实证，不用模型资产校验替代验收。
 - 官方模型导入安全测试 5/5 通过，覆盖路径、链接、重复成员及过量解压数据；没有使用替代模型。
 
-## 阶段 3：首次真实 Release 编译（2026-10-08）
+## 验证里程碑 3：首次真实 Release 编译（2026-10-08）
 
 - Actions run `37738623906` / commit `d4b2fcd202b8231691451f92840552435805a936` 的 `:app:assembleRelease` 实际成功，日志为 `BUILD SUCCESSFUL in 10m 50s`。`hukang-vision:verifyBundledOcrModels` 与 `hukang-vision:compileReleaseKotlin` 均在此次完整构建中执行。
 - 实际生成 APK 94,746,723 bytes，SHA-256 为 `659a487d7c842824601f471285c73ffa4cb681eeddfd65c0416cdb2c502166ba`。这次 APK 未进入上传步骤，不能把检查报告当成已经交付的 APK 文件。
 - 真实 `aapt2` 输出 minSdk 26、targetSdk 36、仅 ARM64，没有 INTERNET / ACCESS_NETWORK_STATE / CAMERA / RECORD_AUDIO。模型与两份 YAML SHA 匹配，APK v2 签名校验通过。
 - 首次检查脚本只识别旧字段 `sdkVersion`，新版输出为 `minSdkVersion`，因此产生了唯一错误 `minSdk is not 26`。原始错误报告保持不变，修复已提交推送 `3ef4198`，等待新版完整检查及 APK 上传。
 - 原始构建日志、最终 Manifest 和检查报告见 `docs/evidence/phase1/first-release-37738623906/`。本机无 KVM 的模拟器不稳定，未安装 App、未执行 OCR；设备验证转为 GitHub Actions KVM 作业，尚未宣称成功。
+
+## 验证里程碑 4：实际 APK 交付与独立复核（2026-10-08）
+
+- [Actions run 37740050254](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37740050254) / 源码 `3ef41988b322713e0d734344cf5a62820525ed1d` 的 release 编译、完整 APK 检查、上传均成功；Gradle 实际耗时 10m 45s。
+- 该次实际 APK 为 **94,746,723 bytes**，SHA-256 为 **`4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3`**。它与里程碑 3 中未上传的 `659a…` 包不同，不混用摘要。
+- [完整 APK artifact 11534180523](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37740050254/artifacts/11534180523) 上传成功；本地通过可信分片 artifact 核对来源、分片摘要和整体摘要后重组，实际文件是 `artifacts/hukang-china-phase1-arm64-release.apk`。
+- 本地再次执行 APK 检查，`errors: []`；实际 final Manifest 没有 INTERNET / ACCESS_NETWORK_STATE，minSdk 26、targetSdk 36，仅 ARM64；模型和原始 YAML 摘要一致，APK v2 签名通过。签名为临时实验签名。
+- 原始小型证据见 [release-37740050254](evidence/phase1/release-37740050254/)。**构建和静态检查通过不能替代设备启动/OCR。** 此包随后在下述翻译层模拟器中实际启动失败。
+
+## 验证里程碑 5：真实 Android 安装与两次失败记录（2026-10-08）
+
+- `68beb10` 修复测试 runner 的 KVM 权限异步竞态。[run 37773783460](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37773783460) 实际启动 Android 11 / API 30，使用 `sdk_gphone_x86_64` + 官方 `libndk_translation.so`，成功安装上述 ARM64-only APK。
+- 原始 session 保存了 APK 摘要、设备属性、翻译库摘要、GMS/GSF/Photos 实际 disabled-user 状态、飞行模式 1 / Wi-Fi 0，以及 IPv4/IPv6 OUTPUT 默认 DROP 前后记录。这些是环境/安装实证，不是离线 OCR 实证。
+- 第一次 run 在 App 启动前，因 MediaProvider 不接受 `/sdcard` 别名路径而失败，`runs=[]`。原始记录见 [device-attempt-37773783460](evidence/phase1/device-attempt-37773783460/)，不是 App 或模型识别失败。
+- `64808a5` 改用 `/storage/emulated/0`。随后 [run 37774801831](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37774801831) 已实际证明两张 fixture 成功索引，并实际尝试离线启动同一个 `4bf12e9e…` APK。
+- 第二次 run 的 UI 按钮超时由真实启动崩溃引起：logcat 为 `SoLoaderDSONotFoundError: couldn't find DSO to load: libreactnative.so`。DirectApkSoSource 选择 APK 的 `lib/x86_64`，ARM64 native 目录未解出库；App 尚未进入 JS 页面或原生 OCR，`runs=[]`。原始 session 和注明源 SHA/行号的崩溃截取见 [device-attempt-37774801831](evidence/phase1/device-attempt-37774801831/)。
+- 当前没有 Android OCR 原文、框、confidence、推理时长或 OCR 内存成绩；没有用人工真值补充输出。ARM64 真机未执行，不能把翻译层环境的崩溃外推为所有手机失败，也不能称手机兼容性已通过。
+
+## 验证里程碑 6：native 库打包修复和新包门禁（2026-10-08，等待实际结果）
+
+- `a0a491a` 已提交推送正常的 `useLegacyPackaging=true` 配置，目标是让 Android 安装时解出 APK 内现有 ARM64 native libraries，避免依赖翻译环境的直接 APK ABI 选择。没有增加 x86 ABI、替换官方模型、伪装设备属性或引入在线兜底。
+- `339a669` 已提交推送严格门禁：对新 APK 的实际 `extractNativeLibs`、必须存在的 ARM64 native libraries 和打包方式检查；设备安装后逐库核对实际解出文件与 APK 内文件摘要。门禁代码存在不代表已经观察到新包安装通过。
+- 新测试脚本准备走生产 UI 执行 4 次全图基线 OCR、旋转往返后 OCR 和矩形裁剪后 OCR，共 6 次真实运行；这是拟执行路径，不是已产生的 6 份成绩。
+- 当前权威重新构建是 [run 37776005573](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573)，build source `339a669`。记录本里程碑时正在编译，**新 APK 大小、SHA、最终 Manifest、成功启动和 OCR 结果均待实际产物**，不能用旧 `4bf12e9e…` 包数据代填。
+- 历史已交付包仍是里程碑 4 的 `3ef4198` / `4bf12e9e…`，在上述模拟器中的启动失败已经保存；修复源码不会追溯改变它的身份或测试结论。
+
+## 验证里程碑 7：实际 release 依赖图核验（2026-10-08）
+
+- 本地实际运行 `:app:dependencies --configuration releaseRuntimeClasspath`：exit 0，`BUILD SUCCESSFUL in 1m`；200 个不同 resolved Maven coordinates，无 `FAILED` 或 unresolved `(n)` 节点。
+- 原始报告 [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt) 为 94,037 bytes，SHA-256 `d57d33e056827d4fc66d759ad4bd70526f1e115cfd43b44b55f6ecd022131dd0`。审计详情见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
+- 所检查依赖图没有 Google Play Services、ML Kit、Firebase、在线 OCR/AI 和遥测 SDK coordinates。普通 Google/AndroidX 工具类不是联网服务；React Native 标准 HTTP 基础代码不等于已经配置生产海外服务。
+- 该结果是依赖元数据解析和清单核验，不是重新编译 APK、二进制全部下载、网络抓包或设备推理成绩。当前生产 `FOREIGN_NETWORK_SERVICE` 配置数量仍为 0。
