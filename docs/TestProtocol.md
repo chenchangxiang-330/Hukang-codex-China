@@ -122,6 +122,23 @@ adb shell dumpsys package <实际applicationId>
 
 这一次 `dumpsys meminfo` 是快照，不是峰值。若设备不允许采集，报告“未测量”，不使用模型文件大小作为内存测量。
 
+### 可复现的 ADB 证据采集
+
+交互运行后可使用仓库工具采集原始设备信息、网络设置、包信息、内存快照、截图及 logcat：
+
+```sh
+python3 scripts/android-device-evidence.py \
+  --serial <adb序列号> \
+  --apk artifacts/<实际release文件名>.apk \
+  --output artifacts/device-runs/<实际会话目录>
+```
+
+只有支持 `adb root` 的测试设备，可以先开启 root 后增加 `--pull-private`，直接拉取原生 `files/ocr-lab` 和 Expo `files/ocr-evidence`。这不修改 APK 的 debuggable 属性、不增加生产测试 Activity，也不要求真实用户手机 root。普通手机继续使用 App 的主动分享功能。
+
+工具不安装 App、不设置离线、不运行 OCR、不生成识别文本或准确率；所有执行和失败仍需写入会话记录。采集时的网络状态仅是快照，不能替代首次离线启动证据。
+
+如果使用 ARM64 native translation 的 x86_64 模拟器，必须记录 `ro.product.cpu.abilist`、`ro.dalvik.vm.native.bridge`、翻译库身份、宿主加速状态，以及实际安装的 APK 摘要。实际成功执行可证明该 Android 仿真环境运行了 ARM64 库；它不能替代 ARM64 真机兼容性和性能测量，也不能称为原生 ARM64 模拟器。
+
 ## 7. 验收报告状态
 
 每项使用以下状态，证据文件必须可对应：

@@ -41,8 +41,8 @@ with zipfile.ZipFile(apk) as archive:
     if native_abis != ["arm64-v8a"]:
         errors.append(f"Unexpected native ABIs: {native_abis}")
     required = {
-        "assets/paddleocr/v5-mobile/detector.onnx": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
-        "assets/paddleocr/v5-mobile/recognizer.onnx": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+        "assets/models/paddleocr/v5-mobile/detector.onnx": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+        "assets/models/paddleocr/v5-mobile/recognizer.onnx": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
     }
     assets = {}
     for name, expected in required.items():
@@ -54,9 +54,25 @@ with zipfile.ZipFile(apk) as archive:
                 errors.append(f"Model hash mismatch: {name}")
         except KeyError:
             errors.append(f"Missing bundled model: {name}")
-    for name in ["assets/paddleocr/v5-mobile/inference.yml", "assets/index.android.bundle"]:
+    for name in ["assets/models/paddleocr/v5-mobile/detector.yml", "assets/models/paddleocr/v5-mobile/inference.yml", "assets/index.android.bundle"]:
         if name not in archive.namelist():
             errors.append(f"Missing offline asset: {name}")
+    try:
+        model_manifest = json.loads(archive.read("assets/models/paddleocr/v5-mobile/manifest.json"))
+        if model_manifest.get("verification", {}).get("status") != "verified_artifacts":
+            errors.append("Bundled model manifest is not verified")
+        if model_manifest.get("productionNetwork") is not False or model_manifest.get("automaticModelDownload") is not False:
+            errors.append("Bundled model policy permits networking or download")
+        for model_name, config_name in [("detector", "detector.yml"), ("recognizer", "inference.yml")]:
+            config_path = "assets/models/paddleocr/v5-mobile/" + config_name
+            config_bytes = archive.read(config_path)
+            config_sha = hashlib.sha256(config_bytes).hexdigest()
+            expected = model_manifest["models"][model_name].get("configSha256")
+            if not expected or config_sha != expected:
+                errors.append(f"Bundled configuration hash mismatch: {config_name}")
+            assets[config_path] = {"bytes": len(config_bytes), "sha256": config_sha}
+    except (KeyError, ValueError, TypeError) as error:
+        errors.append(f"Missing or invalid bundled model configuration: {error}")
 
 try:
     signature = run("apksigner", "verify", "--verbose", apk)

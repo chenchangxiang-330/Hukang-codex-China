@@ -18,6 +18,8 @@ Hukang modifications:
   all decoder lines with score threshold 0, including low-confidence results.
 - Monotonic Android clock replaces wall-clock timing in the adopted engine.
 - Intermediate recognition native buffers are released deterministically.
+- ONNX Runtime telemetry is explicitly disabled before creating any session;
+  initialization fails if that setting cannot be applied.
 - The public SDK demo, UI, benchmark image, and network/download facilities are
   not included. The Expo module owns image import, EXIF 1–8 transforms,
   evidence, memory sampling and local-only error reporting.

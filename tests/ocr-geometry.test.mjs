@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { containGeometry, cropPercentToPixels, mapRectToPreview } from '../src/features/ocr-lab/geometry.ts';
+import { containGeometry, cropPercentToPixels, isFullCrop, mapRectToPreview } from '../src/features/ocr-lab/geometry.ts';
 
 test('letterboxed portrait bounding box maps into actual image area rather than viewport origin', () => {
   const image = { width: 1000, height: 2000 };
@@ -35,4 +35,10 @@ test('out-of-bounds, zero, invalid text and subpixel-empty crops reject instead 
 
 test('invalid viewport dimensions are rejected before creating overlay NaN coordinates', () => {
   assert.throws(() => containGeometry({ width: 100, height: 100 }, { width: 0, height: 320 }));
+});
+
+test('a blank crop origin is invalid rather than silently treated as a full-image OCR request', () => {
+  assert.equal(isFullCrop({ x: '0', y: '0.0', width: '100', height: '100.0' }), true);
+  assert.equal(isFullCrop({ x: '', y: '0', width: '100', height: '100' }), false);
+  assert.equal(isFullCrop({ x: '0', y: ' ', width: '100', height: '100' }), false);
 });

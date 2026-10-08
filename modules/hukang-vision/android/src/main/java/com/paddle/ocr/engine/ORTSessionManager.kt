@@ -36,7 +36,16 @@ class ORTSessionManager(
 
     fun loadModels(detAssetPath: String, recAssetPath: String) {
         val loadStart = android.os.SystemClock.elapsedRealtime()
-        env = OrtEnvironment.getEnvironment()
+        env = OrtEnvironment.getEnvironment().also { environment ->
+            try {
+                environment.setTelemetry(false)
+            } catch (t: Throwable) {
+                // Never proceed with inference if the explicit offline privacy
+                // setting cannot be applied. The release manifest independently
+                // removes network permission, but that is not a substitute here.
+                throw IllegalStateException("ONNX Runtime telemetry could not be disabled; model load aborted", t)
+            }
+        }
         val opts = OrtSession.SessionOptions().apply {
             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
             setIntraOpNumThreads(config.numThreads)

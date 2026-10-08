@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "note": "Model SHA-256 values were checked against official PaddlePaddle metadata. Null config hashes must first be acquired directly from official sources over TLS; offline uploads cannot establish them.",
+  "models": {
+    "detector": {
+      "revision": "e6f4fa85f00e168c862bc462aebca69eef9b3d3d",
+      "modelSha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+      "configSha256": null
+    },
+    "recognizer": {
+      "revision": "ed152b8b495f84de93cda5709d768548a9127622",
+      "modelSha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+      "configSha256": null
+    }
+  }
+}

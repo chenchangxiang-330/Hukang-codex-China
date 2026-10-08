@@ -1,0 +1,135 @@
+name: Phase 1 official PaddleOCR release
+
+on:
+  push:
+    branches: [codex/mainland-v2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase1-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - name: Checkout the exact branch commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Obtain only fixed official PaddlePaddle assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3
+          if ! python scripts/fetch-models.py --source bos --receipt artifacts/official-model-acquisition.json; then
+            echo "Official BOS acquisition failed; trying the fixed official PaddlePaddle Hugging Face revisions."
+            python scripts/fetch-models.py --source hf --receipt artifacts/official-model-acquisition.json
+          fi
+          python scripts/fetch-models.py --verify
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = Path('artifacts/official-model-acquisition.json')
+          data = json.loads(receipt.read_text())
+          data['github'] = {key: os.environ.get(key) for key in ('GITHUB_REPOSITORY', 'GITHUB_SHA', 'GITHUB_REF', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')}
+          receipt.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+          PY
+
+      - name: Preserve verified official assets before Android compilation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-official-models-${{ github.sha }}
+          path: |
+            models/paddleocr/v5-mobile/
+            artifacts/official-model-acquisition.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Install and check the project
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --include=dev
+          npm run typecheck
+          npm test
+          npm run verify:assets
+
+      - name: Install fixed Android build components
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
+
+      - name: Create an ephemeral Phase 1 test certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 30 \
+            -dname "CN=Hukang China Phase 1 Test, OU=OCR Lab, O=Hukang, C=CN"
+
+      - name: Build Android ARM64 release APK
+        shell: bash
+        working-directory: android
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace --max-workers=2 \
+            -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" \
+            2>&1 | tee ../artifacts/gradle-release.log
+
+      - name: Inspect the actual APK, Manifest, models and certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/verify-apk.py
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase1-arm64-release.apk
+
+      - name: Publish APK and build evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hukang-china-phase1-build-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: State the exact validation boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Phase 1 validation boundary"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Official model acquisition, Android compilation and APK inspection are separate steps."
+            echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
+            echo "- This workflow does not execute OCR on an Android device."
+            echo "- No OCR output, speed or memory result is claimed without separate device evidence."
+          } >> "$GITHUB_STEP_SUMMARY"
