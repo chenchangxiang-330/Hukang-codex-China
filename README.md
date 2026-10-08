@@ -3,6 +3,12 @@
 中国大陆版 Hukang 的新工程。本轮范围是 **Phase 0 + Phase 1**：干净分层结构、
 原版 App 图标、运行依赖审计，以及 Android 本地 PaddleOCR 技术验证页面。
 
+当前已实际构建 ARM64 Release APK（58,709,659 bytes），最终 Manifest 没有 INTERNET。
+同一 APK 在 Android 15 / API 35 官方 ARM 翻译模拟器中，已完成六次完全离线 OCR，
+包括旋转往返与矩形裁剪后的识别。ARM64 真机、EXIF 2–8 和完整生产验收仍未验证。
+APK 入口、原始输出和限制见 [验收报告](docs/Phase1AcceptanceReport.md)，
+本次成功执行原始记录见 [设备证据](docs/evidence/phase1/device-37781340401/README.md)。
+
 ## Scope
 
 - React Native + TypeScript + Expo Router、自定义 Kotlin Android 模块。

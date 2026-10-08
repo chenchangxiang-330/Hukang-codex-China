@@ -1,8 +1,8 @@
 # Hukang China Phase 1 验收报告
 
-报告日期：2026-10-08（Asia/Shanghai）。范围：Phase 0、Phase 1；没有开始 Phase 2。已推送快照为 `0008669`；当前 APK 构建 source 为 `339a66991af93c488e1f1426a3f240edd82fc3ca`，本次已有实测的测试工具 source 为 `f113662a82546880483bfae920845dada659eec5`。App 构建、测试工具和历史旧包身份分别记录。
+报告日期：2026-10-08（Asia/Shanghai）。范围：Phase 0、Phase 1；没有开始 Phase 2。本文证据快照为已推送的 `10f0ea95ab63cfd1821b7ac57d45f3e327eaf37d`，实际 APK build source 为 `339a66991af93c488e1f1426a3f240edd82fc3ca`，最终成功测试 source 为 `a0c85d544ed2bccea225ead8a4e063acccadb764`。App、测试工具、历史旧包和各次成绩分别记录。
 
-**同一 release APK 已在 API 35 Android 仿真环境中完成 4 次真实、完全离线的中文 PaddleOCR；Phase 1 尚未整体验收通过，旋转/裁剪正在重测。** 当前包为 **58,709,659 bytes**，SHA-256 为 **`3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`**，实际 Manifest 没有 INTERNET。两张真实归档包装照片各执行 2 次，保留实际原文、框、confidence、原始模型/图片摘要与时长/采样内存；没有人工补写。旧 SoLoader 缺库已修复，API 30 翻译层 SIGILL 的历史失败保留；API 35 对同一 APK 的离线基线通过不代表 ARM64 真机兼容性、手机速度或全部 Phase 1 功能通过。
+**Phase 1 核心技术验证已达成：真实 Android App 在 API 35 仿真环境完成 6 次完全离线的官方 PaddleOCR，手动旋转、旋转往返后 OCR、矩形裁剪后 OCR 均有实际证据。** release APK 为 **58,709,659 bytes**，SHA-256 **`3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`**，最终 Manifest 没有 INTERNET。保留原图、处理图、实际原文、框、confidence、模型摘要、原生时长/采样内存，错文未纠正。ARM64 真机、EXIF 2–8、更多食品/拍摄条件和长期性能尚未验证，不能标为完整生产验收或手机性能达标；没有开始 Phase 2。
 
 本文使用以下状态，避免把不同层级的证据混为一谈：
 
@@ -37,7 +37,7 @@ Hukang-codex-China/
 ├── plugins/                        离线 Android 配置插件
 ├── scripts/                        模型、APK、fixture 与设备证据工具
 ├── tests/fixtures/china-food/       两张有署名的归档实物包装照片
-├── docs/evidence/phase1/            官方获取、实际 APK、设备失败与4次 OCR 原始证据
+├── docs/evidence/phase1/            官方获取、实际 APK、历史失败与6次 OCR 原始证据
 ├── .github/workflows/               release 构建与 Android 设备测试工作流
 └── artifacts/                      本地构建/测试产物位置；不批量提交缓存
 ```
@@ -93,6 +93,8 @@ Hukang-codex-China/
 | `675717c` | 保存两张照片各2次的实际离线 PaddleOCR 输出、截图与测量 |
 | `a0c85d5` | 修复测试工具方向按钮匹配和证据文件 glob，启动同包旋转/裁剪重测 |
 | `0008669` | 按原始内容摘要保留实际processed PNG，并更新离线验证里程碑 |
+| `5ec7edc` | 已推送4次离线基线验收报告，真实错误与尚未验证内容明确区分 |
+| `10f0ea9` | 保存最终6次实际离线OCR、旋转/裁剪、截图与原始JSON，以及独立本地实物核验 |
 
 实际执行通过：TypeScript `tsc --noEmit`、Node 测试 15/15、官方模型导入安全测试 5/5、资产与 fixture 摘要核验、Gradle `help`、Expo Android autolinking。autolinking 实际解析到 `com.hukang.vision.HukangVisionModule`，与 Kotlin 类一致。
 
@@ -146,7 +148,7 @@ Hukang-codex-China/
 
 ## 5. 实际 Android release APK 构建结果
 
-状态：当前包构建 `verified_host_test`、APK 内容 `verified_static`、API 35 安装/启动/四次基线 OCR 为 `verified_android`。API 30 的历史启动 `error` 保留；本次旋转/裁剪验收未完成。不同 Android 镜像和 APK 身份不混用。
+状态：当前包构建 `verified_host_test`、APK内容 `verified_static`，最终API35安装/离线启动/6次OCR/旋转和裁剪为 `verified_android`。API30历史错误保留；真机与多方向EXIF仍未测，不混用环境和成绩。
 
 **当前实际交付包**来自 [Actions run 37776005573](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37776005573)，构建源码 `339a66991af93c488e1f1426a3f240edd82fc3ca`，release job `113307547677`。此 job 的 release 编译、完整 APK 检查、上传成功；本地取得实际 APK 并再次检查。Android 设备 job 另行计分，不因 release 成功而自动通过。
 
@@ -166,7 +168,7 @@ Hukang-codex-China/
 | 必需 native 库 | `libreactnative.so`、`libopencv_java4.so`、`libonnxruntime.so`、`libonnxruntime4j_jni.so` 实际存在，均为 ZIP DEFLATED（compression 8），各摘要已核验 |
 | 新包 Android 安装 | job `113311498884` 实际安装成功，4 个必需 ARM64 native 库安装后逐个摘要与 APK 内一致 |
 | API 30 运行历史 | 旧 SoLoader 缺库解决后，API 30 `libndk_translation` 出现 SIGILL，未完成 OCR Lab 启动 |
-| API 35 当前实证 | `37779323597` 使用同一 APK，首次离线启动、相册导入、两图各2次真实本地 OCR 成功；旋转/裁剪测试工具后来失败，不能说整套 job 成功 |
+| API 35 当前实证 | `37781340401` / job `113324913574` 成功；同一APK完成4次全图基线、1次旋转往返后、1次矩形裁剪后OCR，以及3项实际图片变换检查 |
 
 为可信取回新 APK，构建机按固定顺序拆成三份，生成带 repository/commit/run 身份和各份摘要的 transfer manifest，分别上传 GitHub Actions artifact。本地核对 GitHub artifact metadata、每份字节及摘要后，顺序重组，再核对完整 APK 摘要，重新解码 Manifest、校验模型、native 库及签名。三分片是开发产物传输，不是 App 运行时模型下载。完整 APK 没有提交进源码 Git。
 
@@ -184,25 +186,24 @@ native 库改为安装时解出的压缩打包后，实际 APK 从 94,746,723 by
 
 | 判断 | 状态与证据 |
 | --- | --- |
-| 国产模型来源和实际字节 | `verified_static`：官方获取 receipt、来源锁、本地/实际 APK 与 device JSON 摘要一致 |
-| 模型直接在 APK 中 | `verified_static`：实际两模型、原始 YAML 和字典固定打包，没有首次启动下载 |
-| 运行中自动下载模型 | `verified_static`：没有下载路径，资产缺失时报错；本次离线首次加载成功 |
-| 国外 OCR、AI 或食品供应商 | `verified_static`：没有启用，生产 `FOREIGN_NETWORK_SERVICE` 为 0 |
-| 本地模型初始化和推理 | `verified_android`：API 35 实际运行 Kotlin + ORT CPU，产生4份原生结果，模型/config 摘要对应固定官方资产 |
-| App 网络权限 | `verified_static`：实际 APK 不含 INTERNET / ACCESS_NETWORK_STATE |
-| 首次启动前离线设置 | `verified_android`：API 35 session 记录飞行模式1、Wi-Fi0、GMS/GSF/Photos disabled；IPv4/IPv6 OUTPUT 默认 DROP 前后原样保留 |
-| 首次离线启动与中文 OCR | `verified_android`：同一 release APK 未连接 Metro，选择本地两图并实际识别4次；不是 host Python 结果或人工真值 |
-| Google Play Services 依赖 | `verified_android`：系统镜像内的 GMS/GSF/Photos实际禁用后，以上基线仍完成；不是“系统从未安装过Google服务”的真机实验 |
-| 流量观察 | 已保存环境规则和计数；未进行完整 packet capture 或 App UID 专属流量审计，不声称抓包为零 |
-| ARM64 真机完全离线 OCR | `not_run`：本次为 x86_64 Android + 官方 ARM native translation，未在真实 ARM64 手机执行 |
+| 国产模型来源和实际字节 | `verified_static`：官方receipt、来源锁、本地/实际APK/device JSON模型与config摘要一致 |
+| 模型直接在APK中 | `verified_static`：模型、原始YAML和字典固定打包；没有首次启动下载 |
+| 本地模型初始化和推理 | `verified_android`：API35实际Kotlin+ORT CPU运行，6份原生输出；固定国产模型，不是host推理或人工文字 |
+| 海外OCR/AI/食品供应商 | `verified_static`：没有生产集成或在线fallback，`FOREIGN_NETWORK_SERVICE=0` |
+| App网络权限 | `verified_static`：实际APK没有INTERNET/ACCESS_NETWORK_STATE |
+| 启动前离线状态 | `verified_android`：飞行模式1、Wi-Fi0、GMS/GSF/Photos disabled；IPv4/IPv6 OUTPUT默认DROP前后记录保留 |
+| 首次离线启动与中文OCR | `verified_android`：release未连接Metro，本地相册导入→4次基线、旋转往返后1次、裁剪后1次实际识别成功 |
+| Google Play Services依赖 | `verified_android`：镜像内GMS/GSF/Photos实际禁用后成功；不是“系统从未安装Google服务”的真机实验 |
+| 流量观察 | 保存系统规则和计数；未做完整packet capture或App UID专项审计，不声称抓包为零 |
+| ARM64真机完全离线OCR | `not_run`：本次为x86_64 Android+官方ARM native translation，不是真机 |
 
-**本次已实际证明：在记录的 API 35 Android 仿真环境中，官方国产模型直接从已打包 release APK 加载，用户通过本地相册的生产 UI 路径完成4次离线中文 OCR，保存真实原文、坐标、分数和测量。** 此判断结合实际 APK 网络权限、离线首次启动、源图/模型摘要、原生 JSON 与 UI 截图；没有在线 OCR fallback、模型下载或 AI 补文。
+**已经实际证明：记录的API35 Android App在首次启动前离线条件下，从APK加载官方国产模型，经生产UI本地相册、图片处理和原生模块完成6次中文OCR，保留真实原文、坐标、分数与测量。** 该结论结合APK权限、设备session、源图/模型摘要、原始native/JS记录和截图。没有网络模型下载、AI补文或其他OCR引擎。
 
-不能把上述局部通过扩展为所有 Android 版本、ARM64 真机、旋转/裁剪、多方向 EXIF 或完整 Phase 1 验收通过。API 30 同一 APK 的历史翻译层崩溃仍保留，不能因 API 35 基线成功而删除。
+这不等于所有Android版本、ARM64手机、多方向EXIF、长时间使用或完整生产验收通过。API30同包的历史翻译层错误保留，不能因API35成功而删除。
 
-ONNX Runtime、OpenCV、React Native、Expo、AndroidX 等是 `FOREIGN_OFFLINE_LIBRARY`。GitHub、npm、Maven、SDK 和官方模型下载只发生在开发/构建供应链；不计作用户 OCR 的境外服务器依赖。ORT 在创建 session 前明确禁用 telemetry，实际 APK 网络权限也已移除，详见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
+ORT、OpenCV、React Native、Expo、AndroidX标为 `FOREIGN_OFFLINE_LIBRARY`。GitHub/npm/Maven/SDK和官方模型获取是开发供应链，不是用户OCR服务器依赖。ORT明确禁用telemetry，APK网络权限移除，详见 [MainlandDependencyAudit.md](MainlandDependencyAudit.md)。
 
-系统相册可展示云端图片，用户主动分享的目标 App 也可有自己的网络行为；本次使用已在设备本地的两份 fixture，并禁用 Google Photos。没有把外部系统/App 行为算成 Hukang 自动上传。
+系统相册/用户主动分享的其他App可有独立网络行为；本次选用设备本地fixture并禁用Google Photos，没有把外部行为说成Hukang上传。
 
 ## 7. 实际最终 Manifest 是否存在 INTERNET
 
@@ -223,24 +224,28 @@ ONNX Runtime、OpenCV、React Native、Expo、AndroidX 等是 `FOREIGN_OFFLINE_L
 
 每次后续 APK 都需重新检查，首次包的结果不能自动授予新包同样状态。
 
-## 8. 中国食品照片、真实 OCR 输出与设备测试
+## 8. 中国食品照片、真实OCR输出、旋转和裁剪
 
-本项基线状态为 `verified_android`。已有两张照片各2次真实 OCR，共4次；每张图两次的 `rawText`、文字块几何和 confidence 相同。**整次设备 job 后来在手动旋转按钮定位处失败，不能把4次基线成功写成整套测试通过。**
+**最终Android测试job已实际成功。** [run 37781340401](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401)，job `113324913574`，test source `a0c85d544ed2bccea225ead8a4e063acccadb764`，App build `339a66991af93c488e1f1426a3f240edd82fc3ca`，同一APK `3dd6e764…`。session状态 `verified_android_emulated`，6份真实OCR与3项图片变换检查，不是真机验收。
 
-实际执行：[run 37779323597](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37779323597)，test source `f113662a82546880483bfae920845dada659eec5`，App build `339a66991af93c488e1f1426a3f240edd82fc3ca`，APK SHA `3dd6e764…`。信任来源见 [artifact-identity.json](evidence/phase1/device-attempt-37779323597/artifact-identity.json)：artifact ID `11551632136`，ZIP 30,991,029 bytes，SHA-256 `a99ffb24e05548bc1c681ca208cbc29e2e093a61ede7777f53dce9395d96963b`。
+环境：`sdk_gphone64_x86_64`、Android15/API35、官方Google APIs userdebug镜像、安全补丁2024-09-05；ARM bridge `libndk_translation` 0.2.3，SHA `9b5808354a85d722a290ae879400b909aa961955e80ea1a7e807aea9416d92f9`。4个必需ARM64库安装后摘要与APK一致。首次启动前飞行模式1、Wi-Fi0、GMS/GSF/Photos disabled，IPv4/IPv6 OUTPUT默认DROP，规则前后保留。实际设备[session.json](evidence/phase1/device-37781340401/session.json)与build/test身份分别保存。
 
-设备是 `sdk_gphone64_x86_64`，Android 15 / API 35，官方 Google APIs userdebug 镜像，安全补丁2024-09-05；`libndk_translation` version0.2.3，实际 SHA `9b5808354a85d722a290ae879400b909aa961955e80ea1a7e807aea9416d92f9`。APK中只有ARM64库，安装后4库摘要与APK一致，在官方native bridge上执行。测试前飞行模式1、Wi-Fi0，GMS/GSF/Photos disabled；前后IPv4/IPv6 OUTPUT默认DROP。完整原始 [session.json](evidence/phase1/device-attempt-37779323597/session.json) 保留设备、动作、模型测量与最终helper错误。
+可信取得的 [小型证据artifact11552408564](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401/artifacts/11552408564)：15,116,060 bytes，ZIP SHA `d6a5e6529c8fbf3804aa28692bb4285ceee3e0ccac0bf06a032cfa7c5ae50805`。它实际包含6份native/JS记录、4份处理图片/metadata、截图、session和CI一致性报告；已下载并校验。完整 [artifact11553038552](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401/artifacts/11553038552) 为48,957,940 bytes，GitHub报告digest `54ae589b9176d88a54b2b5db04d10bab6559817469e5ed025fb6d6c3fc1a8e10`，**没有在本地下载这个完整ZIP**，不声称本地重验全部原始导出子目录。
 
-| 实际原图 | 原图SHA-256 | 处理图与覆盖 | 实际基线 |
-| --- | --- | --- | --- |
-| `6923644266066.jpg`，1280×1700 | `dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103` | 1280×1700不缩小；特仑苏包装、配料、营养表、小字、倾斜、复杂背景 | 39个文字块，2次真实输出 |
-| `6937003117814.jpg`，3024×4032 | `a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3` | decode sampleSize2→1512×2016，matrix缩放0.5；中文营养表、曲面包装、小字 | 21个文字块，2次真实输出 |
+CI 对其实际6份导出的原图、processed图、record做完整摘要与证据检查，[evidence-consistency.json](evidence/phase1/device-37781340401/evidence-consistency.json) 为该次真实通过结果。本地小型包缺各record子目录的 `original.bin`/`processed.png`；本地另外核验六份原文、框、模型字段、原图fixture摘要，以及实际保留PNG的字节摘要和尺寸，结果见 [local-record-and-retained-image-check.json](evidence/phase1/device-37781340401/local-record-and-retained-image-check.json)。牛奶、右转、旋转往返和裁剪PNG取自本次small artifact；零食PNG取自先前已下载的完整artifact `37779323597` 的原始导出，其hash与本次输出相同。CI全文件检查、本地部分实物核验和记录schema一致性边界分开，不以parser检查单独认证执行真实性。
 
-两图是有许可的归档实物包装照片，保留 `CC-BY-SA-3.0` 与 smoothie-app / macrofactor / Open Food Facts 来源署名。它们不是本轮新拍，拍摄设备、地点、时间未知；来源URL不是食品查询API或数据库源，未迁移OFF营养字段或旧ML Kit结果。`.source.json` 中人工目读真值没有输入本次OCR，不冒充模型输出。照片仅两个商品，未充分覆盖食品类别、反光、暗光、模糊，不能宣称代表中国市场准确率。
+原生Kotlin Float与导出JS Number的JSON小数表示略有不同，本地核验其IEEE-754 Float32位值相同；实际confidence没有被业务修改。原文、框与计时字段也已比对。记录中的运行时路径保持原样，没有为让本地校验通过而重写JSON或重建处理图片。
 
-下面文字直接取自本次原生JSON，保留错字、空格、单位和行顺序，没有parser/人工修正。完整每块polygon、boundingBox、confidence、page、模型摘要和变换见原始文件。
+| 原图与场景 | 原图SHA-256 | 实际处理与基线 |
+| --- | --- | --- |
+| `6923644266066.jpg`，1280×1700；特仑苏、配料/营养、小字、倾斜、复杂背景 | `dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103` | 不缩小，39块，2次；另有旋转往返39块和裁剪33块 |
+| `6937003117814.jpg`，3024×4032；曲面、中文营养表、低对比小字 | `a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3` | sampleSize2→1512×2016、matrix0.5，21块，2次 |
 
-**图1第一次原始输出**：[photo-1-run-1-native.json](evidence/phase1/device-attempt-37779323597/photo-1-run-1-native.json)。
+这是两个有许可的归档实物包装，不是本轮新拍，拍摄设备/地点/时间未知；保留CC-BY-SA-3.0与smoothie-app/macrofactor/Open Food Facts归属。历史来源不是食品数据库/API，未迁移其营养字段或ML Kit结果；人工目读真值没有输入OCR。两图及派生变换仍只有两个商品，不把旋转/裁剪新增为真实拍摄样本。类别、反光、暗光、模糊等覆盖不足，不计算代表性准确率。
+
+以下直接读取最终run的native JSON写入报告，原文、错字、单位和行顺序不修正。全量每块polygon、boundingBox、confidence、page、模型与图片摘要在原始文件保留。
+
+**图1第一次原始输出**：[photo-1-run-1-native.json](evidence/phase1/device-37781340401/photo-1-run-1-native.json)。
 
 ```text
 6L
@@ -284,7 +289,7 @@ PLEASE DISPOSE PROPERLY
 保持环境酒洁
 ```
 
-**图2第一次原始输出**：[photo-2-run-1-native.json](evidence/phase1/device-attempt-37779323597/photo-2-run-1-native.json)。
+**图2第一次原始输出**：[photo-2-run-1-native.json](evidence/phase1/device-37781340401/photo-2-run-1-native.json)。
 
 ```text
 营养成分表
@@ -310,22 +315,68 @@ NRV%
 商业信息中心《2022年中国休闲零食市场报告》
 ```
 
-实际结果既有可辨中文与营养数字，也有错误：图1把钠/钙合为“钠钙”，NRV输出出现“%2”，未独立保留照片中7%；“请物连同包装…”、“润费者热线…”、“保持环境酒洁”均是实际错文。图2“2075千焦(k)”丢了单位中的J。以上观察独立对照原图，不回写结果。表格行/列仍依靠坐标证据，rawText顺序不是结构化营养表；Phase 1没有业务解析或食品字段成绩。
+可辨中文和数字不等于表格正确结构化：全图把钠/钙合成“钠钙”，NRV出现“%2”而7%未独立保留；“请物…”、“润费者…”、“保持环境酒洁”是实际错文。图2“2075千焦(k)”漏J。对照照片的观察另写在报告，不改JSON；部分错文confidence>0.93。营养业务解析没有实现，不从这些字符串猜营养事实。
 
-| 真实块样例（processed image像素） | boundingBox：left,top,right,bottom | 原始confidence |
+| 真实块（processed pixels） | boundingBox：left,top,right,bottom | 原始confidence |
 | --- | --- | ---: |
 | 图1“特仑苏” | 450,432,753,561 | 0.9979282 |
 | 图1“钠钙” | 304,971,355,1062 | 0.9717849 |
-| 图1“%2” | 686,914,771,1031 | 0.50947875 |
 | 图2“1248毫克（mg）” | 556,522,974,622 | 0.90365654 |
+| 裁剪“860%28” | 553,707,645,898 | 0.2592969 |
 
-图1confidence范围0.21275023–0.99994344，图2范围0.8842335–0.9998801；这不是准确率，部分错文分数超过0.93。低分块没有删除，高分错文也没有被“修正为正确值”。JSON全量保存各块四边形，page为0。实际UI截图 [原文/耗时](evidence/phase1/device-attempt-37779323597/photo-1-actual-text.png) 和 [图片/文字框](evidence/phase1/device-attempt-37779323597/photo-1-actual-boxes.png) 可核查；仅截图不能代替原始JSON或逐框精度评价。
+图1score范围0.21275023–0.99994344，图2为0.8842335–0.9998801，裁剪为0.2592969–0.9999537；不是正确概率或准确率。低分块保留，高分错文不被自动纠正。page均0，坐标按各自processed图定义，不能直接混入原图坐标。
 
-EXIF实际记录是两图均 `reportedOrientation=0`（缺失/未知），有效orientation1。图2解码缩小有完整矩阵、源图和处理图摘要；不能说EXIF 2–8、镜像、或方向错误的图片修复已实证。原图不覆盖，实际processed文件另存。
+**实际生产UI变换验收**：
 
-4次基线后，helper报 `UI element not found: 右转 90°`，`processingChecks=[]`。这是自动化方向按钮匹配未覆盖生产UI带箭头的文字，不是基线OCR失败；当前手动旋转与矩形裁剪仍为待验证。`a0c85d5` 已修复helper并以 [run 37781340401](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37781340401) 重测同一APK，拟执行4次基线+旋转往返+裁剪共6次，尚无可引用的该次结果，不提前记通过。
+| 操作 | 实测结果与边界 |
+| --- | --- |
+| 手动顺时针90° | 1700×1280；matrix `[0,-1,1700,1,0,0,0,0,1]`，实际PNG SHA `c4d5276838e6b8d6d0f098a6ce93750d5b65f51125f62dc9e909f835f31bbf71`；UI、metadata、尺寸/摘要通过。没有单独对90°横置文字执行OCR或独立逐像素评分 |
+| 手动逆时针90°往返 | 回到1280×1700，identity matrix；编码PNG SHA恢复 `ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a`，与基线字节相同；真实OCR39块，rawText/blocks与基线相同 |
+| 10/10/80/80%矩形裁剪 | crop(left128,top170,right1152,bottom1530)，1024×1360；matrix `[1,0,-128,0,1,-170,0,0,1]`；实际PNG SHA `3a90d9e6ddd6e89ebc135168d7bdafe42df2d281f7ce996b2f79f44384abc138`；生产UI、实际文件和33块OCR通过，不声称独立逐像素验证 |
 
-原始native/Expo记录、截图和摘要已在 `docs/evidence/phase1/device-attempt-37779323597/` 提交保留。原图在fixtures，实际processed PNG也按原始内容摘要保留于 [actual-processed-images](evidence/phase1/actual-processed-images/)，未转换或修图：[sources.json](evidence/phase1/actual-processed-images/sources.json)记录它们与原图、运行记录的关系。可信完整artifact和本地 `artifacts/device-attempt-37779323597/` 另保留导出文件。[baseline-evidence-consistency-local.json](evidence/phase1/device-attempt-37779323597/baseline-evidence-consistency-local.json)记录实际文件摘要/尺寸/证据一致性复核；此格式检查不单独认证Android执行真实性。
+两图EXIF均reportedOrientation0（缺失/未知）→有效1；没有EXIF2–8/镜像实测。变换原图hash不变，处理图和完整operations/matrix另存；不覆盖原图。截图和metadata保存在最终证据目录；实际处理PNG按内容hash统一保存在 [actual-processed-images](evidence/phase1/actual-processed-images/)，来源关系见 [sources.json](evidence/phase1/actual-processed-images/sources.json)。
+
+**裁剪后实际原文**：[processing-crop-run-native.json](evidence/phase1/device-37781340401/processing-crop-run-native.json)，不是把全图文字人工删几行。
+
+```text
+Tetra Pak
+特仑苏
+营养成分表
+项目
+每100mL
+NRV%
+能量
+309kJ
+4%
+蛋白质
+3.6g
+860%28
+脂肪
+4.4g
+碳水化合物
+5.0g
+钠
+58mg
+钙
+120mg
+15%
+配
+料：生牛乳
+产品类型：全脂灭菌乳
+产品标准号：GB25190
+生产日期：见包装喷码
+保质期：6个月
+生产厂级产地：具体见喷码前两位代码
+存条件：常温密闭保存。
+开启前，无需冷藏；
+开启后，请立即饮用。
+请勿连同包装在微波炉中加热。
+润费者热线：400-6603333
+```
+
+裁剪使钠/钙分为两块，警示字“勿”在本次正确，但产生NRV合并错文“860%28”，且“润费者…”仍错；不能称裁剪全面提高准确率。当前保留这种真实变化，没有用原图输出或业务parser覆盖。
+
+最终6次OCR原始JSON、JS记录、实际UI截图、变换metadata与session保留于 `docs/evidence/phase1/device-37781340401/`；实际PNG原样保存在共享的 `actual-processed-images/`。旧4次基线及失败记录不改。协议见 [TestProtocol.md](TestProtocol.md)。
 
 <details>
 <summary>历史构建、安装与启动失败：证据保留，不覆盖本次真实基线</summary>
@@ -383,78 +434,84 @@ libndk_translation.so (...DecodeSimdScalarTwoRegMisc...)
 
 原始小型 session/安装库身份/前后规则以及注明完整源 SHA、行号的 tombstone 截取保留于 `docs/evidence/phase1/device-attempt-37776005573/`。脚本原计划 4 次全图基线、旋转往返后和矩形裁剪后 OCR，共 6 次；**6 次是计划，本次实际 OCR 次数为 0，未运行不计算识别准确率。** 原文、框、分数、模型加载时长、OCR 耗时和内存均未产生。
 
-后续已使用官方 API 35 镜像对同一 `339a669` / `3dd6e764…` APK 重测，取得下文真实基线；未为换镜像更换模型、伪装 ABI 或重编 App。API 30 的旧失败仍是该环境的实际结论。
+后续已使用官方 API 35 镜像对同一 `339a669` / `3dd6e764…` APK 重测，取得本节已列出的真实基线与最终6次成功记录；未为换镜像更换模型、伪装 ABI 或重编 App。API 30 的旧失败仍是该环境的实际结论。
+
+
+此前 [run 37779323597](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/37779323597) 已完成4次基线，但其helper在“右转90°”按钮定位失败。原始4份输出、时长/内存和最终failure保留于 `device-attempt-37779323597/`。后续修复只改测试工具，未重编或更换App；不能把旧job改成success。本报告最终主要成绩来自新的成功run37781340401，不混用两次session的测量。
 
 </details>
 
-实际测试协议见 [TestProtocol.md](TestProtocol.md)。只有实际执行的能力标记verified_android；未测的方向/生命周期/真机项目仍单独列出，不因拿到4份JSON而自动完成。
+## 9. 模型加载、OCR与总耗时
 
-## 9. 模型加载、OCR 和总耗时
-
-状态：API 35基线4次为 `verified_android`，以下数值来自原生JSON，不是理论预计或host Python推理。
+状态：最终API35的6次原生测量为 `verified_android`，没有理论估算或host推理成绩。
 
 | 实际运行 | modelLoadMs | ocrMs | totalMs | detInferenceMs | recInferenceMs |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 图1第一次（进程内首次模型加载） | 1,393 | 88,554 | 90,133 | 8,782 | 79,238 |
-| 图1第二次 | 0 | 85,057 | 85,164 | 9,066 | 75,526 |
-| 图2第一次（模型已加载） | 0 | 49,251 | 49,434 | 8,523 | 40,371 |
-| 图2第二次 | 0 | 49,870 | 50,013 | 8,714 | 40,818 |
+| 图1首次冷加载 | 1,384 | 86,121 | 87,641 | 8,715 | 76,858 |
+| 图1第二次 | 0 | 84,178 | 84,259 | 8,764 | 74,933 |
+| 图2第一次（模型已加载） | 0 | 48,382 | 48,536 | 8,468 | 39,536 |
+| 图2第二次 | 0 | 48,695 | 48,848 | 8,534 | 39,786 |
+| 图1旋转往返后 | 0 | 83,652 | 83,778 | 8,582 | 74,602 |
+| 图1矩形裁剪后 | 0 | 73,272 | 73,344 | 8,524 | 64,375 |
 
-原始记录另有 `modelColdLoadMs=1105`；这是不同测量字段，保留原值，不把它替换外层modelLoadMs1393。图2“第一次”是该图第一次，不是模型冷启动。检测输入实际 `[1,3,960,736]` 与 `[1,3,960,704]`；识别为每文字块batch1、高48，动态宽度，原始timings保存全部shape。
+首次 `modelLoadMs=1384`，记录另有 `modelColdLoadMs=1079`，不同计时字段原样保留，不相互替换。图2首次是该图第一次，模型已在同进程加载；不是第二个模型冷启动。
 
-本次图1 OCR85.06–88.55秒，图2 OCR49.25–49.87秒，主要耗时为识别网络：约40.37–79.24秒；检测约8.52–9.07秒。这里是x86_64宿主上的ARM64 native translation CPU成绩，**不能称手机速度、不能承诺用户会等待同样时间，也不能据此说移动端性能达标**。两图各2次只适合初步冷/热观察，不计算稳定性P50/P95；协议建议更多重复和真机分阶段分析。
+本轮图1全图OCR84.18–86.12秒、图2全图48.38–48.70秒，旋转往返83.652秒，裁剪73.272秒。识别网络约39.54–76.86秒，占大头；检测约8.47–8.76秒。前次独立run37779323597的4次基线为85.06–88.55秒/49.25–49.87秒，历史测量保留，不混做本轮数值或选最好结果。
 
-7m16s是APK构建时间，与上述OCR时间无关。方向/裁剪后的OCR性能等待实际记录，不能把全图成绩当裁剪成绩。
+这些是x86_64宿主执行ARM native translation的CPU测量，**不是ARM64手机速度，不能承诺手机同样耗时或移动端性能达标**。每图基线仅2次，不计算P50/P95或稳定性。裁剪只有1次，只能说明该次流程通过，不当作一般加速结论。真机性能/多次数/后台重启仍未测。7m16s是APK构建时间，与OCR速度无关。
 
 ## 10. 内存情况
 
-状态：API 35基线的原生采样为 `verified_android`。采样间隔50ms，数字是OCR期间采样观测最高值；不是瞬时绝对峰值RSS，不是APK或模型文件大小。
+状态：最终API35实际原生采样 `verified_android`。采样间隔50ms，记录OCR期间观测最高PSS/Java/native heap；不是瞬时绝对峰值RSS。
 
 | 实际运行 | 观测最高PSS（KiB / MiB） | 观测最高Java heap（MiB） | 观测最高native heap（MiB） | 样本数 |
 | --- | ---: | ---: | ---: | ---: |
-| 图1第一次 | 529,040 / 516.64 | 51.11 | 265.81 | 1,802 |
-| 图1第二次 | 659,530 / 644.07 | 56.61 | 404.81 | 1,703 |
-| 图2第一次 | 695,363 / 679.07 | 52.76 | 434.25 | 987 |
-| 图2第二次 | 689,870 / 673.70 | 50.10 | 434.35 | 999 |
+| 图1首次冷加载 | 529,067 / 516.67 | 56.03 | 265.13 | 1,752 |
+| 图1第二次 | 657,407 / 642.00 | 53.94 | 404.67 | 1,685 |
+| 图2第一次（模型已加载） | 687,791 / 671.67 | 46.66 | 435.06 | 970 |
+| 图2第二次 | 693,719 / 677.46 | 49.22 | 435.23 | 976 |
+| 图1旋转往返后 | 711,565 / 694.89 | 53.70 | 449.47 | 1,675 |
+| 图1矩形裁剪后 | 718,063 / 701.23 | 47.74 | 450.33 | 1,465 |
 
-MiB按1024换算，原始字节/KB字段全部在native JSON和session中。PSS包含该Android进程的模型、UI和runtime等观测开销，不能把Java/native heap相加后当全进程总RAM，也不能把翻译宿主机器的RAM当App测量。
+本轮最大采样PSS为 **718,063 KiB / 701.23 MiB**。前次4次基线最高为695,363 KiB/679.07MiB；本次增加了变换/图片和2次OCR，不能仅比较两次最大值推断永久增长或泄漏。
 
-本次连续4次过程中PSS/native heap有增加，需要进一步研究缓存、模型workspace和生命周期；**仅这些采样不能证明内存泄漏或永久增长**。翻译层仿真环境不能代表ARM64手机内存。采样可能漏过短时尖峰；`dumpsys meminfo`另保留为一次快照，不能称绝对峰值。真机、长序列、后台恢复和关闭session后的释放情况未测。
+原始字节/KiB字段完整在JSON。PSS包含App的UI、图片、模型、runtime等；Java/native heap不简单相加为全进程RAM，宿主模拟器用量不等于App内存。短时尖峰可能漏采。`dumpsys meminfo`是一次快照，不是峰值。
 
-## 11. 当前已知错误、限制和未测项目
+同进程6次采样显示PSS/native heap增加，需要真机长序列、session释放和生命周期检查；这些数据不能独自证明泄漏。翻译层环境的内存不代表ARM64手机。APK/模型文件大小也不作为运行内存。
 
-| 项目 | 类型 | 实际状态与影响 |
+## 11. 当前已知问题、限制和未测项目
+
+| 项目 | 类型 | 最终实际状态与影响 |
 | --- | --- | --- |
-| 官方模型本地下载失败 | 构建环境，已解决 | Actions直接获取官方BOS，固定模型/config/字典摘要通过并可信取回；没有第三方替代、代理/TLS绕过或运行时下载 |
-| Gradle发布配置/注册 | 原生配置，已验证 | library versionName/versionCode、autolinking类修复；真实release原生编译及API35实际调用均通过 |
-| RN AAR本地重定向受限 / sdkmanager PATH | 构建环境/脚本，已解决release | Actions真实编译成功；SDK绝对路径发现修复。不等于所有构建机网络都畅通 |
-| aapt2 minSdk字段误判 | 检查脚本，已验证修复 | 新APK实际完整检查通过；首次原始错误JSON未修改 |
-| 无KVM模拟器 / KVM权限race | 测试环境 | 早期失败保留；后续KVM Android已启动并真实执行模型 |
-| fixture MediaProvider别名路径 | helper，已实证修复 | canonical `/storage/emulated/0` 后两图成功索引 |
-| SoLoader缺库 | 旧包打包/翻译环境兼容性，已实证修复 | 新包extractNativeLibs true、实际4库安装摘要一致，API35真实App/模型执行；旧4bf包失败记录不改 |
-| API30 ARM translation SIGILL | 旧Android镜像执行兼容性 | 同一3dd包在API30失败；官方API35 bridge0.2.3完成4次基线。不能外推真机或所有版本 |
-| Android15 PhotoPicker不暴露文件名 | helper，已实证修复 | `f113662`走实际系统picker路径，本地两图导入成功；没有往App增加测试后门 |
-| 旋转按钮定位 | helper，本次仍待重测 | 4次OCR后“右转90°”匹配失败；`a0c85d5`已修复工具，但旋转/裁剪不能提前记通过 |
-| OCR错字/漏字/行列混合 | 已观测模型/检测与图像问题 | 钠钙合行、%2、单位J丢失和小字错文原样保留；高confidence也可能错。尚无代表性准确率或食品业务成绩 |
-| EXIF2–8 / 镜像 | 未测 | 两张样本仅缺失EXIF→有效1；源码支持不等于方向修复实测 |
-| OCR速度和内存适用范围 | 限制 | 本次仅翻译层仿真数据，识别推理耗时较高，4次不足评稳定性；不代表ARM64手机 |
-| 冷启动/生命周期/长序列 | 部分未测 | 一次首次离线模型加载及同进程重复通过；后台、强制停止重启、长期内存释放未完整验证 |
-| UI框精度/全部confidence可读性 | 部分验证 | 实际原文、图像框和时间截图；JSON完整坐标与分数。未逐框标注IoU或逐块屏幕可读性评分 |
-| 测试集/真机 | 限制/未测 | 两张归档照片，不是本轮新拍；多类别、反光、模糊、暗光及ARM64真机均不足 |
-| 实验签名 | 分发限制 | 临时release-mode测试证书，非商店签名；不同构建可能需卸载旧包，卸载清除实验记录 |
-| 食品、扫码、SQLite、AI | 本轮范围 | 只有必要独立模型/接口，没有开始Phase2，不作为识别fallback |
+| 官方模型本地下载失败 | 构建环境，已解决交付 | Actions直接获取官方BOS，固定ONNX/config/字典SHA通过并可信取回；无第三方文件或运行时下载 |
+| Gradle发布配置/原生注册 | 已验证修复 | library版本与autolinking类修复；真实release编译、API35实际模块调用/模型初始化通过 |
+| RN AAR本地重定向/SDK工具PATH | 构建环境/脚本 | Actions真实编译完成，SDK绝对路径修复；不宣称本地网络策略全放行 |
+| aapt2字段误判 | 已验证修复 | 当前实际APK完整检查通过，首次错误JSON保留 |
+| 无KVM/权限race/MediaProvider别名 | 历史测试环境/helper | 后续KVM启动、canonical索引均实证通过，不删除旧失败 |
+| SoLoader缺库 | 旧包打包兼容性，已修复 | 新包解出4个ARM64库，安装hash与APK一致，模型实际执行；旧4bf失败结论保留 |
+| API30 ARM translation SIGILL | 旧镜像执行兼容性 | 同一3dd包API30失败；API35 bridge0.2.3完成6次流程。不是所有Android版本或真机已通过 |
+| Android15 picker/旋转控件定位 | helper，已实证修复 | 仅改测试工具；最终生产UI相册、右转/左转、裁剪/OCR真实通过，无App测试后门 |
+| OCR错文/NRV合行/单位漏字 | 已观测模型/检测/图像质量 | 全图%2/钠钙、裁剪860%28、高分错字及图2漏J原样保留；业务营养解析未实现，不猜数值 |
+| 单次90°横置图OCR/精确像素评估 | 未测/边界 | 90°变换UI、尺寸、matrix/PNG真实通过；OCR在往返恢复后执行。没有独立像素解码评分/每框IoU |
+| EXIF2–8/镜像 | 未测 | 样本只缺失EXIF→有效1，源码支持不等于多方向实际验收 |
+| 手机速度/内存/兼容性 | 未测 | 全部现有成绩为API35仿真翻译层；ARM64真机未执行，不称性能达标 |
+| 生命周期/长序列 | 未完整测 | 首次离线初始化、同进程6次通过；后台、强制停止/重启、长期内存释放未完整验证 |
+| 测试集覆盖 | 限制 | 2张有许可归档包装，不是本轮新拍；多数类别、反光/模糊/暗光不足，未计算代表性准确率 |
+| 本地取得证据范围 | 实证边界 | 下载小型真实记录/变换PNG；完整48.96MB ZIP未本地下载。CI6份全导出检查通过，本地实物/字段核验单独记录 |
+| 实验签名 | 分发限制 | 临时release-mode证书，非正式商店签名；不同构建可能需卸载旧包，卸载清除实验记录 |
+| 食品库/扫码/SQLite/AI | 本轮范围 | 仅独立接口/模型，未开始Phase2，也不作为OCR fallback |
 
-OCR与理解保持分离：rawText/blocks/confidence/原图和变换永远保留。没有在线兜底，没有用AI、食品数据库或人工目读覆盖错误数字；当前原文错误不会被包装成“已确认食品事实”。
+原文和所有块永久保留；没有AI、数据库或人工值覆盖错文，confidence不是准确概率。原始OCR与未来解释/用户确认保持分离。
 
 ## 12. 下一阶段建议与停止边界
 
-本轮已证明“官方国产PaddleOCR在记录的真实Android仿真环境、完全离线条件下完成中文包装识别”。目前仍是 **Phase 1部分验收通过**：下一步先核查已在执行的同APK旋转/裁剪重测原始记录，不能因为已有4次基线就开始Phase2。
+**本轮Phase1核心技术验证已完成：官方国产模型在实际Android App中，断网首次启动后经生产UI执行中文OCR，原文/框/分数/测量留存，并实际验证手动旋转、旋转往返后和裁剪后识别。** 最终CI设备job成功，但这是明确环境与有限样本的技术证明，不是ARM64真机、全方向EXIF、全部食品或正式生产发布验收。
 
-Phase1尚需：旋转往返与矩形裁剪后实际图/变换/框/OCR，EXIF多方向和镜像样本，至少一台ARM64真机首次离线使用及性能，更多有权使用的中国食品手机照片，后台/重启和长序列内存测量。现有错字、表格分行和高分误识别应作为后续图像/检测质量评估的输入，不靠修改原文掩盖。
+优先补充真实ARM64手机离线运行与性能、多方向EXIF/镜像、有权使用的真实中国食品手机照片、后台/重启和长序列内存；现有高分错文/NRV合行需作为图像和检测评估输入，不靠修改原文掩盖。不要从仿真耗时推算手机速度。
 
-只有用户确认Phase2后，才建议进入本地食品记录、营养表业务解析、用户确认/修改、SQLite和独立条码扫描。解析/修订记录引用OCR原始证据，不覆盖rawText，不用NRV%反推值充当照片原文。中国中央食品服务仍仅有未来接口，没有建设云服务、批量录库、药品、AI、提醒或完整主页。
+完成本轮后停止，不继续Phase2。只有用户确认后才建议实现本地食品记录、营养业务解析、用户确认/修改、SQLite和独立条码。解析/修订引用原始OCR，不覆盖rawText、不用NRV%反推值冒充包装原文。中国中央食品服务仅保留未来接口，没有建设云服务、批量录库、药品、AI、提醒或完整主页。
 
-Phase1最终结论需实际APK和各项Android执行证据共同确定。本报告中待测/部分通过的内容不标完成；本轮结束后停止，等待用户确认后续范围。
+最终结论按实证分开：Phase0工程/图标/依赖审计通过；Phase1 API35离线OCR技术链与所测试旋转/裁剪通过；真机、多方向EXIF、代表性质量和正式发布仍未验证。等待用户确认后续范围。
 
 ## 附录：原始证据与复核入口
 
@@ -479,20 +536,24 @@ Phase1最终结论需实际APK和各项Android执行证据共同确定。本报�
 | 第二次 RN 启动崩溃原始日志截取 | `docs/evidence/phase1/device-attempt-37774801831/startup-crash-excerpt.txt`，含源 SHA 与行号 |
 | 新包实际安装库摘要、SIGILL 前后 session | `docs/evidence/phase1/device-attempt-37776005573/{session.json,build-identity.json}` |
 | 新包翻译层崩溃原始 tombstone 截取 | `docs/evidence/phase1/device-attempt-37776005573/tombstone-excerpt.txt`，含完整源 SHA 与行号 |
-| API35实际离线4次基线与helper失败 | `docs/evidence/phase1/device-attempt-37779323597/session.json`、`build-identity.json`、`artifact-identity.json` |
-| 实际全量rawText/每块几何/分数/测量 | 同目录 `photo-1-run-{1,2}-native.json`、`photo-2-run-{1,2}-native.json` 与对应原始 `record.json` |
-| 实际UI图像框与原文展示 | 同目录 `photo-{1,2}-actual-{boxes,text}.png` |
+| 最终API35成功的6次离线OCR与3项图片检查 | `docs/evidence/phase1/device-37781340401/{session.json,build-identity.json,artifact-identity.json}` |
+| 最终全量rawText/每块几何/分数/测量 | 同目录 `photo-{1,2}-run-{1,2}-native.json`、`processing-{roundtrip,crop}-run-native.json` 与6份对应原始 `record.json` |
+| 最终实际UI图像框/原文和旋转/裁剪截图 | 同目录 `photo-{1,2}-actual-{boxes,text}.png`、`processing-*.png` |
+| 最终图片变换metadata/matrix | 同目录 `processing-{baseline,right-90,roundtrip,crop}-image.json` |
+| 最终CI对6份完整导出的一致性检查 | `docs/evidence/phase1/device-37781340401/evidence-consistency.json` |
+| 最终本地6份字段与实际保留图核验/边界 | `docs/evidence/phase1/device-37781340401/local-record-and-retained-image-check.json`、`README.md` |
+| 历史API35离线4次基线与helper失败 | `docs/evidence/phase1/device-attempt-37779323597/session.json`、`build-identity.json`、`artifact-identity.json` |
 | 实际原样processed PNG及原图关系 | `docs/evidence/phase1/actual-processed-images/` 与 `sources.json` |
-| 4次真实导出的一致性复核 | `docs/evidence/phase1/device-attempt-37779323597/baseline-evidence-consistency-local.json` |
+| 历史4次真实导出的一致性复核 | `docs/evidence/phase1/device-attempt-37779323597/baseline-evidence-consistency-local.json` |
 | 实际 resolved release 依赖原始报告 | `docs/evidence/phase1/release-dependencies-local-64808a5.txt` |
 | 图片原字节、归属与真实覆盖范围 | `tests/fixtures/china-food/manifest.json`、`README.md`、两份 `.source.json` |
 | Android 实测方法与证据要求 | `docs/TestProtocol.md` |
 | 生产与构建供应链分开审计 | `docs/MainlandDependencyAudit.md` |
 
-复核已推送修改范围：在新仓库运行 `git diff --name-status a3864c6 0008669`。当前APK、历史失败和4次基线原始记录均已提交保存；本报告更新等待统一提交。同APK后续旋转/裁剪重测需新的session，不能覆盖这些原始成功或失败证据。
+复核已推送修改范围：在新仓库运行 `git diff --name-status a3864c6 10f0ea9`。当前APK身份、历史失败、4次历史基线和最终6次成功的原始记录均已提交并推送保存；本报告最终更新等待统一提交。App源目录从当前APK的 `339a669` 至证据快照 `10f0ea9` 无修改，测试工具来源另记为 `a0c85d5`；不把后续文档/工具提交伪装成APK build source，也不覆盖原始成功或失败证据。
 
 <details>
-<summary>已推送快照 0008669：实际 212 个路径（新增 211，修改 1，删除0）</summary>
+<summary>已推送快照 10f0ea9：实际 259 个路径（新增 258，修改 1，删除0）</summary>
 
 ```text
 A	.github/workflows/phase1-device-retest.yml
@@ -546,9 +607,56 @@ A	docs/OcrModelManifest.md
 A	docs/Phase1AcceptanceReport.md
 A	docs/Phase1Progress.md
 A	docs/TestProtocol.md
+A	docs/evidence/phase1/actual-processed-images/3a90d9e6ddd6e89ebc135168d7bdafe42df2d281f7ce996b2f79f44384abc138.png
 A	docs/evidence/phase1/actual-processed-images/45b7133d873e7965306bd2caafa0752479617cd88d4857597fb203a9daf5e5ea.png
 A	docs/evidence/phase1/actual-processed-images/ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a.png
+A	docs/evidence/phase1/actual-processed-images/c4d5276838e6b8d6d0f098a6ce93750d5b65f51125f62dc9e909f835f31bbf71.png
 A	docs/evidence/phase1/actual-processed-images/sources.json
+A	docs/evidence/phase1/device-37781340401/README.md
+A	docs/evidence/phase1/device-37781340401/artifact-identity.json
+A	docs/evidence/phase1/device-37781340401/build-identity.json
+A	docs/evidence/phase1/device-37781340401/device-job-excerpt.txt
+A	docs/evidence/phase1/device-37781340401/evidence-consistency.json
+A	docs/evidence/phase1/device-37781340401/final-connectivity.txt
+A	docs/evidence/phase1/device-37781340401/final-ipv4-rules.txt
+A	docs/evidence/phase1/device-37781340401/final-ipv6-rules.txt
+A	docs/evidence/phase1/device-37781340401/final-properties.txt
+A	docs/evidence/phase1/device-37781340401/initial-ipv4-rules.txt
+A	docs/evidence/phase1/device-37781340401/initial-ipv6-rules.txt
+A	docs/evidence/phase1/device-37781340401/installed-package.txt
+A	docs/evidence/phase1/device-37781340401/ip6tables-rules.txt
+A	docs/evidence/phase1/device-37781340401/iptables-rules.txt
+A	docs/evidence/phase1/device-37781340401/kvm.txt
+A	docs/evidence/phase1/device-37781340401/last-window.xml
+A	docs/evidence/phase1/device-37781340401/local-record-and-retained-image-check.json
+A	docs/evidence/phase1/device-37781340401/meminfo-snapshot.txt
+A	docs/evidence/phase1/device-37781340401/photo-1-actual-boxes.png
+A	docs/evidence/phase1/device-37781340401/photo-1-actual-text.png
+A	docs/evidence/phase1/device-37781340401/photo-1-run-1-native.json
+A	docs/evidence/phase1/device-37781340401/photo-1-run-1/record.json
+A	docs/evidence/phase1/device-37781340401/photo-1-run-2-native.json
+A	docs/evidence/phase1/device-37781340401/photo-1-run-2/record.json
+A	docs/evidence/phase1/device-37781340401/photo-2-actual-boxes.png
+A	docs/evidence/phase1/device-37781340401/photo-2-actual-text.png
+A	docs/evidence/phase1/device-37781340401/photo-2-run-1-native.json
+A	docs/evidence/phase1/device-37781340401/photo-2-run-1/record.json
+A	docs/evidence/phase1/device-37781340401/photo-2-run-2-native.json
+A	docs/evidence/phase1/device-37781340401/photo-2-run-2/record.json
+A	docs/evidence/phase1/device-37781340401/processing-baseline-image.json
+A	docs/evidence/phase1/device-37781340401/processing-crop-actual-boxes.png
+A	docs/evidence/phase1/device-37781340401/processing-crop-actual-text.png
+A	docs/evidence/phase1/device-37781340401/processing-crop-image.json
+A	docs/evidence/phase1/device-37781340401/processing-crop-preview-ui.png
+A	docs/evidence/phase1/device-37781340401/processing-crop-run-native.json
+A	docs/evidence/phase1/device-37781340401/processing-crop-run/record.json
+A	docs/evidence/phase1/device-37781340401/processing-right-90-image.json
+A	docs/evidence/phase1/device-37781340401/processing-right-90-ui.png
+A	docs/evidence/phase1/device-37781340401/processing-roundtrip-image.json
+A	docs/evidence/phase1/device-37781340401/processing-roundtrip-run-native.json
+A	docs/evidence/phase1/device-37781340401/processing-roundtrip-run/record.json
+A	docs/evidence/phase1/device-37781340401/processing-roundtrip-ui.png
+A	docs/evidence/phase1/device-37781340401/root-identity.txt
+A	docs/evidence/phase1/device-37781340401/session.json
 A	docs/evidence/phase1/device-attempt-37773783460/build-identity.json
 A	docs/evidence/phase1/device-attempt-37773783460/disabled-packages.txt
 A	docs/evidence/phase1/device-attempt-37773783460/final-ipv4-rules.txt
@@ -708,7 +816,5 @@ A	tests/ocr-native-result.test.mjs
 A	tests/test_model_acquisition.py
 A	tsconfig.json
 ```
-
-本报告当前更新不改变原始JSON、实际图片或已有失败证据。后续重测结果单独保留，再按其真实结果更新结论。
 
 </details>

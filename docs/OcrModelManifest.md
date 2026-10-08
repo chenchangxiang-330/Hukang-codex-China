@@ -208,9 +208,18 @@ artifact，核对 ZIP 摘要，再按仓库固定来源锁严格导入官方 ONN
 状态现在是 verified_artifacts。取得模型未绕过受管代理，没有第三方镜像、
 APK 提取、占位模型或修改字典。
 
-**尚未验证：** 首轮 Actions 未产出 APK；真实 Android 模型初始化、离线 OCR、
-原文／框／confidence、时间和峰值内存需在实际设备或模拟器上另行执行。
-本文件不因资产校验通过而标记这些设备功能已完成。
+**后续 APK 和 Android 实际验证：** release run `37776005573` / source `339a669`
+已成功生成 58,709,659 bytes 的 ARM64 APK，摘要
+`3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e`。
+实际 APK 中模型及原始 YAML 与本文件固定 SHA 一致，最终 Manifest 没有 INTERNET。
+device run `37781340401` 在 API 35 官方 ARM 翻译模拟器中，首次启动前断网，实际
+加载打包模型并完成六次中文 OCR，包括旋转往返和裁剪后的识别。原生输出的模型
+摘要、原文／框／confidence、计时及 50 ms 采样内存均已保存，见
+[实际设备证据](evidence/phase1/device-37781340401/README.md) 和
+[验收报告](Phase1AcceptanceReport.md)。没有改模型或字典，没有在线兜底。
+
+**仍未验证：** ARM64 真机、Android 26、多方向 EXIF、绝对内存峰值、代表性准确率
+和长期稳定性。上述实际仿真执行成绩不能作为手机性能或完整生产验收结论。
 
 即使取得模型并校验成功，也只代表资产身份、配置和字典通过校验。
 真实 Android 的模型初始化、OCR 输出、时间、峰值内存以及食品实拍准确率
