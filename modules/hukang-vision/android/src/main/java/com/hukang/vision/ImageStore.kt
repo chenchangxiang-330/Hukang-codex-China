@@ -50,7 +50,10 @@ internal class ImageStore(private val context: Context) {
         inSampleSize = sample
         inPreferredConfig = Bitmap.Config.ARGB_8888
       }) ?: throw IllegalArgumentException("Image decoding failed")
-      val orientation = ExifInterface(source).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+      val reportedOrientation = ExifInterface(source).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+      // EXIF 0 means undefined, and malformed values do not identify a valid
+      // transform. Treat them as normal while preserving the reported value.
+      val orientation = reportedOrientation.takeIf { it in 1..8 } ?: ExifInterface.ORIENTATION_NORMAL
       var oriented: Bitmap? = null
       try {
         val step = orientationMatrix(orientation, bitmap.width, bitmap.height)
@@ -61,7 +64,7 @@ internal class ImageStore(private val context: Context) {
         }
         val operations = listOf(
           mapOf("kind" to "decode", "sampleSize" to sample, "width" to bitmap.width, "height" to bitmap.height),
-          mapOf("kind" to "exif", "orientation" to orientation)
+          mapOf("kind" to "exif", "orientation" to orientation, "reportedOrientation" to reportedOrientation)
         )
         return saveDerived(oriented, mapOf(
           "originalUri" to Uri.fromFile(source).toString(),

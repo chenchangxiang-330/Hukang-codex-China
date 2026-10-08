@@ -15,3 +15,5 @@ artifacts/*
 .env*
 *.log
 dist/
+__pycache__/
+*.pyc

@@ -43,7 +43,7 @@ export function useOcrLab() {
   }, []);
 
   const choosePhoto = useCallback(async () => {
-    const token = start('selecting');
+    const token = start('selecting', false);
     if (token === null) return;
     try {
       const selection = await ImagePicker.launchImageLibraryAsync({
@@ -57,6 +57,7 @@ export function useOcrLab() {
       if (requestGeneration.current !== token) return;
       setImage(prepared);
       setCrop(FULL_CROP);
+      setEvidence(null);
     } catch (cause) {
       if (requestGeneration.current === token) setError(`导入失败：${errorMessage(cause)}`);
     } finally {
@@ -133,8 +134,10 @@ export function useOcrLab() {
         setSavedEvidence(saved);
         setSaveNotice('原图、处理图及真实 OCR JSON 已保存在本机。');
       } catch (cause) {
-        setSavedEvidence(null);
-        setSaveNotice(`OCR 已完成，但证据保存失败：${errorMessage(cause)}`);
+        if (requestGeneration.current === token) {
+          setSavedEvidence(null);
+          setSaveNotice(`OCR 已完成，但证据保存失败：${errorMessage(cause)}`);
+        }
       }
     } catch (cause) {
       if (requestGeneration.current === token) setError(`本地 OCR 失败：${errorMessage(cause)}`);

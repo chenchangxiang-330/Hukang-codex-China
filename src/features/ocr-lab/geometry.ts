@@ -48,5 +48,6 @@ export function cropPercentToPixels(crop: CropPercent, image: Size): Rect {
 }
 
 export function isFullCrop(crop: CropPercent): boolean {
+  if ([crop.x, crop.y, crop.width, crop.height].some((value) => !/^\d+(?:\.\d+)?$/.test(value.trim()))) return false;
   return Number(crop.x) === 0 && Number(crop.y) === 0 && Number(crop.width) === 100 && Number(crop.height) === 100;
 }

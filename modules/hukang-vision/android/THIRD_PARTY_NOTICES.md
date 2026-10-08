@@ -30,7 +30,7 @@ Runtime dependencies (all FOREIGN_OFFLINE_LIBRARY):
   OpenCV 4.5.3 core, Apache-2.0;
   https://github.com/QuickBirdEng/opencv-android and
   https://github.com/opencv/opencv/tree/4.5.3
-- AndroidX ExifInterface 1.3.7 — Apache-2.0;
+- AndroidX ExifInterface 1.4.1 — Apache-2.0; aligned with Expo ImagePicker 57;
   https://developer.android.com/jetpack/androidx/releases/exifinterface
 
 These libraries are used only on the device. This module declares no Android

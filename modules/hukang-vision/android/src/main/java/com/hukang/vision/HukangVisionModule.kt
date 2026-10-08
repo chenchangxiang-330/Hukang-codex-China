@@ -38,9 +38,12 @@ class HukangVisionModule : Module() {
     }
 
     OnDestroy {
-      destroyed.set(true)
-      queue.execute { engine?.release(); engine = null }
-      queue.shutdown()
+      // Module teardown can be requested more than once. Release sessions on
+      // the inference queue, after an in-flight inference has relinquished them.
+      if (destroyed.compareAndSet(false, true)) {
+        queue.execute { engine?.release(); engine = null }
+        queue.shutdown()
+      }
     }
   }
 
@@ -108,8 +111,10 @@ class HukangVisionModule : Module() {
         "blocks" to blocks,
         "page" to 0,
         "imageUri" to uri,
+        "originalImageUri" to metadata["originalUri"],
         "sourceImageHash" to metadata["sourceImageHash"],
         "processedImageHash" to metadata["processedImageHash"],
+        "preprocessingTransform" to metadata["transform"],
         "width" to bitmap.width, "height" to bitmap.height,
         "engineVersion" to "PaddleOCR-v3.7.0-hukang.1/ONNX-Runtime-1.21.1-CPU",
         "modelVersion" to "PP-OCRv5_mobile_det_onnx+PP-OCRv5_mobile_rec_onnx",
@@ -142,6 +147,14 @@ class HukangVisionModule : Module() {
       val actual = context.assets.open("$MODEL_DIRECTORY/$filename").use { ImageStore.sha256(it) }
       require(actual == expected) { "Bundled model SHA-256 mismatch: $kind" }
       verified[kind] = actual
+      // The recognizer dictionary lives in its official YAML. A matching ONNX
+      // hash alone cannot protect decoding from a replaced/reordered dictionary.
+      val configFilename = if (kind == "detector") "detector.yml" else "inference.yml"
+      val expectedConfigHash = models.getJSONObject(kind).getString("configSha256")
+      require(expectedConfigHash.matches(Regex("[0-9a-f]{64}"))) { "Official configuration hash is not locked: $kind" }
+      val actualConfigHash = context.assets.open("$MODEL_DIRECTORY/$configFilename").use { ImageStore.sha256(it) }
+      require(actualConfigHash == expectedConfigHash) { "Bundled configuration SHA-256 mismatch: $kind" }
+      verified["${kind}Config"] = actualConfigHash
     }
     modelHashes = verified.toMap()
   }

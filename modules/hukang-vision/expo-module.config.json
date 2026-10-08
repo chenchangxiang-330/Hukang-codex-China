@@ -1,4 +1,4 @@
 {
   "platforms": ["android"],
-  "android": {"modules": ["expo.modules.hukangvision.HukangVisionModule"]}
+  "android": {"modules": ["com.hukang.vision.HukangVisionModule"]}
 }

@@ -64,7 +64,7 @@ function MemorySummary({ result }: { result: OcrDocument }) {
 export default function OcrLabScreen() {
   const lab = useOcrLab();
   const [viewport, setViewport] = useState({ width: 1, height: 320 });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ evidenceId: string; blockId: string } | null>(null);
   const onPreviewLayout = ({ nativeEvent }: LayoutChangeEvent) => {
     const { width, height } = nativeEvent.layout;
     if (width > 0 && height > 0) setViewport({ width, height });
@@ -75,6 +75,10 @@ export default function OcrLabScreen() {
   ];
   const result = lab.evidence?.ocr;
   const image = lab.image;
+  const selectedId = selection?.evidenceId === lab.evidence?.id ? selection?.blockId : null;
+  const selectBlock = (blockId: string) => {
+    if (lab.evidence) setSelection({ evidenceId: lab.evidence.id, blockId });
+  };
 
   return <SafeAreaView style={styles.safeArea} edges={['bottom']}>
     <Stack.Screen options={{ title: 'OCR Lab', headerShadowVisible: false }} />
@@ -101,7 +105,7 @@ export default function OcrLabScreen() {
           <View onLayout={onPreviewLayout} style={styles.preview}>
             <Image source={{ uri: image.uri }} resizeMode="contain" style={StyleSheet.absoluteFill} />
             {result?.blocks.map((block, index) => <Pressable
-              key={block.id} onPress={() => setSelectedId(block.id)}
+              key={block.id} onPress={() => selectBlock(block.id)}
               accessibilityLabel={`文字块 ${index + 1}：${block.text}，confidence ${confidenceText(block)}`}
               style={[styles.box, mapRectToPreview(block.boundingBox, image, viewport), selectedId === block.id && styles.selectedBox]}
             >
@@ -149,7 +153,7 @@ export default function OcrLabScreen() {
             <View style={styles.rawText}><Text selectable style={styles.rawTextContent}>{result.rawText || '未识别到文字。可裁剪文字区域、旋转或换一张更清晰的照片后重试。'}</Text></View>
             <Heading title="文字块与 confidence" note="confidence 是模型分数，不能当作已校准的正确概率。点按列表可突出图片上的文字框。" />
             {result.blocks.map((block, index) => <Pressable
-              key={block.id} onPress={() => setSelectedId(block.id)}
+              key={block.id} onPress={() => selectBlock(block.id)}
               style={[styles.blockRow, selectedId === block.id && styles.selectedRow]}
               accessibilityRole="button"
             >
