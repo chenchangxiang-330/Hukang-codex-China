@@ -401,6 +401,18 @@ def main():
             except (RuntimeError, sqlite3.Error) as error:
                 last_error = str(error)
             time.sleep(1)
+        # Saving errors are rendered above a long review form. Capture the
+        # production UI outcome instead of reducing every failure to count=0.
+        screenshot(label + "-timeout")
+        for attempt in range(20):
+            root = hierarchy()
+            (output / (label + f"-failure-{attempt}.xml")).write_bytes(ET.tostring(root, encoding="utf-8"))
+            failure = locate(root, r"保存失败|尚不能这样保存|删除失败")
+            if failure:
+                screenshot(label + "-error")
+                raise RuntimeError("Production UI reported: " + str(failure[0].attrib))
+            shell("input", "swipe", "540", "450", "540", "1600", "350")
+            time.sleep(0.4)
         raise RuntimeError("Production save did not produce the expected SQLite records: " + str(last_error))
 
     def food_from(snapshot, identifier):
