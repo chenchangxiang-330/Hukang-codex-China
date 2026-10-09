@@ -457,7 +457,15 @@ def main():
 
     def open_food(identifier):
         tap_match("^食品记录-" + re.escape(identifier) + "$", scroll=True)
-        tap_match("^食品名称$", scroll=True, direction="down")
+        # Wait for the production review form without tapping its first
+        # field. Tapping the EditText here opens the IME and can move the
+        # bottom delete action outside the visible viewport.
+        for _ in range(15):
+            require_app_process()
+            if locate(hierarchy(), r"^食品名称$"):
+                return
+            time.sleep(1)
+        raise RuntimeError("Food review form did not open for " + identifier)
 
     def fill_confirmed_milk(column_id):
         # Explicit human transcription from the photographed label. These are
@@ -701,6 +709,10 @@ def main():
         relaunch("before-delete")
         tap_match(r"^打开本地食品$|^本地食品$", scroll=True, direction="up")
         open_food(food_id)
+        # Ensure the real form, rather than an input method window, receives
+        # the delete action. The subsequent swipe reaches the bottom action.
+        shell("input", "keyevent", "KEYCODE_BACK")
+        time.sleep(1)
         tap_match(r"^删除食品记录$", scroll=True, direction="down")
         tap_match(r"^删除$", tries=5)
         for _ in range(20):
