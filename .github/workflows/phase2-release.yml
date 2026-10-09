@@ -147,7 +147,7 @@ jobs:
 
       - name: Split the verified APK for trusted developer transfer
         shell: bash
-        run: python scripts/split-apk.py
+        run: python scripts/split-apk.py --apk artifacts/hukang-china-phase2-arm64-release.apk
 
       - name: Publish transfer manifest
         if: hashFiles('artifacts/apk-transfer/manifest.json') != ''

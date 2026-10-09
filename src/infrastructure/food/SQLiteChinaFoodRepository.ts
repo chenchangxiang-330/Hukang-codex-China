@@ -58,7 +58,7 @@ const evidenceFiles: FoodEvidenceFiles = {
       writeNewJson(ocrDocument, evidence.ocr);
       writeNewJson(new File(directory, 'evidence.json'), evidence);
       new Directory(directory, 'revisions').create();
-      return { sourceEvidence: record.evidence, evidence, folderUri: directory.uri };
+      return { sourceEvidence: record.evidence, evidence, parsed: record.parsed, folderUri: directory.uri };
     } catch (error) {
       try { if (directory.exists) directory.delete(); }
       catch (cleanupError) { throw new Error(`创建食品证据失败且清理未完成：${String(error)}；${String(cleanupError)}`); }
@@ -77,7 +77,7 @@ const evidenceFiles: FoodEvidenceFiles = {
     await verifyImage(processed, stored.evidence.image.processedImageHash);
     for (const [filename, expected] of [
       ['raw-ocr.json', stored.sourceEvidence], ['evidence.json', stored.evidence],
-      ['ocr-document.json', stored.evidence.ocr],
+      ['ocr-document.json', stored.evidence.ocr], ['parsed-nutrition.json', stored.parsed],
     ] as const) {
       const file = new File(directory, filename);
       if (!file.exists || canonicalFoodJson(JSON.parse(await file.text())) !== canonicalFoodJson(expected)) {

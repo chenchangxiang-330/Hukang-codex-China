@@ -50,7 +50,7 @@ test('SQLite store persists draft, immutable evidence, revisions and cascade del
   const database = new DatabaseSync(':memory:');
   const writes = [], removed = [];
   const files = {
-    async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, folderUri: `food://${input.id}` }; },
+    async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}` }; },
     async validateStored() {},
     async writeRevision(id, folder, revision) { writes.push({ id, folder, revision }); },
     async removeRevision() {},

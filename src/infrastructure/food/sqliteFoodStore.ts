@@ -1,6 +1,6 @@
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
-import type { FoodRevision, FoodScanRecord, FoodSummary } from '../../domain/food/scan';
+import type { FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
 import { validateFoodReview } from '../../domain/food/review';
 
 export type SqlValue = string | number | null;
@@ -15,6 +15,7 @@ export interface FoodSqlDriver {
 export interface MaterializedFoodEvidence {
   readonly sourceEvidence: OcrEvidence;
   readonly evidence: OcrEvidence;
+  readonly parsed: ParsedNutritionLabel;
   readonly folderUri: string;
 }
 export interface FoodEvidenceFiles {
@@ -216,7 +217,8 @@ export function createSQLiteFoodStore(
         }
         if (!previous && record.revisions.length !== 0) throw new Error('新食品记录不能携带伪造的历史版本。');
         const materialized: MaterializedFoodEvidence = existing
-          ? { sourceEvidence: JSON.parse(existing.source_evidence_json), evidence: JSON.parse(existing.persisted_evidence_json), folderUri: existing.folder_uri }
+          ? { sourceEvidence: JSON.parse(existing.source_evidence_json), evidence: JSON.parse(existing.persisted_evidence_json),
+            parsed: JSON.parse(existing.parsed_json), folderUri: existing.folder_uri }
           : await files.materialize(record);
         const recordedAt = now();
         assertDate(recordedAt);
