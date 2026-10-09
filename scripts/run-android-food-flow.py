@@ -103,6 +103,12 @@ def main():
             require_app_process()
             root = hierarchy()
             found = locate(root, pattern)
+            # React Native's accessibility dump includes off-screen children
+            # with coordinates far outside the viewport. Never tap one of
+            # those nodes; scroll until the real control is visible.
+            if found and not (found[1][0] < 1080 and found[1][2] > 0
+                              and found[1][1] < 1920 and found[1][3] > 0):
+                found = None
             if found:
                 node, bounds = found
                 shell("input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
