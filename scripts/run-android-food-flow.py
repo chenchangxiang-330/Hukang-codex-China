@@ -417,7 +417,7 @@ def main():
 
     def open_food(identifier):
         tap_match("^食品记录-" + re.escape(identifier) + "$", scroll=True)
-        tap_match("^食品名称$", scroll=True, direction="up")
+        tap_match("^食品名称$", scroll=True, direction="down")
 
     def fill_confirmed_milk(column_id):
         # Explicit human transcription from the photographed label. These are
@@ -563,7 +563,7 @@ def main():
                 choose_photo(fixtures[index + 1])
         native = native_results[-1]
         screenshot("food-ocr-before-review")
-        tap_match(r"^食品营养核对$", scroll=True, direction="up")
+        tap_match(r"^食品营养核对$", scroll=True, direction="down")
         require_app_process(wait_seconds=10)
         screenshot("food-review-draft")
 
@@ -621,7 +621,7 @@ def main():
                 prefix = "营养" + column_id
                 # Prefer an explicit per-100 basis. It avoids introducing a
                 # serving size that the photograph may not state.
-                basis = locate(review_root, r"^" + re.escape(prefix + r"-计量基准-(?:per_100g|per_100ml)") + r"$")
+                basis = locate(review_root, r"^" + re.escape(prefix + "-计量基准-") + r"(?:per_100g|per_100ml)$")
                 if not basis:
                     continue
                 tap_match(r"^" + re.escape(prefix + "-计量基准-") + r"(?:per_100g|per_100ml)$", scroll=True)

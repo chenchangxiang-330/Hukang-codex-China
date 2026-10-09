@@ -94,6 +94,9 @@ export default function OcrLabScreen() {
         </View>
       </View>
       <View style={styles.badges}><Text style={styles.badge}>完全离线</Text><Text style={styles.badge}>PP-OCRv5 mobile</Text><Text style={styles.badge}>原文保留</Text></View>
+      <View style={styles.actionRow}>
+        <Action title="打开本地食品" onPress={() => router.push('/foods')} />
+      </View>
 
       <View style={styles.card}>
         <Heading title="01 选择照片" note="选择食品包装、配料表或营养表的真实照片。" />
