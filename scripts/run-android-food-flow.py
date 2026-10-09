@@ -457,15 +457,11 @@ def main():
 
     def open_food(identifier):
         tap_match("^食品记录-" + re.escape(identifier) + "$", scroll=True)
-        # Wait for the production review form without tapping its first
-        # field. Tapping the EditText here opens the IME and can move the
-        # bottom delete action outside the visible viewport.
-        for _ in range(15):
-            require_app_process()
-            if locate(hierarchy(), r"^食品名称$"):
-                return
-            time.sleep(1)
-        raise RuntimeError("Food review form did not open for " + identifier)
+        # The review form has its own inner ScrollView. Its first field may be
+        # outside the current viewport even though the form is open; set_text
+        # and tap_match below perform the real scroll-to-control operation.
+        require_app_process(wait_seconds=10)
+        time.sleep(1)
 
     def fill_confirmed_milk(column_id):
         # Explicit human transcription from the photographed label. These are
