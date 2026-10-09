@@ -706,9 +706,8 @@ def main():
         tap_match(r"^打开本地食品$|^本地食品$", scroll=True, direction="up")
         open_food(food_id)
         # Ensure the real form, rather than an input method window, receives
-        # the delete action. The subsequent swipe reaches the bottom action.
-        shell("input", "keyevent", "KEYCODE_BACK")
-        time.sleep(1)
+        # the delete action. open_food does not focus an input, so sending a
+        # back key here would leave the review form and return to the list.
         tap_match(r"^删除食品记录$", scroll=True, direction="down")
         tap_match(r"^删除$", tries=5)
         for _ in range(20):
