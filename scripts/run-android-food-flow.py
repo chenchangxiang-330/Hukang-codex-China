@@ -617,9 +617,12 @@ def main():
                              for label in [node.attrib.get("content-desc", "")]
                              for match in [re.search(r"^营养(.+)-计量基准$", label)] if match})
         if column_ids:
-            manual_by_nutrient = {"energy": ("309", "kJ", "4"), "protein": ("3.6", "g", "6"),
-                                  "fat": ("4.4", "g", "7"), "carbohydrate": ("5.0", "g", "2"),
-                                  "sodium": ("58", "mg", "3")}
+            # These are the values visibly printed on the second fixture
+            # (the snack label). The energy unit is deliberately entered as
+            # kJ to resolve the OCR text "2075千焦(k)" during human review.
+            manual_by_nutrient = {"energy": ("2075", "kJ", "25"), "protein": ("21.0", "g", "35"),
+                                  "fat": ("37.7", "g", "63"), "carbohydrate": ("19.0", "g", "6"),
+                                  "sodium": ("1248", "mg", "62")}
             for column_id in column_ids:
                 prefix = "营养" + column_id
                 # Prefer an explicit per-100 basis. It avoids introducing a
