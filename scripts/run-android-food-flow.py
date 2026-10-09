@@ -613,9 +613,12 @@ def main():
         tap_match(r"^打开本地食品$|^本地食品$", scroll=True, direction="up")
         open_food(food_id)
         review_root = hierarchy()
+        # The native hierarchy exposes the selectable radio options, whose
+        # labels end in the selected basis value; the parent View itself does
+        # not carry the column label. Extract IDs from those real controls.
         column_ids = sorted({match.group(1) for node in review_root.iter("node")
                              for label in [node.attrib.get("content-desc", "")]
-                             for match in [re.search(r"^营养(.+)-计量基准$", label)] if match})
+                             for match in [re.search(r"^营养(.+)-计量基准-(?:per_100g|per_100ml|per_serving|unknown)$", label)] if match})
         if column_ids:
             # These are the values visibly printed on the second fixture
             # (the snack label). The energy unit is deliberately entered as

@@ -42,6 +42,10 @@ export default function FoodReviewScreen() {
   const [focusedBlockIds, setFocusedBlockIds] = useState<readonly string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [dirty, setDirty] = useState(false);
+  // A persisted record carries at least its creation revision. Keeping this
+  // fallback makes the destructive action available after a cold-start route
+  // restore even if Expo Router temporarily omits the query parameter.
+  const persistedFoodId = foodId ?? (record && record.revisions.length > 0 ? record.id : undefined);
 
   useEffect(() => {
     let active = true;
@@ -92,13 +96,13 @@ export default function FoodReviewScreen() {
   };
 
   const deleteRecord = () => {
-    if (!foodId || saving) return;
+    if (!persistedFoodId || saving) return;
     Alert.alert('删除食品记录？', '将删除本机这条食品记录及其专属图片证据，此操作无法撤销。', [
       { text: '取消', style: 'cancel' },
       { text: '删除', style: 'destructive', onPress: () => {
         setSaving(true);
         setError(null);
-        void chinaFoodRepository.deleteFood(foodId).then(() => router.replace('/foods'))
+        void chinaFoodRepository.deleteFood(persistedFoodId).then(() => router.replace('/foods'))
           .catch((cause: unknown) => setError(`删除失败：${foodError(cause)}`)).finally(() => setSaving(false));
       } },
     ]);
@@ -153,7 +157,7 @@ export default function FoodReviewScreen() {
           <FoodAction title="保存待确认记录" disabled={saving} onPress={() => void save('draft')} />
           <FoodAction title="确认并保存食品" disabled={saving} primary onPress={() => void save('confirmed')} />
           {saving ? <ActivityIndicator color={foodColors.teal} accessibilityLabel="正在保存食品记录" /> : null}
-          {foodId ? <FoodAction title="删除食品记录" destructive disabled={saving} onPress={deleteRecord} /> : null}
+          {persistedFoodId ? <FoodAction title="删除食品记录" destructive disabled={saving} onPress={deleteRecord} /> : null}
         </View>
         <View style={foodStyles.card}>
           <FoodAction title={showHistory ? '收起识别与核对历史' : '查看识别与核对历史'} onPress={() => setShowHistory((value) => !value)} />
