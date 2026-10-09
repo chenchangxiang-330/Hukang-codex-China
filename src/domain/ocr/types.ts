@@ -29,6 +29,10 @@ export interface ImageAsset {
   readonly processedImageHash: string;
   readonly sourceOrientation: number;
   readonly transform: ImageTransform;
+  /** Native elapsed time for import/EXIF preparation and all applied transforms; no UI dwell. */
+  readonly preprocessingMs?: number;
+  /** Native elapsed time for the latest successful prepare/transform operation. */
+  readonly preprocessingLastOperationMs?: number;
 }
 
 export interface OcrBlock {
@@ -41,6 +45,18 @@ export interface OcrBlock {
   readonly confidence: number;
   /** Zero-based page index. Phase 1 processes one image: page 0. */
   readonly page: number;
+}
+
+export interface OcrStageTimings {
+  readonly detPreprocessMs: number;
+  readonly detInferenceMs: number;
+  readonly detPostprocessMs: number;
+  readonly recPreprocessMs: number;
+  readonly recInferenceMs: number;
+  readonly recPostprocessMs: number;
+  readonly pipelineOverheadMs: number;
+  readonly detInputShape: readonly number[];
+  readonly recInputShapes: readonly (readonly number[])[];
 }
 
 /** Immutable OCR evidence. Parsed or user-confirmed values belong in separate records. */
@@ -57,11 +73,26 @@ export interface OcrDocument {
   readonly modelVersion: string;
   readonly modelHashes: Readonly<Record<string, string>>;
   readonly modelLoadMs: number;
+  /** Session initialization within the first native engine load; carried on subsequent runs. */
+  readonly modelColdLoadMs?: number;
+  /** Metadata read and prepared-image decode at recognition, before model loading. */
+  readonly imageDecodeMs?: number;
   readonly ocrMs: number;
   readonly totalMs: number;
+  /** Measured by the native engine, not inferred by JavaScript or from CI duration. */
+  readonly timings?: OcrStageTimings;
   /** Optional sampled measurements; keys must state their units. Not necessarily peak RSS. */
   readonly memory?: Readonly<Record<string, number | null>>;
 }
+
+/** Snapshot captured from the native engine; business interpretations live elsewhere. */
+export type OcrEvidence = Readonly<{
+  schemaVersion: 1;
+  id: string;
+  recordedAt: string;
+  image: ImageAsset;
+  ocr: OcrDocument;
+}>;
 
 export type OcrFailureCode =
   | 'MODEL_MISSING'

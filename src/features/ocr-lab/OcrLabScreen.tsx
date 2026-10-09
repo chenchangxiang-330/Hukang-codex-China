@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import {
   ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type LayoutChangeEvent,
@@ -8,6 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { OcrBlock, OcrDocument } from '../../domain/ocr/types';
 import { mapRectToPreview, type CropPercent } from './geometry';
 import { useOcrLab, type LabPhase } from './useOcrLab';
+import { PerformancePanel } from './PerformancePanel';
+import { setFoodDraft } from '../food/draftStore';
 
 const colors = {
   background: '#f3faf8', surface: '#ffffff', ink: '#183e37', secondary: '#60736e',
@@ -62,6 +64,7 @@ function MemorySummary({ result }: { result: OcrDocument }) {
 }
 
 export default function OcrLabScreen() {
+  const router = useRouter();
   const lab = useOcrLab();
   const [viewport, setViewport] = useState({ width: 1, height: 320 });
   const [selection, setSelection] = useState<{ evidenceId: string; blockId: string } | null>(null);
@@ -162,9 +165,20 @@ export default function OcrLabScreen() {
               <Text style={styles.coordinates}>框 ({block.boundingBox.left.toFixed(0)}, {block.boundingBox.top.toFixed(0)}) — ({block.boundingBox.right.toFixed(0)}, {block.boundingBox.bottom.toFixed(0)}) · page {block.page}</Text>
             </Pressable>)}
             <Text selectable style={styles.fingerprint}>模型 {result.modelVersion}{'\n'}处理图 SHA-256 {image.processedImageHash}</Text>
+            <View style={styles.actionRow}>
+              <Action title="食品营养核对" primary onPress={() => {
+                if (!lab.evidence) return;
+                const draftId = setFoodDraft(lab.evidence);
+                router.push({ pathname: '/food-review', params: { draftId } });
+              }} />
+              <Action title="打开本地食品" onPress={() => router.push('/foods')} />
+            </View>
           </> : <Text style={styles.note}>识别完成后展示真实原文、坐标、分数与耗时。图片修改会隐藏旧结果，原始证据仍保留。</Text>}
         </View>
       </> : null}
+
+      <PerformancePanel records={lab.performanceRecords} summary={lab.performanceSummary}
+        error={lab.performanceError} onClear={lab.clearPerformanceRecords} busy={lab.busy} />
 
       {lab.saveNotice || lab.savedEvidence ? <View style={styles.card}>
         <Heading title="本地实验记录" />
@@ -179,7 +193,7 @@ export default function OcrLabScreen() {
           <Text style={styles.note}>分享由你主动操作；App 不自动上传。若要外部校验，请将 JSON、原图、处理图保存到同一目录。</Text>
         </> : null}
       </View> : null}
-      <Text style={styles.footer}>Phase 1 · 仅验证 OCR。未收集食品库数据，未调用任何在线识别。</Text>
+      <Text style={styles.footer}>Phase 2 · OCR 原文和初始解析永久保留；食品数据只写入本机 SQLite，未调用任何在线服务。</Text>
     </ScrollView>
   </SafeAreaView>;
 }

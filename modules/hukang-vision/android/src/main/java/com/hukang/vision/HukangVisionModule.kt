@@ -26,15 +26,30 @@ class HukangVisionModule : Module() {
     Name("HukangVision")
 
     AsyncFunction("prepareImage") { uri: String, promise: Promise ->
-      submit(promise, "IMAGE_PREPARE_FAILED") { ImageStore(context()).prepare(uri) }
+      submit(promise, "IMAGE_PREPARE_FAILED") {
+        val started = SystemClock.elapsedRealtime()
+        val store = ImageStore(context())
+        val result = store.prepare(uri)
+        store.recordPreprocessing(result, SystemClock.elapsedRealtime() - started, 0L)
+      }
     }
 
     AsyncFunction("transformImage") { uri: String, rotationDegrees: Int, crop: Map<String, Double>?, promise: Promise ->
-      submit(promise, "IMAGE_TRANSFORM_FAILED") { ImageStore(context()).transform(uri, rotationDegrees, crop) }
+      submit(promise, "IMAGE_TRANSFORM_FAILED") {
+        val started = SystemClock.elapsedRealtime()
+        val store = ImageStore(context())
+        val result = store.transform(uri, rotationDegrees, crop)
+        val previousMs = (result["preprocessingMs"] as? Number)?.toLong() ?: 0L
+        store.recordPreprocessing(result, SystemClock.elapsedRealtime() - started, previousMs)
+      }
     }
 
     AsyncFunction("recognize") { uri: String, promise: Promise ->
       submit(promise, "OCR_FAILED") { recognizeImage(uri) }
+    }
+
+    AsyncFunction("fileSha256") { uri: String, promise: Promise ->
+      submit(promise, "FILE_HASH_FAILED") { ImageStore(context()).fileSha256(uri) }
     }
 
     OnDestroy {
@@ -76,6 +91,7 @@ class HukangVisionModule : Module() {
     val store = ImageStore(context())
     val metadata = store.metadata(uri)
     val bitmap = store.decodePrepared(uri)
+    val imageDecodeMs = SystemClock.elapsedRealtime() - started
     val sampler = MemorySampler()
     var samplingFinished = false
     try {
@@ -121,6 +137,7 @@ class HukangVisionModule : Module() {
         "modelHashes" to modelHashes,
         "modelLoadMs" to loadMs,
         "modelColdLoadMs" to activeEngine.coldLoadTimeMs,
+        "imageDecodeMs" to imageDecodeMs,
         "ocrMs" to result.totalTimeMs,
         "totalMs" to (SystemClock.elapsedRealtime() - started),
         "timings" to mapOf(

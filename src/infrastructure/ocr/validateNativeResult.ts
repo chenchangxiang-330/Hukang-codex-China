@@ -39,6 +39,13 @@ export function assertImageAsset(value: unknown): asserts value is ImageAsset {
     && transform.matrix.every((n) => typeof n === 'number' && Number.isFinite(n)), '图片变换矩阵无效。');
   requireCondition(Array.isArray(transform.operations), '缺少图片处理操作记录。');
   transform.operations.forEach((operation) => record(operation, '图片处理操作'));
+  for (const key of ['preprocessingMs', 'preprocessingLastOperationMs']) {
+    if (image[key] !== undefined) requireCondition(nonnegativeFinite(image[key]), `图片 ${key} 无效。`);
+  }
+  if (image.preprocessingMs !== undefined && image.preprocessingLastOperationMs !== undefined) {
+    requireCondition((image.preprocessingMs as number) >= (image.preprocessingLastOperationMs as number),
+      '图片累计处理耗时小于最近一次处理耗时。');
+  }
 }
 
 /** Checks consistency and the pinned model identity; does not attest Android execution or accuracy. */
@@ -68,6 +75,21 @@ export function assertOcrDocument(
   }
   requireCondition((result.totalMs as number) >= (result.ocrMs as number)
     && (result.totalMs as number) >= (result.modelLoadMs as number), 'OCR 总耗时小于实际执行阶段。');
+  for (const key of ['modelColdLoadMs', 'imageDecodeMs']) {
+    if (result[key] !== undefined) requireCondition(nonnegativeFinite(result[key]), `OCR ${key} 无效。`);
+  }
+  if (result.timings !== undefined) {
+    const timings = record(result.timings, 'OCR 分阶段耗时');
+    for (const key of ['detPreprocessMs', 'detInferenceMs', 'detPostprocessMs',
+      'recPreprocessMs', 'recInferenceMs', 'recPostprocessMs', 'pipelineOverheadMs']) {
+      requireCondition(nonnegativeFinite(timings[key]), `OCR 分阶段 ${key} 无效。`);
+    }
+    requireCondition(Array.isArray(timings.detInputShape)
+      && timings.detInputShape.every(positiveInteger), '检测输入形状无效。');
+    requireCondition(Array.isArray(timings.recInputShapes)
+      && timings.recInputShapes.every((shape) => Array.isArray(shape) && shape.every(positiveInteger)),
+    '识别输入形状无效。');
+  }
 
   const ids = new Set<string>();
   const texts: string[] = [];

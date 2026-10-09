@@ -126,6 +126,7 @@ internal class ImageStore(private val context: Context) {
         "originalUri" to metadata["originalUri"],
         "sourceImageHash" to metadata["sourceImageHash"],
         "sourceOrientation" to metadata["sourceOrientation"],
+        "preprocessingMs" to metadata["preprocessingMs"],
         "transform" to mapOf("matrix" to matrixValues(total), "operations" to operations,
           "originalWidth" to oldTransform["originalWidth"], "originalHeight" to oldTransform["originalHeight"])
       ))
@@ -134,6 +135,29 @@ internal class ImageStore(private val context: Context) {
       if (cropped !== bitmap) cropped?.recycle()
       bitmap.recycle()
     }
+  }
+
+  /** Measure native work through bitmap disposal; exclude this instrumentation sidecar write. */
+  fun recordPreprocessing(result: Map<String, Any?>, operationMs: Long, previousMs: Long): Map<String, Any?> {
+    require(operationMs >= 0 && previousMs >= 0) { "Invalid image preprocessing duration" }
+    val complete = result + mapOf(
+      "preprocessingMs" to (previousMs + operationMs),
+      "preprocessingLastOperationMs" to operationMs
+    )
+    val file = preparedFile(result["uri"] as String)
+    File(file.path + ".json").writeText(JSONObject(complete).toString())
+    return complete
+  }
+
+  /** Allows copied food evidence to be verified without network or loading an OCR model. */
+  fun fileSha256(value: String): Map<String, String> {
+    val uri = Uri.parse(value)
+    require(uri.scheme == "file") { "Hashing requires an app-private local file" }
+    val file = File(requireNotNull(uri.path)).canonicalFile
+    val allowed = listOf(context.filesDir.canonicalFile, context.cacheDir.canonicalFile)
+      .any { root -> file.path.startsWith(root.path + File.separator) }
+    require(allowed && file.isFile) { "Hashing is limited to app-private files/cache" }
+    return mapOf("sha256" to sha256(file))
   }
 
   fun metadata(uri: String): Map<String, Any?> {

@@ -1,4 +1,4 @@
 <resources>
-  <string name="app_name">护康 China · OCR Lab</string>
+  <string name="app_name">护康 China</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
 </resources>

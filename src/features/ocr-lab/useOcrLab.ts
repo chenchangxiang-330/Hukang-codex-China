@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 import type { ImageAsset } from '../../domain/ocr/types';
 import { recognizeAndCapture, type OcrEvidence } from '../../application/usecases/OcrLabUseCases';
 import { hukangVision } from '../../infrastructure/ocr/HukangVision';
 import { cropPercentToPixels, FULL_CROP, isFullCrop, type CropPercent } from './geometry';
 import { saveEvidence, shareEvidence, type SavedEvidence } from './evidence';
+import { appendPerformanceRecord, makePerformanceRecord, summarizePerformance,
+  type OcrPerformanceRecord, type PerformanceDevice } from './performance';
+import { performanceStore } from './performanceStore';
 
 export type LabPhase = 'idle' | 'selecting' | 'preparing' | 'transforming' | 'recognizing' | 'exporting';
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function performanceDevice(): PerformanceDevice {
+  if (Platform.OS === 'android') return { platform: Platform.OS, osVersion: String(Platform.Version),
+    manufacturer: Platform.constants.Manufacturer, model: Platform.constants.Model, brand: Platform.constants.Brand };
+  return { platform: Platform.OS, osVersion: String(Platform.Version) };
 }
 
 export function useOcrLab() {
@@ -20,10 +30,36 @@ export function useOcrLab() {
   const [phase, setPhase] = useState<LabPhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [performanceRecords, setPerformanceRecords] = useState<readonly OcrPerformanceRecord[]>([]);
+  const [performanceError, setPerformanceError] = useState<string | null>(null);
   const requestGeneration = useRef(0);
+  const performanceGeneration = useRef(0);
   const running = useRef(false);
 
-  useEffect(() => () => { requestGeneration.current += 1; }, []);
+  useEffect(() => {
+    const token = performanceGeneration.current;
+    void performanceStore.load().then((records) => {
+      if (performanceGeneration.current === token) setPerformanceRecords(records);
+    }).catch((cause) => {
+      if (performanceGeneration.current === token) setPerformanceError(`性能历史读取失败：${errorMessage(cause)}`);
+    });
+    return () => { requestGeneration.current += 1; performanceGeneration.current += 1; };
+  }, []);
+
+  const performanceSummary = useMemo(() => summarizePerformance(performanceRecords), [performanceRecords]);
+
+  const clearPerformanceRecords = useCallback(async () => {
+    if (running.current) return;
+    const token = ++performanceGeneration.current;
+    try {
+      const records = await performanceStore.clear();
+      if (performanceGeneration.current !== token) return;
+      setPerformanceRecords(records);
+      setPerformanceError(null);
+    } catch (cause) {
+      if (performanceGeneration.current === token) setPerformanceError(`性能历史清除失败：${errorMessage(cause)}`);
+    }
+  }, []);
 
   const start = useCallback((nextPhase: LabPhase, invalidateResult = true) => {
     if (running.current) return null;
@@ -31,7 +67,11 @@ export function useOcrLab() {
     const token = ++requestGeneration.current;
     setPhase(nextPhase);
     setError(null);
-    if (invalidateResult) setEvidence(null);
+    if (invalidateResult) {
+      setEvidence(null);
+      setSavedEvidence(null);
+      setSaveNotice(null);
+    }
     return token;
   }, []);
 
@@ -58,6 +98,8 @@ export function useOcrLab() {
       setImage(prepared);
       setCrop(FULL_CROP);
       setEvidence(null);
+      setSavedEvidence(null);
+      setSaveNotice(null);
     } catch (cause) {
       if (requestGeneration.current === token) setError(`导入失败：${errorMessage(cause)}`);
     } finally {
@@ -75,6 +117,8 @@ export function useOcrLab() {
     if (running.current) return;
     setCrop((previous) => ({ ...previous, [key]: value }));
     setEvidence(null);
+    setSavedEvidence(null);
+    setSaveNotice(null);
     setError(null);
   }, []);
 
@@ -123,20 +167,43 @@ export function useOcrLab() {
     if (!isFullCrop(crop)) { setError('先应用裁剪，或重置裁剪区域后再识别。'); return; }
     const token = start('recognizing');
     if (token === null) return;
+    const workflowStarted = performance.now();
     setSaveNotice(null);
     try {
       const record = await recognizeAndCapture(image);
       if (requestGeneration.current !== token) return;
       setEvidence(record);
+      const saveStarted = performance.now();
+      let evidenceSaved = false;
       try {
         const saved = await saveEvidence(record);
         if (requestGeneration.current !== token) return;
         setSavedEvidence(saved);
+        evidenceSaved = true;
         setSaveNotice('原图、处理图及真实 OCR JSON 已保存在本机。');
       } catch (cause) {
         if (requestGeneration.current === token) {
           setSavedEvidence(null);
           setSaveNotice(`OCR 已完成，但证据保存失败：${errorMessage(cause)}`);
+        }
+      }
+      const saveMs = performance.now() - saveStarted;
+      const workflowMs = performance.now() - workflowStarted;
+      if (requestGeneration.current !== token) return;
+      // Performance persistence has its own error channel; a failure cannot hide valid OCR.
+      const performanceToken = ++performanceGeneration.current;
+      try {
+        const measurement = makePerformanceRecord(record, {
+          device: performanceDevice(), workflowMs, evidenceSaveMs: saveMs, evidenceSaved,
+        });
+        setPerformanceRecords((previous) => appendPerformanceRecord(previous, measurement));
+        const records = await performanceStore.append(measurement);
+        if (performanceGeneration.current !== performanceToken) return;
+        setPerformanceRecords(records);
+        setPerformanceError(null);
+      } catch (cause) {
+        if (performanceGeneration.current === performanceToken) {
+          setPerformanceError(`OCR 已完成，但性能历史保存失败：${errorMessage(cause)}`);
         }
       }
     } catch (cause) {
@@ -157,6 +224,7 @@ export function useOcrLab() {
 
   return {
     image, crop, cropStatus, evidence, savedEvidence, phase, error, saveNotice,
+    performanceRecords, performanceError, performanceSummary, clearPerformanceRecords,
     busy: phase !== 'idle', cropPending: !isFullCrop(crop),
     choosePhoto, updateCrop, resetCrop, transform, restoreOriginal, recognize, exportLastEvidence,
   };

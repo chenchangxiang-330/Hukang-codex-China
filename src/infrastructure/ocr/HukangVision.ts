@@ -8,6 +8,7 @@ type VisionModule = {
   prepareImage(uri: string): Promise<ImageAsset>;
   transformImage(uri: string, rotationDegrees: number, crop: BoundingBox | null): Promise<ImageAsset>;
   recognize(uri: string): Promise<OcrDocument>;
+  fileSha256(uri: string): Promise<{ sha256: string }>;
 };
 
 let nativeModule: VisionModule | undefined;
@@ -19,6 +20,11 @@ function vision(): VisionModule {
 }
 
 export const hukangVision = {
+  async fileSha256(uri: string): Promise<string> {
+    const result = await vision().fileSha256(uri);
+    if (!/^[a-f0-9]{64}$/.test(result.sha256)) throw new Error('本地图片摘要无效。');
+    return result.sha256;
+  },
   async prepareImage(uri: string): Promise<ImageAsset> {
     const image = await vision().prepareImage(uri);
     assertImageAsset(image);

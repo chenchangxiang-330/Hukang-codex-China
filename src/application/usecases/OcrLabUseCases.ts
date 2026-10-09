@@ -1,13 +1,7 @@
-import type { ImageAsset, OcrDocument } from '../../domain/ocr/types';
+import type { ImageAsset, OcrEvidence, OcrDocument } from '../../domain/ocr/types';
 import { hukangVision } from '../../infrastructure/ocr/HukangVision';
 
-export type OcrEvidence = Readonly<{
-  schemaVersion: 1;
-  id: string;
-  recordedAt: string;
-  image: ImageAsset;
-  ocr: OcrDocument;
-}>;
+export type { OcrEvidence } from '../../domain/ocr/types';
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
