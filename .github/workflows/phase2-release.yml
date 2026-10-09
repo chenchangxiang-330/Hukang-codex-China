@@ -1,0 +1,244 @@
+name: Phase 2 official PaddleOCR release
+
+on:
+  push:
+    branches: [codex/mainland-v2]
+    paths-ignore:
+      - docs/**
+      - tests/fixtures/**
+      - artifacts/**
+      - README.md
+      - .github/workflows/phase2-device.yml
+      - .github/workflows/phase2-device-retest.yml
+      - scripts/run-android-food-flow.py
+      - scripts/android-device-evidence.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - name: Checkout the exact branch commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Obtain only fixed official PaddlePaddle assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3
+          if ! python scripts/fetch-models.py --source bos --receipt artifacts/official-model-acquisition.json; then
+            echo "Official BOS acquisition failed; trying the fixed official PaddlePaddle Hugging Face revisions."
+            python scripts/fetch-models.py --source hf --receipt artifacts/official-model-acquisition.json
+          fi
+          python scripts/fetch-models.py --verify
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = Path('artifacts/official-model-acquisition.json')
+          data = json.loads(receipt.read_text())
+          data['github'] = {key: os.environ.get(key) for key in ('GITHUB_REPOSITORY', 'GITHUB_SHA', 'GITHUB_REF', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')}
+          receipt.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+          PY
+
+      - name: Preserve verified official assets before Android compilation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: verified-official-models-${{ github.sha }}
+          path: |
+            models/paddleocr/v5-mobile/
+            artifacts/official-model-acquisition.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Install and check the project
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --include=dev
+          npm run typecheck
+          npm test
+          python -B -m unittest discover -s tests -p test_model_acquisition.py -v
+          npm run verify:assets
+
+      - name: Install fixed Android build components
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_dir="$(printenv ANDROID_HOME || printenv ANDROID_SDK_ROOT || true)"
+          if [[ -z "$sdk_dir" || ! -d "$sdk_dir" ]]; then
+            echo "Runner Android SDK directory is missing." >&2
+            exit 1
+          fi
+          sdk_manager=""
+          for candidate in "$sdk_dir/cmdline-tools/latest/bin/sdkmanager" "$sdk_dir"/cmdline-tools/*/bin/sdkmanager "$sdk_dir/tools/bin/sdkmanager"; do
+            if [[ -x "$candidate" ]]; then
+              sdk_manager="$candidate"
+              break
+            fi
+          done
+          if [[ -z "$sdk_manager" ]]; then
+            echo "No sdkmanager executable exists under the runner Android SDK: $sdk_dir" >&2
+            exit 1
+          fi
+          echo "Using runner SDK manager: $sdk_manager"
+          echo "ANDROID_HOME=$sdk_dir" >> "$GITHUB_ENV"
+          echo "$sdk_dir/platform-tools" >> "$GITHUB_PATH"
+          # Expo SQLite's native CMake metadata asks for r27.0 while the
+          # Expo/RN root project selects r27.1. Keep both fixed packages so
+          # the build never attempts an implicit model/tool download.
+          "$sdk_manager" --sdk_root="$sdk_dir" "platforms;android-36" "build-tools;36.0.0" \
+            "ndk;27.0.12077973" "ndk;27.1.12297006" "cmake;3.22.1"
+
+      - name: Create an ephemeral Phase 2 test certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 30 \
+            -dname "CN=Hukang China Phase 2 Test, OU=OCR Lab, O=Hukang, C=CN"
+
+      - name: Build Android ARM64 release APK
+        shell: bash
+        working-directory: android
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace --max-workers=2 \
+            -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" \
+            2>&1 | tee ../artifacts/gradle-release.log
+
+      - name: Inspect the actual APK, Manifest, models and certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase2-arm64-release.apk
+          python scripts/verify-apk.py
+
+      - name: Split the verified APK for trusted developer transfer
+        shell: bash
+        run: python scripts/split-apk.py
+
+      - name: Publish transfer manifest
+        if: hashFiles('artifacts/apk-transfer/manifest.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-manifest
+          path: artifacts/apk-transfer/manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 1
+        if: hashFiles('artifacts/apk-transfer/part001.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part001
+          path: artifacts/apk-transfer/part001.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 2
+        if: hashFiles('artifacts/apk-transfer/part002.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part002
+          path: artifacts/apk-transfer/part002.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 3
+        if: hashFiles('artifacts/apk-transfer/part003.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part003
+          path: artifacts/apk-transfer/part003.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 4
+        if: hashFiles('artifacts/apk-transfer/part004.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part004
+          path: artifacts/apk-transfer/part004.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 5
+        if: hashFiles('artifacts/apk-transfer/part005.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part005
+          path: artifacts/apk-transfer/part005.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK part 6
+        if: hashFiles('artifacts/apk-transfer/part006.bin') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase2-apk-${{ github.sha }}-part006
+          path: artifacts/apk-transfer/part006.bin
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK and build evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hukang-china-phase2-build-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: State the exact validation boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Phase 2 validation boundary"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Official model acquisition, Android compilation and APK inspection are separate steps."
+            echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
+            echo "- Release compilation does not itself execute OCR; the separate device job records actual execution or failure."
+            echo "- No OCR output, speed or memory result is claimed without separate device evidence."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  device:
+    needs: release
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/phase2-device.yml
+    with:
+      build_sha: ${{ github.sha }}
