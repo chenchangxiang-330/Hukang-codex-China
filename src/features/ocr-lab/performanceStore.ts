@@ -23,7 +23,10 @@ async function write(records: readonly OcrPerformanceRecord[]): Promise<void> {
   // A same-directory temporary file protects existing history if writing fails.
   const temporary = new File(directory(), 'history-v1.pending.json');
   temporary.write(JSON.stringify({ schemaVersion: 1, records }, null, 2));
-  temporary.move(history());
+  // File.move is asynchronous and the destination is the canonical history
+  // file. Await the replacement so the next serialized read never observes a
+  // missing or half-written performance history.
+  await temporary.move(history(), { overwrite: true });
 }
 
 export const performanceStore = {
