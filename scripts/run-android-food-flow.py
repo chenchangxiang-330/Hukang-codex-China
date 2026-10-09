@@ -556,6 +556,9 @@ def main():
         # read back from SQLite and compared byte-for-byte after each edit.
         if not fixtures:
             raise RuntimeError("No real food fixtures supplied")
+        # Import the first real gallery fixture before looking for the OCR
+        # action; the production button is rendered only after an image exists.
+        choose_photo(fixtures[0])
         native_results = []
         for index, fixture in enumerate(fixtures):
             native_results.append(run_ocr(fixture, f"food-{index + 1}"))
