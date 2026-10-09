@@ -110,7 +110,19 @@ def main():
                               and found[1][1] < 1920 and found[1][3] > 0):
                 found = None
             if found:
-                node, bounds = found
+                # The Android IME resize animation can finish between the
+                # accessibility dump and the tap. Re-dump after a short
+                # settle window and use the latest visible bounds so a
+                # control is never tapped at its stale keyboard-open offset.
+                time.sleep(0.35)
+                settled = locate(hierarchy(), pattern)
+                if settled and not (settled[1][0] < 1080 and settled[1][2] > 0
+                                    and settled[1][1] < 1920 and settled[1][3] > 0):
+                    settled = None
+                if settled:
+                    node, bounds = settled
+                else:
+                    node, bounds = found
                 shell("input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
                 actions.append({"uiTap": node.attrib, "match": pattern})
                 return
@@ -318,6 +330,16 @@ def main():
         ime = shell("dumpsys", "input_method")
         if re.search(r"mInputShown=true|mIsInputViewShown=true", ime):
             shell("input", "keyevent", "KEYCODE_BACK")
+            # Wait for the window resize to settle before the next control is
+            # located. Without this, uiautomator may expose pre-dismissal
+            # coordinates while the screenshot/touch surface has moved.
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                state = shell("dumpsys", "input_method")
+                if not re.search(r"mInputShown=true|mIsInputViewShown=true", state):
+                    break
+                time.sleep(0.2)
+            time.sleep(0.5)
 
     def check_reviewed(label):
         pattern = "^" + re.escape(label) + "$"
