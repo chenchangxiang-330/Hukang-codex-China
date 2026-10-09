@@ -10,8 +10,6 @@ on:
       - README.md
       - .github/workflows/phase2-device.yml
       - .github/workflows/phase2-device-retest.yml
-      - scripts/run-android-food-flow.py
-      - scripts/android-device-evidence.py
   workflow_dispatch:
 
 permissions:
