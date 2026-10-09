@@ -77,7 +77,10 @@ export default function FoodReviewScreen() {
     setError(null);
     try {
       const snapshot = JSON.parse(JSON.stringify(review)) as FoodReviewValues;
-      const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status, updatedAt: new Date().toISOString() });
+      // Keep the loaded updatedAt as the optimistic concurrency token. The
+      // repository assigns the new timestamp after the transaction succeeds;
+      // replacing it here would make every edit look stale and be rejected.
+      const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status });
       if (draftId) removeFoodDraft(draftId);
       setDirty(false);
       router.replace({ pathname: '/foods', params: { saved: saved.id } });

@@ -10,6 +10,7 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import org.json.JSONObject
 import java.time.Instant
+import kotlin.math.round
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -110,10 +111,14 @@ class HukangVisionModule : Module() {
       val result = activeEngine.run(bitmap)
       val blocks = result.results.mapIndexed { index, item ->
         require(item.confidence.isFinite() && item.confidence in 0f..1f) { "OCR returned invalid confidence" }
+        // Paddle's recognizer exposes a Float. Round once before returning it
+        // so the Expo bridge and the immutable native run JSON preserve the
+        // same decimal value byte-for-byte.
+        val confidence = round(item.confidence.toDouble() * 10_000_000.0) / 10_000_000.0
         val points = item.box.points
         require(points.all { it.x.isFinite() && it.y.isFinite() }) { "OCR returned invalid geometry" }
         mapOf("id" to "line-$index", "text" to item.text, "page" to 0,
-          "confidence" to item.confidence,
+          "confidence" to confidence,
           "boundingBox" to mapOf("left" to points.minOf { it.x }, "top" to points.minOf { it.y },
             "right" to points.maxOf { it.x }, "bottom" to points.maxOf { it.y }),
           "polygon" to points.map { mapOf("x" to it.x, "y" to it.y) })
