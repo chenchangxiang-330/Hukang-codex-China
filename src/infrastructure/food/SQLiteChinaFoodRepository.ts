@@ -41,8 +41,10 @@ const evidenceFiles: FoodEvidenceFiles = {
     try {
       const original = new File(directory, 'original.source');
       const processed = new File(directory, 'processed.png');
-      new File(record.evidence.image.originalUri).copy(original);
-      new File(record.evidence.image.uri).copy(processed);
+      // Expo's native copy is asynchronous. Verify only after both promises
+      // resolve; checking exists/hash sooner races with the native writer.
+      await new File(record.evidence.image.originalUri).copy(original);
+      await new File(record.evidence.image.uri).copy(processed);
       await verifyImage(original, record.evidence.image.sourceImageHash);
       await verifyImage(processed, record.evidence.image.processedImageHash);
       const ocrDocument = new File(directory, 'ocr-document.json');

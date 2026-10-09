@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,10 +42,15 @@ export default function FoodReviewScreen() {
   const [focusedBlockIds, setFocusedBlockIds] = useState<readonly string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   // A persisted record carries at least its creation revision. Keeping this
   // fallback makes the destructive action available after a cold-start route
   // restore even if Expo Router temporarily omits the query parameter.
   const persistedFoodId = foodId ?? (record && record.revisions.length > 0 ? record.id : undefined);
+
+  useEffect(() => {
+    if (error) scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [error]);
 
   useEffect(() => {
     let active = true;
@@ -118,7 +123,7 @@ export default function FoodReviewScreen() {
 
   return <SafeAreaView style={foodStyles.safe} edges={['bottom']}>
     <Stack.Screen options={{ title: '食品人工核对', headerShadowVisible: false }} />
-    <ScrollView contentContainerStyle={foodStyles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} contentContainerStyle={foodStyles.content} keyboardShouldPersistTaps="handled">
       <Text style={foodStyles.title}>食品人工核对</Text>
       <Text style={foodStyles.note}>识别结果只是候选值。整张表的计量基准、每项数值、单位、小数点及 NRV% 都需要对照照片确认。</Text>
       <FoodAction title="本地食品" onPress={openList} disabled={saving} />
