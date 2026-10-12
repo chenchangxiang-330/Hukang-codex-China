@@ -118,14 +118,34 @@ jobs:
           "$sdk_manager" --sdk_root="$sdk_dir" "platforms;android-36" "build-tools;36.0.0" \
             "ndk;27.0.12077973" "ndk;27.1.12297006" "cmake;3.22.1"
 
-      - name: Create an ephemeral Phase 2 test certificate
+      - name: Prepare protected release signing or ephemeral test certificate
         shell: bash
+        env:
+          HUKANG_RELEASE_KEYSTORE_B64: ${{ secrets.HUKANG_RELEASE_KEYSTORE_B64 }}
+          HUKANG_RELEASE_STORE_PASSWORD: ${{ secrets.HUKANG_RELEASE_STORE_PASSWORD }}
+          HUKANG_RELEASE_KEY_ALIAS: ${{ secrets.HUKANG_RELEASE_KEY_ALIAS }}
+          HUKANG_RELEASE_KEY_PASSWORD: ${{ secrets.HUKANG_RELEASE_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore \
-            -storepass android -keypass android -alias androiddebugkey \
-            -keyalg RSA -keysize 2048 -validity 30 \
-            -dname "CN=Hukang China Phase 2 Test, OU=OCR Lab, O=Hukang, C=CN"
+          if [[ -n "${HUKANG_RELEASE_KEYSTORE_B64:-}" && -n "${HUKANG_RELEASE_STORE_PASSWORD:-}" && \
+                -n "${HUKANG_RELEASE_KEY_ALIAS:-}" && -n "${HUKANG_RELEASE_KEY_PASSWORD:-}" ]]; then
+            stable_keystore="$RUNNER_TEMP/hukang-release.keystore"
+            printf '%s' "$HUKANG_RELEASE_KEYSTORE_B64" | base64 --decode > "$stable_keystore"
+            chmod 600 "$stable_keystore"
+            {
+              echo "HUKANG_RELEASE_KEYSTORE=$stable_keystore"
+              echo "HUKANG_RELEASE_STORE_PASSWORD=$HUKANG_RELEASE_STORE_PASSWORD"
+              echo "HUKANG_RELEASE_KEY_ALIAS=$HUKANG_RELEASE_KEY_ALIAS"
+              echo "HUKANG_RELEASE_KEY_PASSWORD=$HUKANG_RELEASE_KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "Using protected release signing key from runner temp storage."
+          else
+            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 30 \
+              -dname "CN=Hukang China Phase 2.1 Test, OU=OCR Lab, O=Hukang, C=CN"
+            echo "No protected release signing secrets configured; using ephemeral laboratory certificate."
+          fi
 
       - name: Build Android ARM64 release APK
         shell: bash
@@ -227,7 +247,11 @@ jobs:
             echo "### Phase 2 validation boundary"
             echo "- Commit: $GITHUB_SHA"
             echo "- Official model acquisition, Android compilation and APK inspection are separate steps."
-            echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
+            if [[ -n "${HUKANG_RELEASE_KEYSTORE:-}" ]]; then
+              echo "- The APK uses the protected release keystore from runner temp storage."
+            else
+              echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
+            fi
             echo "- Release compilation does not itself execute OCR; the separate device job records actual execution or failure."
             echo "- No OCR output, speed or memory result is claimed without separate device evidence."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -341,6 +341,36 @@ def main():
                 time.sleep(0.2)
             time.sleep(0.5)
 
+    def dismiss_ime():
+        """Dismiss a restored keyboard without navigating away from review."""
+        ime = shell("dumpsys", "input_method", check=False)
+        if re.search(r"mInputShown=true|mIsInputViewShown=true", ime):
+            shell("input", "keyevent", "KEYCODE_BACK")
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                state = shell("dumpsys", "input_method", check=False)
+                if not re.search(r"mInputShown=true|mIsInputViewShown=true", state):
+                    break
+                time.sleep(0.2)
+            time.sleep(0.5)
+
+    def review_column_ids():
+        """Scroll the real review form until its nutrition controls are exposed."""
+        column_ids = set()
+        latest = None
+        for _ in range(24):
+            latest = hierarchy()
+            for node in latest.iter("node"):
+                label = node.attrib.get("content-desc", "")
+                match = re.search(r"^营养(.+)-计量基准-(?:per_100g|per_100ml|per_serving|unknown)$", label)
+                if match:
+                    column_ids.add(match.group(1))
+            if column_ids:
+                return sorted(column_ids), latest
+            shell("input", "swipe", "540", "1650", "540", "420", "350")
+            time.sleep(0.4)
+        return sorted(column_ids), latest
+
     def check_reviewed(label):
         pattern = "^" + re.escape(label) + "$"
         tap_match(pattern, scroll=True)
@@ -631,6 +661,19 @@ def main():
                                        "status": "draft", "foodCount": 1,
                                        "immutableEvidence": True})
 
+        # Same-signature install -r must preserve the actual user database and
+        # evidence. A signing mismatch is intentionally handled by the release
+        # policy as a hard install failure; this check covers the safe upgrade
+        # path without uninstalling the app or deleting local records.
+        before_upgrade = database_snapshot("before-install-r")
+        execute(["install", "-r", str(args.apk)], timeout=180)
+        relaunch("after-install-r")
+        after_upgrade = database_snapshot("after-install-r")
+        if before_upgrade["tables"] != after_upgrade["tables"]:
+            raise RuntimeError("Same-signature install -r changed persisted food records or immutable evidence")
+        summary["foodChecks"].append({"step": "same-signature-install-r", "foodId": food_id,
+                                       "databasePreserved": True})
+
         # Reopen from SQLite after a process restart. The editable values use
         # ASCII only because adb input text cannot reliably inject Chinese;
         # the OCR source and parser JSON remain the actual photographed data.
@@ -656,13 +699,12 @@ def main():
         relaunch("before-confirmed-review")
         tap_match(r"^打开本地食品$|^本地食品$", scroll=True, direction="up")
         open_food(food_id)
-        review_root = hierarchy()
+        dismiss_ime()
         # The native hierarchy exposes the selectable radio options, whose
         # labels end in the selected basis value; the parent View itself does
-        # not carry the column label. Extract IDs from those real controls.
-        column_ids = sorted({match.group(1) for node in review_root.iter("node")
-                             for label in [node.attrib.get("content-desc", "")]
-                             for match in [re.search(r"^营养(.+)-计量基准-(?:per_100g|per_100ml|per_serving|unknown)$", label)] if match})
+        # not carry the column label. Scroll the actual inner form until the
+        # real controls are visible; never synthesize a nutrition column.
+        column_ids, _review_root = review_column_ids()
         if column_ids:
             # These are the values visibly printed on the second fixture
             # (the snack label). The energy unit is deliberately entered as
@@ -674,10 +716,11 @@ def main():
                 prefix = "营养" + column_id
                 # Prefer an explicit per-100 basis. It avoids introducing a
                 # serving size that the photograph may not state.
-                basis = locate(review_root, r"^" + re.escape(prefix + "-计量基准-") + r"(?:per_100g|per_100ml)$")
-                if not basis:
-                    continue
-                tap_match(r"^" + re.escape(prefix + "-计量基准-") + r"(?:per_100g|per_100ml)$", scroll=True)
+                basis_pattern = r"^" + re.escape(prefix + "-计量基准-") + r"(?:per_100g|per_100ml)$"
+                # tap_match re-dumps and scrolls the production form itself;
+                # do not silently skip confirmation merely because the first
+                # hierarchy snapshot was above the radio controls.
+                tap_match(basis_pattern, scroll=True)
                 check_reviewed(prefix + "-已核对")
                 for nutrient, (amount, unit, nrv) in manual_by_nutrient.items():
                     field = prefix + "-" + nutrient

@@ -1,6 +1,6 @@
-# Hukang China — Phase 0 / Phase 1 architecture
+# Hukang China — Phase 2.1 architecture
 
-本轮边界：干净 Android 工程、原版图标、依赖审计与本地 OCR Lab。没有食品营养解析、食品库 UI、药品功能、AI、提醒、云服务或扫码实现。
+本轮边界：本地离线 OCR、食品营养表解析、人工核对、SQLite 食品记录和升级保留验证。没有药品、AI、提醒、云服务或扫码实现。
 
 ## Current execution path
 
@@ -10,7 +10,8 @@ Expo Router / OCR Lab screen
   → local image + OCR adapter
   → custom Expo Kotlin module
   → image preparation / bundled PaddleOCR / ONNX Runtime CPU
-  → immutable OCR evidence + local result display
+  → immutable OCR evidence + geometry parser
+  → Food Review + SQLite local repository
 ```
 
 React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
@@ -30,7 +31,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 | `src/domain/food/` | Mainland label-compatible food data model, not parser implementation |
 | `src/domain/medicine/` | Independent drug model; no shared generic Product |
 | `src/infrastructure/ocr/` | Custom Kotlin module adapter; no remote fallback |
-| `src/infrastructure/food/` | Reserved local-first food adapter boundary, not implemented |
+| `src/infrastructure/food/` | Local SQLite food adapter, evidence and revision storage |
 | `modules/hukang-vision/android/` | Local image processing and Paddle OCR inference |
 | `models/paddleocr/v5-mobile/` | Fixed model artifacts and paired configs; see model manifest |
 | `tests/fixtures/china-food/` | Real-photo fixture plan and independently stored outputs |
@@ -52,7 +53,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 - Model loading, OCR and total timing use native measurements. Sampled memory
   maxima are labelled as observations, not absolute peak RSS.
 
-## Food boundary reserved for the next phase
+## Future food lookup boundary
 
 ```text
 BarcodeScanner → raw barcode + format
@@ -63,9 +64,10 @@ BarcodeScanner → raw barcode + format
       → package photos + OCR + user confirmation on lookup miss
 ```
 
-`HukangChinaFoodService` is only an interface reserved for a Hukang-controlled
-mainland deployment. It does not configure a URL, API key, HTTP client or active
-network dependency. Phase 1 has no food repository adapter or seeded food data.
+`ChinaFoodRepository` currently uses the local SQLite adapter. `HukangChinaFoodService`
+is only an interface reserved for a Hukang-controlled mainland deployment. It does
+not configure a URL, API key, HTTP client or active network dependency. Barcode
+scanning and seeded catalog providers remain future work.
 
 Food records preserve leading zeros, packaging versions, Chinese name, brand,
 category, specification, ingredients, images, provenance and timestamps.

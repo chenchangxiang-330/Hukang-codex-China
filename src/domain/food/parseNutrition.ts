@@ -93,9 +93,14 @@ function detectBasis(position: Located): Header | null {
     const serving = /^每(?:份|包|袋|瓶)(?::)?(?:\((.+)\)|(.+))?$/.exec(lower);
     const body = serving?.[1] ?? serving?.[2] ?? '';
     const quantity = /^(\d+(?:\.\d+)?)(g|克(?:\(g\))?|ml|毫升(?:\(ml\))?)$/.exec(body);
-    const amount = quantity?.[1] && !/\d\s+\d/.test(position.block.text) ? Number(quantity[1]) : null;
-    const unit = quantity?.[2] ? (/^(g|克)/.test(quantity[2]) ? 'g' : 'mL') : null;
-    const issues = !serving || body && !quantity || /\d\s+\d/.test(position.block.text) || amount === 0 ? ['份量文字或大小需要人工核对'] : amount === null ? ['未识别到每份大小，请核对是否印有份量'] : [];
+    // Spaces between digits or around a decimal point may represent a lost
+    // glyph/decimal in a photograph. Keep the raw text and require review
+    // instead of letting compact() silently turn “３ ０g” into “30g”.
+    const ambiguousSpacing = /[０-９\d]\s+(?:[０-９\d]|[．.])|[．.]\s+[０-９\d]/.test(position.block.text);
+    const amount = quantity?.[1] && !ambiguousSpacing ? Number(quantity[1]) : null;
+    const unit = quantity?.[2] && !ambiguousSpacing ? (/^(g|克)/.test(quantity[2]) ? 'g' : 'mL') : null;
+    const issues = !serving || body && !quantity || ambiguousSpacing || amount === 0
+      ? ['份量文字或大小需要人工核对'] : amount === null ? ['未识别到每份大小，请核对是否印有份量'] : [];
     return { position, basis: { kind: 'per_serving', rawText: position.block.text, servingAmount: amount && unit ? amount : null, servingUnit: amount && unit ? unit : null }, issues };
   }
   if (/^每/.test(lower) && /\d|份|克|毫升|[gm]/.test(lower)) {

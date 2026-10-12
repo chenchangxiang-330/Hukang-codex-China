@@ -1,6 +1,6 @@
 # Mainland production dependency audit
 
-Scope: Hukang China Phase 0 / Phase 1, Android arm64-v8a release, minSdk 26.
+Scope: Hukang China Phase 0 through Phase 2.1, Android arm64-v8a release, minSdk 26.
 Audit date: 2026-10-08 (Asia/Shanghai).
 
 **Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** This counts active
@@ -45,12 +45,13 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | Glide | 5.0.5 | `FOREIGN_OFFLINE_LIBRARY` | Expo image-loader transitive image infrastructure; Phase 1 uses local photo resources |
 | Expo WebView | 57.0.1 | `FOREIGN_OFFLINE_LIBRARY` | Resolved Expo module infrastructure; OCR Lab does not render or open a remote WebView |
 | Splash/status bar, safe-area and screens | SDK-compatible pinned lockfile | `FOREIGN_OFFLINE_LIBRARY` | Local rendering and lifecycle |
-| `ChinaFoodRepository` / `MedicineRepository` | TypeScript contracts only | `LOCAL` | No provider, HTTP client, seed catalog or cloud storage implementation |
+| `ChinaFoodRepository` / SQLite adapter | `src/infrastructure/food/` | `LOCAL` | Food records, evidence and revisions remain on-device; no provider or cloud sync |
+| `MedicineRepository` | TypeScript contract only | `LOCAL` | No medicine provider or remote lookup implementation |
 | Future `HukangChinaFoodService` | Interface only | — | Not a configured dependency; mainland hosting and data rights need separate approval before implementation |
 
-There is **no active `CHINA_SERVICE` in Phase 1**. Local records are not uploaded
-to a future central database. SQLite food storage and ZXing scanning are later
-phase work; neither is claimed as implemented in this inventory.
+There is **no active `CHINA_SERVICE` in Phase 2.1**. Local food records are not
+uploaded to a future central database. Barcode scanning and seeded catalog lookup
+remain later-phase work.
 
 The actual graph contains generic networking-capable libraries, including
 OkHttp and image-loading adapters. Their capability is distinct from a
@@ -158,3 +159,9 @@ not assert a successful device OCR run or a packet-capture result.
 
 Future Paddle Lite / Paddle-native runtime evaluation is recorded as an
 optional optimization. It does not block the fixed ONNX Runtime baseline.
+
+## Signing and upgrade boundary
+
+Release signing and same-signature `adb install -r` data-preservation checks are
+defined in [AndroidSigningAndUpgradePolicy.md](AndroidSigningAndUpgradePolicy.md).
+The policy does not treat an ephemeral CI certificate as a production signing key.
