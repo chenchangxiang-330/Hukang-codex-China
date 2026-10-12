@@ -344,6 +344,18 @@ def main():
     def dismiss_ime():
         """Dismiss a restored keyboard without navigating away from review."""
         ime = shell("dumpsys", "input_method", check=False)
+        if not re.search(r"mInputShown=true|mIsInputViewShown=true", ime):
+            return
+        # Android may retain an input-method state transition after a process
+        # restart. Pressing BACK in that state would leave the Food Review
+        # route, so only dismiss when the production hierarchy has a focused
+        # TextInput that can actually own the keyboard.
+        root = hierarchy()
+        focused_input = any(node.attrib.get("focused") == "true" and
+                            "EditText" in node.attrib.get("class", "")
+                            for node in root.iter("node"))
+        if not focused_input:
+            return
         if re.search(r"mInputShown=true|mIsInputViewShown=true", ime):
             shell("input", "keyevent", "KEYCODE_BACK")
             deadline = time.monotonic() + 3
@@ -740,8 +752,7 @@ def main():
                                            "revisionCount": len(confirmed_revisions),
                                            "immutableEvidence": True})
         else:
-            summary["foodChecks"].append({"step": "confirmed-save", "status": "not-attempted",
-                                           "reason": "Production parser returned no editable nutrition column"})
+            raise RuntimeError("Production Food Review exposed no nutrition column controls; confirmed save was not attempted")
 
         # Delete through the production UI and verify both relational rows and
         # the app-private evidence folder disappear.
