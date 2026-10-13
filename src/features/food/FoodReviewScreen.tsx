@@ -4,6 +4,8 @@ import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { FoodConfirmationStatus, FoodReviewValues, FoodScanRecord, NutritionReviewColumn } from '../../domain/food/scan';
 import { CORE_NUTRIENTS } from '../../domain/food/scan';
+import { normalizeBarcode } from '../../domain/barcode/normalize';
+import type { BarcodeAcquisitionMethod, ValidatedBarcode } from '../../domain/barcode/types';
 import { validateFoodReview } from '../../domain/food/review';
 import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
 import { getFoodDraft, removeFoodDraft } from './draftStore';
@@ -30,9 +32,16 @@ function manualColumn(existing: readonly NutritionReviewColumn[]): NutritionRevi
 
 export default function FoodReviewScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ foodId?: string | string[]; draftId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    foodId?: string | string[]; draftId?: string | string[];
+    barcodeRaw?: string | string[]; barcodeFormat?: string | string[]; barcodeAcquiredBy?: string | string[];
+  }>();
   const foodId = routeId(params.foodId);
   const draftId = routeId(params.draftId);
+  const barcodeRaw = routeId(params.barcodeRaw);
+  const barcodeFormat = routeId(params.barcodeFormat);
+  const barcodeAcquiredBy: BarcodeAcquisitionMethod = params.barcodeAcquiredBy === 'camera' || params.barcodeAcquiredBy === 'image' ? params.barcodeAcquiredBy : 'manual';
+  const pendingBarcode: ValidatedBarcode | null = barcodeRaw && barcodeFormat ? normalizeBarcode({ rawValue: barcodeRaw, format: barcodeFormat, decodedAt: new Date().toISOString() }) : null;
   const [record, setRecord] = useState<FoodScanRecord | null>(null);
   const [review, setReview] = useState<FoodReviewValues | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +99,12 @@ export default function FoodReviewScreen() {
       // repository assigns the new timestamp after the transaction succeeds;
       // replacing it here would make every edit look stale and be rejected.
       const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status });
+      if (pendingBarcode) {
+        if (pendingBarcode.validity !== 'valid' || !pendingBarcode.lookupKey) {
+          throw new Error('食品已保存，但条码未通过校验，未建立条码关联。');
+        }
+        await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
+      }
       if (draftId) removeFoodDraft(draftId);
       setDirty(false);
       router.replace({ pathname: '/foods', params: { saved: saved.id } });
@@ -131,6 +146,7 @@ export default function FoodReviewScreen() {
       {error ? <View style={foodStyles.error} accessibilityLiveRegion="assertive"><Text style={foodStyles.errorText}>{error}</Text></View> : null}
       {!loading && record && review ? <>
         <Text style={foodStyles.note}>{record.status === 'confirmed' && !dirty ? '当前记录：已人工确认' : '当前记录：待确认或有未保存修改'}</Text>
+        {pendingBarcode ? <View style={foodStyles.notice}><Text style={foodStyles.sectionTitle}>待绑定条码</Text><Text style={foodStyles.text}>{pendingBarcode.scan.rawValue} · {pendingBarcode.scan.format}</Text><Text style={foodStyles.note}>保存后会将原始条码、格式、校验结果和获取方式写入本机食品库。</Text></View> : null}
         <FoodEvidencePanel evidence={record.evidence} focusedBlockIds={focusedBlockIds} />
         <View style={foodStyles.card}>
           <Text style={foodStyles.sectionTitle}>食品信息</Text>

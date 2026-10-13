@@ -50,9 +50,14 @@ function files() {
   };
 }
 
+function testNonce() {
+  let value = 0;
+  return () => String(++value);
+}
+
 test('barcode association closes miss → save → repeat local hit without OCR', async () => {
   const database = new DatabaseSync(':memory:');
-  const store = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', () => 'fixed');
+  const store = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', testNonce());
   await store.saveFood(record('food-one'));
   const scanned = normalizeBarcode({ rawValue: '6900000000014', format: 'EAN_13', decodedAt: '2026-10-13T00:00:02.000Z' });
   assert.equal(await store.getFoodByBarcode('06900000000014'), null);
@@ -66,12 +71,17 @@ test('barcode association closes miss → save → repeat local hit without OCR'
   const edited = await store.getFood('food-one');
   assert.equal(edited?.barcodes?.length, 1);
   assert.deepEqual(edited?.barcodes?.[0], association);
+  assert.ok(edited);
+  await store.saveFood({ ...edited, review: { ...edited.review, name: '编辑后的食品' } });
+  const afterEdit = await store.getFoodByBarcode(association.lookupKey);
+  assert.equal(afterEdit?.record.review.name, '编辑后的食品');
+  assert.deepEqual(afterEdit?.record.barcodes?.[0], association);
   database.close();
 });
 
 test('duplicate lookup key cannot silently move to another food and deletion removes index', async () => {
   const database = new DatabaseSync(':memory:');
-  const store = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', () => 'fixed');
+  const store = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', testNonce());
   await store.saveFood(record('food-one'));
   await store.saveFood(record('food-two'));
   const scanned = normalizeBarcode({ rawValue: '6900000000014', format: 'EAN_13', decodedAt: '2026-10-13T00:00:02.000Z' });
@@ -86,11 +96,11 @@ test('duplicate lookup key cannot silently move to another food and deletion rem
 
 test('schema v1 upgrade creates barcode index while retaining food rows and evidence', async () => {
   const database = new DatabaseSync(':memory:');
-  const first = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', () => 'fixed');
+  const first = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', testNonce());
   await first.saveFood(record('legacy-food'));
   assert.equal(database.prepare('PRAGMA user_version').get().user_version, 2);
   database.exec('DROP TABLE food_barcodes; PRAGMA user_version=1;');
-  const upgraded = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:03.000Z', () => 'fixed');
+  const upgraded = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:03.000Z', testNonce());
   const legacy = await upgraded.getFood('legacy-food');
   assert.equal(legacy?.id, 'legacy-food');
   assert.equal(legacy?.evidence.ocr.engineVersion, 'test');

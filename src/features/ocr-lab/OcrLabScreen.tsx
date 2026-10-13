@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type LayoutChangeEvent,
@@ -65,6 +65,13 @@ function MemorySummary({ result }: { result: OcrDocument }) {
 
 export default function OcrLabScreen() {
   const router = useRouter();
+  const barcodeParams = useLocalSearchParams<{
+    barcodeRaw?: string | string[];
+    barcodeFormat?: string | string[];
+    barcodeGtin?: string | string[];
+    barcodeLookupKey?: string | string[];
+    barcodeAcquiredBy?: string | string[];
+  }>();
   const lab = useOcrLab();
   const [viewport, setViewport] = useState({ width: 1, height: 320 });
   const [selection, setSelection] = useState<{ evidenceId: string; blockId: string } | null>(null);
@@ -78,6 +85,11 @@ export default function OcrLabScreen() {
   ];
   const result = lab.evidence?.ocr;
   const image = lab.image;
+  const barcodeRaw = typeof barcodeParams.barcodeRaw === 'string' ? barcodeParams.barcodeRaw : undefined;
+  const barcodeFormat = typeof barcodeParams.barcodeFormat === 'string' ? barcodeParams.barcodeFormat : undefined;
+  const barcodeGtin = typeof barcodeParams.barcodeGtin === 'string' ? barcodeParams.barcodeGtin : undefined;
+  const barcodeLookupKey = typeof barcodeParams.barcodeLookupKey === 'string' ? barcodeParams.barcodeLookupKey : undefined;
+  const barcodeAcquiredBy = typeof barcodeParams.barcodeAcquiredBy === 'string' ? barcodeParams.barcodeAcquiredBy : undefined;
   const selectedId = selection?.evidenceId === lab.evidence?.id ? selection?.blockId : null;
   const selectBlock = (blockId: string) => {
     if (lab.evidence) setSelection({ evidenceId: lab.evidence.id, blockId });
@@ -96,7 +108,12 @@ export default function OcrLabScreen() {
       <View style={styles.badges}><Text style={styles.badge}>完全离线</Text><Text style={styles.badge}>PP-OCRv5 mobile</Text><Text style={styles.badge}>原文保留</Text></View>
       <View style={styles.actionRow}>
         <Action title="打开本地食品" onPress={() => router.push('/foods')} />
+        <Action title="扫码查食品" onPress={() => router.push('/barcode')} primary />
       </View>
+      {barcodeRaw ? <View style={styles.barcodeNotice}>
+        <Text style={styles.noticeTitle}>正在补录未收录食品</Text>
+        <Text style={styles.note}>条码 {barcodeRaw}（{barcodeFormat ?? '未知格式'}）已保留。完成 OCR 和人工核对后，确认保存会把它绑定到这条食品记录。</Text>
+      </View> : null}
 
       <View style={styles.card}>
         <Heading title="01 选择照片" note="选择食品包装、配料表或营养表的真实照片。" />
@@ -172,7 +189,14 @@ export default function OcrLabScreen() {
               <Action title="食品营养核对" primary onPress={() => {
                 if (!lab.evidence) return;
                 const draftId = setFoodDraft(lab.evidence);
-                router.push({ pathname: '/food-review', params: { draftId } });
+                router.push({ pathname: '/food-review', params: {
+                  draftId,
+                  ...(barcodeRaw ? { barcodeRaw } : {}),
+                  ...(barcodeFormat ? { barcodeFormat } : {}),
+                  ...(barcodeGtin ? { barcodeGtin } : {}),
+                  ...(barcodeLookupKey ? { barcodeLookupKey } : {}),
+                  ...(barcodeAcquiredBy ? { barcodeAcquiredBy } : {}),
+                } });
               }} />
               <Action title="打开本地食品" onPress={() => router.push('/foods')} />
             </View>
@@ -212,6 +236,8 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   badge: { backgroundColor: colors.pale, color: colors.teal, fontSize: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, fontWeight: '600' },
   card: { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 16, gap: 12 },
+  barcodeNotice: { backgroundColor: '#fff9e8', borderRadius: 12, borderWidth: 1, borderColor: '#efdfaa', padding: 13, gap: 5 },
+  noticeTitle: { color: colors.amber, fontSize: 14, fontWeight: '700' },
   heading: { gap: 6 },
   sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '700' },
   note: { color: colors.secondary, fontSize: 12, lineHeight: 19 },

@@ -1,0 +1,225 @@
+import { useRef, useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  ActivityIndicator, NativeModules, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { BarcodeScan, ValidatedBarcode, SupportedBarcodeFormat } from '../../domain/barcode/types';
+import { normalizeBarcode } from '../../domain/barcode/normalize';
+import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
+import { hukangBarcode } from '../../infrastructure/barcode/HukangBarcode';
+
+type LookupRecord = {
+  id?: string;
+  name?: string;
+  chineseName?: string;
+  brand?: string;
+  status?: string;
+  updatedAt?: string;
+  review?: { name?: string; brand?: string };
+};
+type LookupResult = { status: 'found'; records: readonly LookupRecord[] } | { status: 'not_found' } | { status: 'unavailable'; reason: string };
+type BarcodeRepositoryApi = typeof chinaFoodRepository;
+type NativeBarcodeResult = { rawValue?: unknown; format?: unknown; decodedAt?: unknown };
+type NativeBarcodeModule = {
+  scanImage?: (uri: string) => Promise<NativeBarcodeResult | NativeBarcodeResult[] | null>;
+  startCameraScan?: () => Promise<NativeBarcodeResult | NativeBarcodeResult[] | null>;
+};
+
+const palette = {
+  background: '#f3faf8', surface: '#ffffff', ink: '#183e37', secondary: '#60736e',
+  teal: '#157b67', pale: '#e6f4ed', border: '#dce9e4', amber: '#946015', red: '#a43b3b',
+};
+const formatOptions: readonly { value: SupportedBarcodeFormat; label: string }[] = [
+  { value: 'EAN_13', label: 'EAN-13' }, { value: 'EAN_8', label: 'EAN-8' },
+  { value: 'UPC_A', label: 'UPC-A' }, { value: 'UPC_E', label: 'UPC-E' },
+];
+const formatLabel = (value: string | null | undefined) => formatOptions.find(option => option.value === value)?.label ?? value ?? '未知格式';
+
+function scanFromNative(value: NativeBarcodeResult): BarcodeScan | null {
+  if (typeof value.rawValue !== 'string' || typeof value.format !== 'string') return null;
+  return { rawValue: value.rawValue, format: value.format, decodedAt: typeof value.decodedAt === 'string' ? value.decodedAt : new Date().toISOString() };
+}
+
+function nativeBarcode(): NativeBarcodeModule | null {
+  const module = (NativeModules as unknown as { HukangBarcode?: NativeBarcodeModule }).HukangBarcode;
+  return module ?? null;
+}
+
+function explanation(validated: ValidatedBarcode): string {
+  switch (validated.reason) {
+    case 'unsupported_format': return '这不是本阶段支持的食品条码格式。二维码和药品追溯码不会自动打开或查询。';
+    case 'non_digit_value': return '条码含有非数字字符，请对照包装重新输入。';
+    case 'wrong_length': return '条码长度与选择的格式不符，请保留所有前导零。';
+    case 'invalid_check_digit': return '校验位不正确。请重新扫描，或检查是否漏读了数字。';
+    case 'unsupported_number_system': return 'UPC-E 编码的 number system 不明确，未猜测展开方式。';
+    default: return '条码未通过校验，尚未查询本地食品库。';
+  }
+}
+
+function recordName(record: LookupRecord): string {
+  return record.name ?? record.chineseName ?? record.review?.name ?? '未命名食品';
+}
+
+/** Offline barcode entry. Camera/image decoding is injected by HukangBarcode; no ML Kit or network fallback exists. */
+export default function BarcodeScanScreen() {
+  const router = useRouter();
+  const [format, setFormat] = useState<SupportedBarcodeFormat>('EAN_13');
+  const [rawValue, setRawValue] = useState('');
+  const [validated, setValidated] = useState<ValidatedBarcode | null>(null);
+  const [lookup, setLookup] = useState<LookupResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [acquiredBy, setAcquiredBy] = useState<'camera' | 'image' | 'manual'>('manual');
+  const requestId = useRef(0);
+
+  const lookupLocal = async (next: ValidatedBarcode) => {
+    const found = await (chinaFoodRepository as BarcodeRepositoryApi).getFoodByBarcode(next.lookupKey as string);
+    return found
+      ? { status: 'found' as const, records: [found.record] }
+      : { status: 'not_found' as const };
+  };
+
+  const submitScan = async (scan: BarcodeScan, source: 'camera' | 'image' | 'manual' = 'manual') => {
+    const id = ++requestId.current;
+    setBusy(true); setNotice(null); setLookup(null);
+    setRawValue(scan.rawValue);
+    setAcquiredBy(source);
+    const next = normalizeBarcode(scan);
+    setValidated(next);
+    if (next.validity !== 'valid') { setBusy(false); return; }
+    try {
+      const result = await lookupLocal(next);
+      if (id === requestId.current) setLookup(result);
+    } catch (cause) {
+      if (id === requestId.current) setLookup({ status: 'unavailable', reason: cause instanceof Error ? cause.message : String(cause) });
+    } finally {
+      if (id === requestId.current) setBusy(false);
+    }
+  };
+
+  const submitManual = () => {
+    void submitScan({ rawValue, format, decodedAt: new Date().toISOString() }, 'manual');
+  };
+
+  const launchCamera = async () => {
+    const module = nativeBarcode();
+    if (!module?.startCameraScan) {
+      setNotice('当前构建尚未提供相机扫码模块。可以先使用“从图片识别条码”或手动输入；不会调用在线服务。');
+      return;
+    }
+    setBusy(true); setNotice(null);
+    try {
+      const output = await module.startCameraScan();
+      const first = Array.isArray(output) ? output[0] : output;
+      const scan = first ? scanFromNative(first) : null;
+      if (!scan) setNotice('没有识别到支持的食品条码，请调整取景后重试。');
+      else await submitScan(scan, 'camera');
+    } catch (cause) {
+      setNotice(`相机不可用或权限被拒绝：${cause instanceof Error ? cause.message : String(cause)}`);
+    } finally { setBusy(false); }
+  };
+
+  const launchImage = async () => {
+    setNotice(null);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) { setNotice('没有相册权限，无法从包装照片识别条码。'); return; }
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: false });
+    if (picked.canceled) return;
+    const asset = picked.assets?.[0];
+    if (!asset?.uri) { setNotice('没有取得可读取的包装图片。'); return; }
+    setBusy(true);
+    try {
+      const output = await hukangBarcode.scanImage(asset.uri);
+      const first = output[0] as NativeBarcodeResult | undefined;
+      const scan = first ? scanFromNative(first) : null;
+      if (!scan) setNotice('图片中没有识别到支持的食品条码。');
+      else await submitScan(scan, 'image');
+    } catch (cause) { setNotice(`图片条码识别失败：${cause instanceof Error ? cause.message : String(cause)}`); }
+    finally { setBusy(false); }
+  };
+
+  const startDraft = () => {
+    if (!validated?.gtin) return;
+    // FoodReview receives the validated barcode through route params. OCR Lab
+    // preserves the params while it creates the immutable evidence draft.
+    router.push({ pathname: '/', params: {
+      barcodeRaw: validated.scan.rawValue, barcodeFormat: validated.scan.format,
+      barcodeGtin: validated.gtin, barcodeLookupKey: validated.lookupKey ?? '', barcodeAcquiredBy: acquiredBy,
+    } });
+  };
+
+  return <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <Stack.Screen options={{ title: '扫码查食品', headerShadowVisible: false }} />
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Text style={styles.title}>扫码查食品</Text>
+      <Text style={styles.note}>条码只用于定位本机食品记录。没有记录时可以带着条码补录包装，整个流程保持离线。</Text>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>扫描入口</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="使用相机扫描食品条码" onPress={() => void launchCamera()} disabled={busy} style={[styles.primary, busy && styles.disabled]}>
+          <Text style={styles.primaryText}>使用相机扫描</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="从图片识别食品条码" onPress={() => void launchImage()} disabled={busy} style={[styles.action, busy && styles.disabled]}>
+          <Text style={styles.actionText}>从包装图片识别条码</Text>
+        </Pressable>
+        <Text style={styles.note}>支持 EAN-13、EAN-8、UPC-A、UPC-E。二维码和药品追溯码不会打开网页。</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>手动输入（辅助入口）</Text>
+        <View style={styles.choices}>{formatOptions.map(option => <Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={`条码格式-${option.label}`} accessibilityState={{ selected: format === option.value }} onPress={() => setFormat(option.value)} style={[styles.choice, format === option.value && styles.selectedChoice]}><Text style={[styles.choiceText, format === option.value && styles.selectedChoiceText]}>{option.label}</Text></Pressable>)}</View>
+        <TextInput accessibilityLabel="手动输入条码" value={rawValue} onChangeText={value => { setRawValue(value); setValidated(null); setLookup(null); }} placeholder="保留前导零，只输入数字" keyboardType="number-pad" style={styles.input} maxLength={14} />
+        <Pressable accessibilityRole="button" accessibilityLabel="查询手动输入条码" onPress={submitManual} disabled={busy || !rawValue} style={[styles.action, busy && styles.disabled]}><Text style={styles.actionText}>查询本地食品</Text></Pressable>
+      </View>
+      {busy ? <ActivityIndicator color={palette.teal} accessibilityLabel="正在扫描或查询本地食品" /> : null}
+      {notice ? <View style={styles.error}><Text style={styles.errorText}>{notice}</Text></View> : null}
+      {validated ? <View style={styles.card}>
+        <Text style={styles.sectionTitle}>条码结果</Text>
+        <Text style={styles.text}>原始条码：{validated.scan.rawValue}</Text>
+        <Text style={styles.note}>格式：{formatLabel(validated.normalizedFormat ?? validated.scan.format)} · 读取来源：{validated.scan.decodedAt}</Text>
+        {validated.validity !== 'valid' ? <Text style={styles.errorText}>{explanation(validated)}</Text> : <Text style={styles.success}>校验通过 · 本地查询键 {validated.lookupKey}</Text>}
+      </View> : null}
+      {lookup?.status === 'unavailable' ? <View style={styles.error}><Text style={styles.errorText}>本地食品查询不可用：{lookup.reason}</Text></View> : null}
+      {lookup?.status === 'found' ? <View style={styles.card}>
+        <Text style={styles.sectionTitle}>已收录食品</Text>
+        {lookup.records.map((record, index) => <Pressable key={record.id ?? `${index}`} accessibilityRole="button" accessibilityLabel={`打开食品-${recordName(record)}`} onPress={() => record.id && router.push({ pathname: '/food-review', params: { foodId: record.id } })} style={styles.result}>
+          <Text style={styles.text}>{recordName(record)}</Text><Text style={record.status === 'confirmed' ? styles.success : styles.warning}>{record.status === 'confirmed' ? '已人工确认' : '待确认'}</Text>
+          {record.brand || record.review?.brand ? <Text style={styles.note}>{record.brand ?? record.review?.brand}</Text> : null}
+        </Pressable>)}
+      </View> : null}
+      {lookup?.status === 'not_found' ? <View style={styles.card}>
+        <Text style={styles.sectionTitle}>本地食品库尚未收录</Text>
+        <Text style={styles.note}>没有查到这个条码的本地记录。你可以拍摄或导入包装，补充食品信息；这不会被当作“商品不存在”或食品安全结论。</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="补录带条码的食品" onPress={startDraft} style={styles.primary}><Text style={styles.primaryText}>补录这个食品</Text></Pressable>
+      </View> : null}
+      <Pressable accessibilityRole="button" accessibilityLabel="重新扫描" onPress={() => { requestId.current += 1; setValidated(null); setLookup(null); setRawValue(''); setNotice(null); }} style={styles.action}><Text style={styles.actionText}>重新扫描</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="返回 OCR Lab" onPress={() => router.replace('/')} style={styles.action}><Text style={styles.actionText}>返回 OCR Lab</Text></Pressable>
+    </ScrollView>
+  </SafeAreaView>;
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: palette.background },
+  content: { padding: 16, gap: 16, paddingBottom: 36 },
+  title: { fontSize: 23, fontWeight: '700', color: palette.ink },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: palette.ink },
+  card: { backgroundColor: palette.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: palette.border, gap: 12 },
+  note: { fontSize: 12, lineHeight: 20, color: palette.secondary },
+  text: { fontSize: 14, lineHeight: 22, color: palette.ink },
+  success: { color: palette.teal, fontSize: 13, lineHeight: 20 },
+  warning: { color: palette.amber, fontSize: 12, lineHeight: 20 },
+  error: { backgroundColor: '#fff1ee', padding: 12, borderRadius: 10, gap: 5 },
+  errorText: { color: palette.red, fontSize: 13, lineHeight: 21 },
+  primary: { minHeight: 46, justifyContent: 'center', alignItems: 'center', backgroundColor: palette.teal, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11 },
+  primaryText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  action: { minHeight: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: palette.pale, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10 },
+  actionText: { color: palette.teal, fontWeight: '600', fontSize: 14 },
+  disabled: { opacity: 0.4 },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  choice: { borderWidth: 1, borderColor: palette.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 9, minHeight: 40, justifyContent: 'center' },
+  selectedChoice: { backgroundColor: palette.teal, borderColor: palette.teal },
+  choiceText: { color: palette.secondary, fontSize: 12 },
+  selectedChoiceText: { color: '#fff', fontWeight: '600' },
+  input: { backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 10, color: palette.ink, fontSize: 16, minHeight: 46 },
+  result: { borderWidth: 1, borderColor: palette.border, borderRadius: 10, padding: 12, gap: 4 },
+});

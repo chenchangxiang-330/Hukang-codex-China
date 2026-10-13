@@ -1,6 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import type { LocalChinaFoodSource } from '../../application/ports/ChinaFoodRepository';
+import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import type { FoodRevision, FoodScanRecord } from '../../domain/food/scan';
 import { hukangVision } from '../ocr/HukangVision';
 import {
@@ -129,6 +130,12 @@ function repository(): Promise<ReturnType<typeof createSQLiteFoodStore>> {
 export const chinaFoodRepository: LocalChinaFoodSource = {
   kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v1',
   async getFood(id) { return (await repository()).getFood(id); },
+  async getFoodByBarcode(lookupKey) { return (await repository()).getFoodByBarcode(lookupKey); },
+  async listFoodBarcodes(foodId) { return (await repository()).listFoodBarcodes(foodId); },
+  async bindBarcode(foodId, barcode: ValidatedBarcode, acquiredBy: BarcodeAcquisitionMethod): Promise<FoodBarcodeAssociation> {
+    return (await repository()).bindBarcode(foodId, barcode, acquiredBy);
+  },
+  async unbindBarcode(foodId, lookupKey) { return (await repository()).unbindBarcode(foodId, lookupKey); },
   async listFoods(query) { return (await repository()).listFoods(query); },
   async saveFood(record) { return (await repository()).saveFood(record); },
   async deleteFood(id) { return (await repository()).deleteFood(id); },
