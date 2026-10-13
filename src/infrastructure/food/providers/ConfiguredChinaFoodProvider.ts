@@ -71,6 +71,7 @@ function safeStatus(code: unknown): Exclude<ProviderStatus, 'found'> | null {
     case 'RATE_LIMITED':
     case 'QUOTA_EXCEEDED': return 'rate_limited';
     case 'SERVICE_UNAVAILABLE': return 'unavailable';
+    case 'NOT_CONFIGURED': return 'not_configured';
     case 'IDENTITY_CONFLICT': return 'identity_conflict';
     default: return null;
   }

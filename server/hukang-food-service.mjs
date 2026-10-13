@@ -58,7 +58,7 @@ function statusForError(error) {
   if (error?.code === 'UNSUPPORTED_FORMAT') return [422, { ok: false, error: { code: 'UNSUPPORTED_FORMAT' } }];
   if (error?.code === 'UNAUTHORIZED') return [502, { ok: false, error: { code: 'UNAUTHORIZED' } }];
   if (error?.code === 'RATE_LIMITED') return [429, { ok: false, error: { code: 'RATE_LIMITED', retryAfterSeconds: error.retryAfterSeconds } }];
-  if (error?.code === 'NOT_CONFIGURED') return [503, { ok: false, error: { code: 'SERVICE_UNAVAILABLE' } }];
+  if (error?.code === 'NOT_CONFIGURED') return [503, { ok: false, error: { code: 'NOT_CONFIGURED' } }];
   return [502, { ok: false, error: { code: 'SERVICE_UNAVAILABLE' } }];
 }
 
