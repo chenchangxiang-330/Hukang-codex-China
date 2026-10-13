@@ -43,7 +43,7 @@ function record(id = 'identity-food') {
 function source(kind = 'mainland_service', sourceId = 'hukang-test-provider') {
   return { sourceId, sourceName: '测试国内商品服务', kind, sourceRecordId: 'record-001', fetchedAt: '2026-10-13T00:00:00.000Z',
     obtainedAt: '2026-10-13T00:00:00.000Z',
-    policy: { license: null, commercialUse: 'unknown', cache: 'unknown', redistribute: 'unknown', cacheTtlSeconds: null, authorizationReference: null } };
+    policy: { license: null, commercialUse: 'unknown', cache: 'allowed', redistribute: 'unknown', cacheTtlSeconds: null, authorizationReference: null } };
 }
 function identity(foodId, status = 'pending_confirmation', kind = 'mainland_service') {
   return { schemaVersion: 1, foodId, name: '纯牛奶', brand: '测试品牌', specification: '250 mL', status,
@@ -69,6 +69,16 @@ test('product identity is stored separately, with provider source and confirmati
   assert.equal((await local.getFoodIdentityRevisions('identity-food')).length, 2);
   assert.equal((await local.getFood('identity-food')).status, 'draft', 'identity confirmation must not imply nutrition confirmation');
   await assert.rejects(() => local.saveFoodIdentity({ ...pending, name: '过期编辑' }), /已被更新/);
+  database.close();
+});
+
+test('provider identity with unknown cache authorization is not persisted', async () => {
+  const database = new DatabaseSync(':memory:');
+  const local = store(database);
+  await local.saveFood(record('uncached-identity-food'));
+  const uncacheable = { ...identity('uncached-identity-food'), source: { ...source(), policy: { ...source().policy, cache: 'unknown' } } };
+  await assert.rejects(() => local.saveFoodIdentity(uncacheable), /缓存授权尚未确认/);
+  assert.equal(await local.getFoodIdentity('uncached-identity-food'), null);
   database.close();
 });
 

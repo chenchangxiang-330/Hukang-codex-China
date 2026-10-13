@@ -224,6 +224,12 @@ function validateIdentity(identity: FoodIdentity): void {
   canonicalFoodJson(identity);
 }
 
+function assertIdentityCachePolicy(identity: FoodIdentity): void {
+  if (identity.source.kind === 'mainland_service' && identity.source.policy.cache !== 'allowed') {
+    throw new Error('国内服务商品身份的本地缓存授权尚未确认，未写入长期食品库；请手动核对后以本地用户来源保存。');
+  }
+}
+
 function identityFromRow(row: IdentityRow): FoodIdentity {
   const identity = JSON.parse(row.identity_json) as FoodIdentity;
   validateIdentity(identity);
@@ -398,6 +404,7 @@ export function createSQLiteFoodStore(
     },
     async saveFoodIdentity(input) {
       validateIdentity(input);
+      assertIdentityCachePolicy(input);
       const snapshot = JSON.parse(JSON.stringify(input)) as FoodIdentity;
       return serialize(async () => {
         await ready();
@@ -472,6 +479,7 @@ export function createSQLiteFoodStore(
         const requestedIdentity = record.identity;
         if (requestedIdentity) {
           validateIdentity(requestedIdentity);
+          assertIdentityCachePolicy(requestedIdentity);
           if (requestedIdentity.foodId !== record.id) throw new Error('商品身份必须属于当前食品记录。');
         }
         if (previous?.identity && requestedIdentity && canonicalFoodJson(previous.identity) !== canonicalFoodJson(requestedIdentity)) {
