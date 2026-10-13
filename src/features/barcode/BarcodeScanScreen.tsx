@@ -70,7 +70,7 @@ function basisText(value: string | undefined, raw: string | undefined): string {
   }
 }
 
-/** Offline barcode entry. Camera/image decoding is injected by HukangBarcode; no ML Kit or network fallback exists. */
+/** Local-first barcode entry. Camera/image decoding remains local; a miss can opt into the separate identity page for a domestic HTTPS lookup. */
 export default function BarcodeScanScreen() {
   const router = useRouter();
   const [format, setFormat] = useState<SupportedBarcodeFormat>('EAN_13');
@@ -164,7 +164,7 @@ export default function BarcodeScanScreen() {
     <Stack.Screen options={{ title: '扫码查食品', headerShadowVisible: false }} />
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>扫码查食品</Text>
-      <Text style={styles.note}>条码只用于定位本机食品记录。没有记录时可以带着条码补录包装，整个流程保持离线。</Text>
+      <Text style={styles.note}>条码先定位本机食品记录。没有记录时可选择启用国内商品身份查询，也可以完全离线手动建档；照片、OCR 和营养数据始终留在本机。</Text>
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>扫描入口</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="使用相机扫描食品条码" onPress={() => void launchCamera()} disabled={busy} style={[styles.primary, busy && styles.disabled]}>
@@ -209,7 +209,7 @@ export default function BarcodeScanScreen() {
       </View> : null}
       {lookup?.status === 'not_found' ? <View style={styles.card}>
         <Text style={styles.sectionTitle}>本地食品库尚未收录</Text>
-        <Text style={styles.note}>没有查到这个条码的本地记录。你可以拍摄或导入包装，补充食品信息；这不会被当作“商品不存在”或食品安全结论。</Text>
+        <Text style={styles.note}>没有查到这个条码的本地记录。你可以选择国内商品身份查询，或拍摄包装手动补充；查询失败不等于商品不存在，也不是食品安全结论。</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="补录带条码的食品" onPress={startDraft} style={styles.primary}><Text style={styles.primaryText}>补录这个食品</Text></Pressable>
       </View> : null}
       <Pressable accessibilityRole="button" accessibilityLabel="重新扫描" onPress={() => { requestId.current += 1; setValidated(null); setLookup(null); setRawValue(''); setNotice(null); }} style={styles.action}><Text style={styles.actionText}>重新扫描</Text></Pressable>
