@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BarcodeScan, ValidatedBarcode, SupportedBarcodeFormat } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
@@ -15,6 +15,7 @@ type LookupRecord = {
   brand?: string;
   status?: string;
   updatedAt?: string;
+  evidence?: { image?: { uri?: string } };
   review?: { name?: string; brand?: string; columns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[] };
   barcodes?: readonly { rawValue: string; format: string; lookupKey: string; acquiredBy: string }[];
   reviewColumns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[];
@@ -183,6 +184,7 @@ export default function BarcodeScanScreen() {
         {lookup.records.map((record, index) => <Pressable key={record.id ?? `${index}`} accessibilityRole="button" accessibilityLabel={`打开食品-${recordName(record)}`} onPress={() => record.id && router.push({ pathname: '/food-review', params: { foodId: record.id } })} style={styles.result}>
           <Text style={styles.text}>{recordName(record)}</Text><Text style={record.status === 'confirmed' ? styles.success : styles.warning}>{record.status === 'confirmed' ? '已人工确认' : '待确认'}</Text>
           {record.brand || record.review?.brand ? <Text style={styles.note}>{record.brand ?? record.review?.brand}</Text> : null}
+          {record.evidence?.image?.uri ? <Image accessibilityLabel="食品包装图片" source={{ uri: record.evidence.image.uri }} resizeMode="contain" style={styles.packageImage} /> : null}
           {record.barcodes?.map(barcode => <Text key={barcode.lookupKey} style={styles.note}>条码：{barcode.rawValue} · {barcode.format} · {barcode.acquiredBy}</Text>)}
           {(record.reviewColumns ?? record.columns ?? record.review?.columns)?.map((column, columnIndex) => <View key={`${column.basisKind ?? 'unknown'}-${columnIndex}`} style={styles.nutritionSummary}>
             <Text style={styles.note}>{basisText(column.basisKind, column.basisRawText)}</Text>
@@ -226,4 +228,5 @@ const styles = StyleSheet.create({
   input: { backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 10, color: palette.ink, fontSize: 16, minHeight: 46 },
   result: { borderWidth: 1, borderColor: palette.border, borderRadius: 10, padding: 12, gap: 4 },
   nutritionSummary: { backgroundColor: palette.background, borderRadius: 8, padding: 8, marginTop: 4, gap: 2 },
+  packageImage: { width: '100%', height: 150, borderRadius: 8, backgroundColor: palette.background },
 });
