@@ -227,8 +227,13 @@ function validateIdentity(identity: FoodIdentity): void {
 function identityFromRow(row: IdentityRow): FoodIdentity {
   const identity = JSON.parse(row.identity_json) as FoodIdentity;
   validateIdentity(identity);
+  const source = identity.source;
   if (identity.foodId !== row.food_id || identity.name !== row.name || identity.brand !== row.brand ||
-    identity.specification !== row.specification || identity.status !== row.status || identity.updatedAt !== row.updated_at) {
+    identity.specification !== row.specification || identity.status !== row.status || identity.updatedAt !== row.updated_at ||
+    source.sourceId !== row.source_id || source.sourceName !== row.source_name || source.kind !== row.source_kind ||
+    source.sourceRecordId !== row.source_record_id || source.fetchedAt !== row.source_fetched_at ||
+    source.obtainedAt !== row.source_obtained_at || identity.confirmedAt !== row.confirmed_at ||
+    canonicalFoodJson(source.policy) !== canonicalFoodJson(JSON.parse(row.source_policy_json))) {
     throw new Error('商品身份索引列与身份记录不一致。');
   }
   return identity;
