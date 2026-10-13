@@ -59,6 +59,8 @@ function statusForError(error) {
   if (error?.code === 'UNAUTHORIZED') return [502, { ok: false, error: { code: 'UNAUTHORIZED' } }];
   if (error?.code === 'RATE_LIMITED') return [429, { ok: false, error: { code: 'RATE_LIMITED', retryAfterSeconds: error.retryAfterSeconds } }];
   if (error?.code === 'NOT_CONFIGURED') return [503, { ok: false, error: { code: 'NOT_CONFIGURED' } }];
+  if (error?.code === 'IDENTITY_CONFLICT') return [502, { ok: false, error: { code: 'IDENTITY_CONFLICT' } }];
+  if (error?.code === 'INVALID_RESPONSE') return [502, { ok: false, error: { code: 'INVALID_RESPONSE' } }];
   return [502, { ok: false, error: { code: 'SERVICE_UNAVAILABLE' } }];
 }
 
