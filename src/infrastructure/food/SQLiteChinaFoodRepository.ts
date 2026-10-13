@@ -20,9 +20,15 @@ function ownedDirectory(id: string, expectedUri?: string): Directory {
   }
   return directory;
 }
-function revisionFile(id: string, folderUri: string, revisionId: string): File {
-  assertFoodId(revisionId);
-  return new File(ownedDirectory(id, folderUri), 'revisions', `${revisionId}.json`);
+function evidenceDirectory(id: string, expectedUri?: string): Directory {
+  const root = ownedDirectory(id);
+  if (expectedUri === undefined || expectedUri === root.uri) return root;
+  // Versioned evidence is stored below this record-owned directory. Never
+  // accept an arbitrary path from SQLite or a caller.
+  if (!expectedUri.startsWith(`${root.uri}/`)) {
+    throw new Error('证据目录不属于此食品记录，拒绝读取或删除其他文件。');
+  }
+  return new Directory(expectedUri);
 }
 function writeNewJson(file: File, value: unknown): void {
   if (file.exists) throw new Error(`证据文件已存在，拒绝覆盖：${file.name}`);
@@ -35,42 +41,47 @@ async function verifyImage(file: File, expectedHash: string): Promise<void> {
   }
 }
 
+async function materializeInto(record: FoodScanRecord, directory: Directory): Promise<MaterializedFoodEvidence> {
+  if (directory.exists) throw new Error('此食品的证据版本目录已存在，拒绝覆盖原始资料。');
+  directory.create({ intermediates: true });
+  try {
+    const original = new File(directory, 'original.source');
+    const processed = new File(directory, 'processed.png');
+    await new File(record.evidence.image.originalUri).copy(original);
+    await new File(record.evidence.image.uri).copy(processed);
+    await verifyImage(original, record.evidence.image.sourceImageHash);
+    await verifyImage(processed, record.evidence.image.processedImageHash);
+    const ocrDocument = new File(directory, 'ocr-document.json');
+    const evidence = {
+      ...record.evidence,
+      image: { ...record.evidence.image, originalUri: original.uri, uri: processed.uri },
+      ocr: { ...record.evidence.ocr, imageUri: processed.uri, evidenceUri: ocrDocument.uri },
+    };
+    // raw-ocr.json retains every source field and original URI exactly. Only the
+    // separate persistent view changes file paths; OCR text is never rewritten.
+    writeNewJson(new File(directory, 'raw-ocr.json'), record.evidence);
+    writeNewJson(new File(directory, 'parsed-nutrition.json'), record.parsed);
+    writeNewJson(ocrDocument, evidence.ocr);
+    writeNewJson(new File(directory, 'evidence.json'), evidence);
+    new Directory(directory, 'revisions').create();
+    return { sourceEvidence: record.evidence, evidence, parsed: record.parsed, folderUri: directory.uri };
+  } catch (error) {
+    try { if (directory.exists) directory.delete(); }
+    catch (cleanupError) { throw new Error(`创建食品证据失败且清理未完成：${String(error)}；${String(cleanupError)}`); }
+    throw error;
+  }
+}
+
 const evidenceFiles: FoodEvidenceFiles = {
   async materialize(record: FoodScanRecord): Promise<MaterializedFoodEvidence> {
-    const directory = ownedDirectory(record.id);
-    if (directory.exists) throw new Error('此食品的证据目录已存在，拒绝覆盖原始资料。');
-    directory.create({ intermediates: true });
-    try {
-      const original = new File(directory, 'original.source');
-      const processed = new File(directory, 'processed.png');
-      // Expo's native copy is asynchronous. Verify only after both promises
-      // resolve; checking exists/hash sooner races with the native writer.
-      await new File(record.evidence.image.originalUri).copy(original);
-      await new File(record.evidence.image.uri).copy(processed);
-      await verifyImage(original, record.evidence.image.sourceImageHash);
-      await verifyImage(processed, record.evidence.image.processedImageHash);
-      const ocrDocument = new File(directory, 'ocr-document.json');
-      const evidence = {
-        ...record.evidence,
-        image: { ...record.evidence.image, originalUri: original.uri, uri: processed.uri },
-        ocr: { ...record.evidence.ocr, imageUri: processed.uri, evidenceUri: ocrDocument.uri },
-      };
-      // raw-ocr.json retains every source field and original URI exactly. Only the
-      // separate persistent view changes file paths; OCR text is never rewritten.
-      writeNewJson(new File(directory, 'raw-ocr.json'), record.evidence);
-      writeNewJson(new File(directory, 'parsed-nutrition.json'), record.parsed);
-      writeNewJson(ocrDocument, evidence.ocr);
-      writeNewJson(new File(directory, 'evidence.json'), evidence);
-      new Directory(directory, 'revisions').create();
-      return { sourceEvidence: record.evidence, evidence, parsed: record.parsed, folderUri: directory.uri };
-    } catch (error) {
-      try { if (directory.exists) directory.delete(); }
-      catch (cleanupError) { throw new Error(`创建食品证据失败且清理未完成：${String(error)}；${String(cleanupError)}`); }
-      throw error;
-    }
+    return materializeInto(record, ownedDirectory(record.id));
+  },
+  async materializeRevision(record: FoodScanRecord, revisionId: string): Promise<MaterializedFoodEvidence> {
+    assertFoodId(revisionId);
+    return materializeInto(record, new Directory(ownedDirectory(record.id), 'versions', revisionId));
   },
   async validateStored(id, stored) {
-    const directory = ownedDirectory(id, stored.folderUri);
+    const directory = evidenceDirectory(id, stored.folderUri);
     const original = new File(directory, 'original.source');
     const processed = new File(directory, 'processed.png');
     if (stored.evidence.image.originalUri !== original.uri || stored.evidence.image.uri !== processed.uri ||
@@ -89,11 +100,15 @@ const evidenceFiles: FoodEvidenceFiles = {
       }
     }
   },
+  async removeEvidenceRevision(id, folderUri) {
+    const directory = evidenceDirectory(id, folderUri);
+    if (directory.uri !== ownedDirectory(id).uri && directory.exists) directory.delete();
+  },
   async writeRevision(id, folderUri, revision: FoodRevision) {
-    writeNewJson(revisionFile(id, folderUri, revision.id), revision);
+    writeNewJson(new File(evidenceDirectory(id, folderUri), 'revisions', `${revision.id}.json`), revision);
   },
   async removeRevision(id, folderUri, revisionId) {
-    const file = revisionFile(id, folderUri, revisionId);
+    const file = new File(evidenceDirectory(id, folderUri), 'revisions', `${revisionId}.json`);
     if (file.exists) file.delete();
   },
   async removeFood(id, folderUri) {
@@ -129,7 +144,7 @@ function repository(): Promise<ReturnType<typeof createSQLiteFoodStore>> {
 
 /** Local-only adapter. No network provider, automatic sync or external database exists. */
 export const chinaFoodRepository: LocalChinaFoodSource = {
-  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v3',
+  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v4',
   async getFood(id) { return (await repository()).getFood(id); },
   async getFoodIdentity(foodId) { return (await repository()).getFoodIdentity(foodId); },
   async saveFoodIdentity(identity: FoodIdentity) { return (await repository()).saveFoodIdentity(identity); },
@@ -142,5 +157,6 @@ export const chinaFoodRepository: LocalChinaFoodSource = {
   async unbindBarcode(foodId, lookupKey) { return (await repository()).unbindBarcode(foodId, lookupKey); },
   async listFoods(query) { return (await repository()).listFoods(query); },
   async saveFood(record) { return (await repository()).saveFood(record); },
+  async saveFoodEvidence(input) { return (await repository()).saveFoodEvidence(input); },
   async deleteFood(id) { return (await repository()).deleteFood(id); },
 };

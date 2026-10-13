@@ -1,5 +1,6 @@
 import type { ChinaFoodRecord, DataUsePolicy } from '../../domain/food/types';
-import type { FoodScanRecord, FoodSummary } from '../../domain/food/scan';
+import type { FoodScanRecord, FoodSummary, FoodReviewValues, ParsedNutritionLabel } from '../../domain/food/scan';
+import type { OcrEvidence } from '../../domain/ocr/types';
 import type { FoodIdentity } from '../../domain/food/identity';
 import type { FoodBarcodeAssociation, ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/barcode/types';
 
@@ -14,6 +15,17 @@ export interface ChinaFoodRepository {
   listFoods(query?: string): Promise<readonly FoodSummary[]>;
   /** Returns persistent image paths and the newly appended review revision. */
   saveFood(record: FoodScanRecord): Promise<FoodScanRecord>;
+  /**
+   * Append a new immutable package/OCR snapshot to an existing food.  The
+   * previous snapshot stays in evidenceHistory and is never overwritten.
+   */
+  saveFoodEvidence(input: {
+    foodId: string;
+    evidence: OcrEvidence;
+    parsed: ParsedNutritionLabel;
+    review: FoodReviewValues;
+    status: FoodScanRecord['status'];
+  }): Promise<FoodScanRecord>;
   deleteFood(id: string): Promise<void>;
   /** Product identity is persisted independently from OCR/nutrition evidence. */
   getFoodIdentity(foodId: string): Promise<FoodIdentity | null>;

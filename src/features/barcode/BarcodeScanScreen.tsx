@@ -178,7 +178,13 @@ export default function BarcodeScanScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>手动输入（辅助入口）</Text>
         <View style={styles.choices}>{formatOptions.map(option => <Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={`条码格式-${option.label}`} accessibilityState={{ selected: format === option.value }} onPress={() => setFormat(option.value)} style={[styles.choice, format === option.value && styles.selectedChoice]}><Text style={[styles.choiceText, format === option.value && styles.selectedChoiceText]}>{option.label}</Text></Pressable>)}</View>
-        <TextInput accessibilityLabel="手动输入条码" value={rawValue} onChangeText={value => { setRawValue(value); setValidated(null); setLookup(null); }} placeholder="保留前导零，只输入数字" keyboardType="number-pad" style={styles.input} maxLength={14} />
+        <TextInput accessibilityLabel="手动输入条码" value={rawValue} onChangeText={value => {
+          // Editing the value starts a new lookup generation. A slow local
+          // query for the previous value must not repopulate this form.
+          requestId.current += 1;
+          setBusy(false);
+          setRawValue(value); setValidated(null); setLookup(null);
+        }} placeholder="保留前导零，只输入数字" keyboardType="number-pad" style={styles.input} maxLength={14} />
         <Pressable accessibilityRole="button" accessibilityLabel="查询手动输入条码" onPress={submitManual} disabled={busy || !rawValue} style={[styles.action, busy && styles.disabled]}><Text style={styles.actionText}>查询本地食品</Text></Pressable>
       </View>
       {busy ? <ActivityIndicator color={palette.teal} accessibilityLabel="正在扫描或查询本地食品" /> : null}
@@ -212,7 +218,7 @@ export default function BarcodeScanScreen() {
         <Text style={styles.note}>没有查到这个条码的本地记录。你可以选择国内商品身份查询，或拍摄包装手动补充；查询失败不等于商品不存在，也不是食品安全结论。</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="补录带条码的食品" onPress={startDraft} style={styles.primary}><Text style={styles.primaryText}>补录这个食品</Text></Pressable>
       </View> : null}
-      <Pressable accessibilityRole="button" accessibilityLabel="重新扫描" onPress={() => { requestId.current += 1; setValidated(null); setLookup(null); setRawValue(''); setNotice(null); }} style={styles.action}><Text style={styles.actionText}>重新扫描</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="重新扫描" onPress={() => { requestId.current += 1; setBusy(false); setValidated(null); setLookup(null); setRawValue(''); setNotice(null); }} style={styles.action}><Text style={styles.actionText}>重新扫描</Text></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="返回 OCR Lab" onPress={() => router.replace('/')} style={styles.action}><Text style={styles.actionText}>返回 OCR Lab</Text></Pressable>
     </ScrollView>
   </SafeAreaView>;

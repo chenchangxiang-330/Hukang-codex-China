@@ -51,9 +51,11 @@ test('SQLite store persists draft, immutable evidence, revisions and cascade del
   const writes = [], removed = [];
   const files = {
     async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}` }; },
+    async materializeRevision(input, revisionId) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}/versions/${revisionId}` }; },
     async validateStored() {},
     async writeRevision(id, folder, revision) { writes.push({ id, folder, revision }); },
     async removeRevision() {},
+    async removeEvidenceRevision() {},
     async removeFood(id, folder) { removed.push({ id, folder }); },
   };
   let nowValue = '2026-10-09T00:00:01.000Z';
@@ -76,5 +78,27 @@ test('SQLite store persists draft, immutable evidence, revisions and cascade del
   assert.equal((await store.listFoods()).length, 0);
   assert.deepEqual(removed, [{ id: 'food-test', folder: 'food://food-test' }]);
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_revisions').get().count, 0);
+  database.close();
+});
+
+test('new package OCR appends an evidence version without replacing history', async () => {
+  const database = new DatabaseSync(':memory:');
+  const files = {
+    async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}` }; },
+    async materializeRevision(input, revisionId) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}/versions/${revisionId}` }; },
+    async validateStored() {}, async writeRevision() {}, async removeRevision() {}, async removeEvidenceRevision() {}, async removeFood() {},
+  };
+  let nowValue = '2026-10-09T00:00:01.000Z';
+  const store = createSQLiteFoodStore(driverFor(database), files, () => nowValue, () => 'version');
+  await store.saveFood(record());
+  const second = record();
+  second.evidence = { ...second.evidence, id: 'evidence-2', recordedAt: '2026-10-09T00:00:02.000Z' };
+  nowValue = '2026-10-09T00:00:03.000Z';
+  const saved = await store.saveFoodEvidence({ foodId: 'food-test', evidence: second.evidence, parsed: second.parsed, review: second.review, status: 'draft' });
+  assert.equal(saved.evidence.id, 'evidence-2');
+  assert.equal(saved.evidenceHistory?.length, 1);
+  assert.equal(saved.evidenceHistory?.[0].evidence.id, 'evidence-1');
+  assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_evidence_versions').get().count, 2);
+  assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_evidence_versions WHERE is_current=1').get().count, 1);
   database.close();
 });

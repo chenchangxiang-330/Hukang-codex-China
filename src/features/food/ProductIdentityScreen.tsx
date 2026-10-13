@@ -56,13 +56,25 @@ export default function ProductIdentityScreen() {
   useEffect(() => {
     let active = true;
     if (!draft || !existingFoodId) return () => { active = false; };
-    void chinaFoodRepository.getFoodIdentity(existingFoodId).then((identity) => {
-      if (!active || !identity) return;
-      const next = updateIdentityDraft(draft.id, {
-        name: identity.name, brand: identity.brand, specification: identity.specification,
-        sourceId: identity.source.sourceId, sourceKind: identity.source.kind === 'mainland_service' ? 'CHINA_SERVICE' : identity.source.kind === 'local' ? 'LOCAL' : 'MANUAL', sourceFetchedAt: identity.source.fetchedAt,
-      });
-      setDraft(next);
+    void Promise.all([
+      chinaFoodRepository.getFoodIdentity(existingFoodId),
+      chinaFoodRepository.getFood(existingFoodId),
+    ]).then(([identity, food]) => {
+      if (!active) return;
+      if (identity) {
+        const next = updateIdentityDraft(draft.id, {
+          name: identity.name, brand: identity.brand, specification: identity.specification,
+          sourceId: identity.source.sourceId, sourceKind: identity.source.kind === 'mainland_service' ? 'CHINA_SERVICE' : identity.source.kind === 'local' ? 'LOCAL' : 'MANUAL', sourceFetchedAt: identity.source.fetchedAt,
+        });
+        setDraft(next);
+      } else if (food) {
+        // Legacy/local records may predate the separate identity row. Their
+        // reviewed name and brand remain the only local identity evidence.
+        const next = updateIdentityDraft(draft.id, {
+          name: food.review.name, brand: food.review.brand, sourceId: 'local-food-record', sourceKind: 'LOCAL', sourceFetchedAt: null,
+        });
+        setDraft(next);
+      }
     }).catch(() => { /* Existing food can still be edited manually. */ });
     return () => { active = false; };
   }, [draft?.id, existingFoodId]);

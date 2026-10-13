@@ -55,6 +55,10 @@ export default function FoodReviewScreen() {
   const barcodeFormat = routeId(params.barcodeFormat);
   const identityDraftId = routeId(params.identityDraftId);
   const identityFoodId = routeId(params.identityFoodId);
+  // A record that already has product identity but no nutrition table enters
+  // OCR as a new evidence draft. Keep its food ID so the new capture becomes
+  // an immutable evidence version instead of a duplicate barcode record.
+  const evidenceUpdateFoodId = foodId ?? identityFoodId;
   const identityDraft = identityDraftId ? getIdentityDraft(identityDraftId) : null;
   const barcodeAcquiredBy: BarcodeAcquisitionMethod = params.barcodeAcquiredBy === 'camera' || params.barcodeAcquiredBy === 'image' ? params.barcodeAcquiredBy : 'manual';
   const pendingBarcode: ValidatedBarcode | null = barcodeRaw && barcodeFormat ? normalizeBarcode({ rawValue: barcodeRaw, format: barcodeFormat, decodedAt: new Date().toISOString() }) : null;
@@ -87,8 +91,15 @@ export default function FoodReviewScreen() {
     setError(null);
     setValidation([]);
     const load = async () => {
-      const found = foodId ? await chinaFoodRepository.getFood(foodId) : draftId ? getFoodDraft(draftId) : null;
-      if (!found) throw new Error(foodId ? '这条本地食品记录不存在或已删除。' : '未保存的识别草稿已失效。请返回 OCR Lab 重新识别。');
+      const persisted = evidenceUpdateFoodId ? await chinaFoodRepository.getFood(evidenceUpdateFoodId) : null;
+      const draft = draftId ? getFoodDraft(draftId) : null;
+      const found = foodId ? persisted : identityFoodId && draft && persisted ? {
+        ...draft, id: persisted.id, createdAt: persisted.createdAt, updatedAt: persisted.updatedAt,
+        ...(persisted.identity ?? draft.identity ? { identity: persisted.identity ?? draft.identity } : {}),
+        revisions: persisted.revisions, ...(persisted.barcodes ? { barcodes: persisted.barcodes } : {}),
+        ...(persisted.evidenceHistory ? { evidenceHistory: persisted.evidenceHistory } : {}),
+      } : draft;
+      if (!found) throw new Error(evidenceUpdateFoodId ? '这条本地食品记录不存在或已删除。' : '未保存的识别草稿已失效。请返回 OCR Lab 重新识别。');
       if (active) {
         const loaded = found && identityDraft && !found.identity ? {
           ...found,
@@ -102,7 +113,7 @@ export default function FoodReviewScreen() {
     void load().catch((cause: unknown) => { if (active) setError(foodError(cause)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [foodId, draftId]);
+  }, [foodId, identityFoodId, draftId]);
 
   const changeReview = (next: FoodReviewValues) => {
     setReview(next);
@@ -138,12 +149,14 @@ export default function FoodReviewScreen() {
       // New nutrition drafts carry the confirmed user identity into the same
       // SQLite transaction. Existing records update identity separately so an
       // immutable nutrition evidence snapshot is never replaced implicitly.
-      const saved = await chinaFoodRepository.saveFood({
-        ...record, review: snapshot, status,
-        ...(identity && !foodId ? { identity } : {}),
-      });
+      const saved = evidenceUpdateFoodId && !foodId
+        ? await chinaFoodRepository.saveFoodEvidence({ foodId: evidenceUpdateFoodId, evidence: record.evidence, parsed: record.parsed, review: snapshot, status })
+        : await chinaFoodRepository.saveFood({
+          ...record, review: snapshot, status,
+          ...(identity && !foodId ? { identity } : {}),
+        });
       persistedId = saved.id;
-      if (pendingBarcode && pendingBarcode.validity === 'valid' && pendingBarcode.lookupKey) {
+      if (!evidenceUpdateFoodId && pendingBarcode && pendingBarcode.validity === 'valid' && pendingBarcode.lookupKey) {
         bindingStarted = true;
         await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
       }

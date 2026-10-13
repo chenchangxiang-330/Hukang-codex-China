@@ -78,6 +78,20 @@ export interface FoodRevision {
   readonly status: FoodConfirmationStatus;
   readonly review: FoodReviewValues;
 }
+/**
+ * Immutable nutrition/OCR evidence snapshots.  A food can receive a new
+ * package label over time; the latest snapshot is exposed as `evidence`, while
+ * earlier snapshots remain addressable for audit and history.
+ */
+export interface FoodEvidenceRevision {
+  readonly id: string;
+  readonly foodId: string;
+  readonly recordedAt: string;
+  readonly sourceEvidence: OcrEvidence;
+  readonly evidence: OcrEvidence;
+  readonly parsed: ParsedNutritionLabel;
+  readonly folderUri: string;
+}
 export interface FoodScanRecord {
   readonly schemaVersion: 1;
   readonly id: string;
@@ -86,6 +100,8 @@ export interface FoodScanRecord {
   readonly status: FoodConfirmationStatus;
   readonly evidence: OcrEvidence;
   readonly parsed: ParsedNutritionLabel;
+  /** Older immutable OCR snapshots; newest snapshot remains `evidence`. */
+  readonly evidenceHistory?: readonly FoodEvidenceRevision[];
   readonly review: FoodReviewValues;
   /** Product identity is separate from OCR-derived nutrition values. */
   readonly identity?: FoodIdentity;

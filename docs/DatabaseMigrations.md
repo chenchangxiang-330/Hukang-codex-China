@@ -1,6 +1,6 @@
 # Hukang China 数据库迁移说明
 
-当前本地食品数据库版本为 `user_version=3`。
+当前本地食品数据库版本为 `user_version=4`。
 
 ## v1 → v2
 
@@ -51,3 +51,13 @@ v3 新增 `food_identity` 和 `food_identity_revisions`。这两个表通过
 并发检查；旧编辑不能覆盖较新的身份。食品删除时由外键级联清理身份及身份历史。
 已保存的营养记录仍通过原有 `foods.status` 和 `food_revisions` 管理，两种确认
 状态相互独立。
+
+## v3 → v4（营养表证据版本）
+
+v4 新增 `food_evidence_versions`。迁移会把每条现有 `food_evidence` 以不可变的
+`*-evidence-initial` 快照登记为当前版本，不删除或重写旧图片、OCR 原文和解析
+结果。以后用户为同一商品拍摄新包装营养表时，新图片和 OCR JSON 写入该食品
+专属的 `food-evidence/{foodId}/versions/{revisionId}` 目录；事务成功后才将该
+版本标为当前版本，之前版本改为历史版本并仍可读取。事务失败会删除新版本目
+录，保留原当前版本。`FoodScanRecord.evidenceHistory` 暴露历史快照，条码和商品
+身份关联保持不变。

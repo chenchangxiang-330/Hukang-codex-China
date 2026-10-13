@@ -1,6 +1,6 @@
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
-import type { FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
+import type { FoodEvidenceRevision, FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
 import type { FoodIdentity, FoodIdentityRevision, FoodIdentityRevisionKind, FoodIdentitySourceKind, FoodIdentityStatus } from '../../domain/food/identity';
 import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
@@ -24,9 +24,13 @@ export interface MaterializedFoodEvidence {
 export interface FoodEvidenceFiles {
   /** Creates a new owned folder, verifies both copied image hashes and saves immutable JSON. */
   materialize(record: FoodScanRecord): Promise<MaterializedFoodEvidence>;
+  /** Materialize a new immutable evidence folder under the existing food. */
+  materializeRevision?(record: FoodScanRecord, revisionId: string): Promise<MaterializedFoodEvidence>;
   validateStored(id: string, stored: MaterializedFoodEvidence): Promise<void>;
   writeRevision(id: string, folderUri: string, revision: FoodRevision): Promise<void>;
   removeRevision(id: string, folderUri: string, revisionId: string): Promise<void>;
+  /** Removes a newly materialized evidence version after a failed transaction. */
+  removeEvidenceRevision?(id: string, folderUri: string): Promise<void>;
   /** Must reject folders outside the application-owned food-evidence/{id} directory. */
   removeFood(id: string, folderUri: string): Promise<void>;
 }
@@ -113,6 +117,26 @@ CREATE INDEX IF NOT EXISTS food_identity_by_source ON food_identity(source_id, s
 PRAGMA user_version = 3;
 `;
 
+/** v4 gives each package/OCR capture an immutable evidence snapshot. */
+const MIGRATION_V4 = `
+CREATE TABLE IF NOT EXISTS food_evidence_versions (
+  id TEXT PRIMARY KEY NOT NULL,
+  food_id TEXT NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  recorded_at TEXT NOT NULL,
+  source_evidence_json TEXT NOT NULL,
+  persisted_evidence_json TEXT NOT NULL,
+  parsed_json TEXT NOT NULL,
+  folder_uri TEXT NOT NULL,
+  is_current INTEGER NOT NULL CHECK(is_current IN (0,1))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS food_evidence_current ON food_evidence_versions(food_id) WHERE is_current=1;
+CREATE INDEX IF NOT EXISTS food_evidence_versions_by_food ON food_evidence_versions(food_id,recorded_at,id);
+INSERT OR IGNORE INTO food_evidence_versions(id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current)
+  SELECT f.id || '-evidence-initial', f.id, f.created_at, e.source_evidence_json, e.persisted_evidence_json, e.parsed_json, e.folder_uri, 1
+  FROM foods f JOIN food_evidence e ON e.food_id=f.id;
+PRAGMA user_version = 4;
+`;
+
 interface StoredRow {
   id: string; created_at: string; updated_at: string; status: FoodScanRecord['status'];
   review_json: string; source_evidence_json: string; persisted_evidence_json: string;
@@ -135,6 +159,10 @@ interface IdentityRow {
 interface IdentityRevisionRow {
   id: string; food_id: string; recorded_at: string; kind: FoodIdentityRevisionKind;
   status: FoodIdentityStatus; identity_json: string;
+}
+interface EvidenceVersionRow {
+  id: string; food_id: string; recorded_at: string; source_evidence_json: string;
+  persisted_evidence_json: string; parsed_json: string; folder_uri: string; is_current: number;
 }
 const RECORD_SQL = `SELECT f.id,f.created_at,f.updated_at,f.status,f.review_json,
   e.source_evidence_json,e.persisted_evidence_json,e.parsed_json,e.folder_uri
@@ -253,10 +281,19 @@ function identityRevisionFromRow(row: IdentityRevisionRow): FoodIdentityRevision
   return { id: row.id, foodId: row.food_id, recordedAt: row.recorded_at, kind: row.kind, status: row.status, identity };
 }
 
-function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = [], identity?: FoodIdentity): FoodScanRecord {
+function parseEvidenceVersion(row: EvidenceVersionRow): FoodEvidenceRevision {
+  assertFoodId(row.id); assertFoodId(row.food_id); assertDate(row.recorded_at);
+  const sourceEvidence = JSON.parse(row.source_evidence_json) as OcrEvidence;
+  const evidence = JSON.parse(row.persisted_evidence_json) as OcrEvidence;
+  const parsed = JSON.parse(row.parsed_json) as ParsedNutritionLabel;
+  return { id: row.id, foodId: row.food_id, recordedAt: row.recorded_at, sourceEvidence, evidence, parsed, folderUri: row.folder_uri };
+}
+
+function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = [], identity?: FoodIdentity, evidenceHistory: readonly FoodEvidenceRevision[] = []): FoodScanRecord {
   const record: FoodScanRecord = {
     schemaVersion: 1, id: row.id, createdAt: row.created_at, updatedAt: row.updated_at,
     status: row.status, evidence: JSON.parse(row.persisted_evidence_json), parsed: JSON.parse(row.parsed_json),
+    ...(evidenceHistory.length > 0 ? { evidenceHistory } : {}),
     review: JSON.parse(row.review_json),
     ...(identity ? { identity } : {}),
     revisions: revisions.map((revision) => ({
@@ -322,8 +359,8 @@ export function createSQLiteFoodStore(
   async function initialize(): Promise<void> {
     await driver.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
     const version = (await driver.get<{ user_version: number }>('PRAGMA user_version'))?.user_version;
-    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); });
-    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); });
+    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); });
+    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); });
     else if (version === 2) {
       // A short-lived Phase 3 development build used the same version before
       // validation_status was made explicit. Repair that additive column and
@@ -334,8 +371,10 @@ export function createSQLiteFoodStore(
           await transaction.exec("ALTER TABLE food_barcodes ADD COLUMN validation_status TEXT NOT NULL DEFAULT 'valid' CHECK(validation_status = 'valid')");
         }
         await transaction.exec(MIGRATION_V3);
+        await transaction.exec(MIGRATION_V4);
       });
-    } else if (version !== 3) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); });
+    else if (version !== 4) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     await cleanupExpiredIdentities();
     await cleanupFiles();
   }
@@ -355,7 +394,11 @@ export function createSQLiteFoodStore(
     const identityRow = await connection.get<IdentityRow>(
       'SELECT food_id,name,brand,specification,status,source_id,source_name,source_kind,source_record_id,source_fetched_at,source_obtained_at,source_policy_json,confirmed_at,updated_at,identity_json FROM food_identity WHERE food_id=?', id,
     );
-    return parseRow(row, revisions, barcodes, identityRow ? identityFromRow(identityRow) : undefined);
+    const evidenceRows = await connection.all<EvidenceVersionRow>(
+      'SELECT id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current FROM food_evidence_versions WHERE food_id=? ORDER BY recorded_at,rowid', id,
+    );
+    const evidenceHistory = evidenceRows.filter((item) => item.is_current !== 1).map(parseEvidenceVersion);
+    return parseRow(row, revisions, barcodes, identityRow ? identityFromRow(identityRow) : undefined, evidenceHistory);
   }
   function validateBarcodeAssociation(barcode: FoodBarcodeAssociation): void {
     assertFoodId(barcode.id);
@@ -464,6 +507,73 @@ export function createSQLiteFoodStore(
       await ready();
       return listIdentityRevisions(foodId);
     },
+    saveFoodEvidence(input) {
+      assertFoodId(input.foodId);
+      const snapshot = JSON.parse(JSON.stringify(input)) as typeof input;
+      return serialize(async () => {
+        await ready();
+        const previous = await read(snapshot.foodId);
+        if (!previous) throw new Error('要补充营养表的食品记录不存在或已删除。');
+        const currentVersion = await driver.get<EvidenceVersionRow>(
+          'SELECT id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current FROM food_evidence_versions WHERE food_id=? AND is_current=1', snapshot.foodId,
+        );
+        if (!currentVersion) throw new Error('食品原始证据版本索引缺失，已停止覆盖保存。');
+        const candidate: FoodScanRecord = {
+          ...previous,
+          status: snapshot.status,
+          evidence: snapshot.evidence,
+          parsed: snapshot.parsed,
+          review: snapshot.review,
+          updatedAt: previous.updatedAt,
+        };
+        validateRecord(candidate);
+        const recordedAt = now();
+        assertDate(recordedAt);
+        const revision: FoodRevision = {
+          id: `${candidate.id}-${Date.parse(recordedAt).toString(36)}-${nonce()}`,
+          recordedAt, kind: 'edited', status: candidate.status, review: candidate.review,
+        };
+        assertFoodId(revision.id);
+        const evidenceRevisionId = `${candidate.id}-evidence-${Date.parse(recordedAt).toString(36)}-${nonce()}`;
+        assertFoodId(evidenceRevisionId);
+        if (!files.materializeRevision) throw new Error('当前证据存储不支持追加营养表版本，请升级后重试；旧证据未修改。');
+        const materialized = await files.materializeRevision(candidate, evidenceRevisionId);
+        try {
+          await files.validateStored(candidate.id, materialized);
+          await files.writeRevision(candidate.id, materialized.folderUri, revision);
+          await driver.transaction(async (transaction) => {
+            await verifyTransaction(transaction);
+            await transaction.run('UPDATE food_evidence_versions SET is_current=0 WHERE food_id=? AND is_current=1', candidate.id);
+            await transaction.run('INSERT INTO food_evidence_versions(id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current) VALUES(?,?,?,?,?,?,?,1)',
+              evidenceRevisionId, candidate.id, recordedAt, JSON.stringify(materialized.sourceEvidence), JSON.stringify(materialized.evidence), JSON.stringify(candidate.parsed), materialized.folderUri);
+            await transaction.run('UPDATE food_evidence SET source_evidence_json=?,persisted_evidence_json=?,parsed_json=?,folder_uri=? WHERE food_id=?',
+              JSON.stringify(materialized.sourceEvidence), JSON.stringify(materialized.evidence), JSON.stringify(candidate.parsed), materialized.folderUri, candidate.id);
+            await transaction.run('UPDATE foods SET updated_at=?,status=?,name=?,brand=?,review_json=? WHERE id=?',
+              recordedAt, candidate.status, candidate.review.name, candidate.review.brand, JSON.stringify(candidate.review), candidate.id);
+            await transaction.run('INSERT INTO food_revisions(id,food_id,recorded_at,kind,status,review_json) VALUES(?,?,?,?,?,?)',
+              revision.id, candidate.id, recordedAt, revision.kind, revision.status, JSON.stringify(revision.review));
+          });
+        } catch (error) {
+          try { if (files.removeEvidenceRevision) await files.removeEvidenceRevision(candidate.id, materialized.folderUri); }
+          catch (cleanupError) { throw new Error(`营养表版本保存失败且新证据清理未完成：${String(error)}；${String(cleanupError)}`); }
+          throw error;
+        }
+        const priorEvidence: FoodEvidenceRevision = {
+          id: currentVersion.id, foodId: candidate.id, recordedAt: currentVersion.recorded_at,
+          sourceEvidence: JSON.parse(currentVersion.source_evidence_json),
+          evidence: JSON.parse(currentVersion.persisted_evidence_json), parsed: JSON.parse(currentVersion.parsed_json),
+          folderUri: currentVersion.folder_uri,
+        };
+        return {
+          ...candidate,
+          updatedAt: recordedAt,
+          evidence: materialized.evidence,
+          parsed: materialized.parsed,
+          revisions: [...previous.revisions, revision],
+          evidenceHistory: [...(previous.evidenceHistory ?? []), priorEvidence],
+        };
+      });
+    },
     async getFoodByBarcode(lookupKey) {
       if (!/^\d{14}$/.test(lookupKey)) throw new Error('条码查询键必须是 14 位数字字符串。');
       await ready();
@@ -556,6 +666,8 @@ export function createSQLiteFoodStore(
                 record.id, record.createdAt, recordedAt, record.status, record.review.name, record.review.brand, JSON.stringify(record.review));
               await transaction.run('INSERT INTO food_evidence(food_id,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri) VALUES(?,?,?,?,?)',
                 record.id, JSON.stringify(materialized.sourceEvidence), JSON.stringify(materialized.evidence), JSON.stringify(record.parsed), materialized.folderUri);
+              await transaction.run('INSERT INTO food_evidence_versions(id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current) VALUES(?,?,?,?,?,?,?,1)',
+                `${record.id}-evidence-initial`, record.id, recordedAt, JSON.stringify(materialized.sourceEvidence), JSON.stringify(materialized.evidence), JSON.stringify(record.parsed), materialized.folderUri);
               for (const barcode of requestedBarcodes) {
                 await transaction.run('INSERT INTO food_barcodes(id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at) VALUES(?,?,?,?,?,?,?,?)',
                   barcode.id, barcode.foodId, barcode.rawValue, barcode.format, barcode.lookupKey, barcode.validationStatus, barcode.acquiredBy, barcode.scannedAt);
