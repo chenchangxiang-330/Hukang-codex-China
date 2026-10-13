@@ -20,12 +20,13 @@ Phase 3 的 release APK 必须区分实验签名和稳定发布签名。条码�
 同一证书签名的升级使用：
 
 ```text
-adb install -r hukang-china-phase2-arm64-release.apk
+adb install -r hukang-china-phase3-arm64-release.apk
 ```
 
 验收必须比较安装前后的 `foods`、`food_evidence`、`food_revisions` 行数、内容、
-OCR 原文、图片 SHA-256 和 revision 历史。Phase 2.1 设备脚本已经在保存待确认食品
-后执行同签名 `install -r` 并重新读取 SQLite。
+OCR 原文、图片 SHA-256 和 revision 历史。Phase 3 设备脚本
+`scripts/run-android-food-flow.py` 在保存待确认食品后执行同签名 `install -r`，
+并重新读取 SQLite。
 
 不同证书的覆盖安装必须失败并报告签名不匹配；禁止通过卸载 App 来“修复”测试。卸载
 会删除应用私有 SQLite 和图片证据，这不属于升级路径。
@@ -33,8 +34,9 @@ OCR 原文、图片 SHA-256 和 revision 历史。Phase 2.1 设备脚本已经�
 ## 数据库安全
 
 - 数据库文件名固定为 `hukang-china-food.db`。
-- 当前 schema `user_version=2`。未知版本会拒绝打开且不修改现有数据库；v1 到
-  v2 只新增 `food_barcodes` 及索引，保留食品、OCR 证据和修订历史。
+- 当前 schema 为 `user_version=2`。未知版本会拒绝打开且不修改现有数据库；v1
+  到 v2 只新增 `food_barcodes` 及索引，保留食品、OCR 证据和修订历史。这里的
+  数据库 schema 版本与设备证据 JSON 的 `schemaVersion` 独立，不能混用。
 - 未来 schema 必须提供显式迁移和迁移前备份测试，不能依赖 SQLite 自动重建。
 - `allowBackup=false` 保持开启，避免系统备份恢复造成未审计的数据覆盖。
 

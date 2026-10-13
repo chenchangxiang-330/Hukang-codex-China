@@ -100,12 +100,34 @@ try:
 except subprocess.CalledProcessError as error:
     signature = error.output
     errors.append("APK signature verification failed")
+# Keep the human-readable apksigner transcript, but also expose the certificate
+# identity as structured data.  The transcript format is stable enough for
+# this small field extraction and the raw output remains the audit evidence.
+signing_certificates = {}
+for line in signature.splitlines():
+    match = re.match(r"Signer #(\d+) certificate (DN|SHA-256 digest):\s*(.+)$", line)
+    if not match:
+        continue
+    signer, field, value = match.groups()
+    record = signing_certificates.setdefault(signer, {})
+    if field == "DN":
+        record["dn"] = value
+    else:
+        record["sha256"] = value
+certificate_digests = [
+    {"signer": int(signer), **record}
+    for signer, record in sorted(signing_certificates.items(), key=lambda item: int(item[0]))
+    if "sha256" in record
+]
+if not certificate_digests:
+    errors.append("APK signature certificate SHA-256 digest is missing")
 report = {
     "apk": str(apk), "bytes": apk.stat().st_size,
     "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
     "nativeAbis": native_abis, "permissions": permissions, "badging": badging,
     "extractNativeLibs": extract_native_libs, "nativeLibraries": native_libraries,
     "bundledModels": assets, "signatureVerification": signature,
+    "certificateSha256Digests": certificate_digests,
     "errors": errors, "deviceExecutionVerified": False,
 }
 output = Path(args.output)
