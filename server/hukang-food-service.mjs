@@ -77,11 +77,12 @@ export function createHukangFoodService({ vendorLookup = createVendorLookup(), n
     catch (error) { const [, payload] = statusForError(error); json(res, 400, payload); return; }
     const barcode = canonicalBarcode(body);
     if (!barcode) { json(res, 422, { ok: false, error: { code: 'INVALID_REQUEST' } }); return; }
+    let timeoutHandle;
     try {
-      const vendor = await Promise.race([
-        vendorLookup(barcode),
-        new Promise((_, reject) => setTimeout(() => reject(new VendorError('SERVICE_UNAVAILABLE', 'Vendor timeout.')), REQUEST_TIMEOUT_MS)),
-      ]);
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => reject(new VendorError('SERVICE_UNAVAILABLE', 'Vendor timeout.')), REQUEST_TIMEOUT_MS);
+      });
+      const vendor = await Promise.race([vendorLookup(barcode), timeoutPromise]);
       if (!vendor || typeof vendor !== 'object' || typeof vendor.name !== 'string' || !vendor.name.trim()) {
         json(res, 502, { ok: false, error: { code: 'INVALID_RESPONSE' } });
         return;
@@ -102,6 +103,8 @@ export function createHukangFoodService({ vendorLookup = createVendorLookup(), n
     } catch (error) {
       const [status, payload] = statusForError(error);
       json(res, status, payload, error?.code === 'RATE_LIMITED' ? { 'retry-after': String(error.retryAfterSeconds ?? 0) } : {});
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
     }
   });
 }
