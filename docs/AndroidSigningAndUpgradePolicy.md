@@ -1,6 +1,7 @@
 # Android 签名与本地数据升级策略
 
-Phase 2.1 的 release APK 必须区分实验签名和稳定发布签名。
+Phase 3 的 release APK 必须区分实验签名和稳定发布签名。条码关联使用数据库
+增量迁移，不能用重装或清库规避签名/升级问题。
 
 ## 签名规则
 
@@ -32,7 +33,8 @@ OCR 原文、图片 SHA-256 和 revision 历史。Phase 2.1 设备脚本已经�
 ## 数据库安全
 
 - 数据库文件名固定为 `hukang-china-food.db`。
-- 当前 schema `user_version=1`。未知版本会拒绝打开且不修改现有数据库。
+- 当前 schema `user_version=2`。未知版本会拒绝打开且不修改现有数据库；v1 到
+  v2 只新增 `food_barcodes` 及索引，保留食品、OCR 证据和修订历史。
 - 未来 schema 必须提供显式迁移和迁移前备份测试，不能依赖 SQLite 自动重建。
 - `allowBackup=false` 保持开启，避免系统备份恢复造成未审计的数据覆盖。
 

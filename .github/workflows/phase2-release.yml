@@ -254,7 +254,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "### Phase 2 validation boundary"
+            echo "### Phase 3 validation boundary"
             echo "- Commit: $GITHUB_SHA"
             echo "- Official model acquisition, Android compilation and APK inspection are separate steps."
             if [[ -n "${HUKANG_RELEASE_KEYSTORE:-}" ]]; then
@@ -262,8 +262,8 @@ jobs:
             else
               echo "- The APK is a release-mode laboratory build signed with an ephemeral test certificate."
             fi
-            echo "- Release compilation does not itself execute OCR; the separate device job records actual execution or failure."
-            echo "- No OCR output, speed or memory result is claimed without separate device evidence."
+            echo "- Release compilation does not itself execute OCR or barcode decoding; the separate device job records actual execution or failure."
+            echo "- No OCR, barcode, speed or memory result is claimed without separate device evidence."
           } >> "$GITHUB_STEP_SUMMARY"
 
   device:

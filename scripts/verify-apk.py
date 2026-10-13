@@ -93,7 +93,10 @@ with zipfile.ZipFile(apk) as archive:
         errors.append(f"Missing or invalid bundled model configuration: {error}")
 
 try:
-    signature = run("apksigner", "verify", "--verbose", apk)
+    # Include the certificate digest in the persisted inspection report.  The
+    # release workflow may use either the protected key or an ephemeral lab
+    # key, so the actual APK is the only trustworthy source for this value.
+    signature = run("apksigner", "verify", "--verbose", "--print-certs", apk)
 except subprocess.CalledProcessError as error:
     signature = error.output
     errors.append("APK signature verification failed")
