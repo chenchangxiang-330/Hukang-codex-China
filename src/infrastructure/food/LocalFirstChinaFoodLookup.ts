@@ -26,7 +26,13 @@ export class LocalFirstChinaFoodLookup {
 
   async lookup(query: IdentityQuery, options: { readonly signal?: AbortSignal } = {}): Promise<LocalFirstLookupResult> {
     const token = ++this.sequence;
-    const local = await this.local.getFoodByBarcode(query.lookupKey);
+    let local: Awaited<ReturnType<Pick<ChinaFoodRepository, 'getFoodByBarcode'>['getFoodByBarcode']>>;
+    try {
+      local = await this.local.getFoodByBarcode(query.lookupKey);
+    } catch (error) {
+      if (token !== this.sequence) return { status: 'stale', message: '已切换到另一件商品，丢弃旧查询错误。' };
+      throw error;
+    }
     if (token !== this.sequence) return { status: 'stale', message: '已切换到另一件商品，丢弃旧查询结果。' };
     if (local) return { status: 'local_found', record: local.record, barcode: local.barcode };
     const remote = !this.provider
