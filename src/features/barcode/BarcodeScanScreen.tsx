@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  ActivityIndicator, NativeModules, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BarcodeScan, ValidatedBarcode, SupportedBarcodeFormat } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
@@ -17,15 +15,14 @@ type LookupRecord = {
   brand?: string;
   status?: string;
   updatedAt?: string;
-  review?: { name?: string; brand?: string };
+  review?: { name?: string; brand?: string; columns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[] };
+  barcodes?: readonly { rawValue: string; format: string; lookupKey: string; acquiredBy: string }[];
+  reviewColumns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[];
+  columns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[];
 };
 type LookupResult = { status: 'found'; records: readonly LookupRecord[] } | { status: 'not_found' } | { status: 'unavailable'; reason: string };
 type BarcodeRepositoryApi = typeof chinaFoodRepository;
 type NativeBarcodeResult = { rawValue?: unknown; format?: unknown; decodedAt?: unknown };
-type NativeBarcodeModule = {
-  scanImage?: (uri: string) => Promise<NativeBarcodeResult | NativeBarcodeResult[] | null>;
-  startCameraScan?: () => Promise<NativeBarcodeResult | NativeBarcodeResult[] | null>;
-};
 
 const palette = {
   background: '#f3faf8', surface: '#ffffff', ink: '#183e37', secondary: '#60736e',
@@ -42,11 +39,6 @@ function scanFromNative(value: NativeBarcodeResult): BarcodeScan | null {
   return { rawValue: value.rawValue, format: value.format, decodedAt: typeof value.decodedAt === 'string' ? value.decodedAt : new Date().toISOString() };
 }
 
-function nativeBarcode(): NativeBarcodeModule | null {
-  const module = (NativeModules as unknown as { HukangBarcode?: NativeBarcodeModule }).HukangBarcode;
-  return module ?? null;
-}
-
 function explanation(validated: ValidatedBarcode): string {
   switch (validated.reason) {
     case 'unsupported_format': return '这不是本阶段支持的食品条码格式。二维码和药品追溯码不会自动打开或查询。';
@@ -60,6 +52,15 @@ function explanation(validated: ValidatedBarcode): string {
 
 function recordName(record: LookupRecord): string {
   return record.name ?? record.chineseName ?? record.review?.name ?? '未命名食品';
+}
+
+function basisText(value: string | undefined, raw: string | undefined): string {
+  switch (value) {
+    case 'per_100g': return '每100g';
+    case 'per_100ml': return '每100mL';
+    case 'per_serving': return `每份${raw ? `（${raw}）` : ''}`;
+    default: return raw || '计量基准待确认';
+  }
 }
 
 /** Offline barcode entry. Camera/image decoding is injected by HukangBarcode; no ML Kit or network fallback exists. */
@@ -103,22 +104,27 @@ export default function BarcodeScanScreen() {
     void submitScan({ rawValue, format, decodedAt: new Date().toISOString() }, 'manual');
   };
 
-  const launchCamera = async () => {
-    const module = nativeBarcode();
-    if (!module?.startCameraScan) {
-      setNotice('当前构建尚未提供相机扫码模块。可以先使用“从图片识别条码”或手动输入；不会调用在线服务。');
-      return;
-    }
-    setBusy(true); setNotice(null);
+  const decodePickedImage = async (uri: string, source: 'camera' | 'image') => {
+    setBusy(true);
     try {
-      const output = await module.startCameraScan();
-      const first = Array.isArray(output) ? output[0] : output;
+      const output = await hukangBarcode.scanImage(uri);
+      const first = output[0] as NativeBarcodeResult | undefined;
       const scan = first ? scanFromNative(first) : null;
       if (!scan) setNotice('没有识别到支持的食品条码，请调整取景后重试。');
-      else await submitScan(scan, 'camera');
-    } catch (cause) {
-      setNotice(`相机不可用或权限被拒绝：${cause instanceof Error ? cause.message : String(cause)}`);
-    } finally { setBusy(false); }
+      else await submitScan(scan, source);
+    } catch (cause) { setNotice(`图片条码识别失败：${cause instanceof Error ? cause.message : String(cause)}`); }
+    finally { setBusy(false); }
+  };
+
+  const launchCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) { setNotice('相机权限被拒绝，无法拍摄条码照片。'); return; }
+    setNotice(null);
+    const captured = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: false });
+    if (captured.canceled) return;
+    const asset = captured.assets?.[0];
+    if (!asset?.uri) { setNotice('没有取得相机照片。'); return; }
+    await decodePickedImage(asset.uri, 'camera');
   };
 
   const launchImage = async () => {
@@ -129,15 +135,7 @@ export default function BarcodeScanScreen() {
     if (picked.canceled) return;
     const asset = picked.assets?.[0];
     if (!asset?.uri) { setNotice('没有取得可读取的包装图片。'); return; }
-    setBusy(true);
-    try {
-      const output = await hukangBarcode.scanImage(asset.uri);
-      const first = output[0] as NativeBarcodeResult | undefined;
-      const scan = first ? scanFromNative(first) : null;
-      if (!scan) setNotice('图片中没有识别到支持的食品条码。');
-      else await submitScan(scan, 'image');
-    } catch (cause) { setNotice(`图片条码识别失败：${cause instanceof Error ? cause.message : String(cause)}`); }
-    finally { setBusy(false); }
+    await decodePickedImage(asset.uri, 'image');
   };
 
   const startDraft = () => {
@@ -185,6 +183,11 @@ export default function BarcodeScanScreen() {
         {lookup.records.map((record, index) => <Pressable key={record.id ?? `${index}`} accessibilityRole="button" accessibilityLabel={`打开食品-${recordName(record)}`} onPress={() => record.id && router.push({ pathname: '/food-review', params: { foodId: record.id } })} style={styles.result}>
           <Text style={styles.text}>{recordName(record)}</Text><Text style={record.status === 'confirmed' ? styles.success : styles.warning}>{record.status === 'confirmed' ? '已人工确认' : '待确认'}</Text>
           {record.brand || record.review?.brand ? <Text style={styles.note}>{record.brand ?? record.review?.brand}</Text> : null}
+          {record.barcodes?.map(barcode => <Text key={barcode.lookupKey} style={styles.note}>条码：{barcode.rawValue} · {barcode.format} · {barcode.acquiredBy}</Text>)}
+          {(record.reviewColumns ?? record.columns ?? record.review?.columns)?.map((column, columnIndex) => <View key={`${column.basisKind ?? 'unknown'}-${columnIndex}`} style={styles.nutritionSummary}>
+            <Text style={styles.note}>{basisText(column.basisKind, column.basisRawText)}</Text>
+            {column.rows?.filter(row => row.amount || row.nrvPercent).map((row, rowIndex) => <Text key={`${row.label ?? 'row'}-${rowIndex}`} style={styles.note}>{row.label ?? '营养项目'}：{row.amount || '待确认'} {row.unit && row.unit !== 'unknown' ? row.unit : ''}{row.nrvPercent ? ` · NRV ${row.nrvPercent}%` : ''}</Text>)}
+          </View>)}
         </Pressable>)}
       </View> : null}
       {lookup?.status === 'not_found' ? <View style={styles.card}>
@@ -222,4 +225,5 @@ const styles = StyleSheet.create({
   selectedChoiceText: { color: '#fff', fontWeight: '600' },
   input: { backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 10, color: palette.ink, fontSize: 16, minHeight: 46 },
   result: { borderWidth: 1, borderColor: palette.border, borderRadius: 10, padding: 12, gap: 4 },
+  nutritionSummary: { backgroundColor: palette.background, borderRadius: 8, padding: 8, marginTop: 4, gap: 2 },
 });
