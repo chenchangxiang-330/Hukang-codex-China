@@ -62,7 +62,7 @@ test('not configured and not found remain distinct business results', async () =
   await withServer(async () => { throw new VendorError('NOT_CONFIGURED', 'missing'); }, async (base) => {
     const response = await fetch(`${base}/v1/food-identity/lookup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(valid) });
     assert.equal(response.status, 503);
-    assert.deepEqual(await response.json(), { ok: false, error: { code: 'SERVICE_UNAVAILABLE' } });
+    assert.deepEqual(await response.json(), { ok: false, error: { code: 'NOT_CONFIGURED' } });
   });
   await withServer(async () => { throw new VendorError('NOT_FOUND', 'no record'); }, async (base) => {
     const response = await fetch(`${base}/v1/food-identity/lookup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(valid) });
