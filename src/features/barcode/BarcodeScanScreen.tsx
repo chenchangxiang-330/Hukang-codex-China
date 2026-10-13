@@ -7,6 +7,7 @@ import type { BarcodeScan, ValidatedBarcode, SupportedBarcodeFormat } from '../.
 import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
 import { hukangBarcode } from '../../infrastructure/barcode/HukangBarcode';
+import { createIdentityDraft } from '../food/identityDraftStore';
 
 type LookupRecord = {
   id?: string;
@@ -53,6 +54,11 @@ function explanation(validated: ValidatedBarcode): string {
 
 function recordName(record: LookupRecord): string {
   return record.name ?? record.chineseName ?? record.review?.name ?? '未命名食品';
+}
+
+function hasNutrition(record: LookupRecord): boolean {
+  const columns = record.reviewColumns ?? record.columns ?? record.review?.columns ?? [];
+  return columns.some((column) => (column.rows ?? []).some((row) => Boolean(row.amount || row.nrvPercent)));
 }
 
 function basisText(value: string | undefined, raw: string | undefined): string {
@@ -140,13 +146,18 @@ export default function BarcodeScanScreen() {
   };
 
   const startDraft = () => {
-    if (!validated?.gtin) return;
-    // FoodReview receives the validated barcode through route params. OCR Lab
-    // preserves the params while it creates the immutable evidence draft.
-    router.push({ pathname: '/', params: {
-      barcodeRaw: validated.scan.rawValue, barcodeFormat: validated.scan.format,
-      barcodeGtin: validated.gtin, barcodeLookupKey: validated.lookupKey ?? '', barcodeAcquiredBy: acquiredBy,
-    } });
+    if (!validated?.gtin || !validated.lookupKey) return;
+    // Keep barcode and identity in one draft. The identity page may query an
+    // enabled domestic provider, but the next nutrition/OCR page never starts
+    // a second product and never returns the user to the home page.
+    const identityDraftId = createIdentityDraft({
+      barcodeRaw: validated.scan.rawValue,
+      barcodeFormat: validated.normalizedFormat ?? validated.scan.format,
+      barcodeGtin: validated.gtin,
+      barcodeLookupKey: validated.lookupKey,
+      barcodeAcquiredBy: acquiredBy,
+    });
+    router.push({ pathname: '/identity-confirm', params: { identityDraftId } });
   };
 
   return <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -181,8 +192,12 @@ export default function BarcodeScanScreen() {
       {lookup?.status === 'unavailable' ? <View style={styles.error}><Text style={styles.errorText}>本地食品查询不可用：{lookup.reason}</Text></View> : null}
       {lookup?.status === 'found' ? <View style={styles.card}>
         <Text style={styles.sectionTitle}>已收录食品</Text>
-        {lookup.records.map((record, index) => <Pressable key={record.id ?? `${index}`} accessibilityRole="button" accessibilityLabel={`打开食品-${recordName(record)}`} onPress={() => record.id && router.push({ pathname: '/food-review', params: { foodId: record.id } })} style={styles.result}>
-          <Text style={styles.text}>{recordName(record)}</Text><Text style={record.status === 'confirmed' ? styles.success : styles.warning}>{record.status === 'confirmed' ? '已人工确认' : '待确认'}</Text>
+        {lookup.records.map((record, index) => <Pressable key={record.id ?? `${index}`} accessibilityRole="button" accessibilityLabel={`打开食品-${recordName(record)}`} onPress={() => {
+            if (!record.id) return;
+            if (hasNutrition(record)) router.push({ pathname: '/food-review', params: { foodId: record.id } });
+            else router.push({ pathname: '/identity-confirm', params: { existingFoodId: record.id, barcodeRaw: validated?.scan.rawValue ?? '', barcodeFormat: validated?.normalizedFormat ?? validated?.scan.format ?? '', barcodeGtin: validated?.gtin ?? '', barcodeLookupKey: validated?.lookupKey ?? '', barcodeAcquiredBy: acquiredBy } });
+          }} style={styles.result}>
+          <Text style={styles.text}>{recordName(record)}</Text><Text style={record.status === 'confirmed' ? styles.success : styles.warning}>{record.status === 'confirmed' ? '已人工确认' : '待确认'}</Text><Text style={styles.note}>{hasNutrition(record) ? '本地营养表已保存，可查看或更新。' : '商品身份已保存，营养表尚未录入。'}</Text>
           {record.brand || record.review?.brand ? <Text style={styles.note}>{record.brand ?? record.review?.brand}</Text> : null}
           {record.evidence?.image?.uri ? <Image accessibilityLabel="食品包装图片" source={{ uri: record.evidence.image.uri }} resizeMode="contain" style={styles.packageImage} /> : null}
           {record.barcodes?.map(barcode => <Text key={barcode.lookupKey} style={styles.note}>条码：{barcode.rawValue} · {barcode.format} · {barcode.acquiredBy}</Text>)}
