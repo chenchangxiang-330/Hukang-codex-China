@@ -121,11 +121,11 @@ export default function ProductIdentityScreen() {
       </View>
       <View style={foodStyles.card}>
         <Text style={foodStyles.sectionTitle}>商品信息（请对照包装修改）</Text>
-        <FoodField label="商品名称" accessibilityLabel="待确认商品名称" value={draft.name} onChangeText={(name) => patch({ name, sourceKind: 'MANUAL', sourceId: draft.sourceId === 'manual' ? 'manual' : draft.sourceId })} />
-        <FoodField label="品牌" accessibilityLabel="待确认商品品牌" value={draft.brand} onChangeText={(brand) => patch({ brand, sourceKind: 'MANUAL' })} />
-        <FoodField label="规格" accessibilityLabel="待确认商品规格" value={draft.specification} onChangeText={(specification) => patch({ specification, sourceKind: 'MANUAL' })} />
-        <FoodField label="类别（可选）" accessibilityLabel="待确认商品类别" value={draft.category} onChangeText={(category) => patch({ category, sourceKind: 'MANUAL' })} />
-        <FoodField label="生产厂家（可选）" accessibilityLabel="待确认生产厂家" value={draft.manufacturer} onChangeText={(manufacturer) => patch({ manufacturer, sourceKind: 'MANUAL' })} />
+        <FoodField label="商品名称" accessibilityLabel="待确认商品名称" value={draft.name} onChangeText={(name) => patch({ name, sourceKind: 'MANUAL', sourceId: 'user-manual', sourceFetchedAt: null })} />
+        <FoodField label="品牌" accessibilityLabel="待确认商品品牌" value={draft.brand} onChangeText={(brand) => patch({ brand, sourceKind: 'MANUAL', sourceId: 'user-manual', sourceFetchedAt: null })} />
+        <FoodField label="规格" accessibilityLabel="待确认商品规格" value={draft.specification} onChangeText={(specification) => patch({ specification, sourceKind: 'MANUAL', sourceId: 'user-manual', sourceFetchedAt: null })} />
+        <FoodField label="类别（可选）" accessibilityLabel="待确认商品类别" value={draft.category} onChangeText={(category) => patch({ category, sourceKind: 'MANUAL', sourceId: 'user-manual', sourceFetchedAt: null })} />
+        <FoodField label="生产厂家（可选）" accessibilityLabel="待确认生产厂家" value={draft.manufacturer} onChangeText={(manufacturer) => patch({ manufacturer, sourceKind: 'MANUAL', sourceId: 'user-manual', sourceFetchedAt: null })} />
       </View>
       <View style={foodStyles.card}>
         <Text style={foodStyles.sectionTitle}>下一步</Text>
