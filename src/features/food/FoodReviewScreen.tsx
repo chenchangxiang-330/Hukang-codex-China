@@ -9,6 +9,8 @@ import type { BarcodeAcquisitionMethod, ValidatedBarcode } from '../../domain/ba
 import { validateFoodReview } from '../../domain/food/review';
 import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
 import { getFoodDraft, removeFoodDraft } from './draftStore';
+import { getIdentityDraft, removeIdentityDraft } from './identityDraftStore';
+import type { FoodIdentity } from '../../domain/food/identity';
 import { FoodEvidencePanel } from './FoodEvidencePanel';
 import { NutritionReviewForm } from './NutritionReviewForm';
 import { FoodAction, FoodChoices, FoodField, foodColors, foodError, foodStyles } from './ui';
@@ -30,16 +32,30 @@ function manualColumn(existing: readonly NutritionReviewColumn[]): NutritionRevi
   };
 }
 
+function identityForRecord(record: FoodScanRecord, status: FoodConfirmationStatus, savedAt: string): FoodIdentity | null {
+  if (!record.identity) return null;
+  return {
+    ...record.identity,
+    status: status === 'confirmed' ? 'confirmed' : record.identity.status === 'confirmed' ? 'pending_confirmation' : record.identity.status,
+    confirmedAt: status === 'confirmed' ? (record.identity.confirmedAt ?? savedAt) : null,
+    updatedAt: savedAt,
+  };
+}
+
 export default function FoodReviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     foodId?: string | string[]; draftId?: string | string[];
     barcodeRaw?: string | string[]; barcodeFormat?: string | string[]; barcodeAcquiredBy?: string | string[];
+    identityDraftId?: string | string[]; identityFoodId?: string | string[];
   }>();
   const foodId = routeId(params.foodId);
   const draftId = routeId(params.draftId);
   const barcodeRaw = routeId(params.barcodeRaw);
   const barcodeFormat = routeId(params.barcodeFormat);
+  const identityDraftId = routeId(params.identityDraftId);
+  const identityFoodId = routeId(params.identityFoodId);
+  const identityDraft = identityDraftId ? getIdentityDraft(identityDraftId) : null;
   const barcodeAcquiredBy: BarcodeAcquisitionMethod = params.barcodeAcquiredBy === 'camera' || params.barcodeAcquiredBy === 'image' ? params.barcodeAcquiredBy : 'manual';
   const pendingBarcode: ValidatedBarcode | null = barcodeRaw && barcodeFormat ? normalizeBarcode({ rawValue: barcodeRaw, format: barcodeFormat, decodedAt: new Date().toISOString() }) : null;
   const [record, setRecord] = useState<FoodScanRecord | null>(null);
@@ -74,8 +90,12 @@ export default function FoodReviewScreen() {
       const found = foodId ? await chinaFoodRepository.getFood(foodId) : draftId ? getFoodDraft(draftId) : null;
       if (!found) throw new Error(foodId ? '这条本地食品记录不存在或已删除。' : '未保存的识别草稿已失效。请返回 OCR Lab 重新识别。');
       if (active) {
-        setRecord(found);
-        setReview(JSON.parse(JSON.stringify(found.review)) as FoodReviewValues);
+        const loaded = found && identityDraft && !found.identity ? {
+          ...found,
+          review: { ...found.review, name: identityDraft.name || found.review.name, brand: identityDraft.brand || found.review.brand },
+        } : found;
+        setRecord(loaded);
+        setReview(loaded ? JSON.parse(JSON.stringify(loaded.review)) as FoodReviewValues : null);
         setDirty(false);
       }
     };
@@ -115,7 +135,10 @@ export default function FoodReviewScreen() {
       if (pendingBarcode && pendingBarcode.validity === 'valid' && pendingBarcode.lookupKey) {
         await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
       }
+      const identity = identityForRecord(record, status, saved.updatedAt);
+      if (identity) await chinaFoodRepository.saveFoodIdentity({ ...identity, foodId: saved.id });
       if (draftId) removeFoodDraft(draftId);
+      if (identityDraftId) removeIdentityDraft(identityDraftId);
       setDirty(false);
       router.replace({ pathname: '/foods', params: { saved: saved.id } });
     } catch (cause) {
@@ -173,6 +196,12 @@ export default function FoodReviewScreen() {
       {!loading && record && review ? <>
         <Text style={foodStyles.note}>{record.status === 'confirmed' && !dirty ? '当前记录：已人工确认' : '当前记录：待确认或有未保存修改'}</Text>
         {pendingBarcode ? <View style={foodStyles.notice}><Text style={foodStyles.sectionTitle}>待绑定条码</Text><Text style={foodStyles.text}>{pendingBarcode.scan.rawValue} · {pendingBarcode.scan.format}</Text><Text style={foodStyles.note}>保存后会将原始条码、格式、校验结果和获取方式写入本机食品库。</Text></View> : null}
+        {record.identity || identityDraft ? <View style={foodStyles.notice}>
+          <Text style={foodStyles.sectionTitle}>商品身份（独立于营养标签）</Text>
+          <Text style={foodStyles.text}>{record.identity?.name || identityDraft?.name || '待填写商品'} · {record.identity?.brand || identityDraft?.brand || '品牌待确认'}</Text>
+          <Text style={foodStyles.note}>规格：{record.identity?.specification || identityDraft?.specification || '待确认'} · 来源：{record.identity?.source.sourceName || (identityDraft?.sourceKind === 'CHINA_SERVICE' ? '国内商品身份服务' : '用户填写')}</Text>
+          <Text style={foodStyles.warning}>商品身份已确认不等于营养数据已确认；营养表仍需逐项对照照片。</Text>
+        </View> : null}
         {foodId ? <View style={foodStyles.card}>
           <Text style={foodStyles.sectionTitle}>条码关联</Text>
           {record.barcodes?.length ? record.barcodes.map(barcode => <Text key={barcode.lookupKey} style={foodStyles.note}>已绑定：{barcode.rawValue} · {barcode.format} · {barcode.acquiredBy}</Text>) : <Text style={foodStyles.note}>这条食品记录还没有条码。</Text>}

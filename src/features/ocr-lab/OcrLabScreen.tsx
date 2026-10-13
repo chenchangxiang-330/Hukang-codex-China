@@ -10,6 +10,7 @@ import { mapRectToPreview, type CropPercent } from './geometry';
 import { useOcrLab, type LabPhase } from './useOcrLab';
 import { PerformancePanel } from './PerformancePanel';
 import { setFoodDraft } from '../food/draftStore';
+import { getIdentityDraft } from '../food/identityDraftStore';
 
 const colors = {
   background: '#f3faf8', surface: '#ffffff', ink: '#183e37', secondary: '#60736e',
@@ -71,6 +72,8 @@ export default function OcrLabScreen() {
     barcodeGtin?: string | string[];
     barcodeLookupKey?: string | string[];
     barcodeAcquiredBy?: string | string[];
+    identityDraftId?: string | string[];
+    identityFoodId?: string | string[];
   }>();
   const lab = useOcrLab();
   const [viewport, setViewport] = useState({ width: 1, height: 320 });
@@ -90,6 +93,9 @@ export default function OcrLabScreen() {
   const barcodeGtin = typeof barcodeParams.barcodeGtin === 'string' ? barcodeParams.barcodeGtin : undefined;
   const barcodeLookupKey = typeof barcodeParams.barcodeLookupKey === 'string' ? barcodeParams.barcodeLookupKey : undefined;
   const barcodeAcquiredBy = typeof barcodeParams.barcodeAcquiredBy === 'string' ? barcodeParams.barcodeAcquiredBy : undefined;
+  const identityDraftId = typeof barcodeParams.identityDraftId === 'string' ? barcodeParams.identityDraftId : undefined;
+  const identityFoodId = typeof barcodeParams.identityFoodId === 'string' ? barcodeParams.identityFoodId : undefined;
+  const identityDraft = identityDraftId ? getIdentityDraft(identityDraftId) : null;
   const selectedId = selection?.evidenceId === lab.evidence?.id ? selection?.blockId : null;
   const selectBlock = (blockId: string) => {
     if (lab.evidence) setSelection({ evidenceId: lab.evidence.id, blockId });
@@ -113,6 +119,11 @@ export default function OcrLabScreen() {
       {barcodeRaw ? <View style={styles.barcodeNotice}>
         <Text style={styles.noticeTitle}>正在补录未收录食品</Text>
         <Text style={styles.note}>条码 {barcodeRaw}（{barcodeFormat ?? '未知格式'}）已保留。完成 OCR 和人工核对后，确认保存会把它绑定到这条食品记录。</Text>
+      </View> : null}
+      {identityDraft ? <View style={styles.identityNotice}>
+        <Text style={styles.noticeTitle}>当前商品：{identityDraft.name || '待填写商品'}</Text>
+        <Text style={styles.note}>品牌 {identityDraft.brand || '待确认'} · 规格 {identityDraft.specification || '待确认'}</Text>
+        <Text style={styles.note}>条码 {identityDraft.barcodeRaw} · 商品身份已保留。下面只拍摄并识别营养成分表，OCR 原文不会覆盖身份信息。</Text>
       </View> : null}
 
       <View style={styles.card}>
@@ -188,7 +199,7 @@ export default function OcrLabScreen() {
             <View style={styles.actionRow}>
               <Action title="食品营养核对" primary onPress={() => {
                 if (!lab.evidence) return;
-                const draftId = setFoodDraft(lab.evidence);
+                const draftId = setFoodDraft(lab.evidence, identityDraft ?? undefined);
                 router.push({ pathname: '/food-review', params: {
                   draftId,
                   ...(barcodeRaw ? { barcodeRaw } : {}),
@@ -196,6 +207,8 @@ export default function OcrLabScreen() {
                   ...(barcodeGtin ? { barcodeGtin } : {}),
                   ...(barcodeLookupKey ? { barcodeLookupKey } : {}),
                   ...(barcodeAcquiredBy ? { barcodeAcquiredBy } : {}),
+                  ...(identityDraftId ? { identityDraftId } : {}),
+                  ...(identityFoodId ? { identityFoodId } : {}),
                 } });
               }} />
               <Action title="打开本地食品" onPress={() => router.push('/foods')} />
@@ -220,7 +233,7 @@ export default function OcrLabScreen() {
           <Text style={styles.note}>分享由你主动操作；App 不自动上传。若要外部校验，请将 JSON、原图、处理图保存到同一目录。</Text>
         </> : null}
       </View> : null}
-      <Text style={styles.footer}>Phase 2 · OCR 原文和初始解析永久保留；食品数据只写入本机 SQLite，未调用任何在线服务。</Text>
+      <Text style={styles.footer}>商品身份和营养标签分开保存 · OCR 原文和初始解析永久保留；食品数据只写入本机 SQLite，未调用任何在线服务。</Text>
     </ScrollView>
   </SafeAreaView>;
 }
@@ -236,6 +249,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   badge: { backgroundColor: colors.pale, color: colors.teal, fontSize: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, fontWeight: '600' },
   card: { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 16, gap: 12 },
+  identityNotice: { backgroundColor: '#e8f4ff', borderRadius: 12, borderWidth: 1, borderColor: '#b8d7ef', padding: 13, gap: 5 },
   barcodeNotice: { backgroundColor: '#fff9e8', borderRadius: 12, borderWidth: 1, borderColor: '#efdfaa', padding: 13, gap: 5 },
   noticeTitle: { color: colors.amber, fontSize: 14, fontWeight: '700' },
   heading: { gap: 6 },
