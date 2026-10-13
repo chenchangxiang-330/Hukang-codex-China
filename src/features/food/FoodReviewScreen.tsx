@@ -11,7 +11,7 @@ import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRe
 import { getFoodDraft, removeFoodDraft } from './draftStore';
 import { FoodEvidencePanel } from './FoodEvidencePanel';
 import { NutritionReviewForm } from './NutritionReviewForm';
-import { FoodAction, FoodField, foodColors, foodError, foodStyles } from './ui';
+import { FoodAction, FoodChoices, FoodField, foodColors, foodError, foodStyles } from './ui';
 
 function routeId(value: string | string[] | undefined): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
@@ -51,6 +51,10 @@ export default function FoodReviewScreen() {
   const [focusedBlockIds, setFocusedBlockIds] = useState<readonly string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [bindRaw, setBindRaw] = useState('');
+  const [bindFormat, setBindFormat] = useState<'EAN_13' | 'EAN_8' | 'UPC_A' | 'UPC_E'>('EAN_13');
+  const [binding, setBinding] = useState(false);
+  const [bindingNotice, setBindingNotice] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   // A persisted record carries at least its creation revision. Keeping this
   // fallback makes the destructive action available after a cold-start route
@@ -128,6 +132,22 @@ export default function FoodReviewScreen() {
     ]);
   };
 
+  const bindExistingBarcode = async () => {
+    if (!record || !foodId || binding) return;
+    const barcode = normalizeBarcode({ rawValue: bindRaw, format: bindFormat, decodedAt: new Date().toISOString() });
+    if (barcode.validity !== 'valid' || !barcode.lookupKey) {
+      setBindingNotice('条码格式或校验位无效，未建立关联。请保留前导零并重新核对。');
+      return;
+    }
+    setBinding(true); setBindingNotice(null);
+    try {
+      const association = await chinaFoodRepository.bindBarcode(foodId, barcode, 'manual');
+      setRecord({ ...record, barcodes: [...(record.barcodes ?? []).filter(item => item.lookupKey !== association.lookupKey), association] });
+      setBindRaw(''); setBindingNotice('条码已绑定到这条食品记录。');
+    } catch (cause) { setBindingNotice(`条码绑定失败：${foodError(cause)}`); }
+    finally { setBinding(false); }
+  };
+
   const openList = () => {
     if (!dirty) { router.push('/foods'); return; }
     Alert.alert('还有未保存的修改', '返回食品列表会放弃当前未保存的修改。你可以先保存待确认记录。', [
@@ -147,6 +167,14 @@ export default function FoodReviewScreen() {
       {!loading && record && review ? <>
         <Text style={foodStyles.note}>{record.status === 'confirmed' && !dirty ? '当前记录：已人工确认' : '当前记录：待确认或有未保存修改'}</Text>
         {pendingBarcode ? <View style={foodStyles.notice}><Text style={foodStyles.sectionTitle}>待绑定条码</Text><Text style={foodStyles.text}>{pendingBarcode.scan.rawValue} · {pendingBarcode.scan.format}</Text><Text style={foodStyles.note}>保存后会将原始条码、格式、校验结果和获取方式写入本机食品库。</Text></View> : null}
+        {foodId ? <View style={foodStyles.card}>
+          <Text style={foodStyles.sectionTitle}>条码关联</Text>
+          {record.barcodes?.length ? record.barcodes.map(barcode => <Text key={barcode.lookupKey} style={foodStyles.note}>已绑定：{barcode.rawValue} · {barcode.format} · {barcode.acquiredBy}</Text>) : <Text style={foodStyles.note}>这条食品记录还没有条码。</Text>}
+          <FoodChoices label="条码格式" accessibilityLabel="绑定条码格式" value={bindFormat} options={[{ value: 'EAN_13', label: 'EAN-13' }, { value: 'EAN_8', label: 'EAN-8' }, { value: 'UPC_A', label: 'UPC-A' }, { value: 'UPC_E', label: 'UPC-E' }]} onChange={setBindFormat} disabled={binding} />
+          <FoodField label="手动补绑条码" accessibilityLabel="补绑食品条码" value={bindRaw} onChangeText={setBindRaw} disabled={binding} numeric />
+          <FoodAction title="绑定到当前食品" onPress={() => void bindExistingBarcode()} disabled={binding || !bindRaw.trim()} />
+          {bindingNotice ? <Text style={bindingNotice.includes('失败') || bindingNotice.includes('无效') ? foodStyles.warning : foodStyles.note}>{bindingNotice}</Text> : null}
+        </View> : null}
         <FoodEvidencePanel evidence={record.evidence} focusedBlockIds={focusedBlockIds} />
         <View style={foodStyles.card}>
           <Text style={foodStyles.sectionTitle}>食品信息</Text>
