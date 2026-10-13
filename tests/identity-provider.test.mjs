@@ -71,7 +71,7 @@ test('found response sends only validated identity fields and maps the result', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://food.example.test/v1/food-identity/lookup');
   const body = JSON.parse(calls[0].options.body);
-  assert.deepEqual(body, { gtin: '6901234567892', lookupKey: '06901234567892', format: 'EAN_13' });
+  assert.deepEqual(body, { rawValue: '6901234567892', gtin: '6901234567892', lookupKey: '06901234567892', format: 'EAN_13' });
   assert.equal('image' in body, false);
   assert.equal('ocrText' in body, false);
   assert.equal('nutrition' in body, false);

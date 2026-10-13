@@ -158,7 +158,7 @@ export class ConfiguredChinaFoodProvider implements ChinaFoodIdentityProvider {
       const response = await this.fetchImpl(`${this.endpoint}${LOOKUP_PATH}`, {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gtin: query.gtin, lookupKey: query.lookupKey, format: query.format }),
+        body: JSON.stringify({ rawValue: query.rawValue, gtin: query.gtin, lookupKey: query.lookupKey, format: query.format }),
         signal: controller.signal,
       });
       let payload: unknown;
