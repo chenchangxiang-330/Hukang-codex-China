@@ -96,25 +96,26 @@ export default function OcrLabScreen() {
   const identityDraftId = typeof barcodeParams.identityDraftId === 'string' ? barcodeParams.identityDraftId : undefined;
   const identityFoodId = typeof barcodeParams.identityFoodId === 'string' ? barcodeParams.identityFoodId : undefined;
   const identityDraft = identityDraftId ? getIdentityDraft(identityDraftId) : null;
+  const nutritionCapture = Boolean(identityDraftId || identityFoodId);
   const selectedId = selection?.evidenceId === lab.evidence?.id ? selection?.blockId : null;
   const selectBlock = (blockId: string) => {
     if (lab.evidence) setSelection({ evidenceId: lab.evidence.id, blockId });
   };
 
   return <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-    <Stack.Screen options={{ title: 'OCR Lab', headerShadowVisible: false }} />
+    <Stack.Screen options={{ title: nutritionCapture ? '拍摄营养成分表' : 'OCR Lab', headerShadowVisible: false }} />
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.hero}>
         <Image source={require('../../../assets/icon.png')} style={styles.logo} />
         <View style={styles.heroCopy}>
-          <Text style={styles.title}>护康 · OCR Lab</Text>
-          <Text style={styles.subtitle}>国产 PaddleOCR，图片始终留在本机</Text>
+          <Text style={styles.title}>{nutritionCapture ? '拍摄营养成分表' : '护康 · OCR Lab'}</Text>
+          <Text style={styles.subtitle}>{nutritionCapture ? '商品身份已保留，下面只识别你手中的营养标签' : '国产 PaddleOCR，图片始终留在本机'}</Text>
         </View>
       </View>
       <View style={styles.badges}><Text style={styles.badge}>完全离线</Text><Text style={styles.badge}>PP-OCRv5 mobile</Text><Text style={styles.badge}>原文保留</Text></View>
       <View style={styles.actionRow}>
         <Action title="打开本地食品" onPress={() => router.push('/foods')} />
-        <Action title="扫码查食品" onPress={() => router.push('/barcode')} primary />
+        {!nutritionCapture ? <Action title="扫码查食品" onPress={() => router.push('/barcode')} primary /> : null}
       </View>
       {barcodeRaw ? <View style={styles.barcodeNotice}>
         <Text style={styles.noticeTitle}>正在补录未收录食品</Text>

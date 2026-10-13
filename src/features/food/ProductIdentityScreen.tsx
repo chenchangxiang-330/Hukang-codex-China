@@ -105,7 +105,7 @@ export default function ProductIdentityScreen() {
     if (!draft) return;
     const confirmed = confirmIdentityDraft(draft.id);
     setDraft(confirmed);
-    router.push({ pathname: '/', params: {
+    router.push({ pathname: '/nutrition-capture', params: {
       identityDraftId: confirmed.id,
       ...(existingFoodId ? { identityFoodId: existingFoodId } : {}),
       barcodeRaw: confirmed.barcodeRaw, barcodeFormat: confirmed.barcodeFormat, barcodeGtin: confirmed.barcodeGtin,
