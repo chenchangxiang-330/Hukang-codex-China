@@ -20,7 +20,7 @@ export function normalizeBarcodeFormat(format: string): SupportedBarcodeFormat |
 
 /** GS1 modulo-10 check digit. `digits` includes the check digit. */
 export function hasValidCheckDigit(digits: string): boolean {
-  if (!/^\d{2,14}$/.test(digits)) return false;
+  if (!/^\d{8,14}$/.test(digits) || ![8, 12, 13, 14].includes(digits.length)) return false;
   const check = Number(digits[digits.length - 1]);
   let sum = 0;
   let weight = 3;
