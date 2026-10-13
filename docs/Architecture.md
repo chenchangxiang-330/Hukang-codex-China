@@ -1,6 +1,6 @@
-# Hukang China — Phase 3 architecture
+# Hukang China — Phase 3.1 architecture
 
-本轮边界：本地离线 OCR、食品营养表解析、人工核对、SQLite 食品记录、条码解码和升级保留验证。没有药品、AI、提醒、云服务或远程食品 provider。
+本轮边界：条码身份查询可选走 Hukang 控制的国内 HTTPS 服务；条码解码、PaddleOCR、营养表解析、人工核对、SQLite 食品记录和修订历史始终在本机。没有云 OCR、在线 AI、药品、账号、云同步或海外业务服务。商品查询默认关闭、按次明确启用，服务未配置时不影响离线流程。
 
 ## Current execution path
 
@@ -12,6 +12,12 @@ Expo Router / OCR Lab screen
   → image preparation / bundled PaddleOCR / ONNX Runtime CPU
   → immutable OCR evidence + geometry parser
   → Food Review + SQLite local repository + barcode association
+
+Barcode miss (only after local lookup)
+  → explicit user consent
+  → fixed Hukang HTTPS `/v1/food-identity/lookup` (barcode fields only)
+  → identity candidate → user confirmation
+  → local nutrition photo/OCR/review → SQLite identity + evidence transaction
 ```
 
 React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
@@ -54,7 +60,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 - Model loading, OCR and total timing use native measurements. Sampled memory
   maxima are labelled as observations, not absolute peak RSS.
 
-## Future food lookup boundary
+## Food lookup boundary
 
 ```text
 BarcodeScanner → raw barcode + format
@@ -62,14 +68,18 @@ BarcodeScanner → raw barcode + format
   → independent GTIN validation
   → ChinaFoodRepository
       → LocalChinaFoodSource
-      → explicitly authorized mainland providers, if enabled later
+      → optional explicitly authorized mainland identity provider
       → package photos + OCR + user confirmation on lookup miss
 ```
 
-`ChinaFoodRepository` currently uses the local SQLite adapter. `HukangChinaFoodService`
-is only an interface reserved for a Hukang-controlled mainland deployment. It does
-not configure a URL, API key, HTTP client or active network dependency. The
-ZXing image decoder accepts only local URIs. `expo-camera` is deliberately absent:
+`ChinaFoodRepository` always runs first. `ConfiguredChinaFoodProvider` accepts only
+a build-time Hukang HTTPS origin and sends the validated raw barcode, GTIN, lookup
+key and format; it never accepts an upstream URL, vendor key, image, OCR text or
+food record. In-flight requests are deduplicated and stale responses are dropped.
+The server keeps any supplier credential in deployment secrets and fails closed
+when it is not configured. Provider responses are transient until the user
+confirms the identity; unknown cache rights are rejected by SQLite.
+The ZXing image decoder accepts only local URIs. `expo-camera` is deliberately absent:
 its Android scanner adds ML Kit and Google Play Services. A future native camera
 preview must hand a local capture URI to this decoder; camera permission and
 physical preview execution remain separately verified.

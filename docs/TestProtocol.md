@@ -26,7 +26,9 @@ npm run verify:apk -- artifacts/<实际release文件名>.apk
 - 实际 APK 包含的 detector/recognizer 文件摘要、字典配置及版本。
 - 最终二进制 Manifest 的 minSdk 和 permissions；不能只检查 app.json 或源 Manifest。
 - 最终 APK native libs 仅含 `arm64-v8a`。
-- 生产 `android.permission.INTERNET` 应不存在；若存在，先定位 manifest-merger 来源并修复。不能把未调用的网络 SDK 当作合格依赖。
+- Phase 3.1 允许生产 `android.permission.INTERNET`，因为用户可选的国内商品身份
+  查询需要它。它只能通向固定 Hukang HTTPS origin；`ACCESS_NETWORK_STATE`、模型
+  下载、遥测和海外业务服务仍应不存在。不能把未调用的网络 SDK 当作合格依赖。
 
 即便以上通过，也仅称“构建及静态检查通过”，还不能称“Android 离线 OCR 已验证”。
 
@@ -64,7 +66,10 @@ adb push tests/fixtures/china-food/6923644266066.jpg /storage/emulated/0/Picture
 6. 全图或局部失败均保存错误代码、可复现步骤、源图摘要及日志；不切换在线 OCR。
 7. 后台／前台及强制停止后重新打开再试；记录是否重新初始化模型。
 
-离线证据包括无 INTERNET 的最终 APK、首次离线启动及实际模型执行记录。仅“代码没有 fetch”或“手机当时连的是国内网络”不能证明此项。可额外通过系统网络统计或抓包观测验证；抓包可能漏流量，其方法及局限需记录。
+离线证据包括最终 APK、首次断网启动及实际模型执行记录；有 INTERNET 权限时，
+还需在断网条件下证明本地链路不依赖服务。仅“代码没有 fetch”或“手机当时连的是
+国内网络”不能证明此项。联网验收另行记录固定目的地、用户开关、请求体摘要和服务端
+审计；抓包可能漏流量，其方法及局限需记录。
 
 ## 4. 每次 OCR 的原始记录
 

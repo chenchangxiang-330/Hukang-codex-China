@@ -1,5 +1,8 @@
 # Phase 3 条码闭环测试与证据
 
+本文件记录纯本地条码闭环；商品身份联网和网络权限使用
+[Phase3.1TestingAcceptance.md](Phase3.1TestingAcceptance.md) 的独立证据等级。
+
 Phase 3 的自动化验收必须证明一次真实解码的完整状态迁移，而不是只调用
 SQLite 查询函数：
 
@@ -23,7 +26,8 @@ SQLite 查询函数：
 证据包的 `session.json` 必须包含：
 
 - `deviceExecutionVerified: true` 和 `offline: true`；
-- APK 最终权限清单，且不包含 `INTERNET` 或 `ACCESS_NETWORK_STATE`；
+- APK 最终权限清单。Phase 3.1 允许 `INTERNET` 仅用于用户启用的国内商品身份查询；
+  `ACCESS_NETWORK_STATE`、模型下载、遥测和海外服务仍不得进入生产链路；
 - `barcodeChecks.firstScan`：`source` 为 `camera` 或 `image`，原始条码、格式、
   校验结果、规范化查询键，以及 `queryStatus: not_found`；
 - `draftSaved` 和 `confirmedSaved`：相同食品 ID、相同查询键、保存状态和

@@ -29,7 +29,9 @@ extraction = re.search(r'android:extractNativeLibs[^=\n]*=(true|false)', manifes
 extract_native_libs = extraction is not None and extraction.group(1) == 'true'
 if not extract_native_libs:
     errors.append("Native library extraction is disabled; ARM64 translation cannot use the direct first-ABI loader")
-for permission in ["INTERNET", "ACCESS_NETWORK_STATE", "RECORD_AUDIO"]:
+if "android.permission.INTERNET" not in permissions:
+    errors.append("Domestic product identity lookup requires INTERNET permission")
+for permission in ["ACCESS_NETWORK_STATE", "RECORD_AUDIO"]:
     if f"android.permission.{permission}" in permissions:
         errors.append(f"Unexpected permission: {permission}")
 if "android.permission.CAMERA" not in permissions:

@@ -50,6 +50,7 @@ export default function ProductIdentityScreen() {
   const [allowNetwork, setAllowNetwork] = useState(false);
   const [querying, setQuerying] = useState(false);
   const [result, setResult] = useState<IdentityResult | null>(null);
+  const [queryAttempted, setQueryAttempted] = useState(false);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -71,9 +72,10 @@ export default function ProductIdentityScreen() {
   };
 
   const query = async () => {
-    if (!draft || querying) return;
+    if (!draft || querying || queryAttempted || existingFoodId) return;
     if (!allowNetwork) { setResult({ status: 'disabled', message: '国内联网查询已关闭。' }); return; }
     const id = ++requestId.current;
+    setQueryAttempted(true);
     setQuerying(true); setResult(null);
     try {
       const next = await provider.lookup({ rawValue: draft.barcodeRaw, gtin: draft.barcodeGtin, lookupKey: draft.barcodeLookupKey, format: draft.barcodeFormat as any });
@@ -115,7 +117,7 @@ export default function ProductIdentityScreen() {
         <Text style={foodStyles.sectionTitle}>国内商品身份查询（可选）</Text>
         <Text style={foodStyles.note}>仅在你主动启用后发送已校验条码、格式和 GTIN 到 Hukang 配置的国内 HTTPS 服务。没有服务地址、断网或查询失败时，仍可手动填写。</Text>
         <FoodAction title={allowNetwork ? '已允许本次联网查询' : '启用本次联网查询'} onPress={() => { setAllowNetwork((value) => !value); setResult(null); }} />
-        <FoodAction title={querying ? '查询中…' : '查询商品名称、品牌和规格'} primary onPress={() => void query()} disabled={querying || !allowNetwork} />
+        <FoodAction title={querying ? '查询中…' : queryAttempted ? '本次条码已查询（如需重试请重新扫描）' : '查询商品名称、品牌和规格'} primary onPress={() => void query()} disabled={querying || queryAttempted || !allowNetwork || Boolean(existingFoodId)} />
         {querying ? <ActivityIndicator color={foodColors.teal} accessibilityLabel="正在查询国内商品身份" /> : null}
         {result ? <Text style={result.status === 'found' ? foodStyles.notice : foodStyles.warning}>{statusText(result)}</Text> : null}
       </View>

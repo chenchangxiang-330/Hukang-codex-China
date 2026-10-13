@@ -117,6 +117,8 @@ export default function FoodReviewScreen() {
     if (issues.length > 0) return;
     setSaving(true);
     setError(null);
+    let persistedId: string | null = null;
+    let bindingStarted = false;
     try {
       const snapshot = JSON.parse(JSON.stringify(review)) as FoodReviewValues;
       // Keep the loaded updatedAt as the optimistic concurrency token. The
@@ -131,18 +133,29 @@ export default function FoodReviewScreen() {
           throw new Error(`该条码已绑定到“${existing.record.review.name || '另一条食品记录'}”，未覆盖原关联。请打开原记录或先明确解绑。`);
         }
       }
-      const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status });
+      const identity = identityForRecord(record, status,
+        foodId && record.identity ? record.identity.updatedAt : new Date().toISOString());
+      // New nutrition drafts carry the confirmed user identity into the same
+      // SQLite transaction. Existing records update identity separately so an
+      // immutable nutrition evidence snapshot is never replaced implicitly.
+      const saved = await chinaFoodRepository.saveFood({
+        ...record, review: snapshot, status,
+        ...(identity && !foodId ? { identity } : {}),
+      });
+      persistedId = saved.id;
       if (pendingBarcode && pendingBarcode.validity === 'valid' && pendingBarcode.lookupKey) {
+        bindingStarted = true;
         await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
       }
-      const identity = identityForRecord(record, status, saved.updatedAt);
-      if (identity) await chinaFoodRepository.saveFoodIdentity({ ...identity, foodId: saved.id });
+      if (identity && foodId) await chinaFoodRepository.saveFoodIdentity({ ...identity, foodId: saved.id });
       if (draftId) removeFoodDraft(draftId);
       if (identityDraftId) removeIdentityDraft(identityDraftId);
       setDirty(false);
       router.replace({ pathname: '/foods', params: { saved: saved.id } });
     } catch (cause) {
-      setError(`保存失败：${foodError(cause)}`);
+      setError(persistedId
+        ? `食品记录已保存，但${bindingStarted ? '条码或身份关联尚未完成' : '后续关联尚未完成'}：${foodError(cause)}。请在本地食品中打开该记录后重试。`
+        : `保存失败：${foodError(cause)}`);
     } finally {
       setSaving(false);
     }

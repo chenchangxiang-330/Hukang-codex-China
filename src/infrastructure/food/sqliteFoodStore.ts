@@ -286,6 +286,33 @@ export function createSQLiteFoodStore(
     writing = result.then(() => undefined, () => undefined);
     return result;
   }
+  function identityExpired(identity: FoodIdentity, at: string): boolean {
+    const ttl = identity.source.policy.cacheTtlSeconds;
+    return identity.source.kind === 'mainland_service' && ttl !== null &&
+      Date.parse(at) >= Date.parse(identity.source.obtainedAt) + ttl * 1000;
+  }
+  async function cleanupExpiredIdentities(): Promise<void> {
+    const rows = await driver.all<IdentityRow>(
+      'SELECT food_id,name,brand,specification,status,source_id,source_name,source_kind,source_record_id,source_fetched_at,source_obtained_at,source_policy_json,confirmed_at,updated_at,identity_json FROM food_identity',
+    );
+    const at = now();
+    assertDate(at);
+    for (const row of rows) {
+      const identity = identityFromRow(row);
+      const revisions = await driver.all<IdentityRevisionRow>(
+        'SELECT id,food_id,recorded_at,kind,status,identity_json FROM food_identity_revisions WHERE food_id=?', row.food_id,
+      );
+      const expiredRevisionIds = revisions.filter((revision) => identityExpired(identityRevisionFromRow(revision).identity, at)).map((revision) => revision.id);
+      const removeCurrent = identityExpired(identity, at);
+      if (!removeCurrent && expiredRevisionIds.length === 0) continue;
+      await driver.transaction(async (transaction) => {
+        await verifyTransaction(transaction);
+        for (const id of expiredRevisionIds) await transaction.run('DELETE FROM food_identity_revisions WHERE id=? AND food_id=?', id, row.food_id);
+        if (removeCurrent) await transaction.run('DELETE FROM food_identity WHERE food_id=?', row.food_id);
+      });
+    }
+  }
+
   async function cleanupFiles(): Promise<void> {
     for (const row of await driver.all<{ food_id: string; folder_uri: string }>('SELECT food_id,folder_uri FROM food_file_cleanup')) {
       await files.removeFood(row.food_id, row.folder_uri);
@@ -309,6 +336,7 @@ export function createSQLiteFoodStore(
         await transaction.exec(MIGRATION_V3);
       });
     } else if (version !== 3) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    await cleanupExpiredIdentities();
     await cleanupFiles();
   }
   async function ready(): Promise<void> {

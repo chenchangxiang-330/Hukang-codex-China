@@ -71,6 +71,16 @@ export function updateIdentityDraft(id: string, patch: Partial<Omit<ProductIdent
 }
 
 export function confirmIdentityDraft(id: string): ProductIdentityDraft {
+  const current = drafts.get(id);
+  if (!current) throw new Error('商品身份草稿已失效，请从条码重新开始。');
+  // A provider candidate is not a licensed long-term cache. Once the user
+  // explicitly confirms the fields, the persisted record is a user-owned
+  // correction; the transient provider response is discarded.
+  if (current.sourceKind === 'CHINA_SERVICE') {
+    return updateIdentityDraft(id, {
+      status: 'confirmed', sourceKind: 'MANUAL', sourceId: 'user-confirmed', sourceFetchedAt: null,
+    });
+  }
   return updateIdentityDraft(id, { status: 'confirmed' });
 }
 

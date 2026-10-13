@@ -1,12 +1,13 @@
 # Mainland production dependency audit
 
-Scope: Hukang China Phase 0 through Phase 3, Android arm64-v8a release, minSdk 26.
+Scope: Hukang China Phase 0 through Phase 3.1, Android arm64-v8a release, minSdk 26.
 Audit date: 2026-10-13 (UTC).
 
-**Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** This counts active
-services in the app's runtime path, not foreign-origin offline libraries or
-build repositories. Final APK Manifest and device traffic checks are separate
-acceptance gates; source configuration alone does not prove device behavior.
+**Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** An optional
+`CHINA_SERVICE` boundary now exists for barcode identity only; no provider URL,
+credential or deployment is present in this repository. Final APK Manifest and
+device traffic checks are separate acceptance gates; source configuration alone
+does not prove device behavior.
 
 ## Categories
 
@@ -48,11 +49,13 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | Splash/status bar, safe-area and screens | SDK-compatible pinned lockfile | `FOREIGN_OFFLINE_LIBRARY` | Local rendering and lifecycle |
 | `ChinaFoodRepository` / SQLite adapter | `src/infrastructure/food/` | `LOCAL` | Food records, evidence and revisions remain on-device; no provider or cloud sync |
 | `MedicineRepository` | TypeScript contract only | `LOCAL` | No medicine provider or remote lookup implementation |
-| Future `HukangChinaFoodService` | Interface only | — | Not a configured dependency; mainland hosting and data rights need separate approval before implementation |
+| `ConfiguredChinaFoodProvider` + fixed Hukang endpoint | `src/infrastructure/food/providers/`, optional build-time HTTPS origin | `CHINA_SERVICE` | Sends only validated barcode identity fields after user consent; absent endpoint fails closed; supplier key stays server-side |
+| `server/` food identity service | `server/hukang-food-service.mjs` | `CHINA_SERVICE` | Fixed route, request validation, timeout, safe errors and injected vendor adapter; default `NOT_CONFIGURED`, no photos/OCR/food database |
 
-There is **no active `CHINA_SERVICE` in Phase 3**. Local food records and barcode
-associations are not uploaded to a central database; the local catalog contains
-only records that the user has created or confirmed.
+There is no configured production `CHINA_SERVICE` yet. Local food records and
+barcode associations are not uploaded to a central database; the optional query
+payload contains only the user-approved barcode identity fields. OCR images,
+OCR text, nutrition records and the local catalog never cross this boundary.
 
 Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
 barcode implementation declares `com.google.mlkit:barcode-scanning`,
@@ -68,8 +71,8 @@ The actual graph contains generic networking-capable libraries, including
 OkHttp and image-loading adapters. Their capability is distinct from a
 configured production service; this APK must not be described as containing
 no HTTP-capable code. App-owned Phase 1 code uses local image/file resources,
-and the release app's network permission is removed as an additional
-operating-system boundary. Neither a dependency name nor successful Gradle
+and the release app's `INTERNET` permission is limited to the explicit domestic
+identity lookup boundary; it does not enable model download or telemetry. Neither a dependency name nor successful Gradle
 resolution proves absence of traffic; device observations are a separate gate.
 
 ### Actual Android release dependency graph
@@ -129,9 +132,11 @@ in the production App. No network request is made to obtain them at runtime.
 
 ## Manifest and network gates
 
-- `app.json.android.blockedPermissions` removes `INTERNET` and
-  `ACCESS_NETWORK_STATE`, plus permissions not used by this phase.
-- Native app Manifest uses `tools:node="remove"` for blocked network permissions.
+- `INTERNET` is allowed only because the optional domestic identity query needs
+  it. `ACCESS_NETWORK_STATE` remains blocked because the app does not need a
+  network-state API; a failed request is handled as an explicit offline status.
+- The native Manifest does not add arbitrary network endpoints or cleartext
+  traffic. The client accepts only a fixed HTTPS origin.
   An XML remove marker is not a granted permission and is not sufficient proof
   of the final merge result.
 - Expo updates is disabled. Any generated `CHECK_ON_LAUNCH` metadata must be
@@ -140,9 +145,11 @@ in the production App. No network request is made to obtain them at runtime.
   Attribute/permission names cannot be inferred by searching raw compressed APK bytes.
 - Check resolved release npm/Gradle packages for prohibited SDKs; save the
   resolved inventory, not only direct `package.json` dependencies.
-- Install the actual release on ARM64 Android, cold-start in airplane mode,
-  select an available local image and recognize. Record model initialization,
-  OCR timing, evidence and observed network behavior.
+- Install the actual release on ARM64 Android. In airplane mode, verify local
+  barcode/OCR/manual archive behavior. With consent and an authorized test
+  deployment, separately record the fixed HTTPS host, request purpose and
+  response. Record model initialization, OCR timing, evidence and observed
+  network behavior.
 
 Android's system photo provider may offer cloud-backed images, and other apps
 chosen by an explicit share action may have their own network behavior. Hukang
