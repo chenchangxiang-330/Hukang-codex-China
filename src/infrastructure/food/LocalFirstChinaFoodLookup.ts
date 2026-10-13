@@ -29,9 +29,11 @@ export class LocalFirstChinaFoodLookup {
     const local = await this.local.getFoodByBarcode(query.lookupKey);
     if (token !== this.sequence) return { status: 'stale', message: '已切换到另一件商品，丢弃旧查询结果。' };
     if (local) return { status: 'local_found', record: local.record, barcode: local.barcode };
-    const remote = this.provider
-      ? await this.provider.lookup(query, options)
-      : { status: 'not_configured' as const, message: '国内商品服务尚未配置。' };
+    const remote = !this.provider
+      ? { status: 'not_configured' as const, message: '国内商品服务尚未配置。' }
+      : !this.provider.enabled
+        ? { status: 'disabled' as const, message: '国内商品查询已关闭。' }
+        : await this.provider.lookup(query, options);
     if (token !== this.sequence) return { status: 'stale', message: '已切换到另一件商品，丢弃旧查询结果。' };
     if (remote.status === 'found') return { status: 'china_service_found', identity: remote.identity };
     return { status: 'not_found', providerStatus: remote.status, message: remote.message };
