@@ -1,7 +1,7 @@
 # Mainland production dependency audit
 
 Scope: Hukang China Phase 0 through Phase 3, Android arm64-v8a release, minSdk 26.
-Audit date: 2026-10-08 (Asia/Shanghai).
+Audit date: 2026-10-13 (UTC).
 
 **Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** This counts active
 services in the app's runtime path, not foreign-origin offline libraries or
@@ -24,9 +24,9 @@ include the actual local `releaseRuntimeClasspath` resolution recorded on
 2026-10-08, rather than only direct Gradle declarations. The original report is
 preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt).
 
-| Component | Version / location | Category | Phase 1 behavior |
+| Component | Version / location | Category | Phase 3 runtime role |
 | --- | --- | --- | --- |
-| Hukang UI, use cases, domain and Kotlin adapter | `src/`, `modules/hukang-vision/` | `LOCAL` | Local image preparation and raw OCR display |
+| Hukang UI, use cases, domain and Kotlin adapter | `src/`, `modules/hukang-vision/` | `LOCAL` | Local image preparation, OCR, barcode flow and raw evidence display |
 | PaddlePaddle detection model | PP-OCRv5_mobile_det_onnx | `LOCAL` | APK-bundled domestic model; no runtime download |
 | PaddlePaddle recognition model and dictionary | PP-OCRv5_mobile_rec_onnx + paired config | `LOCAL` | APK-bundled domestic model and exact dictionary |
 | Reviewed PaddleOCR Android engine source | v3.7.0 baseline | `LOCAL` | Local inference; no model API endpoint |
@@ -50,9 +50,9 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | `MedicineRepository` | TypeScript contract only | `LOCAL` | No medicine provider or remote lookup implementation |
 | Future `HukangChinaFoodService` | Interface only | — | Not a configured dependency; mainland hosting and data rights need separate approval before implementation |
 
-There is **no active `CHINA_SERVICE` in Phase 2.1**. Local food records are not
-uploaded to a future central database. Barcode scanning and seeded catalog lookup
-remain later-phase work.
+There is **no active `CHINA_SERVICE` in Phase 3**. Local food records and barcode
+associations are not uploaded to a central database; the local catalog contains
+only records that the user has created or confirmed.
 
 Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
 barcode implementation declares `com.google.mlkit:barcode-scanning`,
@@ -165,8 +165,8 @@ Source configuration, declared dependency review and actual local release
 dependency-graph resolution are complete for this document's scope. Artifact
 Manifest checks, model bundling verification, GitHub Actions compilation,
 Android execution and traffic observations retain their individually recorded
-statuses in the Phase 1 acceptance report. The dependency-tree execution does
-not assert a successful device OCR run or a packet-capture result.
+statuses in the Phase 3 acceptance report. The dependency-tree execution does
+not assert a successful device barcode/OCR run or a packet-capture result.
 
 Future Paddle Lite / Paddle-native runtime evaluation is recorded as an
 optional optimization. It does not block the fixed ONNX Runtime baseline.
