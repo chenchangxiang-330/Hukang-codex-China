@@ -1,6 +1,7 @@
 import type { OcrEvidence } from '../ocr/types';
 import type { NutrientId, NutritionBasis } from './types';
 import type { FoodBarcodeAssociation } from '../barcode/types';
+import type { FoodIdentity } from './identity';
 
 export const CORE_NUTRIENTS = ['energy', 'protein', 'fat', 'carbohydrate', 'sodium'] as const;
 export type NutritionUnit = 'kJ' | 'kcal' | 'g' | 'mg' | 'µg' | 'unknown';
@@ -86,6 +87,8 @@ export interface FoodScanRecord {
   readonly evidence: OcrEvidence;
   readonly parsed: ParsedNutritionLabel;
   readonly review: FoodReviewValues;
+  /** Product identity is separate from OCR-derived nutrition values. */
+  readonly identity?: FoodIdentity;
   readonly revisions: readonly FoodRevision[];
   /** Loaded from the normalized food_barcodes table; absent on pre-Phase-3 drafts. */
   readonly barcodes?: readonly FoodBarcodeAssociation[];

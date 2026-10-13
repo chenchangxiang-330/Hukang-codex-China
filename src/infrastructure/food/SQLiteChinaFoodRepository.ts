@@ -3,6 +3,7 @@ import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import type { LocalChinaFoodSource } from '../../application/ports/ChinaFoodRepository';
 import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import type { FoodRevision, FoodScanRecord } from '../../domain/food/scan';
+import type { FoodIdentity } from '../../domain/food/identity';
 import { hukangVision } from '../ocr/HukangVision';
 import {
   assertFoodId, canonicalFoodJson, createSQLiteFoodStore,
@@ -128,8 +129,11 @@ function repository(): Promise<ReturnType<typeof createSQLiteFoodStore>> {
 
 /** Local-only adapter. No network provider, automatic sync or external database exists. */
 export const chinaFoodRepository: LocalChinaFoodSource = {
-  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v2',
+  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v3',
   async getFood(id) { return (await repository()).getFood(id); },
+  async getFoodIdentity(foodId) { return (await repository()).getFoodIdentity(foodId); },
+  async saveFoodIdentity(identity: FoodIdentity) { return (await repository()).saveFoodIdentity(identity); },
+  async getFoodIdentityRevisions(foodId) { return (await repository()).getFoodIdentityRevisions(foodId); },
   async getFoodByBarcode(lookupKey) { return (await repository()).getFoodByBarcode(lookupKey); },
   async listFoodBarcodes(foodId) { return (await repository()).listFoodBarcodes(foodId); },
   async bindBarcode(foodId, barcode: ValidatedBarcode, acquiredBy: BarcodeAcquisitionMethod): Promise<FoodBarcodeAssociation> {

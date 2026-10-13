@@ -1,5 +1,6 @@
 import type { ChinaFoodRecord, DataUsePolicy } from '../../domain/food/types';
 import type { FoodScanRecord, FoodSummary } from '../../domain/food/scan';
+import type { FoodIdentity } from '../../domain/food/identity';
 import type { FoodBarcodeAssociation, ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/barcode/types';
 
 export type FoodLookupResult =
@@ -14,6 +15,10 @@ export interface ChinaFoodRepository {
   /** Returns persistent image paths and the newly appended review revision. */
   saveFood(record: FoodScanRecord): Promise<FoodScanRecord>;
   deleteFood(id: string): Promise<void>;
+  /** Product identity is persisted independently from OCR/nutrition evidence. */
+  getFoodIdentity(foodId: string): Promise<FoodIdentity | null>;
+  saveFoodIdentity(identity: FoodIdentity): Promise<FoodIdentity>;
+  getFoodIdentityRevisions(foodId: string): Promise<readonly import('../../domain/food/identity').FoodIdentityRevision[]>;
   /** Looks up only the normalized local key; no network fallback exists. */
   getFoodByBarcode(lookupKey: string): Promise<{ record: FoodScanRecord; barcode: FoodBarcodeAssociation } | null>;
   listFoodBarcodes(foodId: string): Promise<readonly FoodBarcodeAssociation[]>;

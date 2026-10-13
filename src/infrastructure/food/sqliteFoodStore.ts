@@ -1,6 +1,7 @@
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
 import type { FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
+import type { FoodIdentity, FoodIdentityRevision, FoodIdentityRevisionKind, FoodIdentitySourceKind, FoodIdentityStatus } from '../../domain/food/identity';
 import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { validateFoodReview } from '../../domain/food/review';
@@ -80,6 +81,38 @@ CREATE INDEX IF NOT EXISTS food_barcodes_by_lookup ON food_barcodes(lookup_key);
 PRAGMA user_version = 2;
 `;
 
+/** v3 separates provider/user product identity from OCR and nutrition evidence. */
+const MIGRATION_V3 = `
+CREATE TABLE IF NOT EXISTS food_identity (
+  food_id TEXT PRIMARY KEY NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  brand TEXT NOT NULL,
+  specification TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('draft','pending_confirmation','confirmed')),
+  source_id TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  source_kind TEXT NOT NULL CHECK(source_kind IN ('local','mainland_service','user','package_ocr')),
+  source_record_id TEXT,
+  source_fetched_at TEXT,
+  source_obtained_at TEXT NOT NULL,
+  source_policy_json TEXT NOT NULL,
+  confirmed_at TEXT,
+  updated_at TEXT NOT NULL,
+  identity_json TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS food_identity_revisions (
+  id TEXT PRIMARY KEY NOT NULL,
+  food_id TEXT NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  recorded_at TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK(kind IN ('created','provider_result','edited','confirmed')),
+  status TEXT NOT NULL CHECK(status IN ('draft','pending_confirmation','confirmed')),
+  identity_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS food_identity_revisions_by_food ON food_identity_revisions(food_id, recorded_at, id);
+CREATE INDEX IF NOT EXISTS food_identity_by_source ON food_identity(source_id, source_record_id);
+PRAGMA user_version = 3;
+`;
+
 interface StoredRow {
   id: string; created_at: string; updated_at: string; status: FoodScanRecord['status'];
   review_json: string; source_evidence_json: string; persisted_evidence_json: string;
@@ -92,6 +125,16 @@ interface RevisionRow {
 interface BarcodeRow {
   id: string; food_id: string; raw_value: string; format: FoodBarcodeAssociation['format'];
   lookup_key: string; validation_status: 'valid'; acquired_by: BarcodeAcquisitionMethod; scanned_at: string;
+}
+interface IdentityRow {
+  food_id: string; name: string; brand: string; specification: string;
+  status: FoodIdentityStatus; source_id: string; source_name: string; source_kind: FoodIdentitySourceKind;
+  source_record_id: string | null; source_fetched_at: string | null; source_obtained_at: string;
+  source_policy_json: string; confirmed_at: string | null; updated_at: string; identity_json: string;
+}
+interface IdentityRevisionRow {
+  id: string; food_id: string; recorded_at: string; kind: FoodIdentityRevisionKind;
+  status: FoodIdentityStatus; identity_json: string;
 }
 const RECORD_SQL = `SELECT f.id,f.created_at,f.updated_at,f.status,f.review_json,
   e.source_evidence_json,e.persisted_evidence_json,e.parsed_json,e.folder_uri
@@ -145,11 +188,66 @@ function validateRecord(record: FoodScanRecord): void {
   }
   canonicalFoodJson(record);
 }
-function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = []): FoodScanRecord {
+function assertNullableDate(value: string | null, label: string): void {
+  if (value !== null) assertDate(value);
+  if (value !== null && typeof value !== 'string') throw new Error(`${label}无效。`);
+}
+
+function validateIdentity(identity: FoodIdentity): void {
+  assertFoodId(identity.foodId);
+  if (identity.schemaVersion !== 1) throw new Error('商品身份版本无效。');
+  for (const [label, value] of [['商品名称', identity.name], ['品牌', identity.brand], ['规格', identity.specification]] as const) {
+    if (typeof value !== 'string' || value.length > 10000) throw new Error(`${label}无效或过长。`);
+  }
+  if (!['draft', 'pending_confirmation', 'confirmed'].includes(identity.status)) throw new Error('商品身份确认状态无效。');
+  const source = identity.source;
+  if (!source || typeof source !== 'object') throw new Error('商品身份来源缺失。');
+  for (const [label, value, max] of [['来源标识', source.sourceId, 300], ['来源名称', source.sourceName, 1000]] as const) {
+    if (typeof value !== 'string' || value.length === 0 || value.length > max) throw new Error(`${label}无效。`);
+  }
+  if (!['local', 'mainland_service', 'user', 'package_ocr'].includes(source.kind)) throw new Error('商品身份来源类型无效。');
+  if (source.sourceRecordId !== null && (typeof source.sourceRecordId !== 'string' || source.sourceRecordId.length > 1000)) throw new Error('商品身份来源记录标识无效。');
+  assertDate(source.obtainedAt);
+  assertNullableDate(source.fetchedAt, '商品身份来源获取时间');
+  assertNullableDate(identity.confirmedAt, '商品身份确认时间');
+  assertDate(identity.updatedAt);
+  if (identity.status === 'confirmed' && identity.confirmedAt === null) throw new Error('已确认商品身份必须保留确认时间。');
+  if (identity.status !== 'confirmed' && identity.confirmedAt !== null) throw new Error('未确认商品身份不能携带确认时间。');
+  const policy = source.policy;
+  if (!policy || typeof policy !== 'object') throw new Error('商品身份数据使用政策缺失。');
+  for (const key of ['commercialUse', 'cache', 'redistribute'] as const) {
+    if (!['allowed', 'denied', 'unknown'].includes(policy[key])) throw new Error(`商品身份政策 ${key} 无效。`);
+  }
+  if (policy.license !== null && typeof policy.license !== 'string') throw new Error('商品身份许可字段无效。');
+  if (policy.authorizationReference !== null && typeof policy.authorizationReference !== 'string') throw new Error('商品身份授权引用无效。');
+  if (policy.cacheTtlSeconds !== null && (!Number.isInteger(policy.cacheTtlSeconds) || policy.cacheTtlSeconds < 0)) throw new Error('商品身份缓存期限无效。');
+  canonicalFoodJson(identity);
+}
+
+function identityFromRow(row: IdentityRow): FoodIdentity {
+  const identity = JSON.parse(row.identity_json) as FoodIdentity;
+  validateIdentity(identity);
+  if (identity.foodId !== row.food_id || identity.name !== row.name || identity.brand !== row.brand ||
+    identity.specification !== row.specification || identity.status !== row.status || identity.updatedAt !== row.updated_at) {
+    throw new Error('商品身份索引列与身份记录不一致。');
+  }
+  return identity;
+}
+
+function identityRevisionFromRow(row: IdentityRevisionRow): FoodIdentityRevision {
+  const identity = JSON.parse(row.identity_json) as FoodIdentity;
+  validateIdentity(identity);
+  if (identity.foodId !== row.food_id || identity.status !== row.status) throw new Error('商品身份历史记录不一致。');
+  assertFoodId(row.id); assertDate(row.recorded_at);
+  return { id: row.id, foodId: row.food_id, recordedAt: row.recorded_at, kind: row.kind, status: row.status, identity };
+}
+
+function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = [], identity?: FoodIdentity): FoodScanRecord {
   const record: FoodScanRecord = {
     schemaVersion: 1, id: row.id, createdAt: row.created_at, updatedAt: row.updated_at,
     status: row.status, evidence: JSON.parse(row.persisted_evidence_json), parsed: JSON.parse(row.parsed_json),
     review: JSON.parse(row.review_json),
+    ...(identity ? { identity } : {}),
     revisions: revisions.map((revision) => ({
       id: revision.id, recordedAt: revision.recorded_at, kind: revision.kind,
       status: revision.status, review: JSON.parse(revision.review_json),
@@ -186,19 +284,20 @@ export function createSQLiteFoodStore(
   async function initialize(): Promise<void> {
     await driver.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
     const version = (await driver.get<{ user_version: number }>('PRAGMA user_version'))?.user_version;
-    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); });
-    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); });
+    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); });
+    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); });
     else if (version === 2) {
       // A short-lived Phase 3 development build used the same version before
-      // validation_status was made explicit. Repair that additive column
-      // without touching foods, evidence or revisions.
+      // validation_status was made explicit. Repair that additive column and
+      // then create the v3 identity tables in one serialized migration.
       const columns = await driver.all<{ name: string }>('PRAGMA table_info(food_barcodes)');
-      if (columns.length > 0 && !columns.some((column) => column.name === 'validation_status')) {
-        await driver.transaction(async (transaction) => {
+      await driver.transaction(async (transaction) => {
+        if (columns.length > 0 && !columns.some((column) => column.name === 'validation_status')) {
           await transaction.exec("ALTER TABLE food_barcodes ADD COLUMN validation_status TEXT NOT NULL DEFAULT 'valid' CHECK(validation_status = 'valid')");
-        });
-      }
-    } else if (version !== 2) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+        }
+        await transaction.exec(MIGRATION_V3);
+      });
+    } else if (version !== 3) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     await cleanupFiles();
   }
   async function ready(): Promise<void> {
@@ -214,7 +313,10 @@ export function createSQLiteFoodStore(
     const barcodes = await connection.all<BarcodeRow>(
       'SELECT id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at FROM food_barcodes WHERE food_id=? ORDER BY scanned_at,id', id,
     );
-    return parseRow(row, revisions, barcodes);
+    const identityRow = await connection.get<IdentityRow>(
+      'SELECT food_id,name,brand,specification,status,source_id,source_name,source_kind,source_record_id,source_fetched_at,source_obtained_at,source_policy_json,confirmed_at,updated_at,identity_json FROM food_identity WHERE food_id=?', id,
+    );
+    return parseRow(row, revisions, barcodes, identityRow ? identityFromRow(identityRow) : undefined);
   }
   function validateBarcodeAssociation(barcode: FoodBarcodeAssociation): void {
     assertFoodId(barcode.id);
@@ -238,6 +340,39 @@ export function createSQLiteFoodStore(
     validateBarcodeAssociation(association);
     return association;
   }
+  async function readIdentity(foodId: string, connection: FoodSqlDriver = driver): Promise<FoodIdentity | null> {
+    const row = await connection.get<IdentityRow>(
+      'SELECT food_id,name,brand,specification,status,source_id,source_name,source_kind,source_record_id,source_fetched_at,source_obtained_at,source_policy_json,confirmed_at,updated_at,identity_json FROM food_identity WHERE food_id=?', foodId,
+    );
+    return row ? identityFromRow(row) : null;
+  }
+  async function listIdentityRevisions(foodId: string, connection: FoodSqlDriver = driver): Promise<readonly FoodIdentityRevision[]> {
+    const rows = await connection.all<IdentityRevisionRow>(
+      'SELECT id,food_id,recorded_at,kind,status,identity_json FROM food_identity_revisions WHERE food_id=? ORDER BY recorded_at,rowid', foodId,
+    );
+    return rows.map(identityRevisionFromRow);
+  }
+  async function persistIdentity(transaction: FoodSqlDriver, identity: FoodIdentity): Promise<void> {
+    const source = identity.source;
+    await transaction.run(
+      `INSERT INTO food_identity(food_id,name,brand,specification,status,source_id,source_name,source_kind,source_record_id,source_fetched_at,source_obtained_at,source_policy_json,confirmed_at,updated_at,identity_json)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(food_id) DO UPDATE SET name=excluded.name,brand=excluded.brand,specification=excluded.specification,status=excluded.status,
+       source_id=excluded.source_id,source_name=excluded.source_name,source_kind=excluded.source_kind,source_record_id=excluded.source_record_id,
+       source_fetched_at=excluded.source_fetched_at,source_obtained_at=excluded.source_obtained_at,source_policy_json=excluded.source_policy_json,
+       confirmed_at=excluded.confirmed_at,updated_at=excluded.updated_at,identity_json=excluded.identity_json`,
+      identity.foodId, identity.name, identity.brand, identity.specification, identity.status,
+      source.sourceId, source.sourceName, source.kind, source.sourceRecordId, source.fetchedAt, source.obtainedAt,
+      JSON.stringify(source.policy), identity.confirmedAt, identity.updatedAt, JSON.stringify(identity),
+    );
+  }
+  async function persistIdentityRevision(transaction: FoodSqlDriver, identity: FoodIdentity, kind: FoodIdentityRevisionKind, recordedAt: string, revisionId: string): Promise<void> {
+    await transaction.run(
+      'INSERT INTO food_identity_revisions(id,food_id,recorded_at,kind,status,identity_json) VALUES(?,?,?,?,?,?)',
+      revisionId, identity.foodId, recordedAt, kind, identity.status, JSON.stringify(identity),
+    );
+  }
+
   async function verifyTransaction(transaction: FoodSqlDriver): Promise<void> {
     // Expo exclusive transactions create another connection. Native build enables
     // SQLITE_DEFAULT_FOREIGN_KEYS=1; enabling PRAGMA after BEGIN would do nothing.
@@ -250,6 +385,44 @@ export function createSQLiteFoodStore(
       assertFoodId(id);
       await ready();
       return read(id);
+    },
+    async getFoodIdentity(foodId) {
+      assertFoodId(foodId);
+      await ready();
+      return readIdentity(foodId);
+    },
+    async saveFoodIdentity(input) {
+      validateIdentity(input);
+      const snapshot = JSON.parse(JSON.stringify(input)) as FoodIdentity;
+      return serialize(async () => {
+        await ready();
+        const food = await read(snapshot.foodId);
+        if (!food) throw new Error('要保存商品身份的食品记录不存在。请先建立食品营养草稿。');
+        const previous = await readIdentity(snapshot.foodId);
+        if (previous && snapshot.updatedAt !== previous.updatedAt) {
+          throw new Error('商品身份已被更新，请重新打开后再编辑；旧身份记录仍保留。');
+        }
+        const recordedAt = now();
+        assertDate(recordedAt);
+        const saved: FoodIdentity = { ...snapshot, updatedAt: recordedAt };
+        validateIdentity(saved);
+        const kind: FoodIdentityRevisionKind = previous
+          ? (previous.status !== 'confirmed' && saved.status === 'confirmed' ? 'confirmed' : saved.source.kind === 'mainland_service' && previous.source.sourceId !== saved.source.sourceId ? 'provider_result' : 'edited')
+          : (saved.source.kind === 'mainland_service' ? 'provider_result' : 'created');
+        const revisionId = `${saved.foodId}-identity-${Date.parse(recordedAt).toString(36)}-${nonce()}`;
+        assertFoodId(revisionId);
+        await driver.transaction(async (transaction) => {
+          await verifyTransaction(transaction);
+          await persistIdentity(transaction, saved);
+          await persistIdentityRevision(transaction, saved, kind, recordedAt, revisionId);
+        });
+        return saved;
+      });
+    },
+    async getFoodIdentityRevisions(foodId) {
+      assertFoodId(foodId);
+      await ready();
+      return listIdentityRevisions(foodId);
     },
     async getFoodByBarcode(lookupKey) {
       if (!/^\d{14}$/.test(lookupKey)) throw new Error('条码查询键必须是 14 位数字字符串。');
@@ -291,6 +464,14 @@ export function createSQLiteFoodStore(
         await ready();
         const previous = await read(record.id);
         const existing = await driver.get<StoredRow>(RECORD_SQL, record.id);
+        const requestedIdentity = record.identity;
+        if (requestedIdentity) {
+          validateIdentity(requestedIdentity);
+          if (requestedIdentity.foodId !== record.id) throw new Error('商品身份必须属于当前食品记录。');
+        }
+        if (previous?.identity && requestedIdentity && canonicalFoodJson(previous.identity) !== canonicalFoodJson(requestedIdentity)) {
+          throw new Error('商品身份必须通过独立身份保存操作修改，食品营养编辑不能静默覆盖身份。');
+        }
         if (previous && (record.createdAt !== previous.createdAt || record.updatedAt !== previous.updatedAt ||
           canonicalFoodJson(record.revisions) !== canonicalFoodJson(previous.revisions))) {
           throw new Error('该食品已更新，请重新打开记录后编辑；原始证据和历史版本不能修改。');
@@ -311,6 +492,14 @@ export function createSQLiteFoodStore(
           : await files.materialize(record);
         const recordedAt = now();
         assertDate(recordedAt);
+        let persistedIdentity = previous?.identity;
+        // A new food (or a legacy food without an identity row) may atomically
+        // attach the identity that travelled with its nutrition draft. Existing
+        // identities are immutable here and must use saveFoodIdentity().
+        if (requestedIdentity && !previous?.identity) {
+          persistedIdentity = { ...requestedIdentity, updatedAt: recordedAt };
+          validateIdentity(persistedIdentity);
+        }
         const revision: FoodRevision = {
           id: `${record.id}-${Date.parse(recordedAt).toString(36)}-${nonce()}`,
           recordedAt, kind: previous ? 'edited' : 'created', status: record.status, review: record.review,
@@ -330,9 +519,21 @@ export function createSQLiteFoodStore(
                 await transaction.run('INSERT INTO food_barcodes(id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at) VALUES(?,?,?,?,?,?,?,?)',
                   barcode.id, barcode.foodId, barcode.rawValue, barcode.format, barcode.lookupKey, barcode.validationStatus, barcode.acquiredBy, barcode.scannedAt);
               }
+              if (persistedIdentity) {
+                await persistIdentity(transaction, persistedIdentity);
+                const identityKind: FoodIdentityRevisionKind = persistedIdentity.source.kind === 'mainland_service' ? 'provider_result' : 'created';
+                await persistIdentityRevision(transaction, persistedIdentity, identityKind, recordedAt,
+                  `${record.id}-identity-${Date.parse(recordedAt).toString(36)}-${nonce()}`);
+              }
             } else {
               await transaction.run('UPDATE foods SET updated_at=?,status=?,name=?,brand=?,review_json=? WHERE id=?',
                 recordedAt, record.status, record.review.name, record.review.brand, JSON.stringify(record.review), record.id);
+              if (persistedIdentity && !previous?.identity) {
+                await persistIdentity(transaction, persistedIdentity);
+                const identityKind: FoodIdentityRevisionKind = persistedIdentity.source.kind === 'mainland_service' ? 'provider_result' : 'created';
+                await persistIdentityRevision(transaction, persistedIdentity, identityKind, recordedAt,
+                  `${record.id}-identity-${Date.parse(recordedAt).toString(36)}-${nonce()}`);
+              }
             }
             await transaction.run('INSERT INTO food_revisions(id,food_id,recorded_at,kind,status,review_json) VALUES(?,?,?,?,?,?)',
               revision.id, record.id, recordedAt, revision.kind, revision.status, JSON.stringify(revision.review));
@@ -348,6 +549,7 @@ export function createSQLiteFoodStore(
         }
         return {
           ...record, updatedAt: recordedAt, evidence: materialized.evidence,
+          ...(persistedIdentity ? { identity: persistedIdentity } : {}),
           revisions: [...(previous?.revisions ?? []), revision], barcodes: previous?.barcodes ?? requestedBarcodes,
         };
       });
