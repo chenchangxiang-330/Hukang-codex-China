@@ -1,5 +1,6 @@
 import type { ChinaFoodRecord, DataUsePolicy } from '../../domain/food/types';
 import type { FoodScanRecord, FoodSummary } from '../../domain/food/scan';
+import type { FoodBarcodeAssociation, ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/barcode/types';
 
 export type FoodLookupResult =
   | { readonly status: 'found'; readonly records: readonly ChinaFoodRecord[]; readonly sourceId: string }
@@ -13,6 +14,12 @@ export interface ChinaFoodRepository {
   /** Returns persistent image paths and the newly appended review revision. */
   saveFood(record: FoodScanRecord): Promise<FoodScanRecord>;
   deleteFood(id: string): Promise<void>;
+  /** Looks up only the normalized local key; no network fallback exists. */
+  getFoodByBarcode(lookupKey: string): Promise<{ record: FoodScanRecord; barcode: FoodBarcodeAssociation } | null>;
+  listFoodBarcodes(foodId: string): Promise<readonly FoodBarcodeAssociation[]>;
+  /** Add a barcode to an existing record. The unique lookup key is never silently reassigned. */
+  bindBarcode(foodId: string, barcode: ValidatedBarcode, acquiredBy: BarcodeAcquisitionMethod): Promise<FoodBarcodeAssociation>;
+  unbindBarcode(foodId: string, lookupKey: string): Promise<void>;
 }
 
 export interface LocalChinaFoodSource extends ChinaFoodRepository {

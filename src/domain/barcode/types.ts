@@ -18,6 +18,8 @@ export interface FoodBarcodeAssociation {
   readonly rawValue: string;
   readonly format: SupportedBarcodeFormat;
   readonly lookupKey: string;
+  /** Invalid scans never enter this association table; this makes that invariant explicit. */
+  readonly validationStatus: 'valid';
   readonly acquiredBy: BarcodeAcquisitionMethod;
   readonly scannedAt: string;
 }

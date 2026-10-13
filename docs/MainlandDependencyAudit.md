@@ -1,6 +1,6 @@
 # Mainland production dependency audit
 
-Scope: Hukang China Phase 0 through Phase 2.1, Android arm64-v8a release, minSdk 26.
+Scope: Hukang China Phase 0 through Phase 3, Android arm64-v8a release, minSdk 26.
 Audit date: 2026-10-08 (Asia/Shanghai).
 
 **Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** This counts active
@@ -33,6 +33,7 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | ONNX Runtime Android | 1.21.1 | `FOREIGN_OFFLINE_LIBRARY` | CPU inference only; no upload, downloader, telemetry or Play Services dependency in application path |
 | OpenCV Android | 4.5.3.0 | `FOREIGN_OFFLINE_LIBRARY` | Bundled native image operations; no cloud recognition |
 | AndroidX ExifInterface | 1.4.1 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
+| ZXing core | 3.5.3, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | On-device EAN/UPC image decoding only; Apache-2.0; no ML Kit, GMS, camera service or network client |
 | React / React Native / Hermes | 19.2.3 / 0.86.3 / 250829098.0.17 | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution; Hermes version is the actual resolved Android artifact |
 | Expo core and module infrastructure | 57.0.27 / SDK-managed modules | `FOREIGN_OFFLINE_LIBRARY` | Custom APK; Expo Go and Expo-hosted JavaScript not needed |
 | Expo Router / linking | SDK 57 modules | `FOREIGN_OFFLINE_LIBRARY` | Local route navigation; no remote route/provider configuration |
@@ -52,6 +53,16 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 There is **no active `CHINA_SERVICE` in Phase 2.1**. Local food records are not
 uploaded to a future central database. Barcode scanning and seeded catalog lookup
 remain later-phase work.
+
+Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
+barcode implementation declares `com.google.mlkit:barcode-scanning`,
+`com.google.android.gms:play-services-code-scanner`, and
+`androidx.camera:camera-mlkit-vision`. Those are prohibited in this product.
+The Phase 3 image-decoder boundary is `modules/hukang-barcode`, which uses only
+the Apache-2.0 ZXing core 3.5.3 library against a local `file://` or
+`content://` image. It rejects `http://` and `https://` input before opening a
+stream. Camera preview/capture must supply a local URI through that boundary;
+the native camera surface remains a separate validation item.
 
 The actual graph contains generic networking-capable libraries, including
 OkHttp and image-loading adapters. Their capability is distinct from a

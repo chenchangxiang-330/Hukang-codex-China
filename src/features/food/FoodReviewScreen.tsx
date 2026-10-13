@@ -102,11 +102,17 @@ export default function FoodReviewScreen() {
       // Keep the loaded updatedAt as the optimistic concurrency token. The
       // repository assigns the new timestamp after the transaction succeeds;
       // replacing it here would make every edit look stale and be rejected.
-      const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status });
       if (pendingBarcode) {
         if (pendingBarcode.validity !== 'valid' || !pendingBarcode.lookupKey) {
-          throw new Error('食品已保存，但条码未通过校验，未建立条码关联。');
+          throw new Error('条码未通过校验，食品尚未保存，也未建立条码关联。');
         }
+        const existing = await chinaFoodRepository.getFoodByBarcode(pendingBarcode.lookupKey);
+        if (existing && existing.record.id !== record.id) {
+          throw new Error(`该条码已绑定到“${existing.record.review.name || '另一条食品记录'}”，未覆盖原关联。请打开原记录或先明确解绑。`);
+        }
+      }
+      const saved = await chinaFoodRepository.saveFood({ ...record, review: snapshot, status });
+      if (pendingBarcode && pendingBarcode.validity === 'valid' && pendingBarcode.lookupKey) {
         await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
       }
       if (draftId) removeFoodDraft(draftId);

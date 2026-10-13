@@ -1,4 +1,4 @@
-name: Phase 2 official PaddleOCR release
+name: Phase 3 offline barcode and PaddleOCR release
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: phase2-release-${{ github.ref }}
+  group: phase3-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -86,6 +86,8 @@ jobs:
           npm ci --include=dev
           npm run typecheck
           npm test
+          python -B -m unittest discover -s tests -p "test_*.py"
+          python scripts/verify-phase3-evidence.py --help >/dev/null
           python -B -m unittest discover -s tests -p test_model_acquisition.py -v
           npm run verify:assets
 
@@ -143,7 +145,7 @@ jobs:
             keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore \
               -storepass android -keypass android -alias androiddebugkey \
               -keyalg RSA -keysize 2048 -validity 30 \
-              -dname "CN=Hukang China Phase 2.1 Test, OU=OCR Lab, O=Hukang, C=CN"
+              -dname "CN=Hukang China Phase 3 Test, OU=OCR Lab, O=Hukang, C=CN"
             echo "No protected release signing secrets configured; using ephemeral laboratory certificate."
           fi
 
@@ -160,19 +162,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase2-arm64-release.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-china-phase3-arm64-release.apk
           python scripts/verify-apk.py
 
       - name: Split the verified APK for trusted developer transfer
         shell: bash
-        run: python scripts/split-apk.py --apk artifacts/hukang-china-phase2-arm64-release.apk
+        run: python scripts/split-apk.py --apk artifacts/hukang-china-phase3-arm64-release.apk
 
       - name: Publish transfer manifest
         if: hashFiles('artifacts/apk-transfer/manifest.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-manifest
+          name: phase3-apk-${{ github.sha }}-manifest
           path: artifacts/apk-transfer/manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish complete APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phase3-apk-${{ github.sha }}-complete
+          path: artifacts/hukang-china-phase3-arm64-release.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -180,7 +190,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part001.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part001
+          name: phase3-apk-${{ github.sha }}-part001
           path: artifacts/apk-transfer/part001.bin
           if-no-files-found: error
           retention-days: 14
@@ -189,7 +199,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part002.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part002
+          name: phase3-apk-${{ github.sha }}-part002
           path: artifacts/apk-transfer/part002.bin
           if-no-files-found: error
           retention-days: 14
@@ -198,7 +208,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part003.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part003
+          name: phase3-apk-${{ github.sha }}-part003
           path: artifacts/apk-transfer/part003.bin
           if-no-files-found: error
           retention-days: 14
@@ -207,7 +217,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part004.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part004
+          name: phase3-apk-${{ github.sha }}-part004
           path: artifacts/apk-transfer/part004.bin
           if-no-files-found: error
           retention-days: 14
@@ -216,7 +226,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part005.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part005
+          name: phase3-apk-${{ github.sha }}-part005
           path: artifacts/apk-transfer/part005.bin
           if-no-files-found: error
           retention-days: 14
@@ -225,7 +235,7 @@ jobs:
         if: hashFiles('artifacts/apk-transfer/part006.bin') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: phase2-apk-${{ github.sha }}-part006
+          name: phase3-apk-${{ github.sha }}-part006
           path: artifacts/apk-transfer/part006.bin
           if-no-files-found: error
           retention-days: 14
@@ -234,7 +244,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: hukang-china-phase2-build-${{ github.sha }}
+          name: hukang-china-phase3-build-${{ github.sha }}
           path: artifacts/
           if-no-files-found: warn
           retention-days: 14

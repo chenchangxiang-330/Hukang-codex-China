@@ -1,6 +1,6 @@
-# Hukang China — Phase 2.1 architecture
+# Hukang China — Phase 3 architecture
 
-本轮边界：本地离线 OCR、食品营养表解析、人工核对、SQLite 食品记录和升级保留验证。没有药品、AI、提醒、云服务或扫码实现。
+本轮边界：本地离线 OCR、食品营养表解析、人工核对、SQLite 食品记录、条码解码和升级保留验证。没有药品、AI、提醒、云服务或远程食品 provider。
 
 ## Current execution path
 
@@ -11,7 +11,7 @@ Expo Router / OCR Lab screen
   → custom Expo Kotlin module
   → image preparation / bundled PaddleOCR / ONNX Runtime CPU
   → immutable OCR evidence + geometry parser
-  → Food Review + SQLite local repository
+  → Food Review + SQLite local repository + barcode association
 ```
 
 React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
@@ -33,6 +33,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 | `src/infrastructure/ocr/` | Custom Kotlin module adapter; no remote fallback |
 | `src/infrastructure/food/` | Local SQLite food adapter, evidence and revision storage |
 | `modules/hukang-vision/android/` | Local image processing and Paddle OCR inference |
+| `modules/hukang-barcode/android/` | ZXing core image decoder for EAN-13/EAN-8/UPC-A/UPC-E; local URI only |
 | `models/paddleocr/v5-mobile/` | Fixed model artifacts and paired configs; see model manifest |
 | `tests/fixtures/china-food/` | Real-photo fixture plan and independently stored outputs |
 
@@ -57,6 +58,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 
 ```text
 BarcodeScanner → raw barcode + format
+  → `modules/hukang-barcode` (ZXing core, local image only)
   → independent GTIN validation
   → ChinaFoodRepository
       → LocalChinaFoodSource
@@ -66,8 +68,11 @@ BarcodeScanner → raw barcode + format
 
 `ChinaFoodRepository` currently uses the local SQLite adapter. `HukangChinaFoodService`
 is only an interface reserved for a Hukang-controlled mainland deployment. It does
-not configure a URL, API key, HTTP client or active network dependency. Barcode
-scanning and seeded catalog providers remain future work.
+not configure a URL, API key, HTTP client or active network dependency. The
+ZXing image decoder accepts only local URIs. `expo-camera` is deliberately absent:
+its Android scanner adds ML Kit and Google Play Services. A future native camera
+preview must hand a local capture URI to this decoder; camera permission and
+physical preview execution remain separately verified.
 
 Food records preserve leading zeros, packaging versions, Chinese name, brand,
 category, specification, ingredients, images, provenance and timestamps.

@@ -128,7 +128,7 @@ function repository(): Promise<ReturnType<typeof createSQLiteFoodStore>> {
 
 /** Local-only adapter. No network provider, automatic sync or external database exists. */
 export const chinaFoodRepository: LocalChinaFoodSource = {
-  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v1',
+  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v2',
   async getFood(id) { return (await repository()).getFood(id); },
   async getFoodByBarcode(lookupKey) { return (await repository()).getFoodByBarcode(lookupKey); },
   async listFoodBarcodes(foodId) { return (await repository()).listFoodBarcodes(foodId); },

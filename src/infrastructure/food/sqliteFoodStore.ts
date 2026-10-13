@@ -1,6 +1,8 @@
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
 import type { FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
+import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
+import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { validateFoodReview } from '../../domain/food/review';
 
 export type SqlValue = string | number | null;
@@ -62,6 +64,22 @@ CREATE TABLE food_file_cleanup (
 PRAGMA user_version = 1;
 `;
 
+const MIGRATION_V2 = `
+CREATE TABLE IF NOT EXISTS food_barcodes (
+  id TEXT PRIMARY KEY NOT NULL,
+  food_id TEXT NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  raw_value TEXT NOT NULL,
+  format TEXT NOT NULL CHECK(format IN ('EAN_13','EAN_8','UPC_A','UPC_E')),
+  lookup_key TEXT NOT NULL UNIQUE,
+  validation_status TEXT NOT NULL CHECK(validation_status = 'valid'),
+  acquired_by TEXT NOT NULL CHECK(acquired_by IN ('camera','image','manual')),
+  scanned_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS food_barcodes_by_food ON food_barcodes(food_id, scanned_at, id);
+CREATE INDEX IF NOT EXISTS food_barcodes_by_lookup ON food_barcodes(lookup_key);
+PRAGMA user_version = 2;
+`;
+
 interface StoredRow {
   id: string; created_at: string; updated_at: string; status: FoodScanRecord['status'];
   review_json: string; source_evidence_json: string; persisted_evidence_json: string;
@@ -70,6 +88,10 @@ interface StoredRow {
 interface RevisionRow {
   id: string; recorded_at: string; kind: FoodRevision['kind'];
   status: FoodRevision['status']; review_json: string;
+}
+interface BarcodeRow {
+  id: string; food_id: string; raw_value: string; format: FoodBarcodeAssociation['format'];
+  lookup_key: string; validation_status: 'valid'; acquired_by: BarcodeAcquisitionMethod; scanned_at: string;
 }
 const RECORD_SQL = `SELECT f.id,f.created_at,f.updated_at,f.status,f.review_json,
   e.source_evidence_json,e.persisted_evidence_json,e.parsed_json,e.folder_uri
@@ -123,7 +145,7 @@ function validateRecord(record: FoodScanRecord): void {
   }
   canonicalFoodJson(record);
 }
-function parseRow(row: StoredRow, revisions: RevisionRow[]): FoodScanRecord {
+function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = []): FoodScanRecord {
   const record: FoodScanRecord = {
     schemaVersion: 1, id: row.id, createdAt: row.created_at, updatedAt: row.updated_at,
     status: row.status, evidence: JSON.parse(row.persisted_evidence_json), parsed: JSON.parse(row.parsed_json),
@@ -131,6 +153,10 @@ function parseRow(row: StoredRow, revisions: RevisionRow[]): FoodScanRecord {
     revisions: revisions.map((revision) => ({
       id: revision.id, recordedAt: revision.recorded_at, kind: revision.kind,
       status: revision.status, review: JSON.parse(revision.review_json),
+    })),
+    barcodes: barcodes.map((barcode) => ({
+      id: barcode.id, foodId: barcode.food_id, rawValue: barcode.raw_value, format: barcode.format,
+      lookupKey: barcode.lookup_key, validationStatus: barcode.validation_status, acquiredBy: barcode.acquired_by, scannedAt: barcode.scanned_at,
     })),
   };
   validateRecord(record);
@@ -160,8 +186,19 @@ export function createSQLiteFoodStore(
   async function initialize(): Promise<void> {
     await driver.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
     const version = (await driver.get<{ user_version: number }>('PRAGMA user_version'))?.user_version;
-    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); });
-    else if (version !== 1) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); });
+    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); });
+    else if (version === 2) {
+      // A short-lived Phase 3 development build used the same version before
+      // validation_status was made explicit. Repair that additive column
+      // without touching foods, evidence or revisions.
+      const columns = await driver.all<{ name: string }>('PRAGMA table_info(food_barcodes)');
+      if (columns.length > 0 && !columns.some((column) => column.name === 'validation_status')) {
+        await driver.transaction(async (transaction) => {
+          await transaction.exec("ALTER TABLE food_barcodes ADD COLUMN validation_status TEXT NOT NULL DEFAULT 'valid' CHECK(validation_status = 'valid')");
+        });
+      }
+    } else if (version !== 2) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     await cleanupFiles();
   }
   async function ready(): Promise<void> {
@@ -174,7 +211,32 @@ export function createSQLiteFoodStore(
     const revisions = await connection.all<RevisionRow>(
       'SELECT id,recorded_at,kind,status,review_json FROM food_revisions WHERE food_id=? ORDER BY recorded_at,rowid', id,
     );
-    return parseRow(row, revisions);
+    const barcodes = await connection.all<BarcodeRow>(
+      'SELECT id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at FROM food_barcodes WHERE food_id=? ORDER BY scanned_at,id', id,
+    );
+    return parseRow(row, revisions, barcodes);
+  }
+  function validateBarcodeAssociation(barcode: FoodBarcodeAssociation): void {
+    assertFoodId(barcode.id);
+    assertFoodId(barcode.foodId);
+    if (!/^\d{14}$/.test(barcode.lookupKey) || !/^\d+$/.test(barcode.rawValue) || barcode.rawValue.length > 14) {
+      throw new Error('食品条码内容无效，必须保留数字字符串和 14 位规范化查询键。');
+    }
+    if (!['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E'].includes(barcode.format)) throw new Error('不支持的食品条码格式。');
+    if (!['camera', 'image', 'manual'].includes(barcode.acquiredBy)) throw new Error('条码获取方式无效。');
+    if (barcode.validationStatus !== 'valid') throw new Error('只有通过校验的条码才能建立食品关联。');
+    assertDate(barcode.scannedAt);
+    const checked = normalizeBarcode({ rawValue: barcode.rawValue, format: barcode.format, decodedAt: barcode.scannedAt });
+    if (checked.validity !== 'valid' || checked.lookupKey !== barcode.lookupKey) throw new Error('条码格式或校验位无效，拒绝写入本地食品库。');
+  }
+  function createBarcodeAssociation(input: ValidatedBarcode, foodId: string, acquiredBy: BarcodeAcquisitionMethod, id: string, fallbackTime: string): FoodBarcodeAssociation {
+    if (input.validity !== 'valid' || !input.lookupKey || !input.normalizedFormat || !input.gtin) throw new Error('只能保存已通过格式和校验位验证的食品条码。');
+    const association: FoodBarcodeAssociation = {
+      id, foodId, rawValue: input.scan.rawValue, format: input.normalizedFormat,
+      lookupKey: input.lookupKey, validationStatus: 'valid', acquiredBy, scannedAt: input.scan.decodedAt || fallbackTime,
+    };
+    validateBarcodeAssociation(association);
+    return association;
   }
   async function verifyTransaction(transaction: FoodSqlDriver): Promise<void> {
     // Expo exclusive transactions create another connection. Native build enables
@@ -188,6 +250,28 @@ export function createSQLiteFoodStore(
       assertFoodId(id);
       await ready();
       return read(id);
+    },
+    async getFoodByBarcode(lookupKey) {
+      if (!/^\d{14}$/.test(lookupKey)) throw new Error('条码查询键必须是 14 位数字字符串。');
+      await ready();
+      const barcode = await driver.get<BarcodeRow>(
+        'SELECT id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at FROM food_barcodes WHERE lookup_key=?', lookupKey,
+      );
+      if (!barcode) return null;
+      const record = await read(barcode.food_id);
+      if (!record) throw new Error('条码索引指向不存在的食品记录。');
+      const associated = record.barcodes?.find((item) => item.lookupKey === lookupKey);
+      if (!associated) throw new Error('条码关联记录不完整。');
+      return { record, barcode: associated };
+    },
+    async listFoodBarcodes(foodId) {
+      assertFoodId(foodId);
+      await ready();
+      const rows = await driver.all<BarcodeRow>(
+        'SELECT id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at FROM food_barcodes WHERE food_id=? ORDER BY scanned_at,id', foodId,
+      );
+      return rows.map((row) => ({ id: row.id, foodId: row.food_id, rawValue: row.raw_value, format: row.format,
+        lookupKey: row.lookup_key, validationStatus: row.validation_status, acquiredBy: row.acquired_by, scannedAt: row.scanned_at }));
     },
     async listFoods(query = '') {
       if (typeof query !== 'string' || query.length > 1000) throw new Error('查询文字过长或无效。');
@@ -216,6 +300,11 @@ export function createSQLiteFoodStore(
           throw new Error('禁止覆盖已保存的 OCR 原文、图片证据或初始解析结果。');
         }
         if (!previous && record.revisions.length !== 0) throw new Error('新食品记录不能携带伪造的历史版本。');
+        const requestedBarcodes = [...(record.barcodes ?? [])];
+        requestedBarcodes.forEach(validateBarcodeAssociation);
+        if (previous && canonicalFoodJson(requestedBarcodes) !== canonicalFoodJson(previous.barcodes ?? [])) {
+          throw new Error('条码关联必须通过独立的绑定操作修改，保存食品编辑不能静默覆盖条码。');
+        }
         const materialized: MaterializedFoodEvidence = existing
           ? { sourceEvidence: JSON.parse(existing.source_evidence_json), evidence: JSON.parse(existing.persisted_evidence_json),
             parsed: JSON.parse(existing.parsed_json), folderUri: existing.folder_uri }
@@ -237,6 +326,10 @@ export function createSQLiteFoodStore(
                 record.id, record.createdAt, recordedAt, record.status, record.review.name, record.review.brand, JSON.stringify(record.review));
               await transaction.run('INSERT INTO food_evidence(food_id,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri) VALUES(?,?,?,?,?)',
                 record.id, JSON.stringify(materialized.sourceEvidence), JSON.stringify(materialized.evidence), JSON.stringify(record.parsed), materialized.folderUri);
+              for (const barcode of requestedBarcodes) {
+                await transaction.run('INSERT INTO food_barcodes(id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at) VALUES(?,?,?,?,?,?,?,?)',
+                  barcode.id, barcode.foodId, barcode.rawValue, barcode.format, barcode.lookupKey, barcode.validationStatus, barcode.acquiredBy, barcode.scannedAt);
+              }
             } else {
               await transaction.run('UPDATE foods SET updated_at=?,status=?,name=?,brand=?,review_json=? WHERE id=?',
                 recordedAt, record.status, record.review.name, record.review.brand, JSON.stringify(record.review), record.id);
@@ -255,8 +348,45 @@ export function createSQLiteFoodStore(
         }
         return {
           ...record, updatedAt: recordedAt, evidence: materialized.evidence,
-          revisions: [...(previous?.revisions ?? []), revision],
+          revisions: [...(previous?.revisions ?? []), revision], barcodes: previous?.barcodes ?? requestedBarcodes,
         };
+      });
+    },
+    bindBarcode(foodId, input, acquiredBy) {
+      assertFoodId(foodId);
+      return serialize(async () => {
+        await ready();
+        const existingFood = await read(foodId);
+        if (!existingFood) throw new Error('要绑定条码的食品记录不存在。');
+        const nowValue = now();
+        assertDate(nowValue);
+        const association = createBarcodeAssociation(input, foodId, acquiredBy,
+          `${foodId}-barcode-${Date.parse(nowValue).toString(36)}-${nonce()}`, nowValue);
+        const already = await driver.get<BarcodeRow>(
+          'SELECT id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at FROM food_barcodes WHERE lookup_key=?', association.lookupKey,
+        );
+        if (already) {
+          if (already.food_id !== foodId) throw new Error('该条码已经绑定到另一条食品记录，未覆盖原关联。');
+          return { id: already.id, foodId: already.food_id, rawValue: already.raw_value, format: already.format,
+            lookupKey: already.lookup_key, validationStatus: already.validation_status, acquiredBy: already.acquired_by, scannedAt: already.scanned_at };
+        }
+        await driver.transaction(async (transaction) => {
+          await verifyTransaction(transaction);
+          await transaction.run('INSERT INTO food_barcodes(id,food_id,raw_value,format,lookup_key,validation_status,acquired_by,scanned_at) VALUES(?,?,?,?,?,?,?,?)',
+            association.id, association.foodId, association.rawValue, association.format, association.lookupKey, association.validationStatus, association.acquiredBy, association.scannedAt);
+        });
+        return association;
+      });
+    },
+    async unbindBarcode(foodId, lookupKey) {
+      assertFoodId(foodId);
+      if (!/^\d{14}$/.test(lookupKey)) throw new Error('条码查询键必须是 14 位数字字符串。');
+      return serialize(async () => {
+        await ready();
+        await driver.transaction(async (transaction) => {
+          await verifyTransaction(transaction);
+          await transaction.run('DELETE FROM food_barcodes WHERE food_id=? AND lookup_key=?', foodId, lookupKey);
+        });
       });
     },
     deleteFood(id) {
