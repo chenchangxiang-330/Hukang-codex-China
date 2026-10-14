@@ -34,9 +34,11 @@ OCR 原文、图片 SHA-256 和 revision 历史。Phase 3 设备脚本
 ## 数据库安全
 
 - 数据库文件名固定为 `hukang-china-food.db`。
-- 当前 schema 为 `user_version=5`。未知版本会拒绝打开且不修改现有数据库；v1
+- 当前 schema 为 `user_version=6`。未知版本会拒绝打开且不修改现有数据库；v1
   到 v2 新增 `food_barcodes`，v3 分离商品身份，v4 保存不可变营养证据版本，v5
-  保存待补营养表的身份草稿，均保留食品、OCR 证据和修订历史。这里的
+  保存待补营养表的身份草稿，v6 增加 `simple_product_photos`、
+  `simple_capture_drafts` 和 `simple_inventory`。所有增量迁移均保留食品、条码、
+  OCR 证据、身份和修订历史。这里的
   数据库 schema 版本与设备证据 JSON 的 `schemaVersion` 独立，不能混用。
 - 未来 schema 必须提供显式迁移和迁移前备份测试，不能依赖 SQLite 自动重建。
 - `allowBackup=false` 保持开启，避免系统备份恢复造成未审计的数据覆盖。

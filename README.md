@@ -1,28 +1,21 @@
-# Hukang China · OCR Lab
+# Hukang China
 
-中国大陆版 Hukang 的新工程。本轮范围是 **Phase 0 + Phase 1**：干净分层结构、
-原版 App 图标、运行依赖审计，以及 Android 本地 PaddleOCR 技术验证页面。
+Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应用。普通用户从首页「拍一拍」开始：实时扫描食品条码，命中本机食品库后查看商品并选择入库；未命中时依次保存包装正面、营养成分表，使用手机内置的 PP-OCRv5 国产模型识别，人工核对后保存食品资料。
 
-当前已实际构建 ARM64 Release APK（58,709,659 bytes），最终 Manifest 没有 INTERNET。
-同一 APK 在 Android 15 / API 35 官方 ARM 翻译模拟器中，已完成六次完全离线 OCR，
-包括旋转往返与矩形裁剪后的识别。ARM64 真机、EXIF 2–8 和完整生产验收仍未验证。
-APK 入口、原始输出和限制见 [验收报告](docs/Phase1AcceptanceReport.md)，
-本次成功执行原始记录见 [设备证据](docs/evidence/phase1/device-37781340401/README.md)。
+当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，包含「今日 / 库存 / 我的」三个入口。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
 
-## Scope
+## 本地能力
 
-- React Native + TypeScript + Expo Router、自定义 Kotlin Android 模块。
-- Android minSdk 26，首版只支持 arm64-v8a；自建 APK，不使用 Expo Go 运行 OCR。
-- 本地相册导入、EXIF 修复、手动旋转、矩形裁剪。
-- 固定 PP-OCRv5 mobile 检测／识别模型，ONNX Runtime 1.21.1 CPU 本地推理。
-- 展示真实原文、文字框、recognizer score 与 native 耗时；保留原图和原始结果。
-- 国内食品及药品数据边界仅有类型／接口，不实现食品解析、库 UI 或云服务。
+- CameraX 实时预览 + ZXing 本地解码，支持 EAN-13、EAN-8、UPC-A、UPC-E。
+- 相册条码识别和手动输入作为辅助入口。
+- PP-OCRv5 mobile detector/recognizer 随 APK 打包，Android 本地离线推理，不下载模型。
+- 营养表保留原始 OCR、坐标、图片证据、解析候选和人工修订。
+- SQLite 增量迁移到 `user_version=6`，保留食品、证据、草稿和库存。
+- 「我的」可导出食品资料包或个人数据 ZIP；文件只在本机生成，用户通过系统分享选择接收方，不自动上传。
 
-没有 ML Kit、在线 OCR、海外 Vision、Open Food Facts、Wikidata、AI、遥测服务、
-自动模型下载或在线失败兜底。模型缺失或推理失败明确报错。首版生产配置移除
-网络权限；最终 APK 必须单独核查，不能把配置当作真机验收结果。
+Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。项目没有 Google ML Kit、Google Play Services、云 OCR、Open Food Facts、Wikidata、在线 AI 或自动模型下载。
 
-## Development
+## 开发与验证
 
 ```sh
 npm ci
@@ -33,33 +26,23 @@ cd android
 ./gradlew :app:assembleRelease
 ```
 
-构建前必须具备 Android SDK / NDK、固定模型文件及配置。Gradle 会校验模型资产；
-缺失模型不得用空文件或 mock 代替来宣称 release 可运行。准确的模型位置、
-许可证和获取状态见 [OcrModelManifest](docs/OcrModelManifest.md)。
+模型来源、版本、许可证和 SHA-256 见 [OcrModelManifest](docs/OcrModelManifest.md)。本机真机相机、OPPO Find X7 Ultra、跨版本签名升级和低照度/反光包装识别必须以实际设备证据为准；模拟器相册测试不能替代物理相机验收。
 
-`npm run verify:apk -- <APK_PATH>` 的实际参数见脚本／验收说明。自动检查与
-Android 安装后真实执行是不同层级；是否已经完成构建和设备执行，以本轮
-验收报告中的证据为准。
+## 视觉资产
 
-## Icon provenance
-
-`assets/icon.png` 来自只读参考仓库 `Hukang-codex/assets/icon.png`，1024×1024，
-未转换、未重绘、未改变设计。源／目标 SHA-256：
+`assets/icon.png` 继承自只读参考仓库 `Hukang-codex/assets/icon.png`，未重绘。SHA-256：
 
 ```text
 d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2
 ```
 
-## Documents
+## 文档
 
+- [简易版使用说明](docs/SimpleApp.md)
 - [Architecture and phase boundaries](docs/Architecture.md)
 - [Mainland dependency audit](docs/MainlandDependencyAudit.md)
-- [OCR model manifest](docs/OcrModelManifest.md)
-- [Food and medicine source rights](docs/FoodDataSources.md)
-- [Phase 1 acceptance report](docs/Phase1AcceptanceReport.md)
-- [Android OCR evidence test protocol](docs/TestProtocol.md)
-- [Phase 1 verification milestones](docs/Phase1Progress.md)
+- [数据库迁移](docs/DatabaseMigrations.md)
+- [Android 签名与升级策略](docs/AndroidSigningAndUpgradePolicy.md)
+- [OCR 模型清单](docs/OcrModelManifest.md)
 
-`Hukang-codex` 与 `Hukang-deepseek` 只读，不在其中开发、提交或删除文件。
-Phase 1 结束后停止，下一阶段需重新确认范围。APK 大小、实拍 OCR 输出、速度、
-内存及离线执行均须使用实际构建／设备数据，不用人工转录冒充 OCR。
+`Hukang-codex` 和 `Hukang-deepseek` 是只读参考仓库。本项目的实验技术分支 `codex/mainland-v2` 保留，不在本次产品整合中删除。

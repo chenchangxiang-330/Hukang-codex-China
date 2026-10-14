@@ -6,13 +6,18 @@ import { expiryLabel } from '../../domain/inventory/rules';
 import { reduceStock, removeStock } from './store';
 export function HomeScreens(p: AppController) {
   const { tab, screen, foods, stock, resume, search, setSearch, photos, setPhotos, draftRef, refresh, task, navigate, openProduct, startScan, exportData, date, setDraft, setReview } = p;
+  const stockByUnit = stock.reduce<Record<string, number>>((totals, item) => {
+    totals[item.unit] = (totals[item.unit] ?? 0) + item.quantity;
+    return totals;
+  }, {});
+  const stockSummary = Object.entries(stockByUnit).map(([unit, quantity]) => `${quantity}${unit}`).join(' · ') || '0';
   const renderFood = (food: FoodSummary) => <Pressable accessibilityRole="button" key={food.id} onPress={() => void openProduct(food.id)} style={S.listRow}><View style={[S.smallMark, { backgroundColor: C.pale }]}><Text style={{ color: C.teal, fontSize: 19 }}>食</Text></View><View style={{ flex: 1, gap: 4 }}><Text style={S.rowTitle}>{food.name || '未命名食品'}</Text><Text style={S.note}>{food.brand || '本地食品'} · {food.status === 'confirmed' ? '已核对' : '待确认'}</Text></View><Text style={S.chevron}>›</Text></Pressable>;
   return <>
     {screen === 'home' && tab === 'today' && <>
       <View style={S.brandRow}><View><Text style={S.brand}>护康</Text><Text style={S.tagline}>今天，照顾好自己。</Text></View><Image source={require('../../../assets/icon.png')} style={S.logo} /></View>
       <View style={{ gap: 6, marginTop: 16 }}><Text style={S.eyebrow}>今天</Text><Text style={S.date}>{date.getMonth() + 1}月{date.getDate()}日 <Text style={{ fontSize: 23 }}>周{'日一二三四五六'[date.getDay()]}</Text></Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel="拍一拍" onPress={() => void startScan()} style={S.hero}><View style={S.heroTop}><View style={S.cameraIcon}><View style={S.lens} /></View><Text style={S.heroArrow}>↗</Text></View><Text style={S.heroTitle}>拍一拍</Text><Text style={S.heroNote}>扫一扫条码，记下每一份安心。</Text><View style={S.heroBottom}><Text style={{ color: 'white', fontSize: 14 }}>查商品 · 拍包装 · 识营养</Text><Text style={{ color: 'white' }}>开始 →</Text></View></Pressable>
-      <View style={S.stats}><View style={S.stat}><Text style={S.number}>{foods.length}<Text style={S.countUnit}> 种</Text></Text><Text style={S.note}>我的食品</Text></View><View style={S.statDivider} /><View style={S.stat}><Text style={S.number}>{stock.reduce((n, s) => n + s.quantity, 0)}<Text style={S.countUnit}> 件</Text></Text><Text style={S.note}>现有库存 · 按包装计数</Text></View></View>
+      <View style={S.stats}><View style={S.stat}><Text style={S.number}>{foods.length}<Text style={S.countUnit}> 种</Text></Text><Text style={S.note}>我的食品</Text></View><View style={S.statDivider} /><View style={S.stat}><Text style={S.number}>{stockSummary}</Text><Text style={S.note}>现有库存 · 按单位分别计数</Text></View></View>
       {resume && <Button title="继续上次未完成的录入" secondary onPress={() => { draftRef.current = resume; setDraft(resume); setReview(resume.review ?? null); navigate(resume.step); }} />}
       <View style={S.sectionRow}><Text style={S.section}>最近保存</Text><Pressable accessibilityRole="button" onPress={() => navigate('library')}><Text style={S.link}>全部食品 →</Text></Pressable></View>
       {foods.length ? foods.slice(0, 4).map(renderFood) : <View style={S.empty}><Text style={S.emptyTitle}>从第一件食品开始</Text><Text style={S.note}>拍下包装和营养表，核对后保存。再次扫描，无需重新录入。</Text></View>}

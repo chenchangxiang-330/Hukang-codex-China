@@ -9,6 +9,13 @@ credential or deployment is present in this repository. Final APK Manifest and
 device traffic checks are separate acceptance gates; source configuration alone
 does not prove device behavior.
 
+The `main` simple product intentionally does not instantiate that historical
+provider boundary. Its normal runtime is local-only: live barcode decoding,
+PaddleOCR, food records, drafts, inventory and export all run on the device.
+The merged Manifest removes both `INTERNET` and `ACCESS_NETWORK_STATE`; the
+provider/server code remains a reference boundary for a future separately
+authorized product and is not a startup or fallback path here.
+
 ## Categories
 
 | Category | Meaning |
@@ -34,7 +41,8 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | ONNX Runtime Android | 1.21.1 | `FOREIGN_OFFLINE_LIBRARY` | CPU inference only; no upload, downloader, telemetry or Play Services dependency in application path |
 | OpenCV Android | 4.5.3.0 | `FOREIGN_OFFLINE_LIBRARY` | Bundled native image operations; no cloud recognition |
 | AndroidX ExifInterface | 1.4.1 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
-| ZXing core | 3.5.3, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | On-device EAN/UPC image decoding only; Apache-2.0; no ML Kit, GMS, camera service or network client |
+| AndroidX CameraX camera2/lifecycle/view | 1.4.2, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | Native live camera preview and local Y-plane frame delivery; Apache-2.0; no ML Kit, GMS, or network client |
+| ZXing core | 3.5.3, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | On-device EAN/UPC decoding for CameraX frames and local images; Apache-2.0; no ML Kit, GMS, or network client |
 | React / React Native / Hermes | 19.2.3 / 0.86.3 / 250829098.0.17 | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution; Hermes version is the actual resolved Android artifact |
 | Expo core and module infrastructure | 57.0.27 / SDK-managed modules | `FOREIGN_OFFLINE_LIBRARY` | Custom APK; Expo Go and Expo-hosted JavaScript not needed |
 | Expo Router / linking | SDK 57 modules | `FOREIGN_OFFLINE_LIBRARY` | Local route navigation; no remote route/provider configuration |
@@ -61,11 +69,20 @@ Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
 barcode implementation declares `com.google.mlkit:barcode-scanning`,
 `com.google.android.gms:play-services-code-scanner`, and
 `androidx.camera:camera-mlkit-vision`. Those are prohibited in this product.
-The Phase 3 image-decoder boundary is `modules/hukang-barcode`, which uses only
-the Apache-2.0 ZXing core 3.5.3 library against a local `file://` or
-`content://` image. It rejects `http://` and `https://` input before opening a
-stream. Camera preview/capture must supply a local URI through that boundary;
-the native camera surface remains a separate validation item.
+The custom `modules/hukang-barcode` module instead uses AndroidX CameraX
+camera2/lifecycle/view 1.4.2 for the live preview and frame delivery, with
+Apache-2.0 ZXing core 3.5.3 decoding only the local Y plane. Its separate
+`scanImage` function accepts only local `file://` or `content://` images and
+rejects `http://` and `https://` before opening a stream. The live analyzer
+uses CameraX's reported 0/90/180/270 degree correction and tries right-angle
+fallbacks; reflection, low light, and small/curved labels still need device
+testing.
+
+The current device evidence exercised the album/synthetic-barcode path on an
+Android emulator (`physicalCameraVerified: false`). Camera permission is
+declared and the live view is implemented, but physical camera focus, exposure,
+torch, continuous-frame decoding, and OPPO hardware behavior remain
+unverified. Do not use the image-only evidence as a physical-camera claim.
 
 The actual graph contains generic networking-capable libraries, including
 OkHttp and image-loading adapters. Their capability is distinct from a

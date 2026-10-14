@@ -39,7 +39,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 | `src/infrastructure/ocr/` | Custom Kotlin module adapter; no remote fallback |
 | `src/infrastructure/food/` | Local SQLite food adapter, evidence and revision storage |
 | `modules/hukang-vision/android/` | Local image processing and Paddle OCR inference |
-| `modules/hukang-barcode/android/` | ZXing core image decoder for EAN-13/EAN-8/UPC-A/UPC-E; local URI only |
+| `modules/hukang-barcode/android/` | CameraX 1.4.2 live preview plus ZXing core 3.5.3 decoding for EAN-13/EAN-8/UPC-A/UPC-E; image path accepts local URI only |
 | `models/paddleocr/v5-mobile/` | Fixed model artifacts and paired configs; see model manifest |
 | `tests/fixtures/china-food/` | Real-photo fixture plan and independently stored outputs |
 
@@ -64,7 +64,7 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 
 ```text
 BarcodeScanner → raw barcode + format
-  → `modules/hukang-barcode` (ZXing core, local image only)
+  → `modules/hukang-barcode` (CameraX live frames or ZXing local image decode)
   → independent GTIN validation
   → ChinaFoodRepository
       → LocalChinaFoodSource
@@ -80,9 +80,13 @@ The server keeps any supplier credential in deployment secrets and fails closed
 when it is not configured. Provider responses are transient until the user
 confirms the identity; unknown cache rights are rejected by SQLite.
 The ZXing image decoder accepts only local URIs. `expo-camera` is deliberately absent:
-its Android scanner adds ML Kit and Google Play Services. A future native camera
-preview must hand a local capture URI to this decoder; camera permission and
-physical preview execution remain separately verified.
+its Android scanner adds ML Kit and Google Play Services. The custom module uses
+CameraX camera2/lifecycle/view 1.4.2 for a native live preview and sends its Y-plane
+frames directly to ZXing, without `camera-mlkit-vision`, GMS or network code. The
+live analyzer handles CameraX's 0/90/180/270 degree corrections and releases the
+camera when the scanner leaves the foreground. Camera permission is declared, but
+physical preview execution remains separately verified: current evidence used an
+Android emulator and album/synthetic-barcode decoding, not OPPO hardware.
 
 Food records preserve leading zeros, packaging versions, Chinese name, brand,
 category, specification, ingredients, images, provenance and timestamps.
@@ -120,8 +124,14 @@ architecture document is not evidence of device execution.
 不可变 OCR 原文、坐标解析候选及营养人工核对历史。确认商品身份不会自动确认营养
 数据，服务商返回的营养字段也不会覆盖用户拍摄的标签。
 
-SQLite `user_version=5` 从 v1/v2/v3/v4 逐步迁移，不清空任何旧表；身份保存和其历史
+SQLite `user_version=6` 从 v1/v2/v3/v4/v5 逐步迁移，不清空任何旧表；身份保存和其历史
 写入同一个事务，并以 `updatedAt` 拒绝过期编辑。身份数据的 `source.policy`
 保留授权、缓存及再分发状态，未知政策不会被推定为允许。
 尚未拍摄营养表的已确认身份暂存于 `food_identity_pending`，它不包含伪造的 OCR
 或营养数据；第一次营养表保存成功后才转入完整食品记录。
+
+v5 → v6 另外创建 `simple_product_photos`、`simple_capture_drafts` 和
+`simple_inventory`，为简易本地产品流程保存封面照片引用、可恢复录入草稿和独立
+购买库存。迁移保留 v5 的食品、条码、身份、OCR 证据及修订历史；库存以外键引用
+食品，删除仍有库存的食品会被拒绝。草稿和照片的清理属于可重试的后续步骤，不会
+通过清库或重建旧表处理升级。

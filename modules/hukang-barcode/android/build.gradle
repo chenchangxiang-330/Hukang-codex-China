@@ -22,7 +22,8 @@ android {
 }
 
 dependencies {
-  // Pure JVM decoder. This does not pull ML Kit, GMS, CameraX, or network code.
+  // ZXing decodes local images and CameraX supplies the live preview/frame
+  // stream. Neither path pulls ML Kit, Google Play Services, or network code.
   implementation 'com.google.zxing:core:3.5.3'
   implementation 'androidx.exifinterface:exifinterface:1.4.1'
   implementation 'androidx.camera:camera-camera2:1.4.2'

@@ -35,7 +35,11 @@ object LocalExport {
           val roots = listOf(context.filesDir.canonicalPath, context.cacheDir.canonicalPath)
           require(roots.any { file.path.startsWith("$it/") } && file.isFile && file.length() <= 64L*1024*1024) { "照片不存在或不属于本应用。" }
           val path = asset["path"] as? String ?: error("照片缺少相对路径。")
-          require(Regex("photos/[A-Za-z0-9_-]+\\.(jpg|png|source)").matches(path) && names.add(path)) { "导出文件名无效或重复。" }
+          // Only generated relative paths are allowed.  Keep this boundary in
+          // native code so a future caller cannot turn the archive writer into
+          // an arbitrary filesystem exporter.
+          require(!path.split('/').any { it == "." || it == ".." } &&
+            Regex("(photos|evidence|drafts)/[A-Za-z0-9_-]+(?:/[A-Za-z0-9_.-]+)*\\.(jpg|png|source|json)").matches(path) && names.add(path)) { "导出文件名无效或重复。" }
           zip.putNextEntry(ZipEntry(path))
           val digest = MessageDigest.getInstance("SHA-256")
           var count = 0L

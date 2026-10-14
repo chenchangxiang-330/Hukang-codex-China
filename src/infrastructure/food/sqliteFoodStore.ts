@@ -239,8 +239,9 @@ function validateRecord(record: FoodScanRecord): void {
   assertDate(record.createdAt);
   assertDate(record.updatedAt);
   if (record.schemaVersion !== 1 || !['draft', 'confirmed'].includes(record.status)) throw new Error('食品记录版本或确认状态无效。');
-  if (![record.review.name, record.review.brand, record.review.ingredients].every((field) => typeof field === 'string' && field.length <= 10000)) {
-    throw new Error('商品名、品牌或配料内容无效。');
+  if (![record.review.name, record.review.brand, record.review.specification ?? '', record.review.ingredients]
+    .every((field) => typeof field === 'string' && field.length <= 10000)) {
+    throw new Error('商品名、品牌、规格或配料内容无效。');
   }
   const errors = validateFoodReview(record.review, record.status);
   if (errors.length) throw new Error(errors.join('\n'));

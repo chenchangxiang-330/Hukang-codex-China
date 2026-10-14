@@ -67,6 +67,8 @@ export interface NutritionReviewColumn {
 export interface FoodReviewValues {
   name: string;
   brand: string;
+  /** Optional package specification (for example 250 mL or 1 kg). */
+  specification?: string;
   ingredients: string;
   columns: NutritionReviewColumn[];
 }

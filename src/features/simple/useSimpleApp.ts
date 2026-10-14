@@ -93,7 +93,7 @@ export function useSimpleApp() {
       if (savedDraft?.barcode.lookupKey === validated.lookupKey) {
         draftRef.current = savedDraft; setDraft(savedDraft); setReview(savedDraft.review ?? null); navigate(savedDraft.step); return;
       }
-      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'package', name: '', brand: '' };
+      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'package', name: '', brand: '', specification: '' };
       await retainDraft(next); setReview(null); setConfirmed(false); navigate('package');
     });
   };
@@ -134,6 +134,7 @@ export function useSimpleApp() {
       const evidence = await recognizeAndCapture(image), parsed = parseNutritionLabel(evidence.ocr), values = createFoodReview(parsed);
       if (!values.columns.length) values.columns = [blankColumn()];
       values.name = draftRef.current.name; values.brand = draftRef.current.brand;
+      values.specification = draftRef.current.specification ?? '';
       const next = { ...draftRef.current, nutrition: evidence, review: values, step: 'review' as const };
       await retainDraft(next); setReview(values); setConfirmed(false); navigate('review');
     });
@@ -146,7 +147,13 @@ export function useSimpleApp() {
     const timer = setTimeout(() => { void saveDraft(draft).catch(e => setError(problem(e))); }, 450);
     return () => clearTimeout(timer);
   }, [draft, busy, screen, editing]);
-  const updateReview = (next: FoodReviewValues) => { setReview(next); patchDraft({ review: next }); setConfirmed(false); };
+  const updateReview = (next: FoodReviewValues) => {
+    setReview(next);
+    // Keep the package-step draft in sync so going back and re-capturing the
+    // nutrition label does not restore a stale specification.
+    patchDraft({ review: next, specification: next.specification ?? '' });
+    setConfirmed(false);
+  };
   const updateColumn = (id: string, patch: Partial<NutritionReviewColumn>) => {
     if (review) updateReview({ ...review, columns: review.columns.map(c => c.id === id ? { ...c, ...patch } : c) });
   };

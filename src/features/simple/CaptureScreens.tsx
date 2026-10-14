@@ -12,7 +12,7 @@ export function CaptureScreens(p: AppController) {
       <Button title={draft.packageImage ? '重新拍包装' : '拍包装正面'} onPress={() => void capture('package')} /><Button title="从相册选择包装" secondary onPress={() => void capture('package', true)} />
       {draft.packageImage && <Button title="读取包装文字（可选）" secondary onPress={() => void readPackage()} />}
       {draft.packageOcr && <View style={S.card}><Text style={S.note}>点选商品名称候选，或直接手动填写。识别文字不等于已确认商品。</Text><View style={S.wrap}>{draft.packageOcr.ocr.blocks.filter(b => b.text.length >= 2 && b.text.length <= 24).slice(0, 14).map(b => <Pressable style={S.chip} key={b.id} onPress={() => patchDraft({ name: b.text })}><Text style={{ color: C.ink }}>{b.text}</Text></Pressable>)}</View></View>}
-      <Field label="商品名称" value={draft.name} onChange={name => patchDraft({ name })} placeholder="例如：纯牛奶" /><Field label="品牌（选填）" value={draft.brand} onChange={brand => patchDraft({ brand })} />
+      <Field label="商品名称" value={draft.name} onChange={name => patchDraft({ name })} placeholder="例如：纯牛奶" /><Field label="品牌（选填）" value={draft.brand} onChange={brand => patchDraft({ brand })} /><Field label="规格（选填）" value={draft.specification ?? ''} onChange={specification => patchDraft({ specification })} placeholder="例如：250 mL" />
       <Button title="下一步，拍营养表" disabled={!draft.packageImage || !draft.name.trim()} onPress={() => void task('正在保存草稿', async () => { await retainDraft({ ...draftRef.current!, step: 'nutrition' }); navigate('nutrition'); })} />
     </>}
     {screen === 'nutrition' && draft && <>
@@ -22,7 +22,7 @@ export function CaptureScreens(p: AppController) {
     </>}
     {screen === 'review' && draft?.nutrition && review && <>
       <Text style={S.title}>最后，核对一下</Text><Text style={S.note}>对照照片检查单位、小数点和计量基准。看不清就重拍，不会把未知值当成零。</Text>
-      <Image source={{ uri: draft.nutrition.image.uri }} resizeMode="contain" style={S.nutritionPhoto} /><Field label="商品名称" value={review.name} onChange={name => updateReview({ ...review, name })} />
+      <Image source={{ uri: draft.nutrition.image.uri }} resizeMode="contain" style={S.nutritionPhoto} /><Field label="商品名称" value={review.name} onChange={name => updateReview({ ...review, name })} /><Field label="规格（选填）" value={review.specification ?? ''} onChange={specification => updateReview({ ...review, specification })} placeholder="例如：250 mL" />
       {review.columns.map(column => <View style={S.card} key={column.id}>
         <Text style={S.rowTitle}>这一列是按多少计算？</Text><Choices value={column.basisKind} options={ [['per_100g', '每100g'], ['per_100ml', '每100mL'], ['per_serving', '每份']] } onChange={v => updateColumn(column.id, { basisKind: v as NutritionReviewColumn['basisKind'] })} />
         {column.basisKind === 'per_serving' && <><Field label="包装标明的每份大小" value={column.servingAmount} numeric onChange={v => updateColumn(column.id, { servingAmount: v })} /><Choices value={column.servingUnit} options={ [['g', 'g'], ['mL', 'mL']] } onChange={v => updateColumn(column.id, { servingUnit: v as 'g' | 'mL' })} /><Check label="包装未标注每份大小" value={column.servingSizeNotDeclared} onChange={v => updateColumn(column.id, { servingSizeNotDeclared: v, servingAmount: v ? '' : column.servingAmount })} /></>}

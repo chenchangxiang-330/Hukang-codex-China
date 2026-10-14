@@ -6,7 +6,7 @@ import type { ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/ba
 import { parseQuantity, validateExpiry } from '../../domain/inventory/rules';
 export interface CaptureDraft {
   id: string; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod;
-  step: 'package' | 'nutrition' | 'review'; name: string; brand: string;
+  step: 'package' | 'nutrition' | 'review'; name: string; brand: string; specification?: string;
   packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutrition?: OcrEvidence; review?: FoodReviewValues;
 }
 export interface StockEntry {
