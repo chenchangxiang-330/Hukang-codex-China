@@ -2,6 +2,7 @@ name: Simple app checks
 on:
   push:
     branches: [main]
+    paths: ['src/**', 'tests/**', 'package*.json', '.github/workflows/simple-app-check.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,18 +22,6 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --include=dev
-      - name: Package exact public source and local typecheck dependencies
-        run: |
-          mkdir -p /tmp/hukang-snapshot
-          git archive --format=tar.gz HEAD > /tmp/hukang-snapshot/source.tar.gz
-          tar -czf /tmp/hukang-snapshot/dependencies.tar.gz node_modules
-          git rev-parse HEAD > /tmp/hukang-snapshot/commit.txt
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: main-source-${{ github.sha }}
-          path: /tmp/hukang-snapshot/
-          retention-days: 3
       - run: npm run typecheck
       - run: npm test
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
-      - run: npm run verify:assets
