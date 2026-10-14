@@ -25,4 +25,7 @@ dependencies {
   // Pure JVM decoder. This does not pull ML Kit, GMS, CameraX, or network code.
   implementation 'com.google.zxing:core:3.5.3'
   implementation 'androidx.exifinterface:exifinterface:1.4.1'
+  implementation 'androidx.camera:camera-camera2:1.4.2'
+  implementation 'androidx.camera:camera-lifecycle:1.4.2'
+  implementation 'androidx.camera:camera-view:1.4.2'
 }

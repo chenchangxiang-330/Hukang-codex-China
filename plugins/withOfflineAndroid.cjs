@@ -5,6 +5,8 @@ module.exports = function withOfflineAndroid(config) {
     const manifest = mod.modResults.manifest;
     manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
     const app = manifest.application[0];
+    manifest['uses-permission'] = (manifest['uses-permission'] || []).filter(item => item.$['android:name'] !== 'android.permission.INTERNET');
+    manifest['uses-permission'].push({ $: { 'android:name': 'android.permission.INTERNET', 'tools:node': 'remove' } });
     // expo-image-picker declares an optional Google Play photo-picker backport.
     // OCR Lab uses the system document picker and never requests this download.
     app.service = (app.service || []).filter((service) => service.$['android:name'] !== 'com.google.android.gms.metadata.ModuleDependencies');

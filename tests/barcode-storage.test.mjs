@@ -98,14 +98,14 @@ test('schema v1 upgrade creates barcode index while retaining food rows and evid
   const database = new DatabaseSync(':memory:');
   const first = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:01.000Z', testNonce());
   await first.saveFood(record('legacy-food'));
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
   database.exec('DROP TABLE food_barcodes; PRAGMA user_version=1;');
   const upgraded = createSQLiteFoodStore(driverFor(database), files(), () => '2026-10-13T00:00:03.000Z', testNonce());
   const legacy = await upgraded.getFood('legacy-food');
   assert.equal(legacy?.id, 'legacy-food');
   assert.equal(legacy?.evidence.ocr.engineVersion, 'test');
   assert.deepEqual(legacy?.barcodes, []);
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
   assert.equal(database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='food_barcodes'").get().name, 'food_barcodes');
   database.close();
 });

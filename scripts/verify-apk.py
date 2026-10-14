@@ -29,8 +29,8 @@ extraction = re.search(r'android:extractNativeLibs[^=\n]*=(true|false)', manifes
 extract_native_libs = extraction is not None and extraction.group(1) == 'true'
 if not extract_native_libs:
     errors.append("Native library extraction is disabled; ARM64 translation cannot use the direct first-ABI loader")
-if "android.permission.INTERNET" not in permissions:
-    errors.append("Domestic product identity lookup requires INTERNET permission")
+if "android.permission.INTERNET" in permissions:
+    errors.append("Local-only app must not have INTERNET permission")
 for permission in ["ACCESS_NETWORK_STATE", "RECORD_AUDIO"]:
     if f"android.permission.{permission}" in permissions:
         errors.append(f"Unexpected permission: {permission}")

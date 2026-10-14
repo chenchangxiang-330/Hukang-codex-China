@@ -88,7 +88,7 @@ test('new nutrition record may atomically carry a pending product identity', asy
   const local = store(database);
   const saved = await local.saveFood({ ...record('atomic-food'), identity: identity('atomic-food') });
   assert.equal(saved.identity.name, '纯牛奶');
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_identity').get().count, 1);
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_identity_revisions').get().count, 1);
   database.close();
@@ -115,7 +115,7 @@ test('v2 to v3 migration preserves foods and creates empty identity tables', asy
   const legacy = await upgraded.getFood('legacy-identity-food');
   assert.equal(legacy.id, 'legacy-identity-food');
   assert.equal(legacy.identity, undefined);
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
   assert.equal(database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='food_identity'").get().name, 'food_identity');
   database.close();
 });
