@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          pattern: hukang-0.3.1-*
+          pattern: hukang-*
           merge-multiple: true
           path: artifacts/build
           run-id: ${{ inputs.build_run || github.event.workflow_run.id }}
@@ -33,7 +33,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,json
           from pathlib import Path
-          root=Path('artifacts/build');apk=root/'hukang-0.3.1-arm64.apk';check=json.loads((root/'apk-inspection.json').read_text())
+          root=Path('artifacts/build');apks=sorted(root.glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];check=json.loads((root/'apk-inspection.json').read_text())
           assert apk.is_file() and hashlib.sha256(apk.read_bytes()).hexdigest()==check['sha256']
           assert not check['errors'] and 'android.permission.INTERNET' not in check['permissions']
           print('APK source:',(root/'source-commit.txt').read_text()); print('APK SHA256:',check['sha256'])
