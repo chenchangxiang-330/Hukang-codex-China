@@ -1,0 +1,41 @@
+{
+  "originalUri": "file:///data/user/0/com.hukang.china/files/ocr-lab/images/9e191388-ad17-4cf8-8683-c0302c0cc5da.source",
+  "sourceImageHash": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+  "sourceOrientation": 1,
+  "transform": {
+    "matrix": [
+      0,
+      -1,
+      1700,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "operations": [
+      {
+        "kind": "decode",
+        "sampleSize": 1,
+        "width": 1280,
+        "height": 1700
+      },
+      {
+        "kind": "exif",
+        "orientation": 1,
+        "reportedOrientation": 0
+      },
+      {
+        "kind": "rotate",
+        "degreesClockwise": 90
+      }
+    ],
+    "originalWidth": 1280,
+    "originalHeight": 1700
+  },
+  "uri": "file:///data/user/0/com.hukang.china/files/ocr-lab/images/5942f08b-3e63-487e-b2eb-9354f9b93d1b.png",
+  "width": 1700,
+  "height": 1280,
+  "processedImageHash": "c4d5276838e6b8d6d0f098a6ce93750d5b65f51125f62dc9e909f835f31bbf71"
+}

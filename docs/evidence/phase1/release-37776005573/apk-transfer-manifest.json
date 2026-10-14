@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "purpose": "developer transfer of a verified release-mode APK",
+  "apk": {
+    "file": "hukang-china-phase1-arm64-release.apk",
+    "bytes": 58709659,
+    "sha256": "3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e"
+  },
+  "parts": [
+    {
+      "index": 1,
+      "file": "part001.bin",
+      "bytes": 25165824,
+      "sha256": "0d6bfad0f14e8879f7c09644f9d8d8669964a6d6a19dbca02d0c707fd1081be6"
+    },
+    {
+      "index": 2,
+      "file": "part002.bin",
+      "bytes": 25165824,
+      "sha256": "b2c2fa4c4881c074ce6462161c6b80a1bee677caf774ca0e6176ca3806d78722"
+    },
+    {
+      "index": 3,
+      "file": "part003.bin",
+      "bytes": 8378011,
+      "sha256": "cd9b2e1cb4462a99831d72ddf93425873eec087391aa6cbf5fe43d28081cb954"
+    }
+  ],
+  "github": {
+    "GITHUB_REPOSITORY": "chenchangxiang-330/Hukang-codex-China",
+    "GITHUB_SHA": "339a66991af93c488e1f1426a3f240edd82fc3ca",
+    "GITHUB_REF": "refs/heads/codex/mainland-v2",
+    "GITHUB_RUN_ID": "37776005573",
+    "GITHUB_RUN_ATTEMPT": "1"
+  },
+  "deviceExecutionVerified": false,
+  "note": "Concatenate raw part bytes in index order and verify whole APK SHA before installation."
+}

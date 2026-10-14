@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "buildSha": "339a66991af93c488e1f1426a3f240edd82fc3ca",
+  "buildWorkflowRunId": "37776005573",
+  "testSha": "339a66991af93c488e1f1426a3f240edd82fc3ca",
+  "testWorkflowRunId": "37776005573",
+  "testWorkflowRunAttempt": "1",
+  "apk": {
+    "bytes": 58709659,
+    "sha256": "3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e"
+  },
+  "executionStatus": "not_started",
+  "deviceKind": "API 30 Google APIs x86_64 emulator with official ARM64 native translation",
+  "limitation": "Hosted emulation cannot establish ARM64 phone speed or compatibility."
+}

@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "护康 China",
+    "slug": "hukang-codex-china",
+    "version": "0.2.2",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "scheme": "hukangchina",
+    "android": {
+      "package": "com.hukang.china",
+      "versionCode": 4,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "选择本机食品包装照片，用于完全离线 OCR。",
+          "cameraPermission": "拍摄食品包装和条码照片，用于完全离线识别。",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#f3faf8"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "useLegacyPackaging": true,
+            "buildArchs": [
+              "arm64-v8a"
+            ]
+          }
+        }
+      ],
+      "expo-status-bar",
+      "expo-sharing",
+      [
+        "expo-sqlite",
+        {
+          "android": {
+            "customBuildFlags": "-DSQLITE_DEFAULT_FOREIGN_KEYS=1"
+          }
+        }
+      ],
+      "./plugins/withOfflineAndroid.cjs"
+    ],
+    "updates": {
+      "enabled": false
+    }
+  }
+}

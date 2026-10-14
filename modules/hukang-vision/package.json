@@ -1,0 +1,6 @@
+{
+  "name": "hukang-vision",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline Android image preparation and PaddleOCR adapter"
+}

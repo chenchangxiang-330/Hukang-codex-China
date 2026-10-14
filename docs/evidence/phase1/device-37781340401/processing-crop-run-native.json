@@ -1,0 +1,1286 @@
+{
+  "id": "fcdad21d-81eb-4b11-ba91-f4e546ce6747",
+  "createdAt": "2026-10-08T13:15:37.112210Z",
+  "rawText": "Tetra Pak\n特仑苏\n营养成分表\n项目\n每100mL\nNRV%\n能量\n309kJ\n4%\n蛋白质\n3.6g\n860%28\n脂肪\n4.4g\n碳水化合物\n5.0g\n钠\n58mg\n钙\n120mg\n15%\n配\n料：生牛乳\n产品类型：全脂灭菌乳\n产品标准号：GB25190\n生产日期：见包装喷码\n保质期：6个月\n生产厂级产地：具体见喷码前两位代码\n存条件：常温密闭保存。\n开启前，无需冷藏；\n开启后，请立即饮用。\n请勿连同包装在微波炉中加热。\n润费者热线：400-6603333",
+  "blocks": [
+    {
+      "id": "line-0",
+      "text": "Tetra Pak",
+      "page": 0,
+      "confidence": 0.8994716,
+      "boundingBox": {
+        "left": 433,
+        "top": 69,
+        "right": 546,
+        "bottom": 105
+      },
+      "polygon": [
+        {
+          "x": 433,
+          "y": 69
+        },
+        {
+          "x": 546,
+          "y": 69
+        },
+        {
+          "x": 546,
+          "y": 105
+        },
+        {
+          "x": 433,
+          "y": 105
+        }
+      ]
+    },
+    {
+      "id": "line-1",
+      "text": "特仑苏",
+      "page": 0,
+      "confidence": 0.9986478,
+      "boundingBox": {
+        "left": 324,
+        "top": 263,
+        "right": 592,
+        "bottom": 387
+      },
+      "polygon": [
+        {
+          "x": 329,
+          "y": 263
+        },
+        {
+          "x": 592,
+          "y": 276
+        },
+        {
+          "x": 587,
+          "y": 387
+        },
+        {
+          "x": 324,
+          "y": 373
+        }
+      ]
+    },
+    {
+      "id": "line-2",
+      "text": "营养成分表",
+      "page": 0,
+      "confidence": 0.99879026,
+      "boundingBox": {
+        "left": 351,
+        "top": 542,
+        "right": 526,
+        "bottom": 604
+      },
+      "polygon": [
+        {
+          "x": 355,
+          "y": 542
+        },
+        {
+          "x": 526,
+          "y": 557
+        },
+        {
+          "x": 522,
+          "y": 604
+        },
+        {
+          "x": 351,
+          "y": 589
+        }
+      ]
+    },
+    {
+      "id": "line-3",
+      "text": "项目",
+      "page": 0,
+      "confidence": 0.9992889,
+      "boundingBox": {
+        "left": 189,
+        "top": 595,
+        "right": 263,
+        "bottom": 642
+      },
+      "polygon": [
+        {
+          "x": 192,
+          "y": 595
+        },
+        {
+          "x": 263,
+          "y": 599
+        },
+        {
+          "x": 260,
+          "y": 642
+        },
+        {
+          "x": 189,
+          "y": 638
+        }
+      ]
+    },
+    {
+      "id": "line-4",
+      "text": "每100mL",
+      "page": 0,
+      "confidence": 0.99469215,
+      "boundingBox": {
+        "left": 377,
+        "top": 602,
+        "right": 513,
+        "bottom": 660
+      },
+      "polygon": [
+        {
+          "x": 381,
+          "y": 602
+        },
+        {
+          "x": 513,
+          "y": 615
+        },
+        {
+          "x": 509,
+          "y": 660
+        },
+        {
+          "x": 377,
+          "y": 647
+        }
+      ]
+    },
+    {
+      "id": "line-5",
+      "text": "NRV%",
+      "page": 0,
+      "confidence": 0.99595714,
+      "boundingBox": {
+        "left": 561,
+        "top": 617,
+        "right": 678,
+        "bottom": 679
+      },
+      "polygon": [
+        {
+          "x": 567,
+          "y": 617
+        },
+        {
+          "x": 678,
+          "y": 630
+        },
+        {
+          "x": 672,
+          "y": 679
+        },
+        {
+          "x": 561,
+          "y": 665
+        }
+      ]
+    },
+    {
+      "id": "line-6",
+      "text": "能量",
+      "page": 0,
+      "confidence": 0.9999537,
+      "boundingBox": {
+        "left": 189,
+        "top": 650,
+        "right": 261,
+        "bottom": 696
+      },
+      "polygon": [
+        {
+          "x": 189,
+          "y": 650
+        },
+        {
+          "x": 261,
+          "y": 650
+        },
+        {
+          "x": 261,
+          "y": 696
+        },
+        {
+          "x": 189,
+          "y": 696
+        }
+      ]
+    },
+    {
+      "id": "line-7",
+      "text": "309kJ",
+      "page": 0,
+      "confidence": 0.96976554,
+      "boundingBox": {
+        "left": 386,
+        "top": 659,
+        "right": 487,
+        "bottom": 712
+      },
+      "polygon": [
+        {
+          "x": 390,
+          "y": 659
+        },
+        {
+          "x": 487,
+          "y": 668
+        },
+        {
+          "x": 483,
+          "y": 712
+        },
+        {
+          "x": 386,
+          "y": 704
+        }
+      ]
+    },
+    {
+      "id": "line-8",
+      "text": "4%",
+      "page": 0,
+      "confidence": 0.9965345,
+      "boundingBox": {
+        "left": 581,
+        "top": 676,
+        "right": 642,
+        "bottom": 730
+      },
+      "polygon": [
+        {
+          "x": 588,
+          "y": 676
+        },
+        {
+          "x": 642,
+          "y": 686
+        },
+        {
+          "x": 634,
+          "y": 730
+        },
+        {
+          "x": 581,
+          "y": 721
+        }
+      ]
+    },
+    {
+      "id": "line-9",
+      "text": "蛋白质",
+      "page": 0,
+      "confidence": 0.9990218,
+      "boundingBox": {
+        "left": 189,
+        "top": 690,
+        "right": 290,
+        "bottom": 739
+      },
+      "polygon": [
+        {
+          "x": 192,
+          "y": 690
+        },
+        {
+          "x": 290,
+          "y": 697
+        },
+        {
+          "x": 287,
+          "y": 739
+        },
+        {
+          "x": 189,
+          "y": 733
+        }
+      ]
+    },
+    {
+      "id": "line-10",
+      "text": "3.6g",
+      "page": 0,
+      "confidence": 0.99147964,
+      "boundingBox": {
+        "left": 390,
+        "top": 697,
+        "right": 473,
+        "bottom": 759
+      },
+      "polygon": [
+        {
+          "x": 399,
+          "y": 697
+        },
+        {
+          "x": 473,
+          "y": 713
+        },
+        {
+          "x": 464,
+          "y": 759
+        },
+        {
+          "x": 390,
+          "y": 744
+        }
+      ]
+    },
+    {
+      "id": "line-11",
+      "text": "860%28",
+      "page": 0,
+      "confidence": 0.2592969,
+      "boundingBox": {
+        "left": 553,
+        "top": 707,
+        "right": 645,
+        "bottom": 898
+      },
+      "polygon": [
+        {
+          "x": 572,
+          "y": 707
+        },
+        {
+          "x": 645,
+          "y": 715
+        },
+        {
+          "x": 625,
+          "y": 898
+        },
+        {
+          "x": 553,
+          "y": 891
+        }
+      ]
+    },
+    {
+      "id": "line-12",
+      "text": "脂肪",
+      "page": 0,
+      "confidence": 0.9389458,
+      "boundingBox": {
+        "left": 186,
+        "top": 729,
+        "right": 260,
+        "bottom": 778
+      },
+      "polygon": [
+        {
+          "x": 189,
+          "y": 729
+        },
+        {
+          "x": 260,
+          "y": 735
+        },
+        {
+          "x": 256,
+          "y": 778
+        },
+        {
+          "x": 186,
+          "y": 772
+        }
+      ]
+    },
+    {
+      "id": "line-13",
+      "text": "4.4g",
+      "page": 0,
+      "confidence": 0.97873497,
+      "boundingBox": {
+        "left": 389,
+        "top": 738,
+        "right": 470,
+        "bottom": 798
+      },
+      "polygon": [
+        {
+          "x": 399,
+          "y": 738
+        },
+        {
+          "x": 470,
+          "y": 755
+        },
+        {
+          "x": 460,
+          "y": 798
+        },
+        {
+          "x": 389,
+          "y": 782
+        }
+      ]
+    },
+    {
+      "id": "line-14",
+      "text": "碳水化合物",
+      "page": 0,
+      "confidence": 0.9977967,
+      "boundingBox": {
+        "left": 185,
+        "top": 768,
+        "right": 346,
+        "bottom": 822
+      },
+      "polygon": [
+        {
+          "x": 187,
+          "y": 768
+        },
+        {
+          "x": 346,
+          "y": 775
+        },
+        {
+          "x": 344,
+          "y": 822
+        },
+        {
+          "x": 185,
+          "y": 814
+        }
+      ]
+    },
+    {
+      "id": "line-15",
+      "text": "5.0g",
+      "page": 0,
+      "confidence": 0.9967228,
+      "boundingBox": {
+        "left": 387,
+        "top": 779,
+        "right": 468,
+        "bottom": 838
+      },
+      "polygon": [
+        {
+          "x": 396,
+          "y": 779
+        },
+        {
+          "x": 468,
+          "y": 794
+        },
+        {
+          "x": 459,
+          "y": 838
+        },
+        {
+          "x": 387,
+          "y": 823
+        }
+      ]
+    },
+    {
+      "id": "line-16",
+      "text": "钠",
+      "page": 0,
+      "confidence": 0.9988763,
+      "boundingBox": {
+        "left": 185,
+        "top": 809,
+        "right": 221,
+        "bottom": 853
+      },
+      "polygon": [
+        {
+          "x": 185,
+          "y": 809
+        },
+        {
+          "x": 221,
+          "y": 809
+        },
+        {
+          "x": 221,
+          "y": 853
+        },
+        {
+          "x": 185,
+          "y": 853
+        }
+      ]
+    },
+    {
+      "id": "line-17",
+      "text": "58mg",
+      "page": 0,
+      "confidence": 0.99714416,
+      "boundingBox": {
+        "left": 384,
+        "top": 817,
+        "right": 483,
+        "bottom": 877
+      },
+      "polygon": [
+        {
+          "x": 392,
+          "y": 817
+        },
+        {
+          "x": 483,
+          "y": 834
+        },
+        {
+          "x": 475,
+          "y": 877
+        },
+        {
+          "x": 384,
+          "y": 860
+        }
+      ]
+    },
+    {
+      "id": "line-18",
+      "text": "钙",
+      "page": 0,
+      "confidence": 0.9985807,
+      "boundingBox": {
+        "left": 182,
+        "top": 838,
+        "right": 219,
+        "bottom": 887
+      },
+      "polygon": [
+        {
+          "x": 182,
+          "y": 838
+        },
+        {
+          "x": 219,
+          "y": 838
+        },
+        {
+          "x": 219,
+          "y": 887
+        },
+        {
+          "x": 182,
+          "y": 887
+        }
+      ]
+    },
+    {
+      "id": "line-19",
+      "text": "120mg",
+      "page": 0,
+      "confidence": 0.9982922,
+      "boundingBox": {
+        "left": 377,
+        "top": 857,
+        "right": 479,
+        "bottom": 913
+      },
+      "polygon": [
+        {
+          "x": 384,
+          "y": 857
+        },
+        {
+          "x": 479,
+          "y": 874
+        },
+        {
+          "x": 473,
+          "y": 913
+        },
+        {
+          "x": 377,
+          "y": 896
+        }
+      ]
+    },
+    {
+      "id": "line-20",
+      "text": "15%",
+      "page": 0,
+      "confidence": 0.9897464,
+      "boundingBox": {
+        "left": 547,
+        "top": 874,
+        "right": 619,
+        "bottom": 923
+      },
+      "polygon": [
+        {
+          "x": 551,
+          "y": 874
+        },
+        {
+          "x": 619,
+          "y": 881
+        },
+        {
+          "x": 615,
+          "y": 923
+        },
+        {
+          "x": 547,
+          "y": 917
+        }
+      ]
+    },
+    {
+      "id": "line-21",
+      "text": "配",
+      "page": 0,
+      "confidence": 0.9930882,
+      "boundingBox": {
+        "left": 173,
+        "top": 915,
+        "right": 203,
+        "bottom": 949
+      },
+      "polygon": [
+        {
+          "x": 173,
+          "y": 915
+        },
+        {
+          "x": 203,
+          "y": 915
+        },
+        {
+          "x": 203,
+          "y": 949
+        },
+        {
+          "x": 173,
+          "y": 949
+        }
+      ]
+    },
+    {
+      "id": "line-22",
+      "text": "料：生牛乳",
+      "page": 0,
+      "confidence": 0.98375344,
+      "boundingBox": {
+        "left": 284,
+        "top": 921,
+        "right": 433,
+        "bottom": 972
+      },
+      "polygon": [
+        {
+          "x": 287,
+          "y": 921
+        },
+        {
+          "x": 433,
+          "y": 932
+        },
+        {
+          "x": 430,
+          "y": 972
+        },
+        {
+          "x": 284,
+          "y": 961
+        }
+      ]
+    },
+    {
+      "id": "line-23",
+      "text": "产品类型：全脂灭菌乳",
+      "page": 0,
+      "confidence": 0.99021035,
+      "boundingBox": {
+        "left": 165,
+        "top": 952,
+        "right": 489,
+        "bottom": 1025
+      },
+      "polygon": [
+        {
+          "x": 169,
+          "y": 952
+        },
+        {
+          "x": 489,
+          "y": 984
+        },
+        {
+          "x": 485,
+          "y": 1025
+        },
+        {
+          "x": 165,
+          "y": 993
+        }
+      ]
+    },
+    {
+      "id": "line-24",
+      "text": "产品标准号：GB25190",
+      "page": 0,
+      "confidence": 0.9961989,
+      "boundingBox": {
+        "left": 166,
+        "top": 996,
+        "right": 473,
+        "bottom": 1066
+      },
+      "polygon": [
+        {
+          "x": 170,
+          "y": 996
+        },
+        {
+          "x": 473,
+          "y": 1026
+        },
+        {
+          "x": 469,
+          "y": 1066
+        },
+        {
+          "x": 166,
+          "y": 1036
+        }
+      ]
+    },
+    {
+      "id": "line-25",
+      "text": "生产日期：见包装喷码",
+      "page": 0,
+      "confidence": 0.9916761,
+      "boundingBox": {
+        "left": 164,
+        "top": 1039,
+        "right": 480,
+        "bottom": 1107
+      },
+      "polygon": [
+        {
+          "x": 168,
+          "y": 1039
+        },
+        {
+          "x": 480,
+          "y": 1070
+        },
+        {
+          "x": 477,
+          "y": 1107
+        },
+        {
+          "x": 164,
+          "y": 1075
+        }
+      ]
+    },
+    {
+      "id": "line-26",
+      "text": "保质期：6个月",
+      "page": 0,
+      "confidence": 0.9845053,
+      "boundingBox": {
+        "left": 162,
+        "top": 1078,
+        "right": 410,
+        "bottom": 1142
+      },
+      "polygon": [
+        {
+          "x": 166,
+          "y": 1078
+        },
+        {
+          "x": 410,
+          "y": 1104
+        },
+        {
+          "x": 406,
+          "y": 1142
+        },
+        {
+          "x": 162,
+          "y": 1116
+        }
+      ]
+    },
+    {
+      "id": "line-27",
+      "text": "生产厂级产地：具体见喷码前两位代码",
+      "page": 0,
+      "confidence": 0.9318136,
+      "boundingBox": {
+        "left": 160,
+        "top": 1116,
+        "right": 617,
+        "bottom": 1200
+      },
+      "polygon": [
+        {
+          "x": 164,
+          "y": 1116
+        },
+        {
+          "x": 617,
+          "y": 1158
+        },
+        {
+          "x": 613,
+          "y": 1200
+        },
+        {
+          "x": 160,
+          "y": 1158
+        }
+      ]
+    },
+    {
+      "id": "line-28",
+      "text": "存条件：常温密闭保存。",
+      "page": 0,
+      "confidence": 0.95509315,
+      "boundingBox": {
+        "left": 158,
+        "top": 1153,
+        "right": 510,
+        "bottom": 1232
+      },
+      "polygon": [
+        {
+          "x": 163,
+          "y": 1153
+        },
+        {
+          "x": 510,
+          "y": 1193
+        },
+        {
+          "x": 506,
+          "y": 1232
+        },
+        {
+          "x": 158,
+          "y": 1192
+        }
+      ]
+    },
+    {
+      "id": "line-29",
+      "text": "开启前，无需冷藏；",
+      "page": 0,
+      "confidence": 0.8867695,
+      "boundingBox": {
+        "left": 160,
+        "top": 1190,
+        "right": 394,
+        "bottom": 1258
+      },
+      "polygon": [
+        {
+          "x": 165,
+          "y": 1190
+        },
+        {
+          "x": 394,
+          "y": 1222
+        },
+        {
+          "x": 389,
+          "y": 1258
+        },
+        {
+          "x": 160,
+          "y": 1226
+        }
+      ]
+    },
+    {
+      "id": "line-30",
+      "text": "开启后，请立即饮用。",
+      "page": 0,
+      "confidence": 0.9373417,
+      "boundingBox": {
+        "left": 158,
+        "top": 1226,
+        "right": 415,
+        "bottom": 1297
+      },
+      "polygon": [
+        {
+          "x": 163,
+          "y": 1226
+        },
+        {
+          "x": 415,
+          "y": 1260
+        },
+        {
+          "x": 411,
+          "y": 1297
+        },
+        {
+          "x": 158,
+          "y": 1263
+        }
+      ]
+    },
+    {
+      "id": "line-31",
+      "text": "请勿连同包装在微波炉中加热。",
+      "page": 0,
+      "confidence": 0.9409595,
+      "boundingBox": {
+        "left": 159,
+        "top": 1263,
+        "right": 536,
+        "bottom": 1346
+      },
+      "polygon": [
+        {
+          "x": 163,
+          "y": 1263
+        },
+        {
+          "x": 536,
+          "y": 1307
+        },
+        {
+          "x": 531,
+          "y": 1346
+        },
+        {
+          "x": 159,
+          "y": 1301
+        }
+      ]
+    },
+    {
+      "id": "line-32",
+      "text": "润费者热线：400-6603333",
+      "page": 0,
+      "confidence": 0.97802705,
+      "boundingBox": {
+        "left": 161,
+        "top": 1301,
+        "right": 477,
+        "bottom": 1360
+      },
+      "polygon": [
+        {
+          "x": 165,
+          "y": 1301
+        },
+        {
+          "x": 477,
+          "y": 1336
+        },
+        {
+          "x": 473,
+          "y": 1360
+        },
+        {
+          "x": 161,
+          "y": 1332
+        }
+      ]
+    }
+  ],
+  "page": 0,
+  "imageUri": "file:///data/user/0/com.hukang.china/files/ocr-lab/images/7354cc3e-dd67-483a-9a14-f489a470c3de.png",
+  "originalImageUri": "file:///data/user/0/com.hukang.china/files/ocr-lab/images/9e191388-ad17-4cf8-8683-c0302c0cc5da.source",
+  "sourceImageHash": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+  "processedImageHash": "3a90d9e6ddd6e89ebc135168d7bdafe42df2d281f7ce996b2f79f44384abc138",
+  "preprocessingTransform": {
+    "matrix": [
+      1,
+      0,
+      -128,
+      0,
+      1,
+      -170,
+      0,
+      0,
+      1
+    ],
+    "operations": [
+      {
+        "kind": "decode",
+        "sampleSize": 1,
+        "width": 1280,
+        "height": 1700
+      },
+      {
+        "kind": "exif",
+        "orientation": 1,
+        "reportedOrientation": 0
+      },
+      {
+        "kind": "rotate",
+        "degreesClockwise": 90
+      },
+      {
+        "kind": "rotate",
+        "degreesClockwise": 270
+      },
+      {
+        "kind": "crop",
+        "left": 128,
+        "top": 170,
+        "right": 1152,
+        "bottom": 1530
+      },
+      {
+        "kind": "rotate",
+        "degreesClockwise": 0
+      }
+    ],
+    "originalWidth": 1280,
+    "originalHeight": 1700
+  },
+  "width": 1024,
+  "height": 1360,
+  "engineVersion": "PaddleOCR-v3.7.0-hukang.1/ONNX-Runtime-1.21.1-CPU",
+  "modelVersion": "PP-OCRv5_mobile_det_onnx+PP-OCRv5_mobile_rec_onnx",
+  "modelHashes": {
+    "detector": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+    "detectorConfig": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699",
+    "recognizer": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+    "recognizerConfig": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+  },
+  "modelLoadMs": 0,
+  "modelColdLoadMs": 1079,
+  "ocrMs": 73272,
+  "totalMs": 73344,
+  "timings": {
+    "detPreprocessMs": 127,
+    "detInferenceMs": 8524,
+    "detPostprocessMs": 18,
+    "recPreprocessMs": 117,
+    "recInferenceMs": 64375,
+    "recPostprocessMs": 32,
+    "pipelineOverheadMs": 79,
+    "detInputShape": [
+      1,
+      3,
+      960,
+      736
+    ],
+    "recInputShapes": [
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        375
+      ],
+      [
+        1,
+        3,
+        48,
+        364
+      ],
+      [
+        1,
+        3,
+        48,
+        407
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        520
+      ],
+      [
+        1,
+        3,
+        48,
+        430
+      ],
+      [
+        1,
+        3,
+        48,
+        320
+      ],
+      [
+        1,
+        3,
+        48,
+        330
+      ],
+      [
+        1,
+        3,
+        48,
+        461
+      ],
+      [
+        1,
+        3,
+        48,
+        486
+      ]
+    ]
+  },
+  "memory": {
+    "observedPeakPssKb": 718063,
+    "observedPeakJavaHeapBytes": 50056080,
+    "observedPeakNativeHeapBytes": 472204624,
+    "samplingIntervalMs": 50,
+    "sampleCount": 1465
+  },
+  "evidenceUri": "file:///data/user/0/com.hukang.china/files/ocr-lab/runs/01cc0032-400f-45cd-ae32-76b7bb1cede5.json"
+}

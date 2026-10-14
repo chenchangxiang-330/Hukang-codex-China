@@ -1,0 +1,1043 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T12:10:51.846870+00:00",
+  "serial": "emulator-5554",
+  "status": "error",
+  "runs": [],
+  "actions": [
+    {
+      "at": "2026-10-08T12:10:52.094733+00:00",
+      "adb": [
+        "wait-for-device"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:52.138823+00:00",
+      "adb": [
+        "shell",
+        "getprop sys.boot_completed"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:52.205785+00:00",
+      "adb": [
+        "root"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.209130+00:00",
+      "adb": [
+        "wait-for-device"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.330105+00:00",
+      "adb": [
+        "shell",
+        "id"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.352968+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.product.model"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.440459+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.build.version.release"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.524839+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.build.version.sdk"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.694164+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.build.fingerprint"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.735751+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.build.version.security_patch"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.752277+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.product.cpu.abilist64"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.824779+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.product.cpu.abilist"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.904118+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.dalvik.vm.native.bridge"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:53.978622+00:00",
+      "adb": [
+        "shell",
+        "getprop ro.kernel.qemu"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:54.275699+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/system/lib64/libndk_translation.so"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:54.532353+00:00",
+      "adb": [
+        "shell",
+        "settings put global airplane_mode_on 1"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.142126+00:00",
+      "adb": [
+        "shell",
+        "am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.432811+00:00",
+      "adb": [
+        "shell",
+        "svc wifi disable"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.543389+00:00",
+      "adb": [
+        "shell",
+        "svc data disable"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.577259+00:00",
+      "adb": [
+        "shell",
+        "iptables -S"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.646595+00:00",
+      "adb": [
+        "shell",
+        "ip6tables -S"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.776467+00:00",
+      "adb": [
+        "shell",
+        "pm list packages"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:56.894546+00:00",
+      "adb": [
+        "shell",
+        "pm disable-user --user 0 com.google.android.gms"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.068563+00:00",
+      "adb": [
+        "shell",
+        "pm disable-user --user 0 com.google.android.gsf"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.191097+00:00",
+      "adb": [
+        "shell",
+        "pm disable-user --user 0 com.google.android.apps.photos"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.338010+00:00",
+      "adb": [
+        "shell",
+        "pm list packages -d"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.414816+00:00",
+      "adb": [
+        "shell",
+        "settings put global device_provisioned 1"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.555102+00:00",
+      "adb": [
+        "shell",
+        "settings put secure user_setup_complete 1"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.659216+00:00",
+      "adb": [
+        "shell",
+        "settings get global airplane_mode_on"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:10:57.717402+00:00",
+      "adb": [
+        "shell",
+        "settings get global wifi_on"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:07.478258+00:00",
+      "adb": [
+        "install",
+        "-r",
+        "/home/runner/work/Hukang-codex-China/Hukang-codex-China/artifacts/build/hukang-china-phase1-arm64-release.apk"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:07.815062+00:00",
+      "adb": [
+        "shell",
+        "dumpsys package com.hukang.china"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:07.829422+00:00",
+      "adb": [
+        "shell",
+        "mkdir -p /storage/emulated/0/Pictures/HukangOcrLab"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:07.977641+00:00",
+      "adb": [
+        "push",
+        "/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/fixtures/china-food/6923644266066.jpg",
+        "/storage/emulated/0/Pictures/HukangOcrLab/6923644266066.jpg"
+      ],
+      "exitCode": 0,
+      "stderr": "/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/fixtures/china-food/6923644266066.jpg: 1 file pushed, 0 skipped. 1.7 MB/s (233070 bytes in 0.131s)\n"
+    },
+    {
+      "at": "2026-10-08T12:11:19.705448+00:00",
+      "adb": [
+        "shell",
+        "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///storage/emulated/0/Pictures/HukangOcrLab/6923644266066.jpg"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:21.364144+00:00",
+      "adb": [
+        "shell",
+        "content query --uri content://media/external/images/media --projection _id:_display_name --where '_display_name='\"'\"'6923644266066.jpg'\"'\"''"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:21.581091+00:00",
+      "adb": [
+        "push",
+        "/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/fixtures/china-food/6937003117814.jpg",
+        "/storage/emulated/0/Pictures/HukangOcrLab/6937003117814.jpg"
+      ],
+      "exitCode": 0,
+      "stderr": "/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/fixtures/china-food/6937003117814.jpg: 1 file pushed, 0 skipped. 233.2 MB/s (1284274 bytes in 0.005s)\n"
+    },
+    {
+      "at": "2026-10-08T12:11:21.690493+00:00",
+      "adb": [
+        "shell",
+        "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///storage/emulated/0/Pictures/HukangOcrLab/6937003117814.jpg"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:22.407956+00:00",
+      "adb": [
+        "shell",
+        "content query --uri content://media/external/images/media --projection _id:_display_name --where '_display_name='\"'\"'6937003117814.jpg'\"'\"''"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:23.003644+00:00",
+      "adb": [
+        "shell",
+        "input keyevent KEYCODE_WAKEUP"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:23.019100+00:00",
+      "adb": [
+        "shell",
+        "wm dismiss-keyguard"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:23.033136+00:00",
+      "adb": [
+        "shell",
+        "am force-stop com.hukang.china"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:23.057911+00:00",
+      "adb": [
+        "shell",
+        "am start -n com.hukang.china/.MainActivity"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:26.681458+00:00",
+      "adb": [
+        "exec-out",
+        "screencap",
+        "-p"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:28.216326+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:28.227075+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:28.240461+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:29.409759+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:31.932385+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:31.942657+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:31.955827+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:33.233682+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:35.786408+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:35.796657+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:35.812965+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:36.946449+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:40.167819+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:40.178186+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:40.190962+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:41.321549+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:43.869091+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:43.879458+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:43.893418+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:45.075348+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:47.600496+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:47.611535+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:47.626382+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:48.701803+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:51.234568+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:51.245474+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:51.259682+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:52.223479+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:54.747285+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:54.758019+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:54.771139+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:55.723345+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:58.249725+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:58.261121+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:58.274899+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:11:59.240458+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:02.011200+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:02.022190+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:02.036135+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:03.008054+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:05.534645+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:05.545228+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:05.558744+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:06.523329+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:09.051487+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:09.061378+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:09.077233+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:10.040391+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:12.565695+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:12.576081+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:12.590067+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:13.557031+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:16.078045+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:16.088836+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:16.103976+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:17.076399+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:19.600621+00:00",
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:19.611362+00:00",
+      "adb": [
+        "exec-out",
+        "cat",
+        "/sdcard/hukang-window.xml"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:19.626012+00:00",
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:20.590619+00:00",
+      "adb": [
+        "shell",
+        "input swipe 540 480 540 1632 450"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:21.817691+00:00",
+      "adb": [
+        "exec-out",
+        "screencap",
+        "-p"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:22.057720+00:00",
+      "adb": [
+        "logcat",
+        "-d",
+        "-v",
+        "threadtime"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:22.071845+00:00",
+      "adb": [
+        "shell",
+        "dumpsys connectivity"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:22.086754+00:00",
+      "adb": [
+        "shell",
+        "dumpsys meminfo com.hukang.china"
+      ],
+      "exitCode": 0,
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-08T12:12:22.090852+00:00",
+      "adb": [
+        "pull",
+        "/data/user/0/com.hukang.china/files/ocr-lab",
+        "/home/runner/work/Hukang-codex-China/Hukang-codex-China/artifacts/device-evidence/native-storage"
+      ],
+      "exitCode": 1,
+      "stderr": "adb: error: failed to stat remote object '/data/user/0/com.hukang.china/files/ocr-lab': No such file or directory\n"
+    }
+  ],
+  "limitation": "Emulated execution is not ARM64 phone compatibility or performance validation.",
+  "apk": {
+    "filename": "hukang-china-phase1-arm64-release.apk",
+    "bytes": 94746723,
+    "sha256": "4bf12e9ef26e8d9c91f7ad775f222eac2f2d3adca05787ccc306619c22d324d3"
+  },
+  "device": {
+    "ro.product.model": "sdk_gphone_x86_64",
+    "ro.build.version.release": "11",
+    "ro.build.version.sdk": "30",
+    "ro.build.fingerprint": "google/sdk_gphone_x86_64/generic_x86_64_arm64:11/RSR1.240422.006/12134477:userdebug/dev-keys",
+    "ro.build.version.security_patch": "2021-08-05",
+    "ro.product.cpu.abilist64": "x86_64,arm64-v8a",
+    "ro.product.cpu.abilist": "x86_64,x86,arm64-v8a,armeabi-v7a,armeabi",
+    "ro.dalvik.vm.native.bridge": "libndk_translation.so",
+    "ro.kernel.qemu": "1"
+  },
+  "nativeBridge": {
+    "path": "/system/lib64/libndk_translation.so",
+    "sha256": "09ed4a608ec4434cb021751320d59ec1e81086617af07b880eb8c95073d72199"
+  },
+  "googlePackagesDisabledForTest": [
+    "com.google.android.gms",
+    "com.google.android.gsf",
+    "com.google.android.apps.photos"
+  ],
+  "offlineSettingsBeforeFirstLaunch": {
+    "airplane_mode_on": "1",
+    "wifi_on": "0"
+  },
+  "error": "UI element not found: 从相册(?:选择|更换)照片",
+  "finishedAt": "2026-10-08T12:12:22.090867+00:00"
+}

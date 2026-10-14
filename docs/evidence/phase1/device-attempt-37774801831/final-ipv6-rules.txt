@@ -1,0 +1,6 @@
+Chain OUTPUT (policy DROP 19 packets, 3813 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+  114 22310 oem_out    all      *      *       ::/0                 ::/0                
+  114 22310 fw_OUTPUT  all      *      *       ::/0                 ::/0                
+  114 22310 st_OUTPUT  all      *      *       ::/0                 ::/0                
+  114 22310 bw_OUTPUT  all      *      *       ::/0                 ::/0                

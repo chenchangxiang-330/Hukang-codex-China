@@ -1,0 +1,6 @@
+{
+  "name": "hukang-barcode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline Android EAN/UPC barcode decoder using ZXing core"
+}

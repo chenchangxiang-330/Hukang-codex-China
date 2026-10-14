@@ -1,0 +1,4 @@
+package:com.google.android.gsf
+package:com.google.android.apps.photos
+package:com.google.android.gms.supervision
+package:com.google.android.gms

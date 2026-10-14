@@ -1,0 +1,34 @@
+{
+  "status": "verified_artifacts",
+  "models": {
+    "detector": {
+      "sha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+      "configSha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699",
+      "bytes": 4826518
+    },
+    "recognizer": {
+      "sha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+      "configSha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e",
+      "bytes": 16534782
+    }
+  },
+  "dictionary": {
+    "characterCount": 18383,
+    "effectiveCharacterCount": 18384,
+    "expectedOutputClasses": 18385,
+    "orderedDictionarySha256": "02c0a0121c577dfa211f11de21084e3abd23478a77ea4fbdf71ee7a3e990a717"
+  },
+  "deviceExecutionVerified": false,
+  "acquiredFrom": {
+    "detector": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx_infer.tar",
+    "recognizer": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_rec_onnx_infer.tar"
+  },
+  "verifiedAt": "2026-10-08T06:28:34.859687+00:00",
+  "github": {
+    "GITHUB_REPOSITORY": "chenchangxiang-330/Hukang-codex-China",
+    "GITHUB_SHA": "304863e4bb4c434f0bb725ca8ba0ab331cdedd89",
+    "GITHUB_REF": "refs/heads/codex/mainland-v2",
+    "GITHUB_RUN_ID": "37737586793",
+    "GITHUB_RUN_ATTEMPT": "1"
+  }
+}

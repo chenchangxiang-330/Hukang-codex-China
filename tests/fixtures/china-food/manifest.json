@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Offline OCR test input only; not a food database or runtime data provider",
+  "sourceRepositoryCommit": "a98fc594cc8bc416d8f9f386f19e185126746e38",
+  "executionStatus": "not_run",
+  "executionReason": "No Hukang China Android device execution record has been supplied",
+  "images": [
+    {
+      "fixtureId": "6937003117814",
+      "image": "6937003117814.jpg",
+      "sourceMetadata": "6937003117814.source.json",
+      "sha256": "a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3",
+      "width": 3024,
+      "height": 4032,
+      "kind": "archived_third_party_packaging_photo",
+      "capturedInThisPhase": false,
+      "cameraDevice": "unknown",
+      "captureLocation": "unknown",
+      "license": "CC-BY-SA-3.0",
+      "attribution": "smoothie-app / Open Food Facts",
+      "visibleCoverage": ["Chinese nutrition table", "small Chinese units", "curved packaging", "low contrast", "partial barcode"],
+      "synthetic": false
+    },
+    {
+      "fixtureId": "6923644266066",
+      "image": "6923644266066.jpg",
+      "sourceMetadata": "6923644266066.source.json",
+      "sha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "width": 1280,
+      "height": 1700,
+      "kind": "archived_third_party_packaging_photo",
+      "capturedInThisPhase": false,
+      "cameraDevice": "unknown",
+      "captureLocation": "unknown",
+      "license": "CC-BY-SA-3.0",
+      "attribution": "macrofactor / Open Food Facts",
+      "visibleCoverage": ["Chinese product name", "ingredients", "nutrition table", "small text", "perspective tilt", "complex background"],
+      "synthetic": false
+    }
+  ],
+  "coverageLimitations": [
+    "Only two products; not a representative mainland food test set",
+    "Not new photographs taken by Hukang China camera functionality",
+    "No known camera model, physical location or capture timestamp",
+    "Insufficient glare, blur, dark-light and food-category coverage",
+    "No Android PaddleOCR runtime results exist in this fixture directory"
+  ]
+}

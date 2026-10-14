@@ -1,0 +1,34 @@
+name: Phase 2 offline device retest of inspected release
+
+on:
+  push:
+    branches: [codex/mainland-v2]
+    paths:
+      - .github/workflows/phase2-device-retest.yml
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Existing successful release run in this repository
+        required: true
+        default: "37905407593"
+        type: string
+      build_sha:
+        description: Exact release source SHA matching that run's official receipt
+        required: true
+        default: "1ca12f7f47431652efa2e1cc9c0c6736d3e5d397"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: phase2-device-retest-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  device:
+    uses: ./.github/workflows/phase2-device.yml
+    with:
+      build_run_id: ${{ inputs.build_run_id || '37905407593' }}
+      build_sha: ${{ inputs.build_sha || '1ca12f7f47431652efa2e1cc9c0c6736d3e5d397' }}

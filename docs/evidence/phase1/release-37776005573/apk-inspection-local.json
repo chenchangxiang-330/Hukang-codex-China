@@ -1,0 +1,54 @@
+{
+  "apk": "/workspace/Hukang-codex-China/artifacts/hukang-china-phase1-arm64-release.apk",
+  "bytes": 58709659,
+  "sha256": "3dd6e764695374bdf5a94d89dba6d228b1fce5a4ce79a048c84a5465ffe0a12e",
+  "nativeAbis": [
+    "arm64-v8a"
+  ],
+  "permissions": "package: com.hukang.china\nuses-permission: name='android.permission.READ_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.VIBRATE'\nuses-permission: name='android.permission.WRITE_EXTERNAL_STORAGE' maxSdkVersion='32'\npermission: com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION\nuses-permission: name='com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'\n",
+  "badging": "package: name='com.hukang.china' versionCode='1' versionName='0.1.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'\nminSdkVersion:'26'\ntargetSdkVersion:'36'\nuses-permission: name='android.permission.READ_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.VIBRATE'\nuses-permission: name='android.permission.WRITE_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'\napplication-label:'护康 China · OCR Lab'\napplication-label-af:'护康 China · OCR Lab'\napplication-label-am:'护康 China · OCR Lab'\napplication-label-ar:'护康 China · OCR Lab'\napplication-label-as:'护康 China · OCR Lab'\napplication-label-az:'护康 China · OCR Lab'\napplication-label-be:'护康 China · OCR Lab'\napplication-label-bg:'护康 China · OCR Lab'\napplication-label-bn:'护康 China · OCR Lab'\napplication-label-bs:'护康 China · OCR Lab'\napplication-label-ca:'护康 China · OCR Lab'\napplication-label-cs:'护康 China · OCR Lab'\napplication-label-da:'护康 China · OCR Lab'\napplication-label-de:'护康 China · OCR Lab'\napplication-label-el:'护康 China · OCR Lab'\napplication-label-en-AU:'护康 China · OCR Lab'\napplication-label-en-CA:'护康 China · OCR Lab'\napplication-label-en-GB:'护康 China · OCR Lab'\napplication-label-en-IN:'护康 China · OCR Lab'\napplication-label-en-XC:'护康 China · OCR Lab'\napplication-label-es:'护康 China · OCR Lab'\napplication-label-es-419:'护康 China · OCR Lab'\napplication-label-es-ES:'护康 China · OCR Lab'\napplication-label-es-GT:'护康 China · OCR Lab'\napplication-label-es-US:'护康 China · OCR Lab'\napplication-label-et:'护康 China · OCR Lab'\napplication-label-eu:'护康 China · OCR Lab'\napplication-label-fa:'护康 China · OCR Lab'\napplication-label-fi:'护康 China · OCR Lab'\napplication-label-fr:'护康 China · OCR Lab'\napplication-label-fr-CA:'护康 China · OCR Lab'\napplication-label-gl:'护康 China · OCR Lab'\napplication-label-gu:'护康 China · OCR Lab'\napplication-label-hi:'护康 China · OCR Lab'\napplication-label-hr:'护康 China · OCR Lab'\napplication-label-hu:'护康 China · OCR Lab'\napplication-label-hy:'护康 China · OCR Lab'\napplication-label-in:'护康 China · OCR Lab'\napplication-label-is:'护康 China · OCR Lab'\napplication-label-it:'护康 China · OCR Lab'\napplication-label-iw:'护康 China · OCR Lab'\napplication-label-ja:'护康 China · OCR Lab'\napplication-label-ka:'护康 China · OCR Lab'\napplication-label-kk:'护康 China · OCR Lab'\napplication-label-km:'护康 China · OCR Lab'\napplication-label-kn:'护康 China · OCR Lab'\napplication-label-ko:'护康 China · OCR Lab'\napplication-label-ky:'护康 China · OCR Lab'\napplication-label-lo:'护康 China · OCR Lab'\napplication-label-lt:'护康 China · OCR Lab'\napplication-label-lv:'护康 China · OCR Lab'\napplication-label-mk:'护康 China · OCR Lab'\napplication-label-ml:'护康 China · OCR Lab'\napplication-label-mn:'护康 China · OCR Lab'\napplication-label-mr:'护康 China · OCR Lab'\napplication-label-ms:'护康 China · OCR Lab'\napplication-label-my:'护康 China · OCR Lab'\napplication-label-nb:'护康 China · OCR Lab'\napplication-label-ne:'护康 China · OCR Lab'\napplication-label-nl:'护康 China · OCR Lab'\napplication-label-or:'护康 China · OCR Lab'\napplication-label-pa:'护康 China · OCR Lab'\napplication-label-pl:'护康 China · OCR Lab'\napplication-label-pt:'护康 China · OCR Lab'\napplication-label-pt-BR:'护康 China · OCR Lab'\napplication-label-pt-PT:'护康 China · OCR Lab'\napplication-label-ro:'护康 China · OCR Lab'\napplication-label-ru:'护康 China · OCR Lab'\napplication-label-ru-RU:'护康 China · OCR Lab'\napplication-label-si:'护康 China · OCR Lab'\napplication-label-sk:'护康 China · OCR Lab'\napplication-label-sl:'护康 China · OCR Lab'\napplication-label-sq:'护康 China · OCR Lab'\napplication-label-sr:'护康 China · OCR Lab'\napplication-label-sr-Latn:'护康 China · OCR Lab'\napplication-label-sv:'护康 China · OCR Lab'\napplication-label-sw:'护康 China · OCR Lab'\napplication-label-ta:'护康 China · OCR Lab'\napplication-label-te:'护康 China · OCR Lab'\napplication-label-th:'护康 China · OCR Lab'\napplication-label-tl:'护康 China · OCR Lab'\napplication-label-tr:'护康 China · OCR Lab'\napplication-label-uk:'护康 China · OCR Lab'\napplication-label-ur:'护康 China · OCR Lab'\napplication-label-uz:'护康 China · OCR Lab'\napplication-label-vi:'护康 China · OCR Lab'\napplication-label-zh:'护康 China · OCR Lab'\napplication-label-zh-CN:'护康 China · OCR Lab'\napplication-label-zh-HK:'护康 China · OCR Lab'\napplication-label-zh-TW:'护康 China · OCR Lab'\napplication-label-zu:'护康 China · OCR Lab'\napplication-icon-160:'res/d2.webp'\napplication-icon-240:'res/MO.webp'\napplication-icon-320:'res/qs.webp'\napplication-icon-480:'res/Sn.webp'\napplication-icon-640:'res/sK.webp'\napplication: label='护康 China · OCR Lab' icon='res/d2.webp'\nlaunchable-activity: name='com.hukang.china.MainActivity'  label='' icon=''\nuses-library-not-required:'androidx.window.extensions'\nuses-library-not-required:'androidx.window.sidecar'\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nmain\nother-activities\nother-receivers\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--' 'af' 'am' 'ar' 'as' 'az' 'be' 'bg' 'bn' 'bs' 'ca' 'cs' 'da' 'de' 'el' 'en-AU' 'en-CA' 'en-GB' 'en-IN' 'en-XC' 'es' 'es-419' 'es-ES' 'es-GT' 'es-US' 'et' 'eu' 'fa' 'fi' 'fr' 'fr-CA' 'gl' 'gu' 'hi' 'hr' 'hu' 'hy' 'in' 'is' 'it' 'iw' 'ja' 'ka' 'kk' 'km' 'kn' 'ko' 'ky' 'lo' 'lt' 'lv' 'mk' 'ml' 'mn' 'mr' 'ms' 'my' 'nb' 'ne' 'nl' 'or' 'pa' 'pl' 'pt' 'pt-BR' 'pt-PT' 'ro' 'ru' 'ru-RU' 'si' 'sk' 'sl' 'sq' 'sr' 'sr-Latn' 'sv' 'sw' 'ta' 'te' 'th' 'tl' 'tr' 'uk' 'ur' 'uz' 'vi' 'zh' 'zh-CN' 'zh-HK' 'zh-TW' 'zu'\ndensities: '160' '240' '320' '480' '640'\nnative-code: 'arm64-v8a'\n",
+  "extractNativeLibs": true,
+  "nativeLibraries": {
+    "libreactnative.so": {
+      "bytes": 6985168,
+      "compression": 8,
+      "sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+    },
+    "libopencv_java4.so": {
+      "bytes": 17189512,
+      "compression": 8,
+      "sha256": "82ac6774835e26fbaba896bf2f6f61e81200dfdb5fe55a53e43b54241de41a0a"
+    },
+    "libonnxruntime.so": {
+      "bytes": 17908496,
+      "compression": 8,
+      "sha256": "67465b2bcf0ad501d389cc2c0f7f04278fb26fcf32e50c16a74deb4472c99706"
+    },
+    "libonnxruntime4j_jni.so": {
+      "bytes": 75720,
+      "compression": 8,
+      "sha256": "bf631163d6350e904e59503eaa8c5a351f4655e7fa582a1878841c312dfea78b"
+    }
+  },
+  "bundledModels": {
+    "assets/models/paddleocr/v5-mobile/detector.onnx": {
+      "bytes": 4826518,
+      "sha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d"
+    },
+    "assets/models/paddleocr/v5-mobile/recognizer.onnx": {
+      "bytes": 16534782,
+      "sha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092"
+    },
+    "assets/models/paddleocr/v5-mobile/detector.yml": {
+      "bytes": 903,
+      "sha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
+    },
+    "assets/models/paddleocr/v5-mobile/inference.yml": {
+      "bytes": 148345,
+      "sha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+    }
+  },
+  "signatureVerification": "Picked up JAVA_TOOL_OPTIONS:  -Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080 -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts\nVerifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): false\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\n",
+  "errors": [],
+  "deviceExecutionVerified": false
+}

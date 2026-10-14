@@ -1,0 +1,27 @@
+{
+  "fixtureId": "6937003117814",
+  "image": "6937003117814.jpg",
+  "width": 3024,
+  "height": 4032,
+  "sha256": "a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3",
+  "source": {
+    "dataset": "Open Food Facts",
+    "productUrl": "https://world.openfoodfacts.org/product/6937003117814",
+    "imageUrl": "https://images.openfoodfacts.org/images/products/693/700/311/7814/nutrition_zh.8.full.jpg",
+    "imageId": "3",
+    "uploader": "smoothie-app",
+    "license": "CC-BY-SA-3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "termsUrl": "https://world.openfoodfacts.org/terms-of-use",
+    "changes": "Unmodified source image; manual transcription and separate ROI coordinates added.",
+    "verifiedOn": "2026-09-26"
+  },
+  "groundTruthMethod": "Manual visual transcription of the packaged label, not OCR or database nutrient values.",
+  "manualTranscription": "营养成分表\n项目 每100克(g) NRV%\n能量 2075千焦(kJ) 25%\n蛋白质 21.0克(g) 35%\n脂肪 37.7克(g) 63%\n碳水化合物 19.0克(g) 6%\n钠 1248毫克(mg) 62%",
+  "basis": { "amount": 100, "unit": "g" },
+  "fields": { "energy_kj": 2075, "protein_g": 21, "fat_g": 37.7, "carbohydrate_g": 19, "sodium_mg": 1248 },
+  "notVisibleFields": ["energy_kcal", "total_sugar_g", "added_sugar_g", "fiber_g"],
+  "roi": { "originX": 300, "originY": 50, "width": 2350, "height": 1280 },
+  "roiMethod": "Manual experiment region in source pixels; not automatic table detection.",
+  "challenges": ["Low contrast brown text on white", "Curved packaging", "Chinese units with parenthesized Latin units", "QR code and unrelated text nearby"]
+}

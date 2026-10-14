@@ -1,0 +1,116 @@
+[
+  {
+    "id": 11551275185,
+    "name": "phase1-apk-339a66991af93c488e1f1426a3f240edd82fc3ca-part001",
+    "size_in_bytes": 25028469,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11551275185",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11551275185/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:30:28Z",
+    "expires_at": "2026-10-22T12:30:27Z",
+    "updated_at": "2026-10-08T12:30:28Z",
+    "digest": "sha256:e35411f265494bf865c647b5197165fb8fcd068810e6f0b6d7b59008374244e0",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  },
+  {
+    "id": 11551115377,
+    "name": "phase1-apk-339a66991af93c488e1f1426a3f240edd82fc3ca-part003",
+    "size_in_bytes": 6940760,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11551115377",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11551115377/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:30:32Z",
+    "expires_at": "2026-10-22T12:30:30Z",
+    "updated_at": "2026-10-08T12:30:32Z",
+    "digest": "sha256:15c3a0dbe38e227914123c2fe9c3f02fe3fd85e9304545c6afc62e5ace2cdf3b",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  },
+  {
+    "id": 11550736609,
+    "name": "phase1-apk-339a66991af93c488e1f1426a3f240edd82fc3ca-manifest",
+    "size_in_bytes": 769,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550736609",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550736609/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:30:27Z",
+    "expires_at": "2026-10-22T12:30:26Z",
+    "updated_at": "2026-10-08T12:30:27Z",
+    "digest": "sha256:76fe6767295f29723af82bb9ddb5a398cb355acd18e0294474bf5cdb6840f830",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  },
+  {
+    "id": 11550421808,
+    "name": "phase1-apk-339a66991af93c488e1f1426a3f240edd82fc3ca-part002",
+    "size_in_bytes": 23822627,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550421808",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550421808/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:30:30Z",
+    "expires_at": "2026-10-22T12:30:29Z",
+    "updated_at": "2026-10-08T12:30:30Z",
+    "digest": "sha256:ce15ac5cde7abfd6b4f617bb35973bc2608e56ddc8ad5fac6dfe2f6502a394e7",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  },
+  {
+    "id": 11550109995,
+    "name": "hukang-china-phase1-build-339a66991af93c488e1f1426a3f240edd82fc3ca",
+    "size_in_bytes": 111597509,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550109995",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11550109995/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:30:35Z",
+    "expires_at": "2026-10-22T12:30:32Z",
+    "updated_at": "2026-10-08T12:30:35Z",
+    "digest": "sha256:1eaebd9957d99bcaee2b1a66b1f19cc080c63326d16203824fc2553ec37dd0fe",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  },
+  {
+    "id": 11549009379,
+    "name": "verified-official-models-339a66991af93c488e1f1426a3f240edd82fc3ca",
+    "size_in_bytes": 18626103,
+    "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11549009379",
+    "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/11549009379/zip",
+    "expired": false,
+    "created_at": "2026-10-08T12:22:38Z",
+    "expires_at": "2026-10-22T12:22:36Z",
+    "updated_at": "2026-10-08T12:22:38Z",
+    "digest": "sha256:aa4265c9847c6b7fa18ed482264ff042c9cfc0da5750c4c25ddfe2fe26104acf",
+    "workflow_run": {
+      "id": 37776005573,
+      "repository_id": 1408452963,
+      "head_repository_id": 1408452963,
+      "head_branch": "codex/mainland-v2",
+      "head_sha": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+    }
+  }
+]

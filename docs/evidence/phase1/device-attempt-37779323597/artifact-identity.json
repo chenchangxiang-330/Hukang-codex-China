@@ -1,0 +1,11 @@
+{
+  "runId": 37779323597,
+  "jobId": 113318113863,
+  "artifactId": 11551632136,
+  "artifactBytes": 30991029,
+  "artifactZipSha256": "a99ffb24e05548bc1c681ca208cbc29e2e093a61ede7777f53dce9395d96963b",
+  "source": "GitHub Actions artifact downloaded through authenticated GitHub connector and Sediment",
+  "zipSha256Checked": true,
+  "testSource": "f113662a82546880483bfae920845dada659eec5",
+  "releaseSource": "339a66991af93c488e1f1426a3f240edd82fc3ca"
+}

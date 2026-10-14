@@ -1,0 +1,82 @@
+{
+  "status": "consistent_evidence",
+  "runs": [
+    {
+      "runId": "1791463866294-ab0fa267a12b",
+      "sourceImageHash": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "processedImageHash": "ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a",
+      "blockCount": 39,
+      "rawCharacterCount": 273,
+      "modelLoadMs": 1393,
+      "ocrMs": 88554,
+      "totalMs": 90133,
+      "memory": {
+        "observedPeakPssKb": 529040,
+        "observedPeakJavaHeapBytes": 53588896,
+        "observedPeakNativeHeapBytes": 278717696,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1802
+      },
+      "warnings": [],
+      "limitation": "Evidence consistency only; no authenticity, accuracy or offline-runtime attestation"
+    },
+    {
+      "runId": "1791463954339-ab0fa267a12b",
+      "sourceImageHash": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+      "processedImageHash": "ab0fa267a12b01474fad5dd95c315fc0fe6918b3b64d5cd08340bfead06c0c2a",
+      "blockCount": 39,
+      "rawCharacterCount": 273,
+      "modelLoadMs": 0,
+      "ocrMs": 85057,
+      "totalMs": 85164,
+      "memory": {
+        "observedPeakPssKb": 659530,
+        "observedPeakJavaHeapBytes": 59361376,
+        "observedPeakNativeHeapBytes": 424471840,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1703
+      },
+      "warnings": [],
+      "limitation": "Evidence consistency only; no authenticity, accuracy or offline-runtime attestation"
+    },
+    {
+      "runId": "1791464049293-45b7133d873e",
+      "sourceImageHash": "a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3",
+      "processedImageHash": "45b7133d873e7965306bd2caafa0752479617cd88d4857597fb203a9daf5e5ea",
+      "blockCount": 21,
+      "rawCharacterCount": 137,
+      "modelLoadMs": 0,
+      "ocrMs": 49251,
+      "totalMs": 49434,
+      "memory": {
+        "observedPeakPssKb": 695363,
+        "observedPeakJavaHeapBytes": 55318640,
+        "observedPeakNativeHeapBytes": 455344976,
+        "samplingIntervalMs": 50,
+        "sampleCount": 987
+      },
+      "warnings": [],
+      "limitation": "Evidence consistency only; no authenticity, accuracy or offline-runtime attestation"
+    },
+    {
+      "runId": "1791464102053-45b7133d873e",
+      "sourceImageHash": "a5b53b885d8b464ac2adb3dfd3ab0e928ba5d10a9873e7fd421ea23080156af3",
+      "processedImageHash": "45b7133d873e7965306bd2caafa0752479617cd88d4857597fb203a9daf5e5ea",
+      "blockCount": 21,
+      "rawCharacterCount": 137,
+      "modelLoadMs": 0,
+      "ocrMs": 49870,
+      "totalMs": 50013,
+      "memory": {
+        "observedPeakPssKb": 689870,
+        "observedPeakJavaHeapBytes": 52529424,
+        "observedPeakNativeHeapBytes": 455450432,
+        "samplingIntervalMs": 50,
+        "sampleCount": 999
+      },
+      "warnings": [],
+      "limitation": "Evidence consistency only; no authenticity, accuracy or offline-runtime attestation"
+    }
+  ],
+  "accuracy": null
+}
