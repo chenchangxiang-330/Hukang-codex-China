@@ -1,0 +1,29 @@
+name: Simple app checks
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'tests/**', 'package*.json', '.github/workflows/simple-app-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Apply reviewed integration for this checkout when needed
+        run: if [ -f .delivery/integrate-simple.py ]; then python3 .delivery/integrate-simple.py; fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm run typecheck
+      - run: npm test
+      - run: python3 -m unittest discover -s tests -p 'test_*.py'

@@ -154,6 +154,25 @@ CREATE INDEX IF NOT EXISTS food_identity_pending_by_updated ON food_identity_pen
 PRAGMA user_version = 5;
 `;
 
+/** Additive migration: keep existing foods, evidence and revisions. */
+const MIGRATION_V6 = `
+CREATE TABLE IF NOT EXISTS simple_product_photos (
+  food_id TEXT PRIMARY KEY NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  json TEXT NOT NULL, ocr_json TEXT
+);
+CREATE TABLE IF NOT EXISTS simple_capture_drafts (
+  id TEXT PRIMARY KEY NOT NULL, json TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS simple_inventory (
+  id TEXT PRIMARY KEY NOT NULL,
+  food_id TEXT NOT NULL REFERENCES foods(id) ON DELETE RESTRICT,
+  quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 9999),
+  unit TEXT NOT NULL, expires_on TEXT, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS simple_inventory_food ON simple_inventory(food_id);
+PRAGMA user_version = 6;
+`;
+
 interface StoredRow {
   id: string; created_at: string; updated_at: string; status: FoodScanRecord['status'];
   review_json: string; source_evidence_json: string; persisted_evidence_json: string;
@@ -416,7 +435,8 @@ export function createSQLiteFoodStore(
       });
     } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
     else if (version === 4) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V5); });
-    else if (version !== 5) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    else if (version !== 5 && version !== 6) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    if (version !== undefined && version < 6) await driver.transaction(async transaction => { await transaction.exec(MIGRATION_V6); });
     await cleanupExpiredIdentities();
     await cleanupFiles();
   }

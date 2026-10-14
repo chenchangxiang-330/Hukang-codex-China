@@ -35,6 +35,14 @@ import kotlin.math.min
 class HukangBarcodeModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("HukangBarcode")
+    View(LiveBarcodeView::class) {
+      Events("onBarcode", "onError")
+      Prop("active") { view: LiveBarcodeView, active: Boolean -> view.setActive(active) }
+      Prop("torch") { view: LiveBarcodeView, torch: Boolean -> view.setTorch(torch) }
+    }
+    AsyncFunction("exportArchive") { payload: String, assets: List<Map<String, Any?>> ->
+      LocalExport.create(context(), payload, assets)
+    }
 
     /** Decode EAN-13, EAN-8, UPC-A or UPC-E from an app-local image. */
     AsyncFunction("scanImage") { uri: String ->
