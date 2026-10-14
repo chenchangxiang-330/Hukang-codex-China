@@ -25,6 +25,8 @@ export interface ChinaFoodRepository {
     parsed: ParsedNutritionLabel;
     review: FoodReviewValues;
     status: FoodScanRecord['status'];
+    /** Optional identity revision travelling with an existing nutrition draft. */
+    identity?: FoodIdentity;
   }): Promise<FoodScanRecord>;
   deleteFood(id: string): Promise<void>;
   /** Product identity is persisted independently from OCR/nutrition evidence. */

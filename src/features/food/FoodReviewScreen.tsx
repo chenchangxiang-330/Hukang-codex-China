@@ -95,7 +95,7 @@ export default function FoodReviewScreen() {
       const draft = draftId ? getFoodDraft(draftId) : null;
       const found = foodId ? persisted : identityFoodId && draft && persisted ? {
         ...draft, id: persisted.id, createdAt: persisted.createdAt, updatedAt: persisted.updatedAt,
-        ...(persisted.identity ?? draft.identity ? { identity: persisted.identity ?? draft.identity } : {}),
+        ...((draft.identity ?? persisted.identity) ? { identity: { ...(draft.identity ?? persisted.identity)!, foodId: persisted.id } } : {}),
         revisions: persisted.revisions, ...(persisted.barcodes ? { barcodes: persisted.barcodes } : {}),
         ...(persisted.evidenceHistory ? { evidenceHistory: persisted.evidenceHistory } : {}),
       } : draft;
@@ -146,11 +146,12 @@ export default function FoodReviewScreen() {
       }
       const identity = identityForRecord(record, status,
         foodId && record.identity ? record.identity.updatedAt : new Date().toISOString());
-      // New nutrition drafts carry the confirmed user identity into the same
-      // SQLite transaction. Existing records update identity separately so an
-      // immutable nutrition evidence snapshot is never replaced implicitly.
+      // New nutrition drafts and an existing identity-only record carry the
+      // confirmed identity into the same SQLite transaction as nutrition
+      // evidence. A standalone food edit still uses the identity repository
+      // operation below.
       const saved = evidenceUpdateFoodId && !foodId
-        ? await chinaFoodRepository.saveFoodEvidence({ foodId: evidenceUpdateFoodId, evidence: record.evidence, parsed: record.parsed, review: snapshot, status })
+        ? await chinaFoodRepository.saveFoodEvidence({ foodId: evidenceUpdateFoodId, evidence: record.evidence, parsed: record.parsed, review: snapshot, status, ...(identity ? { identity } : {}) })
         : await chinaFoodRepository.saveFood({
           ...record, review: snapshot, status,
           ...(identity && !foodId ? { identity } : {}),

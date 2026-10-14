@@ -514,6 +514,15 @@ export function createSQLiteFoodStore(
         await ready();
         const previous = await read(snapshot.foodId);
         if (!previous) throw new Error('要补充营养表的食品记录不存在或已删除。');
+        const requestedIdentity = snapshot.identity;
+        if (requestedIdentity) {
+          validateIdentity(requestedIdentity);
+          assertIdentityCachePolicy(requestedIdentity);
+          if (requestedIdentity.foodId !== previous.id) throw new Error('商品身份必须属于当前食品记录。');
+          if (previous.identity && requestedIdentity.updatedAt !== previous.identity.updatedAt) {
+            throw new Error('商品身份已被更新，请重新打开后再编辑；旧身份记录仍保留。');
+          }
+        }
         const currentVersion = await driver.get<EvidenceVersionRow>(
           'SELECT id,food_id,recorded_at,source_evidence_json,persisted_evidence_json,parsed_json,folder_uri,is_current FROM food_evidence_versions WHERE food_id=? AND is_current=1', snapshot.foodId,
         );
@@ -524,6 +533,7 @@ export function createSQLiteFoodStore(
           evidence: snapshot.evidence,
           parsed: snapshot.parsed,
           review: snapshot.review,
+          ...(requestedIdentity ? { identity: requestedIdentity } : previous.identity ? { identity: previous.identity } : {}),
           updatedAt: previous.updatedAt,
         };
         validateRecord(candidate);
@@ -536,6 +546,8 @@ export function createSQLiteFoodStore(
         assertFoodId(revision.id);
         const evidenceRevisionId = `${candidate.id}-evidence-${Date.parse(recordedAt).toString(36)}-${nonce()}`;
         assertFoodId(evidenceRevisionId);
+        const persistedIdentity = requestedIdentity ? { ...requestedIdentity, updatedAt: recordedAt } : previous.identity;
+        if (persistedIdentity) validateIdentity(persistedIdentity);
         if (!files.materializeRevision) throw new Error('当前证据存储不支持追加营养表版本，请升级后重试；旧证据未修改。');
         const materialized = await files.materializeRevision(candidate, evidenceRevisionId);
         try {
@@ -552,6 +564,17 @@ export function createSQLiteFoodStore(
               recordedAt, candidate.status, candidate.review.name, candidate.review.brand, JSON.stringify(candidate.review), candidate.id);
             await transaction.run('INSERT INTO food_revisions(id,food_id,recorded_at,kind,status,review_json) VALUES(?,?,?,?,?,?)',
               revision.id, candidate.id, recordedAt, revision.kind, revision.status, JSON.stringify(revision.review));
+            if (requestedIdentity) {
+              const identityToPersist = persistedIdentity;
+              if (!identityToPersist) throw new Error('商品身份快照缺失，已停止保存。');
+              await persistIdentity(transaction, identityToPersist);
+              const previousIdentity = previous.identity;
+              const identityKind: FoodIdentityRevisionKind = previousIdentity
+                ? (previousIdentity.status !== 'confirmed' && identityToPersist.status === 'confirmed' ? 'confirmed' : 'edited')
+                : (identityToPersist.source.kind === 'mainland_service' ? 'provider_result' : 'created');
+              await persistIdentityRevision(transaction, identityToPersist, identityKind, recordedAt,
+                `${candidate.id}-identity-${Date.parse(recordedAt).toString(36)}-${nonce()}`);
+            }
           });
         } catch (error) {
           try { if (files.removeEvidenceRevision) await files.removeEvidenceRevision(candidate.id, materialized.folderUri); }
@@ -569,6 +592,7 @@ export function createSQLiteFoodStore(
           updatedAt: recordedAt,
           evidence: materialized.evidence,
           parsed: materialized.parsed,
+          ...(persistedIdentity ? { identity: persistedIdentity } : {}),
           revisions: [...previous.revisions, revision],
           evidenceHistory: [...(previous.evidenceHistory ?? []), priorEvidence],
         };

@@ -102,3 +102,31 @@ test('new package OCR appends an evidence version without replacing history', as
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_evidence_versions WHERE is_current=1').get().count, 1);
   database.close();
 });
+
+test('nutrition evidence and edited identity commit together', async () => {
+  const database = new DatabaseSync(':memory:');
+  const files = {
+    async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}` }; },
+    async materializeRevision(input, revisionId) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}/versions/${revisionId}` }; },
+    async validateStored() {}, async writeRevision() {}, async removeRevision() {}, async removeEvidenceRevision() {}, async removeFood() {},
+  };
+  let nowValue = '2026-10-09T00:00:01.000Z';
+  const store = createSQLiteFoodStore(driverFor(database), files, () => nowValue, () => 'atomic');
+  const first = record();
+  first.identity = {
+    schemaVersion: 1, foodId: first.id, name: '旧名称', brand: '旧品牌', specification: '',
+    status: 'pending_confirmation',
+    source: { sourceId: 'local', sourceName: '本机食品记录', kind: 'user', sourceRecordId: null, fetchedAt: null, obtainedAt: nowValue,
+      policy: { license: null, commercialUse: 'unknown', cache: 'unknown', redistribute: 'unknown', cacheTtlSeconds: null, authorizationReference: null } },
+    confirmedAt: null, updatedAt: nowValue,
+  };
+  await store.saveFood(first);
+  const second = record();
+  second.evidence = { ...second.evidence, id: 'evidence-atomic', recordedAt: '2026-10-09T00:00:02.000Z' };
+  nowValue = '2026-10-09T00:00:03.000Z';
+  const saved = await store.saveFoodEvidence({ foodId: first.id, evidence: second.evidence, parsed: second.parsed, review: second.review, status: 'draft', identity: { ...first.identity, name: '新名称' } });
+  assert.equal(saved.identity?.name, '新名称');
+  assert.equal((await store.getFoodIdentityRevisions(first.id)).length, 2);
+  assert.equal((await store.getFood(first.id)).evidence.id, 'evidence-atomic');
+  database.close();
+});
