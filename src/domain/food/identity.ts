@@ -39,6 +39,15 @@ export interface FoodIdentityRevision {
   readonly identity: FoodIdentity;
 }
 
+/** A local, durable product identity waiting for its first package nutrition capture. */
+export interface PendingFoodIdentity {
+  readonly id: string;
+  readonly identity: FoodIdentity;
+  readonly barcode: import('../barcode/types').FoodBarcodeAssociation;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export function identityDisplayName(identity: Pick<FoodIdentity, 'name' | 'brand' | 'specification'>): string {
   const name = identity.name.trim();
   const brand = identity.brand.trim();

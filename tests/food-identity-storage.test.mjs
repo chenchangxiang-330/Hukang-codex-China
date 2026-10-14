@@ -5,6 +5,7 @@ import './register-typescript.mjs';
 const { createSQLiteFoodStore } = await import('../src/infrastructure/food/sqliteFoodStore.ts');
 const { parseNutritionLabel } = await import('../src/domain/food/parseNutrition.ts');
 const { createFoodReview } = await import('../src/domain/food/review.ts');
+const { normalizeBarcode } = await import('../src/domain/barcode/normalize.ts');
 const { DatabaseSync } = await import('node:sqlite');
 
 function driverFor(database) {
@@ -87,9 +88,21 @@ test('new nutrition record may atomically carry a pending product identity', asy
   const local = store(database);
   const saved = await local.saveFood({ ...record('atomic-food'), identity: identity('atomic-food') });
   assert.equal(saved.identity.name, '纯牛奶');
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 4);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_identity').get().count, 1);
   assert.equal(database.prepare('SELECT COUNT(*) AS count FROM food_identity_revisions').get().count, 1);
+  database.close();
+});
+
+test('pending identity survives restart lookup until nutrition is saved', async () => {
+  const database = new DatabaseSync(':memory:');
+  const local = store(database);
+  const barcode = normalizeBarcode({ rawValue: '6900000000014', format: 'EAN_13', decodedAt: '2026-10-13T00:00:02.000Z' });
+  const pending = await local.savePendingFoodIdentity({ id: 'pending-milk', identity: identity('pending-milk', 'pending_confirmation', 'user'), barcode, acquiredBy: 'camera' });
+  assert.equal((await local.getPendingFoodIdentityByBarcode('06900000000014')).identity.name, '纯牛奶');
+  assert.equal(pending.barcode.rawValue, '6900000000014');
+  await local.deletePendingFoodIdentity('pending-milk');
+  assert.equal(await local.getPendingFoodIdentity('pending-milk'), null);
   database.close();
 });
 
@@ -102,7 +115,7 @@ test('v2 to v3 migration preserves foods and creates empty identity tables', asy
   const legacy = await upgraded.getFood('legacy-identity-food');
   assert.equal(legacy.id, 'legacy-identity-food');
   assert.equal(legacy.identity, undefined);
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 4);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 5);
   assert.equal(database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='food_identity'").get().name, 'food_identity');
   database.close();
 });

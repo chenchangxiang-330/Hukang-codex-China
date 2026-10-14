@@ -144,11 +144,15 @@ function repository(): Promise<ReturnType<typeof createSQLiteFoodStore>> {
 
 /** Local-only adapter. No network provider, automatic sync or external database exists. */
 export const chinaFoodRepository: LocalChinaFoodSource = {
-  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v4',
+  kind: 'LOCAL', sourceId: 'hukang-china-sqlite-v5',
   async getFood(id) { return (await repository()).getFood(id); },
   async getFoodIdentity(foodId) { return (await repository()).getFoodIdentity(foodId); },
   async saveFoodIdentity(identity: FoodIdentity) { return (await repository()).saveFoodIdentity(identity); },
   async getFoodIdentityRevisions(foodId) { return (await repository()).getFoodIdentityRevisions(foodId); },
+  async savePendingFoodIdentity(input) { return (await repository()).savePendingFoodIdentity(input); },
+  async getPendingFoodIdentity(id) { return (await repository()).getPendingFoodIdentity(id); },
+  async getPendingFoodIdentityByBarcode(lookupKey) { return (await repository()).getPendingFoodIdentityByBarcode(lookupKey); },
+  async deletePendingFoodIdentity(id) { return (await repository()).deletePendingFoodIdentity(id); },
   async getFoodByBarcode(lookupKey) { return (await repository()).getFoodByBarcode(lookupKey); },
   async listFoodBarcodes(foodId) { return (await repository()).listFoodBarcodes(foodId); },
   async bindBarcode(foodId, barcode: ValidatedBarcode, acquiredBy: BarcodeAcquisitionMethod): Promise<FoodBarcodeAssociation> {

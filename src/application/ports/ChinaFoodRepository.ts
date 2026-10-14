@@ -1,7 +1,7 @@
 import type { ChinaFoodRecord, DataUsePolicy } from '../../domain/food/types';
 import type { FoodScanRecord, FoodSummary, FoodReviewValues, ParsedNutritionLabel } from '../../domain/food/scan';
 import type { OcrEvidence } from '../../domain/ocr/types';
-import type { FoodIdentity } from '../../domain/food/identity';
+import type { FoodIdentity, PendingFoodIdentity } from '../../domain/food/identity';
 import type { FoodBarcodeAssociation, ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/barcode/types';
 
 export type FoodLookupResult =
@@ -33,6 +33,10 @@ export interface ChinaFoodRepository {
   getFoodIdentity(foodId: string): Promise<FoodIdentity | null>;
   saveFoodIdentity(identity: FoodIdentity): Promise<FoodIdentity>;
   getFoodIdentityRevisions(foodId: string): Promise<readonly import('../../domain/food/identity').FoodIdentityRevision[]>;
+  savePendingFoodIdentity(input: { id: string; identity: FoodIdentity; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod }): Promise<PendingFoodIdentity>;
+  getPendingFoodIdentity(id: string): Promise<PendingFoodIdentity | null>;
+  getPendingFoodIdentityByBarcode(lookupKey: string): Promise<PendingFoodIdentity | null>;
+  deletePendingFoodIdentity(id: string): Promise<void>;
   /** Looks up only the normalized local key; no network fallback exists. */
   getFoodByBarcode(lookupKey: string): Promise<{ record: FoodScanRecord; barcode: FoodBarcodeAssociation } | null>;
   listFoodBarcodes(foodId: string): Promise<readonly FoodBarcodeAssociation[]>;

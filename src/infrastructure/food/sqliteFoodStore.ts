@@ -1,7 +1,7 @@
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
 import type { FoodEvidenceRevision, FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
-import type { FoodIdentity, FoodIdentityRevision, FoodIdentityRevisionKind, FoodIdentitySourceKind, FoodIdentityStatus } from '../../domain/food/identity';
+import type { FoodIdentity, FoodIdentityRevision, FoodIdentityRevisionKind, FoodIdentitySourceKind, FoodIdentityStatus, PendingFoodIdentity } from '../../domain/food/identity';
 import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { validateFoodReview } from '../../domain/food/review';
@@ -137,6 +137,23 @@ INSERT OR IGNORE INTO food_evidence_versions(id,food_id,recorded_at,source_evide
 PRAGMA user_version = 4;
 `;
 
+/** v5 stores a confirmed identity while its first nutrition label is still pending. */
+const MIGRATION_V5 = `
+CREATE TABLE IF NOT EXISTS food_identity_pending (
+  id TEXT PRIMARY KEY NOT NULL,
+  identity_json TEXT NOT NULL,
+  raw_value TEXT NOT NULL,
+  format TEXT NOT NULL CHECK(format IN ('EAN_13','EAN_8','UPC_A','UPC_E')),
+  lookup_key TEXT NOT NULL UNIQUE,
+  acquired_by TEXT NOT NULL CHECK(acquired_by IN ('camera','image','manual')),
+  scanned_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS food_identity_pending_by_updated ON food_identity_pending(updated_at DESC,id);
+PRAGMA user_version = 5;
+`;
+
 interface StoredRow {
   id: string; created_at: string; updated_at: string; status: FoodScanRecord['status'];
   review_json: string; source_evidence_json: string; persisted_evidence_json: string;
@@ -163,6 +180,11 @@ interface IdentityRevisionRow {
 interface EvidenceVersionRow {
   id: string; food_id: string; recorded_at: string; source_evidence_json: string;
   persisted_evidence_json: string; parsed_json: string; folder_uri: string; is_current: number;
+}
+interface PendingIdentityRow {
+  id: string; identity_json: string; raw_value: string; format: FoodBarcodeAssociation['format'];
+  lookup_key: string; acquired_by: BarcodeAcquisitionMethod; scanned_at: string;
+  created_at: string; updated_at: string;
 }
 const RECORD_SQL = `SELECT f.id,f.created_at,f.updated_at,f.status,f.review_json,
   e.source_evidence_json,e.persisted_evidence_json,e.parsed_json,e.folder_uri
@@ -289,6 +311,24 @@ function parseEvidenceVersion(row: EvidenceVersionRow): FoodEvidenceRevision {
   return { id: row.id, foodId: row.food_id, recordedAt: row.recorded_at, sourceEvidence, evidence, parsed, folderUri: row.folder_uri };
 }
 
+function parsePendingIdentity(row: PendingIdentityRow): PendingFoodIdentity {
+  assertFoodId(row.id); assertDate(row.created_at); assertDate(row.updated_at);
+  const identity = JSON.parse(row.identity_json) as FoodIdentity;
+  validateIdentity(identity);
+  if (identity.foodId !== row.id) throw new Error('待补商品身份与记录 ID 不一致。');
+  const barcode: FoodBarcodeAssociation = {
+    id: `${row.id}-barcode`, foodId: row.id, rawValue: row.raw_value, format: row.format,
+    lookupKey: row.lookup_key, validationStatus: 'valid', acquiredBy: row.acquired_by, scannedAt: row.scanned_at,
+  };
+  if (!/^\d{14}$/.test(barcode.lookupKey) || !/^\d+$/.test(barcode.rawValue) || barcode.rawValue.length > 14 ||
+    !['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E'].includes(barcode.format) || !['camera', 'image', 'manual'].includes(barcode.acquiredBy)) {
+    throw new Error('待补商品的条码记录无效。');
+  }
+  const checked = normalizeBarcode({ rawValue: barcode.rawValue, format: barcode.format, decodedAt: barcode.scannedAt });
+  if (checked.validity !== 'valid' || checked.lookupKey !== barcode.lookupKey) throw new Error('待补商品的条码校验失败。');
+  return { id: row.id, identity, barcode, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
 function parseRow(row: StoredRow, revisions: RevisionRow[], barcodes: BarcodeRow[] = [], identity?: FoodIdentity, evidenceHistory: readonly FoodEvidenceRevision[] = []): FoodScanRecord {
   const record: FoodScanRecord = {
     schemaVersion: 1, id: row.id, createdAt: row.created_at, updatedAt: row.updated_at,
@@ -359,8 +399,8 @@ export function createSQLiteFoodStore(
   async function initialize(): Promise<void> {
     await driver.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
     const version = (await driver.get<{ user_version: number }>('PRAGMA user_version'))?.user_version;
-    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); });
-    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); });
+    if (version === 0) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V1); await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
+    else if (version === 1) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V2); await transaction.exec(MIGRATION_V3); await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
     else if (version === 2) {
       // A short-lived Phase 3 development build used the same version before
       // validation_status was made explicit. Repair that additive column and
@@ -372,9 +412,11 @@ export function createSQLiteFoodStore(
         }
         await transaction.exec(MIGRATION_V3);
         await transaction.exec(MIGRATION_V4);
+        await transaction.exec(MIGRATION_V5);
       });
-    } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); });
-    else if (version !== 4) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
+    else if (version === 4) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V5); });
+    else if (version !== 5) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     await cleanupExpiredIdentities();
     await cleanupFiles();
   }
@@ -506,6 +548,66 @@ export function createSQLiteFoodStore(
       assertFoodId(foodId);
       await ready();
       return listIdentityRevisions(foodId);
+    },
+    savePendingFoodIdentity(input) {
+      assertFoodId(input.id);
+      const snapshot = JSON.parse(JSON.stringify(input)) as typeof input;
+      return serialize(async () => {
+        await ready();
+        if (snapshot.identity.foodId !== snapshot.id) throw new Error('待补商品身份必须属于待补记录。');
+        validateIdentity(snapshot.identity);
+        assertIdentityCachePolicy(snapshot.identity);
+        const recordedAt = now();
+        assertDate(recordedAt);
+        const barcode = createBarcodeAssociation(snapshot.barcode, snapshot.id, snapshot.acquiredBy,
+          `${snapshot.id}-barcode-${Date.parse(recordedAt).toString(36)}-${nonce()}`, recordedAt);
+        const existing = await driver.get<PendingIdentityRow>(
+          'SELECT id,identity_json,raw_value,format,lookup_key,acquired_by,scanned_at,created_at,updated_at FROM food_identity_pending WHERE id=?', snapshot.id,
+        );
+        const byKey = await driver.get<{ id: string }>('SELECT id FROM food_identity_pending WHERE lookup_key=?', barcode.lookupKey);
+        if (byKey && byKey.id !== snapshot.id) throw new Error('该条码已有待补商品身份，未覆盖原草稿。');
+        const savedIdentity: FoodIdentity = { ...snapshot.identity, updatedAt: recordedAt };
+        validateIdentity(savedIdentity);
+        const createdAt = existing?.created_at ?? recordedAt;
+        await driver.transaction(async (transaction) => {
+          await verifyTransaction(transaction);
+          await transaction.run(
+            `INSERT INTO food_identity_pending(id,identity_json,raw_value,format,lookup_key,acquired_by,scanned_at,created_at,updated_at)
+             VALUES(?,?,?,?,?,?,?,?,?)
+             ON CONFLICT(id) DO UPDATE SET identity_json=excluded.identity_json,raw_value=excluded.raw_value,format=excluded.format,
+             lookup_key=excluded.lookup_key,acquired_by=excluded.acquired_by,scanned_at=excluded.scanned_at,updated_at=excluded.updated_at`,
+            snapshot.id, JSON.stringify(savedIdentity), barcode.rawValue, barcode.format, barcode.lookupKey, barcode.acquiredBy,
+            barcode.scannedAt, createdAt, recordedAt,
+          );
+        });
+        return { id: snapshot.id, identity: savedIdentity, barcode, createdAt, updatedAt: recordedAt };
+      });
+    },
+    async getPendingFoodIdentity(id) {
+      assertFoodId(id);
+      await ready();
+      const row = await driver.get<PendingIdentityRow>(
+        'SELECT id,identity_json,raw_value,format,lookup_key,acquired_by,scanned_at,created_at,updated_at FROM food_identity_pending WHERE id=?', id,
+      );
+      return row ? parsePendingIdentity(row) : null;
+    },
+    async getPendingFoodIdentityByBarcode(lookupKey) {
+      if (!/^\d{14}$/.test(lookupKey)) throw new Error('条码查询键必须是 14 位数字字符串。');
+      await ready();
+      const row = await driver.get<PendingIdentityRow>(
+        'SELECT id,identity_json,raw_value,format,lookup_key,acquired_by,scanned_at,created_at,updated_at FROM food_identity_pending WHERE lookup_key=?', lookupKey,
+      );
+      return row ? parsePendingIdentity(row) : null;
+    },
+    async deletePendingFoodIdentity(id) {
+      assertFoodId(id);
+      await serialize(async () => {
+        await ready();
+        await driver.transaction(async (transaction) => {
+          await verifyTransaction(transaction);
+          await transaction.run('DELETE FROM food_identity_pending WHERE id=?', id);
+        });
+      });
     },
     saveFoodEvidence(input) {
       assertFoodId(input.foodId);

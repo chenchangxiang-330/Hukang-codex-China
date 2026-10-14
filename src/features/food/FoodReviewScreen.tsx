@@ -47,7 +47,7 @@ export default function FoodReviewScreen() {
   const params = useLocalSearchParams<{
     foodId?: string | string[]; draftId?: string | string[];
     barcodeRaw?: string | string[]; barcodeFormat?: string | string[]; barcodeAcquiredBy?: string | string[];
-    identityDraftId?: string | string[]; identityFoodId?: string | string[];
+    identityDraftId?: string | string[]; identityFoodId?: string | string[]; pendingIdentityId?: string | string[];
   }>();
   const foodId = routeId(params.foodId);
   const draftId = routeId(params.draftId);
@@ -55,6 +55,7 @@ export default function FoodReviewScreen() {
   const barcodeFormat = routeId(params.barcodeFormat);
   const identityDraftId = routeId(params.identityDraftId);
   const identityFoodId = routeId(params.identityFoodId);
+  const pendingIdentityId = routeId(params.pendingIdentityId);
   // A record that already has product identity but no nutrition table enters
   // OCR as a new evidence draft. Keep its food ID so the new capture becomes
   // an immutable evidence version instead of a duplicate barcode record.
@@ -161,6 +162,7 @@ export default function FoodReviewScreen() {
         bindingStarted = true;
         await chinaFoodRepository.bindBarcode(saved.id, pendingBarcode, barcodeAcquiredBy);
       }
+      if (pendingIdentityId) await chinaFoodRepository.deletePendingFoodIdentity(pendingIdentityId);
       if (identity && foodId) await chinaFoodRepository.saveFoodIdentity({ ...identity, foodId: saved.id });
       if (draftId) removeFoodDraft(draftId);
       if (identityDraftId) removeIdentityDraft(identityDraftId);

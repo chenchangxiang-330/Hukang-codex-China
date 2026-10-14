@@ -74,6 +74,7 @@ export default function OcrLabScreen() {
     barcodeAcquiredBy?: string | string[];
     identityDraftId?: string | string[];
     identityFoodId?: string | string[];
+    pendingIdentityId?: string | string[];
   }>();
   const lab = useOcrLab();
   const [viewport, setViewport] = useState({ width: 1, height: 320 });
@@ -95,8 +96,9 @@ export default function OcrLabScreen() {
   const barcodeAcquiredBy = typeof barcodeParams.barcodeAcquiredBy === 'string' ? barcodeParams.barcodeAcquiredBy : undefined;
   const identityDraftId = typeof barcodeParams.identityDraftId === 'string' ? barcodeParams.identityDraftId : undefined;
   const identityFoodId = typeof barcodeParams.identityFoodId === 'string' ? barcodeParams.identityFoodId : undefined;
+  const pendingIdentityId = typeof barcodeParams.pendingIdentityId === 'string' ? barcodeParams.pendingIdentityId : undefined;
   const identityDraft = identityDraftId ? getIdentityDraft(identityDraftId) : null;
-  const nutritionCapture = Boolean(identityDraftId || identityFoodId);
+  const nutritionCapture = Boolean(identityDraftId || identityFoodId || pendingIdentityId);
   const selectedId = selection?.evidenceId === lab.evidence?.id ? selection?.blockId : null;
   const selectBlock = (blockId: string) => {
     if (lab.evidence) setSelection({ evidenceId: lab.evidence.id, blockId });
@@ -210,6 +212,7 @@ export default function OcrLabScreen() {
                   ...(barcodeAcquiredBy ? { barcodeAcquiredBy } : {}),
                   ...(identityDraftId ? { identityDraftId } : {}),
                   ...(identityFoodId ? { identityFoodId } : {}),
+                  ...(pendingIdentityId ? { pendingIdentityId } : {}),
                 } });
               }} />
               <Action title="打开本地食品" onPress={() => router.push('/foods')} />

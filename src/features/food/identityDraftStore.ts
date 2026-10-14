@@ -26,6 +26,21 @@ export interface ProductIdentityDraft {
   allowDomesticLookup: boolean;
 }
 
+export function toFoodIdentity(draft: ProductIdentityDraft, foodId: string, now = new Date().toISOString()): import('../../domain/food/identity').FoodIdentity {
+  const kind = ({ CHINA_SERVICE: 'mainland_service', LOCAL: 'local', MANUAL: 'user' } as const)[draft.sourceKind];
+  return {
+    schemaVersion: 1, foodId, name: draft.name, brand: draft.brand, specification: draft.specification,
+    status: draft.status === 'confirmed' ? 'pending_confirmation' : 'draft',
+    source: {
+      sourceId: draft.sourceId || 'manual',
+      sourceName: draft.sourceKind === 'CHINA_SERVICE' ? '国内商品身份服务' : draft.sourceKind === 'LOCAL' ? '本机食品记录' : '用户填写',
+      kind, sourceRecordId: null, fetchedAt: draft.sourceFetchedAt, obtainedAt: draft.sourceFetchedAt ?? now,
+      policy: { license: null, commercialUse: 'unknown', cache: 'unknown', redistribute: 'unknown', cacheTtlSeconds: null, authorizationReference: null },
+    },
+    confirmedAt: null, updatedAt: now,
+  };
+}
+
 const drafts = new Map<string, ProductIdentityDraft>();
 let sequence = 0;
 

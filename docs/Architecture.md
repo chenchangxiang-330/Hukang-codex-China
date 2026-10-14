@@ -120,6 +120,8 @@ architecture document is not evidence of device execution.
 不可变 OCR 原文、坐标解析候选及营养人工核对历史。确认商品身份不会自动确认营养
 数据，服务商返回的营养字段也不会覆盖用户拍摄的标签。
 
-SQLite `user_version=4` 从 v1/v2/v3 逐步迁移，不清空任何旧表；身份保存和其历史
+SQLite `user_version=5` 从 v1/v2/v3/v4 逐步迁移，不清空任何旧表；身份保存和其历史
 写入同一个事务，并以 `updatedAt` 拒绝过期编辑。身份数据的 `source.policy`
 保留授权、缓存及再分发状态，未知政策不会被推定为允许。
+尚未拍摄营养表的已确认身份暂存于 `food_identity_pending`，它不包含伪造的 OCR
+或营养数据；第一次营养表保存成功后才转入完整食品记录。

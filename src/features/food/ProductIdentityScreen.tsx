@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { IdentityResult } from '../../application/ports/ChinaFoodIdentityProvider';
 import { createConfiguredChinaFoodProvider } from '../../infrastructure/food/providers/ConfiguredChinaFoodProvider';
 import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
-import { confirmIdentityDraft, createIdentityDraft, getIdentityDraft, updateIdentityDraft, type ProductIdentityDraft } from './identityDraftStore';
+import { confirmIdentityDraft, createIdentityDraft, getIdentityDraft, toFoodIdentity, updateIdentityDraft, type ProductIdentityDraft } from './identityDraftStore';
+import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { FoodAction, FoodField, foodColors, foodError, foodStyles } from './ui';
 
 function param(value: string | string[] | undefined): string | undefined {
@@ -35,10 +36,11 @@ function statusText(result: IdentityResult | null): string {
 export default function ProductIdentityScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
-    identityDraftId?: string | string[]; existingFoodId?: string | string[];
+    identityDraftId?: string | string[]; existingFoodId?: string | string[]; pendingIdentityId?: string | string[];
     barcodeRaw?: string | string[]; barcodeFormat?: string | string[]; barcodeGtin?: string | string[]; barcodeLookupKey?: string | string[]; barcodeAcquiredBy?: string | string[];
   }>();
   const existingFoodId = param(params.existingFoodId);
+  const pendingIdentityId = param(params.pendingIdentityId);
   const [draft, setDraft] = useState<ProductIdentityDraft | null>(() => {
     const id = param(params.identityDraftId);
     if (id) return getIdentityDraft(id);
@@ -51,6 +53,8 @@ export default function ProductIdentityScreen() {
   const [querying, setQuerying] = useState(false);
   const [result, setResult] = useState<IdentityResult | null>(null);
   const [queryAttempted, setQueryAttempted] = useState(false);
+  const [savingPending, setSavingPending] = useState(false);
+  const [savePendingError, setSavePendingError] = useState<string | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -79,12 +83,26 @@ export default function ProductIdentityScreen() {
     return () => { active = false; };
   }, [draft?.id, existingFoodId]);
 
+  useEffect(() => {
+    let active = true;
+    if (!draft || !pendingIdentityId) return () => { active = false; };
+    void chinaFoodRepository.getPendingFoodIdentity(pendingIdentityId).then((pending) => {
+      if (!active || !pending) return;
+      const sourceKind = pending.identity.source.kind === 'local' ? 'LOCAL' : pending.identity.source.kind === 'mainland_service' ? 'CHINA_SERVICE' : 'MANUAL';
+      setDraft(updateIdentityDraft(draft.id, {
+        name: pending.identity.name, brand: pending.identity.brand, specification: pending.identity.specification,
+        sourceId: pending.identity.source.sourceId, sourceKind, sourceFetchedAt: pending.identity.source.fetchedAt,
+      }));
+    }).catch(() => { /* The barcode remains usable for manual recovery. */ });
+    return () => { active = false; };
+  }, [draft?.id, pendingIdentityId]);
+
   const patch = (value: Partial<Omit<ProductIdentityDraft, 'id'>>) => {
     if (draft) setDraft(updateIdentityDraft(draft.id, value));
   };
 
   const query = async () => {
-    if (!draft || querying || queryAttempted || existingFoodId) return;
+    if (!draft || querying || queryAttempted || existingFoodId || pendingIdentityId) return;
     if (!allowNetwork) { setResult({ status: 'disabled', message: '国内联网查询已关闭。' }); return; }
     const id = ++requestId.current;
     setQueryAttempted(true);
@@ -108,9 +126,25 @@ export default function ProductIdentityScreen() {
     router.push({ pathname: '/nutrition-capture', params: {
       identityDraftId: confirmed.id,
       ...(existingFoodId ? { identityFoodId: existingFoodId } : {}),
+      ...(pendingIdentityId ? { pendingIdentityId } : {}),
       barcodeRaw: confirmed.barcodeRaw, barcodeFormat: confirmed.barcodeFormat, barcodeGtin: confirmed.barcodeGtin,
       barcodeLookupKey: confirmed.barcodeLookupKey, barcodeAcquiredBy: confirmed.barcodeAcquiredBy,
     } });
+  };
+
+  const saveForLater = async () => {
+    if (!draft || !draft.name.trim() || savingPending) return;
+    setSavingPending(true); setSavePendingError(null);
+    try {
+      const confirmed = confirmIdentityDraft(draft.id);
+      const barcode = normalizeBarcode({ rawValue: confirmed.barcodeRaw, format: confirmed.barcodeFormat, decodedAt: new Date().toISOString() });
+      if (barcode.validity !== 'valid' || !barcode.lookupKey) throw new Error('条码校验已失效，请返回扫码页重新开始。');
+      const id = pendingIdentityId ?? `pending-${confirmed.id}`;
+      const identity = toFoodIdentity(confirmed, id);
+      await chinaFoodRepository.savePendingFoodIdentity({ id, identity, barcode, acquiredBy: confirmed.barcodeAcquiredBy });
+      router.replace('/barcode');
+    } catch (cause) { setSavePendingError(foodError(cause)); }
+    finally { setSavingPending(false); }
   };
 
   if (!draft) return <SafeAreaView style={foodStyles.safe}><Stack.Screen options={{ title: '商品身份' }} /><View style={foodStyles.content}><View style={foodStyles.error}><Text style={foodStyles.errorText}>商品身份草稿已失效，请返回扫码页重新开始。</Text></View><FoodAction title="返回扫码查食品" primary onPress={() => router.replace('/barcode')} /></View></SafeAreaView>;
@@ -145,7 +179,8 @@ export default function ProductIdentityScreen() {
         <Text style={foodStyles.sectionTitle}>下一步</Text>
         <Text style={foodStyles.note}>商品身份和营养标签分开确认。现在确认只锁定商品草稿，营养数值仍必须拍照、OCR 并人工核对。</Text>
         <FoodAction title="确认商品，拍摄营养成分表" primary onPress={openNutrition} disabled={!draft.name.trim()} />
-        <FoodAction title="暂存本次身份，返回扫码" onPress={() => { Alert.alert('身份草稿已保留', '本次商品身份只保留在当前 App 会话中；正式保存需要继续完成营养表核对。', [{ text: '返回扫码', onPress: () => router.replace('/barcode') }]); }} />
+        <FoodAction title={savingPending ? '正在保存商品身份…' : '暂存商品，稍后补营养表'} onPress={() => void saveForLater()} disabled={savingPending || !draft.name.trim()} />
+        {savePendingError ? <Text style={foodStyles.errorText}>{savePendingError}</Text> : null}
       </View>
       <FoodAction title="取消并返回扫码" onPress={() => { requestId.current += 1; router.replace('/barcode'); }} />
     </ScrollView>

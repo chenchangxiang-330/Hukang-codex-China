@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { BarcodeScan, ValidatedBarcode, SupportedBarcodeFormat } from '../../domain/barcode/types';
+import type { PendingFoodIdentity } from '../../domain/food/identity';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { chinaFoodRepository } from '../../infrastructure/food/SQLiteChinaFoodRepository';
 import { hukangBarcode } from '../../infrastructure/barcode/HukangBarcode';
@@ -22,7 +23,7 @@ type LookupRecord = {
   reviewColumns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[];
   columns?: readonly { basisKind?: string; basisRawText?: string; rows?: readonly { label?: string; amount?: string; unit?: string; nrvPercent?: string }[] }[];
 };
-type LookupResult = { status: 'found'; records: readonly LookupRecord[] } | { status: 'not_found' } | { status: 'unavailable'; reason: string };
+type LookupResult = { status: 'found'; records: readonly LookupRecord[] } | { status: 'pending'; pending: PendingFoodIdentity } | { status: 'not_found' } | { status: 'unavailable'; reason: string };
 type BarcodeRepositoryApi = typeof chinaFoodRepository;
 type NativeBarcodeResult = { rawValue?: unknown; format?: unknown; decodedAt?: unknown };
 
@@ -84,9 +85,9 @@ export default function BarcodeScanScreen() {
 
   const lookupLocal = async (next: ValidatedBarcode) => {
     const found = await (chinaFoodRepository as BarcodeRepositoryApi).getFoodByBarcode(next.lookupKey as string);
-    return found
-      ? { status: 'found' as const, records: [found.record] }
-      : { status: 'not_found' as const };
+    if (found) return { status: 'found' as const, records: [found.record] };
+    const pending = await chinaFoodRepository.getPendingFoodIdentityByBarcode(next.lookupKey as string);
+    return pending ? { status: 'pending' as const, pending } : { status: 'not_found' as const };
   };
 
   const submitScan = async (scan: BarcodeScan, source: 'camera' | 'image' | 'manual' = 'manual') => {
@@ -212,6 +213,17 @@ export default function BarcodeScanScreen() {
             {column.rows?.filter(row => row.amount || row.nrvPercent).map((row, rowIndex) => <Text key={`${row.label ?? 'row'}-${rowIndex}`} style={styles.note}>{row.label ?? '营养项目'}：{row.amount || '待确认'} {row.unit && row.unit !== 'unknown' ? row.unit : ''}{row.nrvPercent ? ` · NRV ${row.nrvPercent}%` : ''}</Text>)}
           </View>)}
         </Pressable>)}
+      </View> : null}
+      {lookup?.status === 'pending' ? <View style={styles.card}>
+        <Text style={styles.sectionTitle}>待补营养表的本地商品</Text>
+        <Text style={styles.text}>{lookup.pending.identity.name || '商品名称待填写'}</Text>
+        <Text style={styles.note}>{lookup.pending.identity.brand || '品牌待确认'} · {lookup.pending.identity.specification || '规格待确认'}</Text>
+        <Text style={styles.note}>条码：{lookup.pending.barcode.rawValue} · 商品身份已保存在本机，营养表尚未录入。</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="继续补拍营养成分表" onPress={() => router.push({ pathname: '/identity-confirm', params: {
+          pendingIdentityId: lookup.pending.id, barcodeRaw: lookup.pending.barcode.rawValue, barcodeFormat: lookup.pending.barcode.format,
+          barcodeGtin: normalizeBarcode({ rawValue: lookup.pending.barcode.rawValue, format: lookup.pending.barcode.format, decodedAt: lookup.pending.barcode.scannedAt }).gtin ?? '',
+          barcodeLookupKey: lookup.pending.barcode.lookupKey, barcodeAcquiredBy: lookup.pending.barcode.acquiredBy,
+        } })} style={styles.primary}><Text style={styles.primaryText}>继续拍摄营养成分表</Text></Pressable>
       </View> : null}
       {lookup?.status === 'not_found' ? <View style={styles.card}>
         <Text style={styles.sectionTitle}>本地食品库尚未收录</Text>
