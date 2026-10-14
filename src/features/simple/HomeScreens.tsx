@@ -42,7 +42,7 @@ export function HomeScreens(p: AppController) {
         <Button title="导出食品资料包" onPress={() => exportData('catalogue')} /><Button title="导出个人数据（含库存）" secondary onPress={() => exportData('personal')} />
         <Text style={S.small}>不会自动上传。生成文件后，由你选择保存位置或接收人。当前版本不提供导入还原。</Text>
       </View>
-      <View style={S.card}><Text style={S.rowTitle}>护康 · 本地简易版</Text><Text style={S.note}>0.3.0 · 数据保存在这台设备\n国产 PaddleOCR 识别仅在手机运行。\n删除应用可能删除本机数据，请及时导出。</Text></View>
+      <View style={S.card}><Text style={S.rowTitle}>护康 · 本地简易版</Text><Text style={S.note}>0.3.1 · 数据保存在这台设备\n国产 PaddleOCR 识别仅在手机运行。\n删除应用可能删除本机数据，请及时导出。</Text></View>
     </>}
     {screen === 'library' && <><Field label="搜索食品名称或品牌" value={search} onChange={setSearch} />{foods.filter(f => `${f.name} ${f.brand}`.toLowerCase().includes(search.toLowerCase())).map(renderFood)}{!foods.length && <Text style={S.note}>暂无食品，请先点击「拍一拍」录入。</Text>}</>}
   </>;

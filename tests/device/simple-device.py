@@ -84,7 +84,7 @@ def png_barcode():
  b=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,300,8,0,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b'')
  p=O/'00-barcode.png';p.write_bytes(b);return p
 try:
- apk=Path('artifacts/build/hukang-0.3.0-arm64.apk');inspection=json.loads(Path('artifacts/build/apk-inspection.json').read_text())
+ apks=sorted(Path('artifacts/build').glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];inspection=json.loads(Path('artifacts/build/apk-inspection.json').read_text())
  assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' not in inspection['permissions']
  report['apkSha256']=inspection['sha256'];report['sourceCommit']=Path('artifacts/build/source-commit.txt').read_text().strip()
  run(['root']);time.sleep(1);run(['wait-for-device'])
