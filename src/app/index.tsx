@@ -1,1 +1,1 @@
-export { default } from '../features/ocr-lab/OcrLabScreen';
+export { default } from '../features/simple/SimpleApp';
