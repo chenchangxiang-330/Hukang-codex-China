@@ -22,6 +22,7 @@ android {
 }
 
 dependencies {
+  testImplementation 'junit:junit:4.13.2'
   // ZXing decodes local images and CameraX supplies the live preview/frame
   // stream. Neither path pulls ML Kit, Google Play Services, or network code.
   implementation 'com.google.zxing:core:3.5.3'

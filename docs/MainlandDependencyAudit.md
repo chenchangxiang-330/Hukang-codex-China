@@ -1,20 +1,20 @@
 # Mainland production dependency audit
 
-Scope: Hukang China Phase 0 through Phase 3.1, Android arm64-v8a release, minSdk 26.
-Audit date: 2026-10-13 (UTC).
+Scope: `main` simple local product, Android arm64-v8a, minSdk 26. Audit date: 2026-10-15 (Asia/Shanghai).
 
-**Configured production `FOREIGN_NETWORK_SERVICE` count: 0.** An optional
-`CHINA_SERVICE` boundary now exists for barcode identity only; no provider URL,
-credential or deployment is present in this repository. Final APK Manifest and
-device traffic checks are separate acceptance gates; source configuration alone
-does not prove device behavior.
+**Active `CHINA_SERVICE`: 0. Active `FOREIGN_NETWORK_SERVICE`: 0.**
+Barcode decoding, PP-OCRv5, photos, nutrition parsing, manual review, SQLite,
+drafts, inventory and export all run locally. No provider is instantiated by
+the production route. The final APK must remove both INTERNET and
+ACCESS_NETWORK_STATE. CI inspects its actual Manifest, bundled model hashes,
+JS and resolved release dependency graph. Emulator acceptance disables Wi-Fi/
+mobile data and drops IPv4/IPv6 outbound traffic before executing the app.
 
-The `main` simple product intentionally does not instantiate that historical
-provider boundary. Its normal runtime is local-only: live barcode decoding,
-PaddleOCR, food records, drafts, inventory and export all run on the device.
-The merged Manifest removes both `INTERNET` and `ACCESS_NETWORK_STATE`; the
-provider/server code remains a reference boundary for a future separately
-authorized product and is not a startup or fallback path here.
+Historical provider/server code remains non-runtime reference only; it is not
+a startup dependency, button, fallback, or an enabled domestic service. Future
+activation requires a separate product decision and audit. Developer npm/Maven/
+GitHub downloads and user-directed system sharing are distinct from App runtime
+network requests.
 
 ## Categories
 
@@ -25,7 +25,7 @@ authorized product and is not a startup or fallback path here.
 | `FOREIGN_OFFLINE_LIBRARY` | Foreign-origin code/runtime executing locally, without a required server |
 | `FOREIGN_NETWORK_SERVICE` | Production function depends on a foreign server |
 
-## Runtime inventory
+## Local runtime inventory
 
 JavaScript versions are locked in `package-lock.json`. Android versions below
 include the actual local `releaseRuntimeClasspath` resolution recorded on
@@ -57,13 +57,12 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | Splash/status bar, safe-area and screens | SDK-compatible pinned lockfile | `FOREIGN_OFFLINE_LIBRARY` | Local rendering and lifecycle |
 | `ChinaFoodRepository` / SQLite adapter | `src/infrastructure/food/` | `LOCAL` | Food records, evidence and revisions remain on-device; no provider or cloud sync |
 | `MedicineRepository` | TypeScript contract only | `LOCAL` | No medicine provider or remote lookup implementation |
-| `ConfiguredChinaFoodProvider` + fixed Hukang endpoint | `src/infrastructure/food/providers/`, optional build-time HTTPS origin | `CHINA_SERVICE` | Sends only validated barcode identity fields after user consent; absent endpoint fails closed; supplier key stays server-side |
-| `server/` food identity service | `server/hukang-food-service.mjs` | `CHINA_SERVICE` | Fixed route, request validation, timeout, safe errors and injected vendor adapter; default `NOT_CONFIGURED`, no photos/OCR/food database |
+| Historical `ConfiguredChinaFoodProvider` (inactive) | `src/infrastructure/food/providers/`, optional build-time HTTPS origin | `CHINA_SERVICE` | Sends only validated barcode identity fields after user consent; absent endpoint fails closed; supplier key stays server-side |
+| Historical `server/` identity service (inactive) | `server/hukang-food-service.mjs` | `CHINA_SERVICE` | Fixed route, request validation, timeout, safe errors and injected vendor adapter; default `NOT_CONFIGURED`, no photos/OCR/food database |
 
-There is no configured production `CHINA_SERVICE` yet. Local food records and
-barcode associations are not uploaded to a central database; the optional query
-payload contains only the user-approved barcode identity fields. OCR images,
-OCR text, nutrition records and the local catalog never cross this boundary.
+The two historical CHINA_SERVICE rows are dormant references, excluded from
+active runtime counts. They are not linked from `src/app/index.tsx` or the
+simple product UI. No supplier calls are made by this build.
 
 Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
 barcode implementation declares `com.google.mlkit:barcode-scanning`,

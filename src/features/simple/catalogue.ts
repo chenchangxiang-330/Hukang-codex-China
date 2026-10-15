@@ -1,4 +1,10 @@
 import type { FoodScanRecord } from '../../domain/food/scan';
+/** Old provider-derived identities still require explicit redistribution rights. */
+export function exportableCatalogueRecords(records: readonly FoodScanRecord[]): FoodScanRecord[] {
+  return records.filter(record => record.status === 'confirmed' && (
+    record.identity?.source.kind !== 'mainland_service' || record.identity.source.policy.redistribute === 'allowed'
+  ));
+}
 /** Explicit allowlist: no purchase history, device paths, installation IDs, raw OCR or notes. */
 export function sharedCatalogue(records: readonly FoodScanRecord[], exportedAt: string) {
   return {
@@ -6,7 +12,7 @@ export function sharedCatalogue(records: readonly FoodScanRecord[], exportedAt: 
     format: 'hukang-food-catalogue',
     exportedAt,
     notice: '用户核对的食品包装资料，不是官方营养数据库；不自动授予图片再分发许可。',
-    products: records.filter(r => r.status === 'confirmed').map((record, index) => ({
+    products: exportableCatalogueRecords(records).map((record, index) => ({
       id: `product-${index + 1}`,
       // A portable product/evidence version. It deliberately omits the
       // private SQLite ID and all app-private file paths.

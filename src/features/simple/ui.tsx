@@ -6,8 +6,8 @@ export function Button({ title, onPress, secondary = false, disabled = false }: 
 export function Field({ label, value, onChange, numeric = false, placeholder = '' }: { label: string; value: string; onChange: (s: string) => void; numeric?: boolean; placeholder?: string; }) {
   return <View style={{ gap: 7 }}><Text style={S.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={numeric ? 'decimal-pad' : 'default'} style={S.input} /></View>;
 }
-export function Choices({ value, options, onChange }: { value: string; options: [string, string][]; onChange: (v: string) => void; }) {
-  return <View style={S.wrap}>{options.map(([key, label]) => <Pressable key={key} accessibilityRole="radio" accessibilityState={{ selected: value === key }} accessibilityLabel={label} onPress={() => onChange(key)} style={[S.chip, value === key && S.chipOn]}><Text style={{ color: value === key ? C.white : C.ink, fontSize: 14 }}>{label}</Text></Pressable>)}</View>;
+export function Choices({ value, options, onChange, accessibilityPrefix = '' }: { value: string; options: [string, string][]; onChange: (v: string) => void; accessibilityPrefix?: string; }) {
+  return <View style={S.wrap}>{options.map(([key, label]) => <Pressable key={key} accessibilityRole="radio" accessibilityState={{ selected: value === key }} accessibilityLabel={accessibilityPrefix ? `${accessibilityPrefix} ${label}` : label} onPress={() => onChange(key)} style={[S.chip, value === key && S.chipOn]}><Text style={{ color: value === key ? C.white : C.ink, fontSize: 14 }}>{label}</Text></Pressable>)}</View>;
 }
 export function Check({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void; }) {
   return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: value }} onPress={() => onChange(!value)} style={S.checkRow}><View style={[S.checkbox, value && { backgroundColor: C.teal, borderColor: C.teal }]}><Text style={{ color: 'white' }}>{value ? '✓' : ''}</Text></View><Text style={[S.note, { flex: 1 }]}>{label}</Text></Pressable>;

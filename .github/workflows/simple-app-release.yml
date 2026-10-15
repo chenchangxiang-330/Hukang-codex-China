@@ -8,7 +8,7 @@ concurrency:
   group: simple-apk-main
   cancel-in-progress: false
 permissions:
-  contents: write
+  contents: read
 jobs:
   release:
     runs-on: ubuntu-24.04
@@ -20,23 +20,11 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.sha }}
-      - name: Complete reviewed one-time source integration on main
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f .delivery/integrate-simple.py ]; then
-            python3 .delivery/integrate-simple.py
-            rm .delivery/integrate-simple.py
-            git diff --check
-            git config user.name 'Hukang Build'
-            git config user.email 'hukang-build@users.noreply.github.com'
-            git add android/app/build.gradle android/app/src/main/AndroidManifest.xml android/app/src/main/res/values/strings.xml app.json modules/hukang-barcode/android/build.gradle modules/hukang-barcode/android/src/main/java/com/hukang/barcode/HukangBarcodeModule.kt plugins/withOfflineAndroid.cjs scripts/verify-apk.py src/infrastructure/food/sqliteFoodStore.ts tests/barcode-storage.test.mjs tests/food-identity-storage.test.mjs .delivery/integrate-simple.py
-            git commit -m 'feat: integrate local-only main app, inventory migration and native camera/export'
-            git push origin HEAD:main
-          fi
+          persist-credentials: false
       - name: Record exact built source
         id: source
         run: |
+          test -z "$(git status --porcelain)"
           mkdir -p artifacts
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           git rev-parse HEAD > artifacts/source-commit.txt
@@ -98,8 +86,11 @@ jobs:
               echo "HUKANG_RELEASE_KEY_PASSWORD=$KEY_PASSWORD"
             } >> "$GITHUB_ENV"
             echo protected > artifacts/signing-mode.txt
+          elif [ -n "$KEYSTORE$STORE_PASSWORD$KEY_ALIAS$KEY_PASSWORD" ]; then
+            echo 'Signing configuration is incomplete; refusing to substitute a new signature.' >&2
+            exit 1
           else
-            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang 0.3.1 Test, OU=Local App, O=Hukang, C=CN'
+            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang 0.3.2 Test, OU=Local App, O=Hukang, C=CN'
             echo 'ephemeral-test; cannot promise an in-place update of previous installs' > artifacts/signing-mode.txt
           fi
       - name: Build actual ARM64 release
@@ -107,17 +98,45 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew :app:assembleRelease --no-daemon --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs='-Xmx4g -XX:MaxMetaspaceSize=1g' 2>&1 | tee ../artifacts/gradle-release.log
+      - name: Exercise native barcode decoder with synthetic images
+        working-directory: android
+        run: ./gradlew :hukang-barcode:testReleaseUnitTest --no-daemon --max-workers=2
+      - name: Inspect resolved runtime dependencies
+        working-directory: android
+        run: |
+          set -euo pipefail
+          ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon > ../artifacts/runtime-dependencies.txt
+          if grep -E 'com\.google\.(mlkit|firebase)|com\.google\.android\.gms|camera-mlkit-vision' ../artifacts/runtime-dependencies.txt; then
+            echo 'Forbidden production recognition or Google service dependency' >&2
+            exit 1
+          fi
       - name: Verify APK identity, offline permissions, model hashes and signature
         run: |
           set -euo pipefail
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-0.3.1-arm64.apk
-          python scripts/verify-apk.py artifacts/hukang-0.3.1-arm64.apk --output artifacts/apk-inspection.json
-          sha256sum artifacts/hukang-0.3.1-arm64.apk > artifacts/apk-sha256.txt
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-0.3.2-arm64.apk
+          python scripts/verify-apk.py artifacts/hukang-0.3.2-arm64.apk --output artifacts/apk-inspection.json
+          sha256sum artifacts/hukang-0.3.2-arm64.apk > artifacts/apk-sha256.txt
+      - name: Publish small build inspection evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: build-inspection-${{ steps.source.outputs.sha }}
+          path: |
+            artifacts/apk-inspection.json
+            artifacts/apk-sha256.txt
+            artifacts/final-manifest.txt
+            artifacts/source-commit.txt
+            artifacts/signing-mode.txt
+            artifacts/official-model-acquisition.json
+            artifacts/tests.txt
+            artifacts/runtime-dependencies.txt
+          if-no-files-found: error
+          retention-days: 14
       - name: Publish complete APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: hukang-0.3.1-${{ steps.source.outputs.sha }}
+          name: hukang-0.3.2-${{ steps.source.outputs.sha }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 14

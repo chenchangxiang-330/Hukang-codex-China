@@ -130,3 +130,31 @@ test('nutrition evidence and edited identity commit together', async () => {
   assert.equal((await store.getFood(first.id)).evidence.id, 'evidence-atomic');
   database.close();
 });
+
+test('synthetic v5 database migrates to v6 without changing food, OCR or revision snapshots', async () => {
+  const database = new DatabaseSync(':memory:');
+  const files = {
+    async materialize(input) { return { sourceEvidence: input.evidence, evidence: input.evidence, parsed: input.parsed, folderUri: `food://${input.id}` }; },
+    async validateStored() {}, async writeRevision() {}, async removeRevision() {}, async removeFood() {},
+  };
+  let clock = '2026-10-15T00:00:01.000Z';
+  const driver = driverFor(database);
+  const original = createSQLiteFoodStore(driver, files, () => clock, () => 'migration');
+  const saved = await original.saveFood(record());
+  clock = '2026-10-15T00:00:02.000Z';
+  await original.saveFood({ ...saved, review: { ...saved.review, name: '旧版食品及人工修订' } });
+  // Synthetic schema fixture only; never described as an installed historical APK.
+  database.exec('DROP TABLE simple_inventory; DROP TABLE simple_product_photos; DROP TABLE simple_capture_drafts; PRAGMA user_version=5;');
+  const tables = ['foods','food_evidence','food_evidence_versions','food_revisions'];
+  const before = tables.map(name => database.prepare(`SELECT * FROM ${name}`).all());
+  const upgraded = createSQLiteFoodStore(driver, files, () => clock, () => 'after-migration');
+  assert.equal((await upgraded.getFood(saved.id)).review.name, '旧版食品及人工修订');
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
+  assert.deepEqual(tables.map(name => database.prepare(`SELECT * FROM ${name}`).all()), before);
+  clock = '2026-10-15T00:00:03.000Z';
+  const edited = await upgraded.saveFood({ ...(await upgraded.getFood(saved.id)), review: { ...saved.review, name: '迁移后仍可编辑' } });
+  assert.equal(edited.review.name, '迁移后仍可编辑');
+  assert.equal(edited.revisions.length, 3);
+  assert.deepEqual(database.prepare('SELECT * FROM food_evidence').all(), before[1]);
+  database.close();
+});

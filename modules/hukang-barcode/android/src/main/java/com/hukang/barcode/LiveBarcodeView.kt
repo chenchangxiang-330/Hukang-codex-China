@@ -13,13 +13,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.BinaryBitmap
-import com.google.zxing.DecodeHintType
-import com.google.zxing.MultiFormatReader
-import com.google.zxing.NotFoundException
-import com.google.zxing.PlanarYUVLuminanceSource
-import com.google.zxing.common.HybridBinarizer
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
@@ -45,6 +38,7 @@ class LiveBarcodeView(context: Context, appContext: AppContext) : ExpoView(conte
   private var torch = false
   private val delivered = AtomicBoolean(false)
   private var lastFrame = 0L
+  private var lastAmbiguity = 0L
   init {
     addView(previewView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     previewView.setOnTouchListener { _, event ->
@@ -113,57 +107,24 @@ class LiveBarcodeView(context: Context, appContext: AppContext) : ExpoView(conte
         val offset = start + y * plane.rowStride + x * plane.pixelStride
         if (offset < buffer.limit()) bytes[y * width + x] = buffer.get(offset)
       }
-      val reader = MultiFormatReader().apply {
-        setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E), DecodeHintType.TRY_HARDER to true))
+      val rotation = ((image.imageInfo.rotationDegrees % 360) + 360) % 360
+      val results = FoodBarcodeDecoder.decode(bytes, width, height, rotation)
+      if (results.size > 1) {
+        // Stay in the scanner, never look up or bind an arbitrary first code.
+        // Throttle the warning separately so a busy frame cannot flood JS.
+        if (time - lastAmbiguity >= 1500) {
+          lastAmbiguity = time
+          post { if (enabled && token == epoch && isAttachedToWindow) onError(mapOf("message" to "发现多个不同条码，请只保留一个商品条码在镜头中。")) }
+        }
+        return
       }
-      // CameraX keeps the sensor buffer in its native orientation and reports
-      // the display correction separately.  Decode the corrected orientation
-      // first, then try the other right-angle orientations for devices or
-      // labels that arrive rotated relative to the preview.  Using the
-      // reported value is important: the previous raw/+90-only loop failed
-      // when CameraX reported 180 or 270 degrees (for example after a
-      // landscape orientation change).
-      val cameraRotation = ((image.imageInfo.rotationDegrees % 360) + 360) % 360
-      val rotations = listOf(cameraRotation, 0, 90, 180, 270).distinct()
-      for (rotation in rotations) {
-        val oriented = rotateLuma(bytes, width, height, rotation)
-        try {
-          val source = PlanarYUVLuminanceSource(oriented.data, oriented.width, oriented.height, 0, 0, oriented.width, oriented.height, false)
-          val result = reader.decodeWithState(BinaryBitmap(HybridBinarizer(source)))
-          if (result.text.isNotBlank() && delivered.compareAndSet(false, true)) {
-            post { if (enabled && token == epoch && isAttachedToWindow) onBarcode(mapOf("rawValue" to result.text, "format" to result.barcodeFormat.name)) }
-          }
-          break
-        } catch (_: NotFoundException) {
-        } finally { reader.reset() }
+      val result = results.singleOrNull() ?: return
+      if (delivered.compareAndSet(false, true)) {
+        post { if (enabled && token == epoch && isAttachedToWindow) onBarcode(mapOf("rawValue" to result.text, "format" to result.barcodeFormat.name)) }
       }
     } catch (_: Exception) {
       // An undecodable frame is not an application failure; try the next frame.
     } finally { image.close() }
   }
 
-  private data class LumaFrame(val data: ByteArray, val width: Int, val height: Int)
-
-  /** Rotate a tightly packed Y plane without introducing an image dependency. */
-  private fun rotateLuma(data: ByteArray, width: Int, height: Int, degrees: Int): LumaFrame {
-    return when (degrees) {
-      0 -> LumaFrame(data, width, height)
-      90 -> LumaFrame(ByteArray(data.size).also { output ->
-        for (y in 0 until height) for (x in 0 until width) {
-          output[x * height + (height - 1 - y)] = data[y * width + x]
-        }
-      }, height, width)
-      180 -> LumaFrame(ByteArray(data.size).also { output ->
-        for (y in 0 until height) for (x in 0 until width) {
-          output[(height - 1 - y) * width + (width - 1 - x)] = data[y * width + x]
-        }
-      }, width, height)
-      270 -> LumaFrame(ByteArray(data.size).also { output ->
-        for (y in 0 until height) for (x in 0 until width) {
-          output[(width - 1 - x) * height + y] = data[y * width + x]
-        }
-      }, height, width)
-      else -> error("Unsupported camera rotation: $degrees")
-    }
-  }
 }

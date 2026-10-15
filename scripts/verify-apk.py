@@ -25,6 +25,10 @@ permissions = run("aapt2", "dump", "permissions", apk)
 badging = run("aapt2", "dump", "badging", apk)
 manifest = run("aapt2", "dump", "xmltree", apk, "--file", "AndroidManifest.xml")
 errors = []
+app_config = json.loads((ROOT / "app.json").read_text())["expo"]
+package = re.search(r"^package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging, re.MULTILINE)
+if package is None or package.groups() != (app_config['android']['package'], str(app_config['android']['versionCode']), app_config['version']):
+    errors.append("APK applicationId/version does not match the committed app.json")
 extraction = re.search(r'android:extractNativeLibs[^=\n]*=(true|false)', manifest)
 extract_native_libs = extraction is not None and extraction.group(1) == 'true'
 if not extract_native_libs:
@@ -127,6 +131,9 @@ report = {
     "apk": str(apk), "bytes": apk.stat().st_size,
     "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
     "nativeAbis": native_abis, "permissions": permissions, "badging": badging,
+    "applicationId": package.group(1) if package else None,
+    "versionCode": int(package.group(2)) if package else None,
+    "versionName": package.group(3) if package else None,
     "extractNativeLibs": extract_native_libs, "nativeLibraries": native_libraries,
     "bundledModels": assets, "signatureVerification": signature,
     "certificateSha256Digests": certificate_digests,

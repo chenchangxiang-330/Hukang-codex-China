@@ -1,47 +1,48 @@
-# Hukang China — Phase 3.1 architecture
+# Hukang China — main 简易本地版架构
 
-本轮边界：条码身份查询可选走 Hukang 控制的国内 HTTPS 服务；条码解码、PaddleOCR、营养表解析、人工核对、SQLite 食品记录和修订历史始终在本机。没有云 OCR、在线 AI、药品、账号、云同步或海外业务服务。商品查询默认关闭、按次明确启用，服务未配置时不影响离线流程。
+当前产品只查询用户自己的食品库。`codex/mainland-v2` 保留技术参考历史；旧 Provider 和 `server/` 仅为未启用的参考代码，不在入口、导航、扫码兜底或启动链路中。
 
-## Current execution path
+## 用户和数据流程
 
 ```text
-Expo Router / OCR Lab screen
-  → OCR Lab use cases
-  → local image + OCR adapter
-  → custom Expo Kotlin module
-  → image preparation / bundled PaddleOCR / ONNX Runtime CPU
-  → immutable OCR evidence + geometry parser
-  → Food Review + SQLite local repository + barcode association
-
-Barcode miss (only after local lookup)
-  → explicit user consent
-  → fixed Hukang HTTPS `/v1/food-identity/lookup` (barcode fields only)
-  → identity candidate → user confirmation
-  → local nutrition photo/OCR/review → SQLite identity + evidence transaction
+Expo Router → SimpleApp（今日 / 库存 / 我的）
+  → 拍一拍 → CameraX 实时取景 / 相册 → ZXing 本地解码
+  → BarcodeNormalizer / Validator → ChinaFoodRepository（SQLite）
+      命中 → 商品详情 → 用户确认本次购买数量 → 独立库存批次
+      未命中 → 持久草稿 → 包装正面 + 可编辑名称/品牌/规格
+              → 营养照片 → EXIF 修复 / 旋转 / 矩形裁剪
+              → bundled PP-OCRv5 → 坐标解析 → 人工核对
+              → 不可变证据 + 食品/条码事务 → 封面附加/草稿清理
+  → 我的 → 本地 JSON/ZIP → 用户主动选择系统分享接收方
 ```
 
-React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
-`package-lock.json` 锁定。Android minSdk 26，首版只构建 arm64-v8a。
-自定义 Kotlin 模块必须通过自建 APK 使用，不支持用 Expo Go 代替本地 OCR。
+React Native 0.86.3、Expo 57.0.27、TypeScript 6，依赖补丁锁定于 `package-lock.json`。
+Android minSdk 26，仅 `arm64-v8a`。模型与 JS 随包提供；Release 移除 `INTERNET` 和 `ACCESS_NETWORK_STATE`，禁止自动下载、遥测和远程更新。Expo Go 不能替代此原生 APK。
 
-## Domain and adapter boundaries
+## 代码职责
 
-| Directory | Responsibility |
+| 路径 | 职责 |
 | --- | --- |
-| `src/app/` | Expo Router route entry; no OCR model or food provider logic |
-| `src/features/ocr-lab/` | Phase 1 image selection, rectangular crop, results and measurements |
-| `src/application/usecases/` | Coordinate local image operations and recognition |
-| `src/application/ports/` | Replaceable OCR, scanner, food and medicine boundaries |
-| `src/domain/ocr/` | Image transforms and immutable raw OCR contracts |
-| `src/domain/evidence/` | Field provenance and data-use permissions |
-| `src/domain/food/` | Mainland label-compatible food data model, not parser implementation |
-| `src/domain/medicine/` | Independent drug model; no shared generic Product |
-| `src/infrastructure/ocr/` | Custom Kotlin module adapter; no remote fallback |
-| `src/infrastructure/food/` | Local SQLite food adapter, evidence and revision storage |
-| `modules/hukang-vision/android/` | Local image processing and Paddle OCR inference |
-| `modules/hukang-barcode/android/` | CameraX 1.4.2 live preview plus ZXing core 3.5.3 decoding for EAN-13/EAN-8/UPC-A/UPC-E; image path accepts local URI only |
-| `models/paddleocr/v5-mobile/` | Fixed model artifacts and paired configs; see model manifest |
-| `tests/fixtures/china-food/` | Real-photo fixture plan and independently stored outputs |
+| `src/app/` | 唯一生产路由，进入 SimpleApp |
+| `src/features/simple/` | 连续采集、照片调整、人工核对、商品/库存页面、持久草稿及导出 |
+| `src/domain/barcode/` | 字符串条码、校验位、UPC-E 展开与 GTIN 等价键 |
+| `src/domain/food/` | OCR 坐标行列关联、未知字段、人工核对及食品模型 |
+| `src/domain/inventory/` | 包装数量、到期日校验；不同单位不混加 |
+| `src/application/usecases/` | 本地图片与 OCR 编排 |
+| `src/infrastructure/food/` | SQLite v6、证据文件、条码关联、修订历史 |
+| `modules/hukang-vision/android/` | 图片处理、ONNX Runtime/OpenCV、固定国产 PP-OCRv5 |
+| `modules/hukang-barcode/android/` | CameraX/ZXing、歧义条码拒绝、本地 ZIP 创建 |
+| `src/features/ocr-lab/` | 旧诊断技术参考；不是普通用户入口 |
+| `tests/device/` | 安装真实 Release APK 的黑盒离线验收，测试样本不进生产库 |
+
+## 数据与恢复
+
+商品和库存是独立结构。同一条码的再次购买只新增库存批次，不复制食品或运行 OCR。
+数据库沿用 `hukang-china-food.db`，schema 1–5 增量到 6，保留历史证据。
+新照片在推理前持久化；原图不改写，调整生成新处理图。OCR 失败可调整、重试或保存未确认草稿。
+食品与条码由既有事务保存；封面和草稿清理由后续事务处理，失败保留原 ID 和草稿，重试保留最新人工修正。库存仍引用食品时禁止删除食品。
+
+食品资料包通过白名单只输出已确认商品资料，默认不带照片，不含库存；个人导出明确包含库存与证据。所有导出在本机进行，不具有 App 内一键恢复能力。
 
 ## OCR evidence invariants
 
@@ -60,78 +61,5 @@ React Native 0.86.3、Expo 57.0.27、TypeScript 6；实际补丁版本由
 - Model loading, OCR and total timing use native measurements. Sampled memory
   maxima are labelled as observations, not absolute peak RSS.
 
-## Food lookup boundary
 
-```text
-BarcodeScanner → raw barcode + format
-  → `modules/hukang-barcode` (CameraX live frames or ZXing local image decode)
-  → independent GTIN validation
-  → ChinaFoodRepository
-      → LocalChinaFoodSource
-      → optional explicitly authorized mainland identity provider
-      → package photos + OCR + user confirmation on lookup miss
-```
-
-`ChinaFoodRepository` always runs first. `ConfiguredChinaFoodProvider` accepts only
-a build-time Hukang HTTPS origin and sends the validated raw barcode, GTIN, lookup
-key and format; it never accepts an upstream URL, vendor key, image, OCR text or
-food record. In-flight requests are deduplicated and stale responses are dropped.
-The server keeps any supplier credential in deployment secrets and fails closed
-when it is not configured. Provider responses are transient until the user
-confirms the identity; unknown cache rights are rejected by SQLite.
-The ZXing image decoder accepts only local URIs. `expo-camera` is deliberately absent:
-its Android scanner adds ML Kit and Google Play Services. The custom module uses
-CameraX camera2/lifecycle/view 1.4.2 for a native live preview and sends its Y-plane
-frames directly to ZXing, without `camera-mlkit-vision`, GMS or network code. The
-live analyzer handles CameraX's 0/90/180/270 degree corrections and releases the
-camera when the scanner leaves the foreground. Camera permission is declared, but
-physical preview execution remains separately verified: current evidence used an
-Android emulator and album/synthetic-barcode decoding, not OPPO hardware.
-
-Food records preserve leading zeros, packaging versions, Chinese name, brand,
-category, specification, ingredients, images, provenance and timestamps.
-Nutrition supports multiple per-100g, per-100mL and per-serving columns, energy
-in its printed unit (kJ first), independent NRV%, sugar and saturated fat, and
-2011/2025 label standards. Unknown quantities are not zero. No value is inferred
-from NRV% or an unrelated food average. Conversions, when implemented, must be
-separate derived records with sufficient serving evidence.
-
-The only shared food/medicine types are field evidence and permission wrappers.
-Medicine identity, approval verification and packaging have their own model and
-repository. A formatted approval-number candidate is not official validation.
-
-## Migration discipline
-
-Old repositories remain read-only. This phase copies the verified original
-`assets/icon.png` and uses small, reviewed image-processing rules. No old app,
-generic Product schema, providers, API keys, UI directories, seed data, ML Kit,
-OFF/Wikidata, or Vision/AI integration is copied.
-
-The Paddle Android engine is adapted from its fixed official source baseline;
-its license and source attribution remain in the native module. Runtime/model
-versions are detailed separately in `OcrModelManifest.md`.
-
-Build, installation, real-photo results and release Manifest claims require
-actual artifacts. Their status is recorded in the acceptance report; this
-architecture document is not evidence of device execution.
-
-## Product identity versus nutrition
-
-商品身份和营养标签是两条独立的本地记录链。`food_identity` 保存条码查询得到
-的名称、品牌、规格、来源、获取时间和 `draft` / `pending_confirmation` /
-`confirmed` 状态；`food_identity_revisions` 保存每次供应商结果或用户编辑的快照。
-现有 `food_evidence`、`parsed-nutrition.json` 和 `food_revisions` 继续保存原图、
-不可变 OCR 原文、坐标解析候选及营养人工核对历史。确认商品身份不会自动确认营养
-数据，服务商返回的营养字段也不会覆盖用户拍摄的标签。
-
-SQLite `user_version=6` 从 v1/v2/v3/v4/v5 逐步迁移，不清空任何旧表；身份保存和其历史
-写入同一个事务，并以 `updatedAt` 拒绝过期编辑。身份数据的 `source.policy`
-保留授权、缓存及再分发状态，未知政策不会被推定为允许。
-尚未拍摄营养表的已确认身份暂存于 `food_identity_pending`，它不包含伪造的 OCR
-或营养数据；第一次营养表保存成功后才转入完整食品记录。
-
-v5 → v6 另外创建 `simple_product_photos`、`simple_capture_drafts` 和
-`simple_inventory`，为简易本地产品流程保存封面照片引用、可恢复录入草稿和独立
-购买库存。迁移保留 v5 的食品、条码、身份、OCR 证据及修订历史；库存以外键引用
-食品，删除仍有库存的食品会被拒绝。草稿和照片的清理属于可重试的后续步骤，不会
-通过清库或重建旧表处理升级。
+设备证据见最新简易版验收记录。实现、主机测试、模拟器黑盒测试与 OPPO 物理相机实测必须分开标注。

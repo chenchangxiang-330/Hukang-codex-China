@@ -14,12 +14,13 @@ permissions:
   actions: read
 jobs:
   device:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -29,13 +30,20 @@ jobs:
           run-id: ${{ inputs.build_run || github.event.workflow_run.id }}
           github-token: ${{ github.token }}
       - name: Check exact binary before starting emulator
+        env:
+          EXPECTED_BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python3 - <<'PY'
           import hashlib,json
           from pathlib import Path
           root=Path('artifacts/build');apks=sorted(root.glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];check=json.loads((root/'apk-inspection.json').read_text())
           assert apk.is_file() and hashlib.sha256(apk.read_bytes()).hexdigest()==check['sha256']
-          assert not check['errors'] and 'android.permission.INTERNET' not in check['permissions']
+          assert not check['errors']
+          assert all(p not in check['permissions'] for p in ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'])
+          import os
+          source=(root/'source-commit.txt').read_text().strip()
+          expected=os.environ.get('EXPECTED_BUILD_SHA')
+          assert not expected or source==expected, (source, expected)
           print('APK source:',(root/'source-commit.txt').read_text()); print('APK SHA256:',check['sha256'])
           PY
       - name: Enable emulator acceleration

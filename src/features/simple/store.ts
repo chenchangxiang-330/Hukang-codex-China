@@ -4,10 +4,11 @@ import type { FoodScanRecord, FoodReviewValues } from '../../domain/food/scan';
 import type { ImageAsset, OcrEvidence } from '../../domain/ocr/types';
 import type { ValidatedBarcode, BarcodeAcquisitionMethod } from '../../domain/barcode/types';
 import { parseQuantity, validateExpiry } from '../../domain/inventory/rules';
+import { persistCapturedFood } from './captureRecovery';
 export interface CaptureDraft {
   id: string; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod;
   step: 'package' | 'nutrition' | 'review'; name: string; brand: string; specification?: string;
-  packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutrition?: OcrEvidence; review?: FoodReviewValues;
+  packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutritionImage?: ImageAsset; nutrition?: OcrEvidence; review?: FoodReviewValues;
 }
 export interface StockEntry {
   id: string; food_id: string; name: string; brand: string; quantity: number; unit: string; expires_on: string | null; created_at: string;
@@ -26,8 +27,16 @@ export async function db(): Promise<SQLiteDatabase> {
   })().catch(error => { connection = undefined; throw error; });
   return connection;
 }
-export async function saveDraft(draft: CaptureDraft): Promise<void> {
-  await (await db()).runAsync('INSERT INTO simple_capture_drafts(id,json,updated_at) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json,updated_at=excluded.updated_at', draft.id, JSON.stringify(draft), new Date().toISOString());
+let draftWrites: Promise<void> = Promise.resolve();
+const completedDrafts = new Set<string>();
+export function saveDraft(draft: CaptureDraft): Promise<void> {
+  const json = JSON.stringify(draft);
+  const write = draftWrites.then(async () => {
+    if (completedDrafts.has(draft.id)) return;
+    await (await db()).runAsync('INSERT INTO simple_capture_drafts(id,json,updated_at) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json,updated_at=excluded.updated_at', draft.id, json, new Date().toISOString());
+  });
+  draftWrites = write.catch(() => undefined);
+  return write;
 }
 export async function lastDraft(): Promise<CaptureDraft | null> {
   const row = await (await db()).getFirstAsync<{ json: string }>('SELECT json FROM simple_capture_drafts ORDER BY updated_at DESC LIMIT 1');
@@ -43,13 +52,14 @@ export async function getPackage(foodId: string): Promise<ImageAsset | null> {
 /** Food and barcode commit together in the evidence repository. The persistent draft
  * remains until cover attachment succeeds; retry uses the same ID after interruption. */
 export async function finishFood(record: FoodScanRecord, draft: CaptureDraft): Promise<FoodScanRecord> {
-  const existing = await chinaFoodRepository.getFood(record.id);
-  const saved = existing ?? (await chinaFoodRepository.saveFood(record));
+  const saved = await persistCapturedFood(chinaFoodRepository, record);
+  await draftWrites;
   await (await db()).withExclusiveTransactionAsync(async transaction => {
     if (draft.packageImage) await transaction.runAsync('INSERT INTO simple_product_photos(food_id,json,ocr_json) VALUES(?,?,?) ON CONFLICT(food_id) DO UPDATE SET json=excluded.json,ocr_json=excluded.ocr_json', saved.id, JSON.stringify(draft.packageImage), draft.packageOcr ? JSON.stringify(draft.packageOcr) : null);
     await transaction.runAsync('DELETE FROM simple_capture_drafts WHERE id=?', draft.id);
     if (draft.barcode.lookupKey) await transaction.runAsync('DELETE FROM food_identity_pending WHERE lookup_key=?', draft.barcode.lookupKey);
   });
+  completedDrafts.add(draft.id);
   return saved;
 }
 export async function listStock(): Promise<StockEntry[]> {

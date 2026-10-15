@@ -12,6 +12,7 @@ import { parseNutritionLabel } from '../../domain/food/parseNutrition';
 import { createFoodReview, validateFoodReview } from '../../domain/food/review';
 import { draftForBarcode, finishFood, getPackage, lastDraft, listStock, newId, saveDraft, type CaptureDraft, type StockEntry } from './store';
 import { exportLocal } from './Export';
+import type { BoundingBox, ImageAsset } from '../../domain/ocr/types';
 export type Tab = 'today' | 'stock' | 'mine';
 export type Screen = 'home' | 'scan' | 'package' | 'nutrition' | 'review' | 'product' | 'add-stock' | 'library';
 export const labels = ['能量', '蛋白质', '脂肪', '碳水化合物', '钠'];
@@ -28,6 +29,7 @@ export function useSimpleApp() {
   const [resume, setResume] = useState<CaptureDraft | null>(null), [draft, setDraft] = useState<CaptureDraft | null>(null);
   const [editing, setEditing] = useState<FoodScanRecord | null>(null);
   const [product, setProduct] = useState<FoodScanRecord | null>(null), [cover, setCover] = useState<string | null>(null);
+  const [stockCovers, setStockCovers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(''), [error, setError] = useState<string | null>(null), [notice, setNotice] = useState<string | null>(null);
   const [permission, setPermission] = useState(false), [foreground, setForeground] = useState(true), [torch, setTorch] = useState(false);
   const [scanToken, setScanToken] = useState(0), [manual, setManual] = useState(''), [manualFormat, setManualFormat] = useState('EAN_13');
@@ -39,7 +41,8 @@ export function useSimpleApp() {
   const running = useRef(false), generation = useRef(0), mounted = useRef(true), draftRef = useRef<CaptureDraft | null>(null);
   const refresh = useCallback(async () => {
     const [f, s, d] = await Promise.all([chinaFoodRepository.listFoods(), listStock(), lastDraft()]);
-    if (mounted.current) { setFoods(f); setStock(s); setResume(d); }
+    const covers = await Promise.all([...new Set(s.map(item => item.food_id))].map(async id => [id, (await getPackage(id))?.uri] as const));
+    if (mounted.current) { setFoods(f); setStock(s); setResume(d); setStockCovers(Object.fromEntries(covers.filter((entry): entry is readonly [string, string] => !!entry[1]))); }
   }, []);
   useEffect(() => {
     mounted.current = true;
@@ -75,7 +78,7 @@ export function useSimpleApp() {
     await task('正在打开商品', async () => {
       const f = await chinaFoodRepository.getFood(id);
       if (!f) throw new Error('商品不存在或已经删除。');
-      setProduct(f); setCover((await getPackage(id))?.uri ?? f.evidence.image.uri); navigate('product');
+      setProduct(f); setCover((await getPackage(id))?.uri ?? null); navigate('product');
     });
   }
   const lookup = async (rawValue: string, format: string, source: BarcodeAcquisitionMethod) => {
@@ -86,12 +89,17 @@ export function useSimpleApp() {
       if (validated.validity !== 'valid' || !validated.lookupKey) throw new Error('条码未通过校验，请重新对准条码或核对数字与格式。');
       const found = await chinaFoodRepository.getFoodByBarcode(validated.lookupKey);
       if (token !== generation.current) return;
-      if (found) {
-        setProduct(found.record); setCover((await getPackage(found.record.id))?.uri ?? found.record.evidence.image.uri); navigate('product'); return;
-      }
       const savedDraft = await draftForBarcode(validated.lookupKey);
-      if (savedDraft?.barcode.lookupKey === validated.lookupKey) {
-        draftRef.current = savedDraft; setDraft(savedDraft); setReview(savedDraft.review ?? null); navigate(savedDraft.step); return;
+      if (token !== generation.current) return;
+      // A failed cover attachment can leave a food row plus its recovery draft.
+      // Resume that exact draft instead of silently abandoning the cover/review.
+      if (savedDraft && (!found || found.record.id === savedDraft.id)) {
+        draftRef.current = savedDraft; setDraft(savedDraft); setReview(savedDraft.review ?? null); setConfirmed(false); navigate(savedDraft.step); return;
+      }
+      if (found) {
+        const image = await getPackage(found.record.id);
+        if (token !== generation.current) return;
+        setProduct(found.record); setCover(image?.uri ?? null); navigate('product'); return;
       }
       const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'package', name: '', brand: '', specification: '' };
       await retainDraft(next); setReview(null); setConfirmed(false); navigate('package');
@@ -100,7 +108,7 @@ export function useSimpleApp() {
   async function startScan() {
     if (resume) {
       Alert.alert('有一条尚未完成的食品', '可以继续补录，也可以保留草稿并扫描其他商品。', [
-        { text: '继续补录', onPress: () => { draftRef.current = resume; setDraft(resume); setReview(resume.review ?? null); navigate(resume.step); } },
+        { text: '继续补录', onPress: () => { draftRef.current = resume; setDraft(resume); setReview(resume.review ?? null); setConfirmed(false); navigate(resume.step); } },
         { text: '扫描其他商品', onPress: () => void beginScan() }, { text: '取消', style: 'cancel' }
       ]); return;
     }
@@ -131,12 +139,43 @@ export function useSimpleApp() {
       if (p.canceled || !p.assets[0]) return;
       const image = await hukangVision.prepareImage(p.assets[0].uri);
       if (which === 'package') { const next = { ...draftRef.current, packageImage: image }; delete next.packageOcr; await retainDraft(next); return; }
-      const evidence = await recognizeAndCapture(image), parsed = parseNutritionLabel(evidence.ocr), values = createFoodReview(parsed);
-      if (!values.columns.length) values.columns = [blankColumn()];
-      values.name = draftRef.current.name; values.brand = draftRef.current.brand;
-      values.specification = draftRef.current.specification ?? '';
-      const next = { ...draftRef.current, nutrition: evidence, review: values, step: 'review' as const };
-      await retainDraft(next); setReview(values); setConfirmed(false); navigate('review');
+      // Persist prepared pixels before inference: an OCR failure must not lose
+      // the photo, and users can rotate/crop it before retrying.
+      await retainDraft({ ...draftRef.current, nutritionImage: image, step: 'nutrition' });
+      await recognizeNutritionImage(image);
+    });
+  }
+  async function recognizeNutritionImage(image: ImageAsset) {
+    const current = draftRef.current;
+    if (!current) throw new Error('食品草稿已关闭，请重新打开。');
+    const evidence = await recognizeAndCapture(image), parsed = parseNutritionLabel(evidence.ocr), values = createFoodReview(parsed);
+    if (draftRef.current?.id !== current.id) return;
+    if (!values.columns.length) values.columns = [blankColumn()];
+    values.name = current.name; values.brand = current.brand; values.specification = current.specification ?? '';
+    await retainDraft({ ...current, nutritionImage: image, nutrition: evidence, review: values, step: 'review' });
+    setReview(values); setConfirmed(false); navigate('review');
+  }
+  async function transformNutrition(rotation: number, crop: BoundingBox | null) {
+    await task('正在调整营养表照片', async () => {
+      const current = draftRef.current, image = current?.nutritionImage ?? current?.nutrition?.image;
+      if (!current || !image) throw new Error('请先选择营养表照片。');
+      const transformed = await hukangVision.transformImage(image, rotation, crop);
+      await retainDraft({ ...current, nutritionImage: transformed, step: 'nutrition' });
+      setConfirmed(false);
+    });
+  }
+  async function retryNutrition() {
+    await task('正在离线识别营养表', async () => {
+      const image = draftRef.current?.nutritionImage ?? draftRef.current?.nutrition?.image;
+      if (!image) throw new Error('请先选择营养表照片。');
+      await recognizeNutritionImage(image);
+    });
+  }
+  async function saveCaptureDraft() {
+    await task('正在保存草稿', async () => {
+      if (!draftRef.current || editing) return;
+      await retainDraft({ ...draftRef.current, step: screen as CaptureDraft['step'], ...(review ? { review } : {}) });
+      navigate('home'); setNotice('草稿已保存在本机，可在首页继续录入。尚未确认成食品资料。');
     });
   }
   async function readPackage() {
@@ -151,7 +190,7 @@ export function useSimpleApp() {
     setReview(next);
     // Keep the package-step draft in sync so going back and re-capturing the
     // nutrition label does not restore a stale specification.
-    patchDraft({ review: next, specification: next.specification ?? '' });
+    patchDraft({ review: next, name: next.name, brand: next.brand, specification: next.specification ?? '' });
     setConfirmed(false);
   };
   const updateColumn = (id: string, patch: Partial<NutritionReviewColumn>) => {
@@ -185,12 +224,12 @@ export function useSimpleApp() {
   }
   function showStock() { setQuantity('1'); setUnit('件'); setExpiry(''); setRequest(newId('stock')); navigate('add-stock'); }
   function exportData(kind: 'catalogue' | 'personal') {
-    Alert.alert(kind === 'catalogue' ? '导出食品资料包' : '导出个人数据', kind === 'catalogue' ? `仅导出已确认商品的名称、条码和营养资料，不含个人库存和购买时间。${photos ? '包含包装照片；分享前请确认照片没有人物或私人信息。' : '本次不包含照片。'}` : '包含个人库存数量、到期日和食品修订资料。仅分享给你信任的人。本版本尚无 App 内导入还原功能。', [
+    Alert.alert(kind === 'catalogue' ? '导出食品资料包' : '导出个人数据', kind === 'catalogue' ? `仅导出已确认商品的名称、条码和营养资料，不含个人库存和购买时间。${photos ? '包含包装和营养表照片；分享前请确认照片没有人物或私人信息。' : '本次不包含照片。'}` : `包含食品、库存数量、到期日、草稿、OCR 原文、初始解析和修订记录。${photos ? '附带原始照片，可能包含定位等私人信息。' : '本次不包含照片。'}仅分享给你信任的人。当前可导出，尚不支持 App 内一键恢复。`, [
       { text: '取消', style: 'cancel' }, { text: '生成文件', onPress: () => void task('正在生成本地导出文件', async () => { const file = await exportLocal(kind, photos); setNotice(`已生成 ZIP（${(file.bytes / 1048576).toFixed(1)} MB），可通过系统分享保存或发送。`); }) }
     ]);
   }
   const stepTitle = screen === 'package' ? '拍商品包装' : screen === 'nutrition' ? '拍营养成分表' : screen === 'review' ? '核对营养信息' : screen === 'scan' ? '拍一拍' : screen === 'product' ? '商品详情' : screen === 'add-stock' ? '加入我的库存' : screen === 'library' ? '我的食品' : '护康';
   const date = new Date();
-  return { tab, setTab, screen, foods, stock, resume, draft, product, cover, busy, error, setError, notice, setNotice, permission, foreground, torch, setTorch, scanToken, setScanToken, manual, setManual, manualFormat, setManualFormat, review, confirmed, setConfirmed, originalText, setOriginalText, quantity, setQuantity, unit, setUnit, expiry, setExpiry, request, search, setSearch, photos, setPhotos, scroll, generation, draftRef, refresh, patchDraft, retainDraft, task, navigate, back, openProduct, lookup, startScan, beginScan, pickBarcode, capture, readPackage, updateReview, updateColumn, saveFood, showStock, exportData, stepTitle, date, setDraft, setReview, setProduct, setEditing, editing };
+  return { tab, setTab, screen, foods, stock, stockCovers, resume, draft, product, cover, busy, error, setError, notice, setNotice, permission, foreground, torch, setTorch, scanToken, setScanToken, manual, setManual, manualFormat, setManualFormat, review, confirmed, setConfirmed, originalText, setOriginalText, quantity, setQuantity, unit, setUnit, expiry, setExpiry, request, search, setSearch, photos, setPhotos, scroll, generation, draftRef, refresh, patchDraft, retainDraft, task, navigate, back, openProduct, lookup, startScan, beginScan, pickBarcode, capture, readPackage, transformNutrition, retryNutrition, saveCaptureDraft, updateReview, updateColumn, saveFood, showStock, exportData, stepTitle, date, setDraft, setReview, setProduct, setEditing, editing };
 }
 export type AppController = ReturnType<typeof useSimpleApp>;
