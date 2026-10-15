@@ -18,7 +18,7 @@ permissions:
 env:
   # Test-only fixes can replay this already inspected binary. The source guard
   # below rejects runtime changes, which require a fresh release build.
-  VERIFIED_BUILD_RUN: '38698585390'
+  VERIFIED_BUILD_RUN: '38703696958'
 jobs:
   device:
     # Runtime commits marked [fresh-apk] await workflow_run for their new APK.

@@ -1,6 +1,6 @@
 # Hukang 中国大陆版：main 简易成品验收记录
 
-> 0.3.3 修复版已完成 ARM64 Release 构建和 APK 静态检查，设备验收仍在运行，不能宣布整条流程通过。0.3.2 的裁剪缺陷与失败证据保留在历史记录中，不作为本次最终交付包。
+> 0.3.3 修复版已完成 ARM64 Release 构建和 APK 静态检查，设备验收尚未通过，不能宣布整条流程通过。0.3.2 的裁剪缺陷与失败证据保留在历史记录中，不作为本次最终交付包。
 
 记录日期：2026-10-15（北京时间）。本文件对应本轮本地简易版收尾；它不是正式发行公告。
 下列“待填写”项尚未取得本轮构建或设备证据，不代表通过。构建、设备测试完成后须用同一
@@ -13,7 +13,7 @@
 | 分支 | `main`；`codex/mainland-v2` 保留为参考分支 |
 | 本轮构建源码 SHA | `13449a2c51825fa1eec4f7bb7bc963a9bdb85bc8` |
 | Android 构建运行地址 | [38703696958](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958)，成功（ARM64 编译 11 分 13 秒，原生条码测试步骤 37 秒） |
-| Android 设备测试运行地址 | [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)，进行中；实际 checkout 为 `13449a2`，尚无通过结论 |
+| Android 设备测试运行地址 | [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)，首次运行失败于系统选图；实际 checkout 为 `13449a2` |
 | 完整 APK 下载入口 | [完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压得到单个完整 `hukang-0.3.3-arm64.apk` |
 | applicationId | `com.hukang.china`（最终 APK 已核验） |
 | versionName / versionCode | `0.3.3` / `8`（最终 APK 已核验） |
@@ -134,8 +134,10 @@ v6 新表并设置版本 5，执行真实迁移函数。测试比较迁移前后
 
 ## 0.3.3 Android 设备验收：等待实际结果
 
+首次运行错误为 `UI not found: 00-barcode`。脚本从 Photo Picker 进入 DocumentsUI 后仍使用通用菜单分支，随后退出选图；失败截图还记录了模拟器 Google 应用的无关通知。见 [实际记录](evidence/simple-0.3.3/device-attempt1/session.json) 与 [截图](evidence/simple-0.3.3/device-attempt1/failure.png)。测试修订后复用同一 APK、核对运行源码差异，结果另行记录。
+
 本轮设备运行 [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)
-仍在进行。`workflow_run` 实际 checkout 为 APK 源码 `13449a2`；运行页显示的 head `09649e0`
+首次运行在选择条码图片时失败，未进入 OCR 与保存闭环。`workflow_run` 实际 checkout 为 APK 源码 `13449a2`；运行页显示的 head `09649e0`
 仅为后续文档提交，不能将其误称为 APK 的运行源码。此前 0.3.2 的部分成功和失败均不替代新包验收。
 
 `tests/device/simple-device.py` 计划在 API 35 x86_64 模拟器通过 ARM 转译安装完整

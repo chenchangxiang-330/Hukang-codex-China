@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.parse import unquote,urlparse
 from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top
 from archive_checks import jpeg_has_exif
+from picker_selectors import next_picker_action,MEDIA,DOCUMENTS
 O=Path('artifacts/device');O.mkdir(parents=True,exist_ok=True)
 PKG='com.hukang.china';ADB=['adb','-s','emulator-5554'];steps=[]
 report={'status':'running','steps':steps,'physicalCameraVerified':False,'limitation':'Emulator, not OPPO hardware; package identity text is entered manually.'}
@@ -91,17 +92,23 @@ def photo(button,stem):
    previous=signature if ready and not busy else None;time.sleep(.5)
   raise RuntimeError('Selected photo did not reach expected ready screen: '+button)
  tap('^'+re.escape(button)+'$',True);time.sleep(1)
- for _ in range(6):
-  if find(stem):tap(stem);selected();return
-  if find('^More options$|^更多选项$'):
-   tap('^More options$|^更多选项$')
-   if find('^Browse|^浏览'):tap('^Browse|^浏览');time.sleep(1)
-   else:shell('input','keyevent','KEYCODE_BACK')
-  elif find('^Files$|^文件$'):tap('^Files$|^文件$')
-  elif find('Show roots|Open navigation drawer|导航抽屉'):
-   tap('Show roots|Open navigation drawer|导航抽屉');tap('^Images$|^图片$|^图像$')
+ stage='initial';deadline=time.monotonic()+60;last_snapshot=None;seen_picker=False
+ invocation=len(report.setdefault('pickerInvocations',[]))+1;report['pickerInvocations'].append({'button':button,'fixture':stem})
+ while time.monotonic()<deadline:
+  root=tree();packages=sorted({n.get('package','') for n in root.iter('node')});seen_picker=seen_picker or bool(set(packages)&(MEDIA|DOCUMENTS))
+  action=next_picker_action(root,stem,stage)
+  signature=(stage,tuple(packages),action[0] if action else None)
+  if signature!=last_snapshot:
+   name=f'picker-{invocation}-{len(steps)}';(O/(name+'.xml')).write_text(ET.tostring(root,encoding='unicode'));shot(name)
+   steps.append({'pickerStage':stage,'packages':packages,'nextAction':action[0] if action else None,'evidence':name});last_snapshot=signature
+  if action:
+   kind,node=action;a=bounds(node);shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));steps.append({'pickerAction':kind,'node':node.attrib});time.sleep(.6)
+   if kind=='fixture':selected();return
+   stage=kind
+  elif seen_picker and PKG in packages and not set(packages)&(MEDIA|DOCUMENTS):
+   raise RuntimeError('Photo picker closed without selecting fixture: '+stem)
   else:time.sleep(1)
- tap(stem,True);selected()
+ raise RuntimeError('Fixture not found in media/DocumentsUI picker: '+stem+'; stage='+stage)
 def database(name):
  shell('am','force-stop',PKG)
  paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines()
@@ -217,7 +224,7 @@ try:
  shell('iptables','-I','OUTPUT','1','-j','DROP');shell('ip6tables','-I','OUTPUT','1','-j','DROP')
  report['offlineRules']=[shell('iptables','-S','OUTPUT'),shell('ip6tables','-S','OUTPUT')]
  report['disabledEmulatorPackages']={}
- for p in ['com.google.android.apps.wellbeing','com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:report['disabledEmulatorPackages'][p]=shell('pm','disable-user','--user','0',p,check=False)
+ for p in ['com.google.android.apps.wellbeing','com.google.android.googlequicksearchbox','com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:report['disabledEmulatorPackages'][p]=shell('pm','disable-user','--user','0',p,check=False)
  run(['install','-r',str(apk.resolve())],timeout=180);shell('pm','grant',PKG,'android.permission.CAMERA')
  report['device']=shell('getprop','ro.build.fingerprint');report['abis']=shell('getprop','ro.product.cpu.abilist')
  fixture=Path('tests/fixtures/china-food/6923644266066.jpg');barcode=png_barcode()
