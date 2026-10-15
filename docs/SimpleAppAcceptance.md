@@ -1,6 +1,6 @@
 # Hukang 中国大陆版：main 简易成品验收记录
 
-> 0.3.2 已发现实际裁剪手势缺陷，不能作为完成验收的最终交付。正在构建 0.3.3 修复版；下表暂保留 0.3.2 的已取得证据，待新包结果更新。
+> 0.3.3 修复版已完成 ARM64 Release 构建和 APK 静态检查，设备验收仍在运行，不能宣布整条流程通过。0.3.2 的裁剪缺陷与失败证据保留在历史记录中，不作为本次最终交付包。
 
 记录日期：2026-10-15（北京时间）。本文件对应本轮本地简易版收尾；它不是正式发行公告。
 下列“待填写”项尚未取得本轮构建或设备证据，不代表通过。构建、设备测试完成后须用同一
@@ -11,20 +11,22 @@
 | 项目 | 本轮记录 |
 | --- | --- |
 | 分支 | `main`；`codex/mainland-v2` 保留为参考分支 |
-| 本轮构建源码 SHA | `2299c3ec0e746e305beb5259dc6151fbb0a47d75` |
-| Android 构建运行地址 | [38698585390](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38698585390)，成功（ARM64 编译 9 分 26 秒） |
-| Android 设备测试运行地址 | [38701771515](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38701771515)，未通过（裁剪区域错误）；测试源码 `733a0575bcbc1504cc272ee535a71a79ea0fc5a1` |
-| 完整 APK 下载入口 | [完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38698585390/artifacts/11955681859)，解压得到 `hukang-0.3.2-arm64.apk` |
+| 本轮构建源码 SHA | `13449a2c51825fa1eec4f7bb7bc963a9bdb85bc8` |
+| Android 构建运行地址 | [38703696958](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958)，成功（ARM64 编译 11 分 13 秒，原生条码测试步骤 37 秒） |
+| Android 设备测试运行地址 | [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)，进行中；实际 checkout 为 `13449a2`，尚无通过结论 |
+| 完整 APK 下载入口 | [完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压得到单个完整 `hukang-0.3.3-arm64.apk` |
 | applicationId | `com.hukang.china`（最终 APK 已核验） |
-| versionName / versionCode | `0.3.2` / `7`（最终 APK 已核验） |
-| APK 实际字节数 | 60,785,812 字节（约 57.97 MiB） |
-| APK 文件 SHA-256 | `202fc0e9efeef966d26a96abdde666d8d03bec605976643d2fb675e7590b28d7` |
-| Artifact ZIP 摘要 | `8ab0ce88d6ff172496967d9b8e28a6f0c930476c7f3e64a40a3b0382038849a1`；ZIP 为 93,713,424 字节 |
-| 签名模式、证书 SHA-256 指纹 | 临时测试签名；`46e645fc8bd12979f3d2f59d997b24ff63d7ed9533e87b7219f192930f3bdd94` |
+| versionName / versionCode | `0.3.3` / `8`（最终 APK 已核验） |
+| APK 实际字节数 | 60,786,768 字节（约 57.97 MiB） |
+| APK 文件 SHA-256 | `558cd121be83c25c514b3fc304f6133a8eac39ba5d1ee2e2962930a6bdc48a3b` |
+| Artifact ZIP 摘要 | `5cca81f6851942a668c85fe6ce4e0f8cd27dd6cb251f42a74a6d36bad1a6a601`；ZIP 为 95,265,228 字节 |
+| 签名模式、证书 SHA-256 指纹 | `ephemeral-test` 临时测试签名；`10801899cf694fa6ca5d75ace622d0ed7e682e2a150a4175832e21026c31593e` |
 | 与用户现有安装覆盖兼容性 | 未验证；需要比对用户已安装 APK 的证书和版本 |
 
 Actions artifact 是构建产物，不能称为已发布的正式 Release；本轮没有商店发行。
 当前工作流产物保留期为 14 天，交付链接需在有效期内下载。
+本轮 APK 检查记录为 [apk-inspection.json](evidence/simple-0.3.3/build/apk-inspection.json)，
+其 `errors` 为空、ABI 仅 `arm64-v8a`；其中 `deviceExecutionVerified: false` 不表示设备已通过。
 
 ## 已实现的用户流程
 
@@ -52,10 +54,10 @@ Actions artifact 是构建产物，不能称为已发布的正式 Release；本�
 | 检查 | 结果 | 能证明与不能证明的范围 |
 | --- | --- | --- |
 | `npm run typecheck` | 通过 | TypeScript 类型检查；不能证明 Android 运行 |
-| `npm test` | 75 / 75 通过 | 条码规则、坐标解析、SQLite 事务/历史、草稿恢复、库存、导出白名单等主机测试 |
+| `npm test` | 75 / 75 通过 | 条码规则、坐标解析、SQLite 事务/历史、草稿恢复、库存、导出白名单等主机测试；0.3.3 构建内同样通过，见 [tests.txt](evidence/simple-0.3.3/build/tests.txt) |
 | `python3 -B -m unittest discover -s tests -p 'test_*.py'` | 21 / 21 通过 | 模型获取校验、设备证据规则、UI 选择器等；不等于已执行设备 UI |
-| `npm run verify:assets` | 通过 | 本地原图标、固定模型及配置哈希验证；最终 APK 内部仍须另查 |
-| 原生条码解码本地 JVM 测试 | 8 / 8 通过 | 合成条码的纯解码路径；CI `:hukang-barcode:testReleaseUnitTest` 实际执行成功（日志未列数量），物理镜头仍待验证 |
+| `npm run verify:assets` | 通过 | 本地原图标、固定模型及配置哈希验证；0.3.3 APK 内模型哈希也已核验 |
+| 原生条码解码本地 JVM 测试 | 8 / 8 通过 | 合成条码的纯解码路径；0.3.3 CI `:hukang-barcode:testReleaseUnitTest` 实际执行成功（37 秒，日志未列数量），物理镜头仍待验证 |
 
 食品资料包测试验证：不包含库存、购买记录、本机路径和原始 OCR；保留前导零、规格和资料版本；
 旧服务商身份没有明确再分发许可时不进入共享资料包。个人导出路径转换测试验证不修改源证据，
@@ -94,6 +96,8 @@ v6 新表并设置版本 5，执行真实迁移函数。测试比较迁移前后
 尚未验证本轮 APK 能覆盖用户此前 OPPO 安装。必须同时满足同一 applicationId、兼容证书、
 更高 versionCode，再实际比较升级前后的食品、图片哈希和修订历史。不能重新制作一个“旧包”
 冒充用户历史安装，也不能默认通过卸载清数据解决签名不匹配。
+本轮 0.3.3 与下述历史 0.3.2 的证书指纹已知不同，不能把此包作为该 0.3.2 安装的覆盖升级包。
+用户手机实际已装版本仍须单独比对；保留旧 App 和本地数据，不因新包签名不同而默认卸载。
 
 稳定签名由管理员安全配置以下 GitHub Actions Secrets：
 `HUKANG_RELEASE_KEYSTORE_B64`、`HUKANG_RELEASE_STORE_PASSWORD`、
@@ -101,11 +105,14 @@ v6 新表并设置版本 5，执行真实迁移函数。测试比较迁移前后
 [签名升级策略的一次性配置](AndroidSigningAndUpgradePolicy.md#当前交付与一次性配置)。
 不向聊天、源码、日志或 artifact 提供私钥。新建稳定密钥不自动兼容旧临时签名。
 
-## 本轮 Android 设备验收：等待实际结果
+## 0.3.2 历史构建与失败记录：非最终交付
 
-APK 的运行源码保持 `2299c3e`；测试脚本单独修订到 `733a057`。
-工作流已比较 `src`、原生模块、Android、资产和依赖配置，确认测试提交没有改变 APK 对应的运行代码。
-重测复用同一个 APK 哈希和证书，不因修测试脚本重新生成签名。
+历史构建 [38698585390](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38698585390)
+使用运行源码 `2299c3ec0e746e305beb5259dc6151fbb0a47d75`，输出 0.3.2 / versionCode 7。
+历史 APK SHA-256 为 `202fc0e9efeef966d26a96abdde666d8d03bec605976643d2fb675e7590b28d7`，
+临时证书指纹为 `46e645fc8bd12979f3d2f59d997b24ff63d7ed9533e87b7219f192930f3bdd94`。
+其测试脚本单独修订到 `733a0575bcbc1504cc272ee535a71a79ea0fc5a1`，当时工作流比较了
+`src`、原生模块、Android、资产和依赖配置，确认测试提交未改变运行代码，重测复用同一历史 APK。
 
 此前 [38700209326](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38700209326)
 的两次实际失败均保留：第一次是 App 启动前 Pixel Launcher ANR 弹窗遮挡，见
@@ -115,7 +122,8 @@ APK 的运行源码保持 `2299c3e`；测试脚本单独修订到 `733a057`。
 测试脚本增加照片完成/稳定布局等待、输入焦点断言；仅对已识别的 Launcher 弹窗保存证据后关闭，
 不忽略 Hukang 异常或未知弹窗。后续结果必须另行记录。
 
-`38701771515` 重测实际通过了相册条码解码、包装输入、草稿重启和首次离线 OCR；
+[38701771515](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38701771515)
+重测实际通过了相册条码解码、包装输入、草稿重启和首次离线 OCR；
 随后裁剪拖动受到页面滚动干扰，得到 59×78 小区域，重识别为空。此为需修复的运行时问题，
 未继续宣称保存/库存/导出通过。见 [失败记录](evidence/simple-0.3.2/crop-failure/session.json)、
 [实际裁剪截图](evidence/simple-0.3.2/crop-failure/crop-selected.png) 和
@@ -124,20 +132,26 @@ APK 的运行源码保持 `2299c3e`；测试脚本单独修订到 `733a057`。
 仅为 x86_64 模拟器 ARM 转译的实测，不能推断 OPPO 性能。
 
 
-当前已编写 `tests/device/simple-device.py`，其计划在 API 35 x86_64 模拟器通过 ARM 转译安装完整
+## 0.3.3 Android 设备验收：等待实际结果
+
+本轮设备运行 [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)
+仍在进行。`workflow_run` 实际 checkout 为 APK 源码 `13449a2`；运行页显示的 head `09649e0`
+仅为后续文档提交，不能将其误称为 APK 的运行源码。此前 0.3.2 的部分成功和失败均不替代新包验收。
+
+`tests/device/simple-device.py` 计划在 API 35 x86_64 模拟器通过 ARM 转译安装完整
 ARM64 Release APK。脚本存在不代表已通过；本轮最终状态、失败位置、截图和 `session.json`
 须从上表的实际设备运行填写。模拟器不能替代 OPPO 物理镜头。
 
 | 路径 | 本轮状态 / 所需证据 |
 | --- | --- |
-| 图像条码解码 → 未命中 → 包装/营养表 → 保存 | 待设备运行；相册图像解码不能称为实时镜头通过 |
-| 草稿保存 → 强制停止 → 重启继续 | 待设备运行，比较草稿 ID、照片、条码、规格 |
+| 图像条码解码 → 未命中 → 包装/营养表 → 保存 | 待本轮设备结果；相册图像解码不能称为实时镜头通过 |
+| 草稿保存 → 强制停止 → 重启继续 | 待本轮设备结果，比较草稿 ID、照片、条码、规格 |
 | 本地 PaddleOCR 原始输出及坐标 | 待本轮原生结果 JSON；不得用人工值替代 |
 | 旋转、矩形裁剪、重新 OCR | 待 UI 实际操作、原图/处理图及哈希证据 |
 | 五项数值、单位、NRV%、每 100 mL 保存 | 待 UI 和 SQLite 对照；脚本人工输入，不计入 OCR 准确率 |
-| 故意选错钠单位后改回 mg 再保存 | 待设备运行；这是人工制造的核对场景，不宣称模型原本识错 |
-| 再次图像解码 → 原商品 → 不运行 OCR | 待设备运行，比较食品数量及原生 OCR 文件数 |
-| 分别加入 2 瓶、1 瓶，再减少/移除 | 待设备运行，比较商品 1 条、库存批次及数量 |
+| 故意选错钠单位后改回 mg 再保存 | 待本轮设备结果；这是人工制造的核对场景，不宣称模型原本识错 |
+| 再次图像解码 → 原商品 → 不运行 OCR | 待本轮设备结果，比较食品数量及原生 OCR 文件数 |
+| 分别加入 2 瓶、1 瓶，再减少/移除 | 待本轮设备结果，比较商品 1 条、库存批次及数量 |
 | 编辑规格和小数值仍保留原始证据 | 待 UI、修订与原始 JSON/hash 对照 |
 | 默认食品资料包不含库存、照片 | 待实际 ZIP 和系统分享截图 |
 | 个人导出包含照片、OCR 和修订清单 | 待实际 ZIP 条目、字节数及 SHA-256 验证 |
@@ -146,8 +160,11 @@ ARM64 Release APK。脚本存在不代表已通过；本轮最终状态、失败
 | 用户原有安装覆盖升级、长期稳定性 | **未验证** |
 
 设备脚本会设置飞行模式、关闭 Wi-Fi/移动数据，并阻断 IPv4/IPv6 输出；保存相应规则。
-最终 APK 还需检查 INTERNET 和 ACCESS_NETWORK_STATE 均不存在、JS/模型随包、模型哈希正确、
-无 Google 服务或 ML Kit 传递依赖。最终 APK 已通过上述静态检查；[检查 JSON](evidence/simple-0.3.2/build/apk-inspection.json) 与 [Manifest](evidence/simple-0.3.2/build/final-manifest.txt) 已归档。
+0.3.3 APK 已核验 INTERNET 和 ACCESS_NETWORK_STATE 均不存在、JS/模型随包、模型哈希正确；
+本轮解析的运行依赖未发现 Google 服务或 ML Kit。静态证据见
+[检查 JSON](evidence/simple-0.3.3/build/apk-inspection.json)、
+[Manifest](evidence/simple-0.3.3/build/final-manifest.txt) 和
+[运行依赖图](evidence/simple-0.3.3/build/runtime-dependencies.txt)。这些检查不等于设备闭环通过。
 实际权限为 CAMERA、VIBRATE、仅 Android 12L 及以下的 READ/WRITE_EXTERNAL_STORAGE，及应用私有动态接收器权限。
 
 性能以本轮原生 OCR 的 `modelLoadMs`、`ocrMs`、`totalMs`、分阶段和内存字段为准，待填写实际数据。

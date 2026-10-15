@@ -1,0 +1,1 @@
+558cd121be83c25c514b3fc304f6133a8eac39ba5d1ee2e2962930a6bdc48a3b  artifacts/hukang-0.3.3-arm64.apk
