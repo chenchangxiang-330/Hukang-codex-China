@@ -4,14 +4,16 @@ Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应�
 
 当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，包含「今日 / 库存 / 我的」三个入口。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
 
+当前简易版的构建身份、下载入口、截图和验证边界见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
+
 ## 本地能力
 
 - CameraX 实时预览 + ZXing 本地解码，支持 EAN-13、EAN-8、UPC-A、UPC-E。
 - 相册条码识别和手动输入作为辅助入口。
 - PP-OCRv5 mobile detector/recognizer 随 APK 打包，Android 本地离线推理，不下载模型。
-- 营养表保留原始 OCR、坐标、图片证据、解析候选和人工修订。
+- 营养照片可旋转、矩形裁剪、失败后重试；原始 OCR、坐标、图片证据、解析候选和人工修订分开保留。
 - SQLite 增量迁移到 `user_version=6`，保留食品、证据、草稿和库存。
-- 「我的」可导出食品资料包或个人数据 ZIP；文件只在本机生成，用户通过系统分享选择接收方，不自动上传。
+- 「我的」可导出食品资料包或个人数据 ZIP；食品资料包默认不含照片和私人库存。文件只在本机生成，通过系统分享选择接收方，不自动上传；尚无 App 内一键恢复。
 
 Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。项目没有 Google ML Kit、Google Play Services、云 OCR、Open Food Facts、Wikidata、在线 AI 或自动模型下载。
 
