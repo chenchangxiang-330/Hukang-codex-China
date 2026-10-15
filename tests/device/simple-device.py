@@ -142,25 +142,24 @@ def transform_photo(original):
  tap('^调整照片方向或裁剪$',True)
  tap('^右转90°$',True);wait_image_transform();tap('^左转90°$',True);wait_image_transform();tap('^选择裁剪区域$',True)
  def apply_control(enabled):
-  # Never drag through the active image while revealing the Apply control.
-  for _ in range(12):
+  # The crop modal has no ScrollView: preview and controls must be visible
+  # together, without swipes that could be mistaken for a crop gesture.
+  for _ in range(5):
    control=find('^应用裁剪$')
-   if control and control[1][3]<=1810:break
-   short_swipe()
-  assert control and control[0].get('enabled')==str(enabled).lower(),'Unexpected crop Apply enabled state'
+   if control and 90<=control[1][1]<control[1][3]<=1850:break
+   time.sleep(.5)
+  assert control and 90<=control[1][1]<control[1][3]<=1850 and control[0].get('enabled')==str(enabled).lower(),'Unexpected crop Apply enabled state or visibility'
   return control
  apply_control(False)
- # Bring the whole preview into view after scrolling to its controls. Crop
- # geometry comes from the actual UI bounds and native image dimensions.
- density=int(re.findall(r'\d+',shell('wm','density'))[-1]);preview_height=300*density/160
+ assert find('^裁剪营养成分表$'),'Crop modal did not open'
+ # Coordinates come from the actual modal layout and native image dimensions.
  def reveal_preview():
-  for _ in range(12):
+  for _ in range(5):
    candidate=find('^营养表裁剪预览$')
    if candidate:
     a=candidate[1]
-    if a[3]-a[1]>=preview_height-5 and a[1]>=230:return a
-    short_swipe(up=a[1]<=230)
-   else:short_swipe(up=True)
+    if 90<=a[1]<a[3]<=1850 and a[3]-a[1]>400:return a
+   time.sleep(.5)
   raise AssertionError('Complete crop preview not visible')
  x1,y1,x2,y2=reveal_preview()
  # A tap/zero-area selection must not enable crop. Then select almost all
@@ -169,14 +168,20 @@ def transform_photo(original):
  apply_control(False);steps.append({'zeroAreaCropApplyEnabled':False})
  x1,y1,x2,y2=reveal_preview();scale=min((x2-x1)/original['width'],(y2-y1)/original['height']);w=original['width']*scale;h=original['height']*scale
  left=(x1+x2-w)/2;top=(y1+y2-h)/2
- shell('input','swipe',str(round(left+1)),str(round(top+1)),str(round(left+w-1)),str(round(top+h-1)),'650');time.sleep(.5)
+ start=[round(left+1),round(top+1)];end=[round(left+w-1),round(top+h-1)]
+ report['cropGesture']={'previewBounds':[x1,y1,x2,y2],'sourceDimensions':[original['width'],original['height']],'start':start,'end':end};shot('crop-modal-before-drag')
+ shell('input','swipe',str(start[0]),str(start[1]),str(end[0]),str(end[1]),'650');time.sleep(.5)
  shot('crop-selected')
- # Scroll outside the active preview. A central swipe would draw a new crop
- # rather than reveal its Apply button when the preview fills the viewport.
  apply_control(True)
  tap('^应用裁剪$');wait_image_transform()
- before=native_runs();tap('^使用当前照片重新识别$',True);wait_native(before)
- report['imageTransformUi']={'rotationsDegrees':[90,-90],'crop':'near-full image selected by touch; empty selection disabled','physicalCameraVerified':False}
+ before=native_runs();tap('^使用当前照片重新识别$',True);new=wait_native(before);assert len(new)==1
+ result=json.loads(run(['exec-out','cat',f'/data/user/0/{PKG}/files/ocr-lab/runs/{new[0]}']))
+ operations=result['preprocessingTransform']['operations'];crops=[operation for operation in operations if operation.get('kind')=='crop'];assert crops
+ crop=crops[-1];report['imageTransformUi']={'rotationsDegrees':[90,-90],'crop':'near-full image selected by touch; empty selection disabled','actualNativeCrop':crop,'actualDimensions':[result['width'],result['height']],'physicalCameraVerified':False}
+ assert 0<=crop['left']<crop['right']<=original['width'] and 0<=crop['top']<crop['bottom']<=original['height']
+ assert crop['right']-crop['left']==result['width'] and crop['bottom']-crop['top']==result['height']
+ assert result['width']>=original['width']*.95 and result['height']>=original['height']*.95,'Touch crop did not preserve the requested near-full photo'
+ assert result['sourceImageHash']==original['sourceImageHash'],'Image transforms changed original source bytes'
 def export_archive(button,expected_format,name):
  directory=f'/data/user/0/{PKG}/cache/hukang-exports'
  before=set(shell('find',directory,'-name','*.zip',check=False).splitlines())

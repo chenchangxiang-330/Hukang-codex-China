@@ -1,5 +1,7 @@
 # Hukang 中国大陆版：main 简易成品验收记录
 
+> 0.3.2 已发现实际裁剪手势缺陷，不能作为完成验收的最终交付。正在构建 0.3.3 修复版；下表暂保留 0.3.2 的已取得证据，待新包结果更新。
+
 记录日期：2026-10-15（北京时间）。本文件对应本轮本地简易版收尾；它不是正式发行公告。
 下列“待填写”项尚未取得本轮构建或设备证据，不代表通过。构建、设备测试完成后须用同一
 源码提交及 APK 的实际记录更新，不能套用旧版本成功结果。
@@ -11,7 +13,7 @@
 | 分支 | `main`；`codex/mainland-v2` 保留为参考分支 |
 | 本轮构建源码 SHA | `2299c3ec0e746e305beb5259dc6151fbb0a47d75` |
 | Android 构建运行地址 | [38698585390](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38698585390)，成功（ARM64 编译 9 分 26 秒） |
-| Android 设备测试运行地址 | [38700209326](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38700209326)，执行中 |
+| Android 设备测试运行地址 | [38701771515](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38701771515)，未通过（裁剪区域错误）；测试源码 `733a0575bcbc1504cc272ee535a71a79ea0fc5a1` |
 | 完整 APK 下载入口 | [完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38698585390/artifacts/11955681859)，解压得到 `hukang-0.3.2-arm64.apk` |
 | applicationId | `com.hukang.china`（最终 APK 已核验） |
 | versionName / versionCode | `0.3.2` / `7`（最终 APK 已核验） |
@@ -100,6 +102,27 @@ v6 新表并设置版本 5，执行真实迁移函数。测试比较迁移前后
 不向聊天、源码、日志或 artifact 提供私钥。新建稳定密钥不自动兼容旧临时签名。
 
 ## 本轮 Android 设备验收：等待实际结果
+
+APK 的运行源码保持 `2299c3e`；测试脚本单独修订到 `733a057`。
+工作流已比较 `src`、原生模块、Android、资产和依赖配置，确认测试提交没有改变 APK 对应的运行代码。
+重测复用同一个 APK 哈希和证书，不因修测试脚本重新生成签名。
+
+此前 [38700209326](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38700209326)
+的两次实际失败均保留：第一次是 App 启动前 Pixel Launcher ANR 弹窗遮挡，见
+[截图与记录](evidence/simple-0.3.2/device-attempt1/session.json)；第二次在包装导入后输入名称失败，
+[记录](evidence/simple-0.3.2/device-attempt2/session.json)显示输入框未获得编辑焦点、随后回到首页。
+日志没有 Hukang ANR/闪退，但第二次的精确导航触发点未被现有截图捕获，不能据此认定整段产品流程正常。
+测试脚本增加照片完成/稳定布局等待、输入焦点断言；仅对已识别的 Launcher 弹窗保存证据后关闭，
+不忽略 Hukang 异常或未知弹窗。后续结果必须另行记录。
+
+`38701771515` 重测实际通过了相册条码解码、包装输入、草稿重启和首次离线 OCR；
+随后裁剪拖动受到页面滚动干扰，得到 59×78 小区域，重识别为空。此为需修复的运行时问题，
+未继续宣称保存/库存/导出通过。见 [失败记录](evidence/simple-0.3.2/crop-failure/session.json)、
+[实际裁剪截图](evidence/simple-0.3.2/crop-failure/crop-selected.png) 和
+[首次原生 OCR](evidence/simple-0.3.2/crop-failure/original-ocr.json)。
+第一次识别 total 92,434 ms、modelLoad 1,914 ms、OCR 90,389 ms，采样峰值 PSS 541,922 KiB，
+仅为 x86_64 模拟器 ARM 转译的实测，不能推断 OPPO 性能。
+
 
 当前已编写 `tests/device/simple-device.py`，其计划在 API 35 x86_64 模拟器通过 ARM 转译安装完整
 ARM64 Release APK。脚本存在不代表已通过；本轮最终状态、失败位置、截图和 `session.json`

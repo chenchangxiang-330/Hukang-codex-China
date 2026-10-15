@@ -21,7 +21,9 @@ env:
   VERIFIED_BUILD_RUN: '38698585390'
 jobs:
   device:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
+    # Runtime commits marked [fresh-apk] await workflow_run for their new APK.
+    # Test-only pushes may replay the inspected binary guarded below.
+    if: (github.event_name == 'push' && !contains(github.event.head_commit.message, '[fresh-apk]')) || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:

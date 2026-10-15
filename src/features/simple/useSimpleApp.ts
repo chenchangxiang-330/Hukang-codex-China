@@ -148,7 +148,11 @@ export function useSimpleApp() {
   async function recognizeNutritionImage(image: ImageAsset) {
     const current = draftRef.current;
     if (!current) throw new Error('食品草稿已关闭，请重新打开。');
-    const evidence = await recognizeAndCapture(image), parsed = parseNutritionLabel(evidence.ocr), values = createFoodReview(parsed);
+    const evidence = await recognizeAndCapture(image);
+    if (!evidence.ocr.rawText.trim() || !evidence.ocr.blocks.some(block => block.text.trim())) {
+      throw new Error('这张照片没有识别到文字。照片已保留，请检查裁剪范围、方向与清晰度后重试，或重新拍摄。');
+    }
+    const parsed = parseNutritionLabel(evidence.ocr), values = createFoodReview(parsed);
     if (draftRef.current?.id !== current.id) return;
     if (!values.columns.length) values.columns = [blankColumn()];
     values.name = current.name; values.brand = current.brand; values.specification = current.specification ?? '';
