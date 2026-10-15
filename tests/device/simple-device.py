@@ -15,7 +15,20 @@ def shell(*args,check=True):return run(['shell',shlex.join(args)],check).decode(
 def shot(name): (O/(name+'.png')).write_bytes(run(['exec-out','screencap','-p']))
 def tree():
  shell('uiautomator','dump','--compressed','/sdcard/simple-window.xml')
- b=run(['exec-out','cat','/sdcard/simple-window.xml']);(O/'last-window.xml').write_bytes(b);return ET.fromstring(b)
+ b=run(['exec-out','cat','/sdcard/simple-window.xml']);(O/'last-window.xml').write_bytes(b);root=ET.fromstring(b)
+ # API 35's unrelated Pixel Launcher can ANR during cold emulator boot before
+ # our App starts. Preserve evidence and close only that exact system dialog.
+ # Never dismiss a Hukang ANR/crash or an unknown dialog.
+ title=next((n for n in root.iter('node') if n.get('package')=='android' and n.get('resource-id')=='android:id/alertTitle' and n.get('text')=="Pixel Launcher isn't responding"),None)
+ if title is not None:
+  recoveries=report.setdefault('emulatorLauncherRecoveries',[])
+  if len(recoveries)>=2:raise RuntimeError('Repeated unrelated Launcher ANR prevents device acceptance')
+  close=next((n for n in root.iter('node') if n.get('package')=='android' and n.get('resource-id')=='android:id/aerr_close'),None)
+  if close is None:raise RuntimeError('Known Launcher ANR has no close control')
+  name='launcher-anr-'+str(len(recoveries)+1);shot(name);(O/(name+'.xml')).write_bytes(b)
+  recoveries.append({'dialog':title.attrib,'evidence':name,'deviceTime':shell('date','-Iseconds')})
+  a=bounds(close);shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));time.sleep(1);return tree()
+ return root
 def find(pattern,clazz=None):
  for n in tree().iter('node'):
   if clazz and n.get('class')!=clazz:continue
@@ -31,12 +44,23 @@ def tap(pattern,scroll=False,clazz=None):
   if f:
    n,a=f
    if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe();continue
+   if clazz=='android.widget.EditText':
+    # Image preparation and IME reflow can move fields after a dump. Never tap
+    # stale geometry that could now belong to Save draft or another action.
+    time.sleep(.3);fresh=find(pattern,clazz)
+    if not fresh or fresh[1]!=a:continue
+    n,a=fresh
    shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));steps.append({'tap':pattern,'node':n.attrib});time.sleep(.6);return
   if scroll:swipe()
   else:time.sleep(1)
  raise RuntimeError('UI not found: '+pattern)
 def field(label,value):
- tap('^'+re.escape(label)+'$',True,'android.widget.EditText')
+ pattern='^'+re.escape(label)+'$'
+ for _ in range(3):
+  tap(pattern,True,'android.widget.EditText');f=find(pattern,'android.widget.EditText')
+  if f and f[0].get('focused')=='true':break
+ else:raise RuntimeError('Field did not receive focus; keyboard input refused: '+label)
+ steps.append({'focusedField':label,'node':f[0].attrib})
  shell('input','keyevent','KEYCODE_MOVE_END');shell('input','keyevent',*(['KEYCODE_DEL']*50))
  shell('input','text',value.replace(' ','%s'))
  f=find('^'+re.escape(label)+'$','android.widget.EditText')
@@ -54,9 +78,21 @@ def unit_for(label,unit):
   short_swipe(nutrient_scroll_towards_top(root,label))
  raise RuntimeError('Unit control not found for '+label)
 def photo(button,stem):
+ def selected():
+  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else '先记下它的样子|商品详情'
+  deadline=time.monotonic()+(300 if button=='从相册选择营养表' else 45);previous=None
+  while time.monotonic()<deadline:
+   root=tree();nodes=list(root.iter('node'))
+   busy=any(n.get('package')==PKG and re.match(r'^正在(处理|读取|离线识别|查询|保存)',n.get('text','')) for n in nodes)
+   ready=[n for n in nodes if n.get('package')==PKG and any(re.fullmatch(expected,n.get(k,'')) for k in ('text','content-desc'))]
+   signature=[(n.get('class'),n.get('text'),n.get('content-desc'),n.get('bounds')) for n in ready]
+   if ready and not busy and signature==previous:
+    steps.append({'photoReady':button,'nodes':[n.attrib for n in ready]});return
+   previous=signature if ready and not busy else None;time.sleep(.5)
+  raise RuntimeError('Selected photo did not reach expected ready screen: '+button)
  tap('^'+re.escape(button)+'$',True);time.sleep(1)
  for _ in range(6):
-  if find(stem):tap(stem);return
+  if find(stem):tap(stem);selected();return
   if find('^More options$|^更多选项$'):
    tap('^More options$|^更多选项$')
    if find('^Browse|^浏览'):tap('^Browse|^浏览');time.sleep(1)
@@ -65,7 +101,7 @@ def photo(button,stem):
   elif find('Show roots|Open navigation drawer|导航抽屉'):
    tap('Show roots|Open navigation drawer|导航抽屉');tap('^Images$|^图片$|^图像$')
   else:time.sleep(1)
- tap(stem,True)
+ tap(stem,True);selected()
 def database(name):
  shell('am','force-stop',PKG)
  paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines()
@@ -175,7 +211,8 @@ try:
  shell('settings','put','global','airplane_mode_on','1');shell('svc','wifi','disable');shell('svc','data','disable',check=False)
  shell('iptables','-I','OUTPUT','1','-j','DROP');shell('ip6tables','-I','OUTPUT','1','-j','DROP')
  report['offlineRules']=[shell('iptables','-S','OUTPUT'),shell('ip6tables','-S','OUTPUT')]
- for p in ['com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:shell('pm','disable-user','--user','0',p,check=False)
+ report['disabledEmulatorPackages']={}
+ for p in ['com.google.android.apps.wellbeing','com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:report['disabledEmulatorPackages'][p]=shell('pm','disable-user','--user','0',p,check=False)
  run(['install','-r',str(apk.resolve())],timeout=180);shell('pm','grant',PKG,'android.permission.CAMERA')
  report['device']=shell('getprop','ro.build.fingerprint');report['abis']=shell('getprop','ro.product.cpu.abilist')
  fixture=Path('tests/fixtures/china-food/6923644266066.jpg');barcode=png_barcode()

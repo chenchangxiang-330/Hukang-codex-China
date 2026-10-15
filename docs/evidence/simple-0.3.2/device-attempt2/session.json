@@ -1,0 +1,297 @@
+{
+  "status": "failed",
+  "steps": [
+    {
+      "tap": "^我的$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "我的",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[705,1693][1034,1802]"
+      }
+    },
+    {
+      "tap": "^今日$",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "今日",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[48,1693][377,1802]"
+      }
+    },
+    {
+      "tap": "^拍一拍$",
+      "node": {
+        "index": "4",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "拍一拍",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[63,682][1017,1368]"
+      }
+    },
+    {
+      "tap": "^从相册识别条码$",
+      "node": {
+        "index": "5",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册识别条码",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[63,1720][1017,1857]"
+      }
+    },
+    {
+      "tap": "^More options$|^更多选项$",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,922][1080,1048]"
+      }
+    },
+    {
+      "tap": "^Browse|^浏览",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,978][1028,1035]"
+      }
+    },
+    {
+      "tap": "00-barcode",
+      "node": {
+        "index": "0",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "00-barcode.png, 4.74 kB, 7:46 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[64,795][366,1098]"
+      }
+    },
+    {
+      "tap": "^从相册选择包装$",
+      "node": {
+        "index": "7",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册选择包装",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[63,1064][1017,1210]"
+      }
+    },
+    {
+      "tap": "^More options$|^更多选项$",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,922][1080,1048]"
+      }
+    },
+    {
+      "tap": "^Browse|^浏览",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,978][1028,1035]"
+      }
+    },
+    {
+      "tap": "01-milk",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "01-milk.jpg, 233 kB, 7:44 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[388,795][691,1098]"
+      }
+    },
+    {
+      "tap": "^商品名称$",
+      "node": {
+        "index": "9",
+        "text": "例如：纯牛奶",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "商品名称",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[63,1342][1017,1473]"
+      }
+    }
+  ],
+  "physicalCameraVerified": false,
+  "limitation": "Emulator, not OPPO hardware; package identity text is entered manually.",
+  "apkSha256": "202fc0e9efeef966d26a96abdde666d8d03bec605976643d2fb675e7590b28d7",
+  "sourceCommit": "2299c3ec0e746e305beb5259dc6151fbb0a47d75",
+  "offlineRules": [
+    "-P OUTPUT ACCEPT\n-A OUTPUT -j DROP\n-A OUTPUT -j oem_out\n-A OUTPUT -j fw_OUTPUT\n-A OUTPUT -j st_OUTPUT\n-A OUTPUT -j bw_OUTPUT",
+    "-P OUTPUT ACCEPT\n-A OUTPUT -j DROP\n-A OUTPUT -j oem_out\n-A OUTPUT -j fw_OUTPUT\n-A OUTPUT -j st_OUTPUT\n-A OUTPUT -j bw_OUTPUT"
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "fixtures": {
+    "syntheticBarcode": "e50aae0bea21973855dd94ef4426a90b1bacc81a647d16ec4b5e6a4290baac58",
+    "packagingPhoto": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+    "source": {
+      "dataset": "Open Food Facts",
+      "productUrl": "https://world.openfoodfacts.org/product/6923644266066",
+      "imageUrl": "https://images.openfoodfacts.org/images/products/692/364/426/6066/nutrition_zh.15.full.jpg",
+      "imageId": "4",
+      "uploader": "macrofactor",
+      "license": "CC-BY-SA-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "termsUrl": "https://world.openfoodfacts.org/terms-of-use",
+      "changes": "Unmodified source image; manual transcription and separate ROI coordinates added.",
+      "verifiedOn": "2026-09-26"
+    },
+    "limitation": "Archived real nutrition-side package photo reused for cover input; not a new front-facing camera photo. Synthetic barcode and manual identity are test-only."
+  },
+  "error": "RuntimeError('Field not retained: 商品名称')"
+}

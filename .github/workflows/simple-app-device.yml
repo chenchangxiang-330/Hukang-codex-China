@@ -1,5 +1,8 @@
 name: Simple app Android acceptance
 on:
+  push:
+    branches: [main]
+    paths: ['tests/device/**', '.github/workflows/simple-app-device.yml']
   workflow_run:
     workflows: ['Hukang simple app APK']
     types: [completed]
@@ -12,9 +15,13 @@ on:
 permissions:
   contents: read
   actions: read
+env:
+  # Test-only fixes can replay this already inspected binary. The source guard
+  # below rejects runtime changes, which require a fresh release build.
+  VERIFIED_BUILD_RUN: '38698585390'
 jobs:
   device:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -27,7 +34,7 @@ jobs:
           pattern: hukang-*
           merge-multiple: true
           path: artifacts/build
-          run-id: ${{ inputs.build_run || github.event.workflow_run.id }}
+          run-id: ${{ inputs.build_run || github.event.workflow_run.id || env.VERIFIED_BUILD_RUN }}
           github-token: ${{ github.token }}
       - name: Check exact binary before starting emulator
         env:
@@ -46,6 +53,16 @@ jobs:
           assert not expected or source==expected, (source, expected)
           print('APK source:',(root/'source-commit.txt').read_text()); print('APK SHA256:',check['sha256'])
           PY
+      - name: Reject runtime differences when replaying an existing APK
+        run: |
+          set -euo pipefail
+          built_source="$(cat artifacts/build/source-commit.txt)"
+          [[ "$built_source" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "$built_source^{commit}" || git fetch --no-tags --depth=1 origin "$built_source"
+          git diff --exit-code "$built_source" HEAD -- src modules android plugins assets package.json package-lock.json app.json babel.config.js metro.config.js
+          mkdir -p artifacts/device
+          git rev-parse HEAD > artifacts/device/test-source-commit.txt
+          cp artifacts/build/source-commit.txt artifacts/device/apk-source-commit.txt
       - name: Enable emulator acceleration
         run: |
           test -c /dev/kvm
@@ -69,7 +86,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: simple-device-${{ github.run_id }}
+          name: simple-device-${{ github.run_id }}-attempt-${{ github.run_attempt }}
           path: artifacts/device/
           retention-days: 14
           if-no-files-found: warn
