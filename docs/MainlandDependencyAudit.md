@@ -27,12 +27,15 @@ network requests.
 
 ## Local runtime inventory
 
-JavaScript versions are locked in `package-lock.json`. Android versions below
-include the actual local `releaseRuntimeClasspath` resolution recorded on
-2026-10-08, rather than only direct Gradle declarations. The original report is
-preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt).
+JavaScript versions are locked in `package-lock.json`; direct Android modules
+are declared in their Gradle files. Some transitive versions below come from
+the **historical 2026-10-08** local `releaseRuntimeClasspath` report. That report
+predates this simple-product build and does not establish the final 0.3.3 graph.
+The current release workflow must save and inspect its own resolved
+`runtime-dependencies.txt`. Final-build status is recorded in
+[SimpleAppAcceptance.md](SimpleAppAcceptance.md), not inferred from this table.
 
-| Component | Version / location | Category | Phase 3 runtime role |
+| Component | Version / location | Category | Simple-product runtime role |
 | --- | --- | --- | --- |
 | Hukang UI, use cases, domain and Kotlin adapter | `src/`, `modules/hukang-vision/` | `LOCAL` | Local image preparation, OCR, barcode flow and raw evidence display |
 | PaddlePaddle detection model | PP-OCRv5_mobile_det_onnx | `LOCAL` | APK-bundled domestic model; no runtime download |
@@ -43,7 +46,7 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | AndroidX ExifInterface | 1.4.1 | `FOREIGN_OFFLINE_LIBRARY` | Read EXIF metadata locally; not Google Play Services |
 | AndroidX CameraX camera2/lifecycle/view | 1.4.2, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | Native live camera preview and local Y-plane frame delivery; Apache-2.0; no ML Kit, GMS, or network client |
 | ZXing core | 3.5.3, `modules/hukang-barcode/android` | `FOREIGN_OFFLINE_LIBRARY` | On-device EAN/UPC decoding for CameraX frames and local images; Apache-2.0; no ML Kit, GMS, or network client |
-| React / React Native / Hermes | 19.2.3 / 0.86.3 / 250829098.0.17 | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution; Hermes version is the actual resolved Android artifact |
+| React / React Native / Hermes | 19.2.3 / 0.86.3 / 250829098.0.17 | `FOREIGN_OFFLINE_LIBRARY` | Bundled UI and JavaScript execution; Hermes version shown is from the historical graph and requires current-build confirmation |
 | Expo core and module infrastructure | 57.0.27 / SDK-managed modules | `FOREIGN_OFFLINE_LIBRARY` | Custom APK; Expo Go and Expo-hosted JavaScript not needed |
 | Expo Router / linking | SDK 57 modules | `FOREIGN_OFFLINE_LIBRARY` | Local route navigation; no remote route/provider configuration |
 | Expo image picker | SDK 57 module | `FOREIGN_OFFLINE_LIBRARY` | User selects a photo through Android; app imports a local copy |
@@ -51,20 +54,21 @@ preserved in [release-dependencies-local-64808a5.txt](evidence/phase1/release-de
 | Expo sharing | SDK 57 module | `FOREIGN_OFFLINE_LIBRARY` | User-initiated local evidence export through OS share sheet; no automatic upload |
 | OkHttp / OkHttp URLConnection | 4.9.2 / 4.9.2 | `FOREIGN_OFFLINE_LIBRARY` | Transitive generic HTTP infrastructure; no configured OCR, food, AI or other remote provider is invoked |
 | Okio / Okio JVM | 3.16.0 / 3.16.0 | `FOREIGN_OFFLINE_LIBRARY` | Transitive local buffering and I/O utilities; presence does not imply a server dependency |
-| Fresco / imagepipeline-okhttp3 | 3.6.0 / 3.6.0 | `FOREIGN_OFFLINE_LIBRARY` | React Native image infrastructure; OCR Lab displays imported local images, not remote image URLs |
-| Glide | 5.0.5 | `FOREIGN_OFFLINE_LIBRARY` | Expo image-loader transitive image infrastructure; Phase 1 uses local photo resources |
-| Expo WebView | 57.0.1 | `FOREIGN_OFFLINE_LIBRARY` | Resolved Expo module infrastructure; OCR Lab does not render or open a remote WebView |
+| Fresco / imagepipeline-okhttp3 | 3.6.0 / 3.6.0, historical graph | `FOREIGN_OFFLINE_LIBRARY` | React Native image infrastructure; this UI displays imported local images, not remote image URLs |
+| Glide | 5.0.5, historical graph | `FOREIGN_OFFLINE_LIBRARY` | Expo image-loader transitive infrastructure; this app uses local photo resources |
+| Expo WebView | 57.0.1, historical graph | `FOREIGN_OFFLINE_LIBRARY` | Historical resolved module infrastructure; this product does not render or open a remote WebView |
 | Splash/status bar, safe-area and screens | SDK-compatible pinned lockfile | `FOREIGN_OFFLINE_LIBRARY` | Local rendering and lifecycle |
 | `ChinaFoodRepository` / SQLite adapter | `src/infrastructure/food/` | `LOCAL` | Food records, evidence and revisions remain on-device; no provider or cloud sync |
 | `MedicineRepository` | TypeScript contract only | `LOCAL` | No medicine provider or remote lookup implementation |
-| Historical `ConfiguredChinaFoodProvider` (inactive) | `src/infrastructure/food/providers/`, optional build-time HTTPS origin | `CHINA_SERVICE` | Sends only validated barcode identity fields after user consent; absent endpoint fails closed; supplier key stays server-side |
-| Historical `server/` identity service (inactive) | `server/hukang-food-service.mjs` | `CHINA_SERVICE` | Fixed route, request validation, timeout, safe errors and injected vendor adapter; default `NOT_CONFIGURED`, no photos/OCR/food database |
 
-The two historical CHINA_SERVICE rows are dormant references, excluded from
-active runtime counts. They are not linked from `src/app/index.tsx` or the
-simple product UI. No supplier calls are made by this build.
+Historical `ConfiguredChinaFoodProvider` (`src/infrastructure/food/providers/`)
+and `server/hukang-food-service.mjs` are dormant references to a previously
+considered `CHINA_SERVICE` boundary. They are excluded from the active runtime
+inventory and counts. They are not linked from `src/app/index.tsx` or the simple
+product UI. Their former consent/HTTPS configuration does **not** authorize a
+network permission or supplier call in this build.
 
-Phase 3 deliberately does **not** add `expo-camera`. Expo Camera 57's Android
+This product deliberately does **not** add `expo-camera`. Expo Camera 57's Android
 barcode implementation declares `com.google.mlkit:barcode-scanning`,
 `com.google.android.gms:play-services-code-scanner`, and
 `androidx.camera:camera-mlkit-vision`. Those are prohibited in this product.
@@ -77,39 +81,45 @@ uses CameraX's reported 0/90/180/270 degree correction and tries right-angle
 fallbacks; reflection, low light, and small/curved labels still need device
 testing.
 
-The current device evidence exercised the album/synthetic-barcode path on an
-Android emulator (`physicalCameraVerified: false`). Camera permission is
+Recorded earlier device attempts exercised the album/synthetic-barcode path on
+an Android emulator (`physicalCameraVerified: false`); their exact APK and
+partial results are listed in [SimpleAppAcceptance.md](SimpleAppAcceptance.md).
+They do not establish the result of the pending 0.3.3 build. Camera permission is
 declared and the live view is implemented, but physical camera focus, exposure,
 torch, continuous-frame decoding, and OPPO hardware behavior remain
 unverified. Do not use the image-only evidence as a physical-camera claim.
 
-The actual graph contains generic networking-capable libraries, including
+The dependency inventory includes generic networking-capable libraries, including
 OkHttp and image-loading adapters. Their capability is distinct from a
 configured production service; this APK must not be described as containing
-no HTTP-capable code. App-owned Phase 1 code uses local image/file resources,
-and the release app's `INTERNET` permission is limited to the explicit domestic
-identity lookup boundary; it does not enable model download or telemetry. Neither a dependency name nor successful Gradle
-resolution proves absence of traffic; device observations are a separate gate.
+no HTTP-capable code. This simple-product application uses local image/file
+resources and must remove **both `INTERNET` and `ACCESS_NETWORK_STATE`** from the
+final release Manifest. There is no domestic identity-query exception in this
+version. Neither a dependency name nor successful Gradle resolution proves
+absence of traffic; final Manifest inspection and offline execution are separate
+gates tied to the actual delivered APK.
 
-### Actual Android release dependency graph
+### Historical dependency graph: 2026-10-08, not this build's verification
 
-The following command ran locally with the existing Java 17 / Android SDK /
+On 2026-10-08 the following command ran locally with the then-existing Java 17 / Android SDK /
 Gradle environment and its configured proxy; it did not rebuild the APK:
 
 ```text
 ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --console=plain --no-daemon --max-workers=2
 ```
 
-Result: exit code 0, `BUILD SUCCESSFUL in 1m`, with no dependency-tree `FAILED`
+Historical result: exit code 0, `BUILD SUCCESSFUL in 1m`, with no dependency-tree `FAILED`
 or unresolved `(n)` nodes. The preserved raw report is 94,037 bytes with SHA-256
 `d57d33e056827d4fc66d759ad4bd70526f1e115cfd43b44b55f6ecd022131dd0`.
 It contains 200 distinct resolved Maven coordinates plus local project
 dependencies; repeated branches and constraints are not counted as extra
 libraries. Dependency metadata resolution is not proof that every binary was
 downloaded locally, and it is separate from the recorded GitHub Actions release
-compilation and APK inspection.
+compilation and APK inspection. The original report is preserved in
+[release-dependencies-local-64808a5.txt](evidence/phase1/release-dependencies-local-64808a5.txt).
+Do not use its successful result, library count or hash as 0.3.3 evidence.
 
-The actual graph contains no `com.google.android.gms`, `com.google.firebase`,
+That historical graph contains no `com.google.android.gms`, `com.google.firebase`,
 `com.google.mlkit`, Google Cloud Vision, Gemini/GenAI, OpenAI, Open Food Facts or
 Wikidata SDK coordinates. No Sentry, Firebase Analytics/Crashlytics/Remote
 Config, Bugsnag, App Center, Mixpanel, Amplitude, Segment, OpenTelemetry or New
@@ -120,7 +130,7 @@ are local libraries and do not constitute Google Play Services or Google OCR.
 
 ## Prohibited production integrations
 
-| Item | Phase 1 policy / inspection target |
+| Item | Current simple-product policy / inspection target |
 | --- | --- |
 | Google ML Kit / Google Vision / Google Play Services | No OCR SDK, service dependency, client, plugin or fallback |
 | Firebase | No Firebase SDK, google-services plugin/config or backend |
@@ -148,24 +158,28 @@ in the production App. No network request is made to obtain them at runtime.
 
 ## Manifest and network gates
 
-- `INTERNET` is allowed only because the optional domestic identity query needs
-  it. `ACCESS_NETWORK_STATE` remains blocked because the app does not need a
-  network-state API; a failed request is handled as an explicit offline status.
-- The native Manifest does not add arbitrary network endpoints or cleartext
-  traffic. The client accepts only a fixed HTTPS origin.
-  An XML remove marker is not a granted permission and is not sufficient proof
-  of the final merge result.
+- Both `INTERNET` and `ACCESS_NETWORK_STATE` must be absent from the final
+  release APK. The current application has no domestic lookup exception,
+  provider switch or network fallback. Missing local records lead to local
+  manual capture, not a remote query.
+- Source Manifest remove markers express the intended permission boundary;
+  they are not granted permissions and do not prove the final merged result.
+  Inspect the decoded release Manifest and save the full permission list.
+  Camera and local image access permissions are audited separately and must
+  support the implemented local capture flow.
 - Expo updates is disabled. Any generated `CHECK_ON_LAUNCH` metadata must be
   interpreted together with the disabled flag; no update URL is configured.
 - The release merged Manifest and APK's decoded Manifest must both be checked.
   Attribute/permission names cannot be inferred by searching raw compressed APK bytes.
 - Check resolved release npm/Gradle packages for prohibited SDKs; save the
   resolved inventory, not only direct `package.json` dependencies.
-- Install the actual release on ARM64 Android. In airplane mode, verify local
-  barcode/OCR/manual archive behavior. With consent and an authorized test
-  deployment, separately record the fixed HTTPS host, request purpose and
-  response. Record model initialization, OCR timing, evidence and observed
-  network behavior.
+- Install the exact built ARM64 release APK. Disable Wi-Fi/mobile data and
+  record the available outbound-blocking controls before testing local barcode
+  decoding, OCR, manual confirmation, saving, restart, inventory and export.
+  Record model initialization, OCR timing, evidence and any network observation.
+  Separate emulator ARM translation from physical ARM64 device evidence. No
+  supplier endpoint, credentials or authorized online deployment is required
+  for this product's acceptance.
 
 Android's system photo provider may offer cloud-backed images, and other apps
 chosen by an explicit share action may have their own network behavior. Hukang
@@ -182,14 +196,24 @@ must still preserve license provenance and lock versions, but are kept out of
 the production service count. Expo CLI telemetry settings are build-tool
 settings, not evidence that the app has telemetry.
 
+JVM barcode fixtures, Android emulator system images, test-only dependencies
+and attributed archived packaging photos are also development/test inputs.
+An emulator image containing Google packages is not evidence that those packages
+are in the delivered APK or required by the app; acceptance disables the
+identified Google services and tests local images. Production SDK checks still
+apply to the actual release dependency graph. Test-generated product records
+must not be bundled as production food data.
+
 ## Verification status
 
-Source configuration, declared dependency review and actual local release
-dependency-graph resolution are complete for this document's scope. Artifact
-Manifest checks, model bundling verification, GitHub Actions compilation,
-Android execution and traffic observations retain their individually recorded
-statuses in the Phase 3 acceptance report. The dependency-tree execution does
-not assert a successful device barcode/OCR run or a packet-capture result.
+This document records the current source-level policy and distinguishes the
+historical dependency resolution from this build's evidence. Final Manifest,
+model bundling, resolved dependencies, GitHub Actions compilation, installed
+Android execution and offline/network observations must each retain their
+individual status and source/APK identity in
+[SimpleAppAcceptance.md](SimpleAppAcceptance.md). The 0.3.3 results are pending
+until those artifacts are obtained; neither the historical graph nor source
+configuration establishes a successful device barcode/OCR run or packet capture.
 
 Future Paddle Lite / Paddle-native runtime evaluation is recorded as an
 optional optimization. It does not block the fixed ONNX Runtime baseline.

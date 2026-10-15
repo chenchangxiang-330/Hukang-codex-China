@@ -20,11 +20,11 @@ main 简易本地版的 release APK 必须区分实验签名和稳定发布签�
 同一证书签名的升级使用：
 
 ```text
-adb install -r hukang-china-phase3-arm64-release.apk
+adb install -r hukang-0.3.3-arm64.apk
 ```
 
 验收必须比较安装前后的 `foods`、`food_evidence`、`food_revisions` 行数、内容、
-OCR 原文、图片 SHA-256 和 revision 历史。Phase 3 设备脚本
+OCR 原文、图片 SHA-256 和 revision 历史。以下是验收要求，不代表本轮已完成历史版本升级。旧 Phase 3 设备脚本
 `scripts/run-android-food-flow.py` 在保存待确认食品后执行同签名 `install -r`，
 并重新读取 SQLite。
 
@@ -48,7 +48,7 @@ OCR 原文、图片 SHA-256 和 revision 历史。Phase 3 设备脚本
 
 ## 当前交付与一次性配置
 
-本轮计划版本为 0.3.2 / versionCode 7，实际值以 APK 检查报告为准。
+本轮计划版本为 0.3.3 / versionCode 8，实际值以 APK 检查报告为准。
 构建只读取已提交源码，不在 CI 内修改、提交或推送业务文件。签名 Secrets
 未配置时仍可构建隔离测试包，但每次临时证书不同；证书不匹配不能覆盖既有
 安装，不能通过卸载绕过，尤其有本地数据时。

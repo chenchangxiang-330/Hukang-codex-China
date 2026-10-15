@@ -15,7 +15,7 @@ Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应�
 - SQLite 增量迁移到 `user_version=6`，保留食品、证据、草稿和库存。
 - 「我的」可导出食品资料包或个人数据 ZIP；食品资料包默认不含照片和私人库存。文件只在本机生成，通过系统分享选择接收方，不自动上传；尚无 App 内一键恢复。
 
-Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。项目没有 Google ML Kit、Google Play Services、云 OCR、Open Food Facts、Wikidata、在线 AI 或自动模型下载。
+Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。本版生产运行链路不依赖 Google ML Kit、Google Play Services、云 OCR、Open Food Facts、Wikidata 或在线 AI，也没有自动模型下载。仓库归档测试图片保留其来源与许可声明，不作为生产食品库或联网查询来源。
 
 ## 开发与验证
 
