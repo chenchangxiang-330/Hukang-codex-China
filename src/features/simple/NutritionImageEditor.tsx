@@ -13,6 +13,7 @@ export function NutritionImageEditor({ image, transform, recognize }: { image: I
     <Text style={S.note}>{cropping ? '在图片上从一个角拖到另一个角，框住完整营养表及计量基准。' : '已自动修复照片方向。需要时可旋转、裁剪，再重新识别；原图始终保留。'}</Text>
     <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ width: '100%', height: 300, backgroundColor: C.pale }}
       accessible accessibilityLabel="营养表裁剪预览" onStartShouldSetResponder={() => cropping}
+      onResponderTerminationRequest={() => !cropping}
       onResponderGrant={e => { start.current = { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }; setCrop(null); }}
       onResponderMove={e => { if (start.current) setCrop(previewCrop(start.current, { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }, image, viewport)); }}
       onResponderRelease={() => { start.current = null; }} onResponderTerminate={() => { start.current = null; }}>

@@ -8,6 +8,8 @@ test('personal export remaps image paths without changing source evidence or OCR
   const image = Object.freeze({ uri: 'file:///private/processed.png', originalUri: 'file:///private/original.jpg', processedImageHash: 'hash' });
   const evidence = Object.freeze({ image, ocr: Object.freeze({
     imageUri: image.uri, evidenceUri: 'file:///private/ocr.json',
+    // Native metadata includes this property even though the TS interface does not.
+    originalImageUri: image.originalUri,
     rawText: 'file:///a-printed-path', blocks: Object.freeze([{ text: '蛋白质 3.60 g', confidence: 0.91 }]),
   }) });
   const exported = portableExportValue(evidence, {
@@ -17,11 +19,17 @@ test('personal export remaps image paths without changing source evidence or OCR
   assert.equal(exported.image.uri, 'photos/food-nutrition.png');
   assert.equal(exported.image.originalUri, null, 'omitted photos must not become broken app-private paths');
   assert.equal(exported.ocr.imageUri, exported.image.uri);
+  assert.equal(exported.ocr.originalImageUri, null);
   assert.equal(exported.ocr.evidenceUri, 'evidence/food/current-ocr.json');
   assert.equal(exported.ocr.rawText, evidence.ocr.rawText);
   assert.deepEqual(exported.ocr.blocks, evidence.ocr.blocks);
   assert.equal(evidence.image.uri, 'file:///private/processed.png');
   assert.equal(evidence.ocr.evidenceUri, 'file:///private/ocr.json');
+  const withOriginal = portableExportValue(evidence, { [image.originalUri]: 'photos/food-original.source' });
+  assert.equal(withOriginal.image.originalUri, 'photos/food-original.source');
+  assert.equal(withOriginal.ocr.originalImageUri, withOriginal.image.originalUri);
+  assert.equal(withOriginal.ocr.rawText, evidence.ocr.rawText);
+  assert.equal(evidence.ocr.originalImageUri, 'file:///private/original.jpg');
 });
 
 const record = (id, redistribute) => ({

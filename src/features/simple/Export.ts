@@ -69,17 +69,19 @@ export async function exportLocal(kind: 'catalogue' | 'personal', includePhotos:
   };
   const addEvidenceAssets = (record: FoodScanRecord, id: string): void => {
     const root = `evidence/${id}`;
+    const source = sourceEvidence.get(record.id);
+    if (source && includePhotos) {
+      // Native OCR metadata also retains originalImageUri from the source
+      // capture. Register its persisted-file alias before writing any JSON.
+      for (const [original, persisted] of [
+        [source.image.uri, record.evidence.image.uri], [source.image.originalUri, record.evidence.image.originalUri],
+      ]) if (original && persisted && mappings[persisted] && !mappings[original]) mappings[original] = mappings[persisted];
+    }
     addJson(record.evidence.ocr, `${root}/current-ocr.json`, [record.evidence.ocr.evidenceUri]);
     addJson(record.parsed, `${root}/current-parsed.json`);
     addJson(record.evidence, `${root}/current-evidence.json`);
     addJson(record.revisions, `${root}/revisions.json`);
-    const source = sourceEvidence.get(record.id);
     if (source) {
-      if (includePhotos) {
-        for (const [original, persisted] of [
-          [source.image.uri, record.evidence.image.uri], [source.image.originalUri, record.evidence.image.originalUri],
-        ]) if (original && persisted && mappings[persisted] && !mappings[original]) mappings[original] = mappings[persisted];
-      }
       addJson(source.ocr, `${root}/current-source-document.json`, [source.ocr.evidenceUri]);
       addJson(source, `${root}/current-source-ocr.json`);
     }

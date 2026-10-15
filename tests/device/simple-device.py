@@ -3,6 +3,7 @@ import hashlib,json,re,shlex,sqlite3,struct,subprocess,time,xml.etree.ElementTre
 from pathlib import Path
 from urllib.parse import unquote,urlparse
 from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top
+from archive_checks import jpeg_has_exif
 O=Path('artifacts/device');O.mkdir(parents=True,exist_ok=True)
 PKG='com.hukang.china';ADB=['adb','-s','emulator-5554'];steps=[]
 report={'status':'running','steps':steps,'physicalCameraVerified':False,'limitation':'Emulator, not OPPO hardware; package identity text is entered manually.'}
@@ -104,33 +105,39 @@ def wait_image_transform():
 def transform_photo(original):
  tap('^调整照片方向或裁剪$',True)
  tap('^右转90°$',True);wait_image_transform();tap('^左转90°$',True);wait_image_transform();tap('^选择裁剪区域$',True)
- apply=find('^应用裁剪$');assert apply and apply[0].get('enabled')=='false','Crop requires a valid selected rectangle'
+ def apply_control(enabled):
+  # Never drag through the active image while revealing the Apply control.
+  for _ in range(12):
+   control=find('^应用裁剪$')
+   if control and control[1][3]<=1810:break
+   short_swipe()
+  assert control and control[0].get('enabled')==str(enabled).lower(),'Unexpected crop Apply enabled state'
+  return control
+ apply_control(False)
  # Bring the whole preview into view after scrolling to its controls. Crop
  # geometry comes from the actual UI bounds and native image dimensions.
  density=int(re.findall(r'\d+',shell('wm','density'))[-1]);preview_height=300*density/160
- preview=None
- for _ in range(12):
-  candidate=find('^营养表裁剪预览$')
-  if candidate:
-   a=candidate[1]
-   if a[3]-a[1]>=preview_height-5 and a[1]>=230:preview=a;break
-   short_swipe(up=a[1]<=230)
-  else:short_swipe(up=True)
- assert preview,'Complete crop preview not visible'
- x1,y1,x2,y2=preview;scale=min((x2-x1)/original['width'],(y2-y1)/original['height']);w=original['width']*scale;h=original['height']*scale
- left=(x1+x2-w)/2;top=(y1+y2-h)/2
+ def reveal_preview():
+  for _ in range(12):
+   candidate=find('^营养表裁剪预览$')
+   if candidate:
+    a=candidate[1]
+    if a[3]-a[1]>=preview_height-5 and a[1]>=230:return a
+    short_swipe(up=a[1]<=230)
+   else:short_swipe(up=True)
+  raise AssertionError('Complete crop preview not visible')
+ x1,y1,x2,y2=reveal_preview()
  # A tap/zero-area selection must not enable crop. Then select almost all
  # pixels (one display-pixel inset) so this test does not cut off nutrients.
  shell('input','tap',str(round((x1+x2)/2)),str(round((y1+y2)/2)));time.sleep(.5)
+ apply_control(False);steps.append({'zeroAreaCropApplyEnabled':False})
+ x1,y1,x2,y2=reveal_preview();scale=min((x2-x1)/original['width'],(y2-y1)/original['height']);w=original['width']*scale;h=original['height']*scale
+ left=(x1+x2-w)/2;top=(y1+y2-h)/2
  shell('input','swipe',str(round(left+1)),str(round(top+1)),str(round(left+w-1)),str(round(top+h-1)),'650');time.sleep(.5)
  shot('crop-selected')
  # Scroll outside the active preview. A central swipe would draw a new crop
  # rather than reveal its Apply button when the preview fills the viewport.
- for _ in range(12):
-  apply=find('^应用裁剪$')
-  if apply and apply[1][3]<=1810:break
-  short_swipe()
- assert apply and apply[0].get('enabled')=='true','Selected crop was not actionable'
+ apply_control(True)
  tap('^应用裁剪$');wait_image_transform()
  before=native_runs();tap('^使用当前照片重新识别$',True);wait_native(before)
  report['imageTransformUi']={'rotationsDegrees':[90,-90],'crop':'near-full image selected by touch; empty selection disabled','physicalCameraVerified':False}
@@ -145,6 +152,8 @@ def export_archive(button,expected_format,name):
   manifest=json.loads(z.read('files.json'))
   for asset in manifest:
    payload=z.read(asset['path']);assert len(payload)==asset['bytes'];assert hashlib.sha256(payload).hexdigest()==asset['sha256']
+   if expected_format=='hukang-food-catalogue':
+    assert asset['path'].startswith('photos/') and asset['path'].endswith('.jpg');assert not jpeg_has_exif(payload),'Catalogue photo contains EXIF metadata'
   for path in z.namelist():
    if path.endswith('.json'):
     portable=z.read(path).decode();assert 'file://' not in portable and 'content://' not in portable,(name,path)
@@ -204,12 +213,15 @@ try:
  tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
  tap('^我的$');data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
  tap('.*',True,'android.widget.Switch');switch=find('.*','android.widget.Switch');assert switch and switch[0].get('checked')=='true'
+ data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue-with-photos');assert len(data['products'])==1 and 'inventory' not in data;assert data['photosIncluded'] is True and data['photoMetadataRemoved'] is True;assert len(assets)==2
  data,assets=export_archive('导出个人数据（含库存）','hukang-personal-export','actual-personal-with-photos');assert len(data['products'])==1 and len(data['inventory'])==1 and data['inventory'][0]['quantity']==1
  assert any(a['path'].startswith('photos/') for a in assets);assert any(a['path'].endswith('/current-ocr.json') for a in assets);assert any(a['path'].endswith('/revisions.json') for a in assets)
  c=database('final');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM simple_inventory').fetchone()[0]==1;assert c.execute('SELECT SUM(quantity) FROM simple_inventory').fetchone()[0]==1
  final_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert final_review['specification']=='250 mL checked';assert next(r for r in final_review['columns'][0]['rows'] if r['nutrient']=='protein')['amount']=='3.60';assert c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone()==evidence_before
  assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1;c.close()
- report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','personalExportContainsPhotosAndHashedEvidence']
+ for uri_key,hash_key in [('originalUri','sourceImageHash'),('uri','processedImageHash')]:
+  payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key],'Export modified source image bytes'
+ report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']
  for filename,measurement in report['nativeOcrMeasurements'].items():
   payload=run(['exec-out','cat',f'/data/user/0/{PKG}/files/ocr-lab/runs/{filename}']);assert hashlib.sha256(payload).hexdigest()==measurement['sha256'],'Native OCR evidence changed after review'
  run(['pull',f'/data/user/0/{PKG}/files/ocr-lab/runs',str(O/'native-ocr')]);report['status']='passed';report['deviceExecutionVerified']=True
