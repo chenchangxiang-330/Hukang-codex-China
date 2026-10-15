@@ -6,6 +6,10 @@ Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应�
 
 当前简易版的构建身份、下载入口、截图和验证边界见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
 
+当前测试包为 **0.3.3 / versionCode 8**（ARM64，Android 8.0 及以上）。[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压获得 `hukang-0.3.3-arm64.apk`；这是保留 14 天的 Actions 产物，不是正式 Release。
+
+已在断网 Android 模拟器完成图片条码解码、真实包装照片 OCR、人工修正、食品保存、重启、同商品两次入库及三个导出包检查。OPPO 实时镜头与历史安装升级仍未验证。当前临时签名不能保证覆盖已有 App；有本地数据时不要卸载。
+
 ## 本地能力
 
 - CameraX 实时预览 + ZXing 本地解码，支持 EAN-13、EAN-8、UPC-A、UPC-E。

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "format": "hukang-food-catalogue",
+  "exportedAt": "2026-10-15T08:45:07.735Z",
+  "notice": "用户核对的食品包装资料，不是官方营养数据库；不自动授予图片再分发许可。",
+  "products": [
+    {
+      "id": "product-1",
+      "productVersion": {
+        "currentEvidenceRecordedAt": "2026-10-15T08:40:20.944Z",
+        "currentProcessedImageHash": "2e0ec194e00a902f280cfc4d009787db4a78c60e9054a71530d528fce8f97388",
+        "evidenceVersionCount": 1
+      },
+      "source": {
+        "kind": "user_package",
+        "confirmedBy": "user",
+        "identity": null
+      },
+      "name": "Test Milk",
+      "brand": "Test Brand",
+      "specification": "250 mL checked",
+      "ingredients": "",
+      "confirmation": "user_confirmed",
+      "confirmationStatus": "confirmed",
+      "barcodes": [
+        {
+          "rawValue": "6923644266066",
+          "format": "EAN_13",
+          "lookupKey": "06923644266066"
+        }
+      ],
+      "nutrition": [
+        {
+          "basis": "per_100ml",
+          "printedBasis": "每100mL",
+          "servingAmount": null,
+          "servingUnit": "unknown",
+          "nutrients": [
+            {
+              "nutrient": "energy",
+              "label": "能量",
+              "printedAmount": "309",
+              "unit": "kJ",
+              "nrvPercent": "4",
+              "nrvNotDeclared": false
+            },
+            {
+              "nutrient": "protein",
+              "label": "蛋白质",
+              "printedAmount": "3.60",
+              "unit": "g",
+              "nrvPercent": "6",
+              "nrvNotDeclared": false
+            },
+            {
+              "nutrient": "fat",
+              "label": "脂肪",
+              "printedAmount": "4.4",
+              "unit": "g",
+              "nrvPercent": "7",
+              "nrvNotDeclared": false
+            },
+            {
+              "nutrient": "carbohydrate",
+              "label": "碳水化合物",
+              "printedAmount": "5.0",
+              "unit": "g",
+              "nrvPercent": "2",
+              "nrvNotDeclared": false
+            },
+            {
+              "nutrient": "sodium",
+              "label": "钠",
+              "printedAmount": "58",
+              "unit": "mg",
+              "nrvPercent": "3",
+              "nrvNotDeclared": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "images": {
+    "product-1": {
+      "front": null,
+      "nutrition": null
+    }
+  },
+  "photosIncluded": false,
+  "photoMetadataRemoved": false,
+  "mergePolicy": "按规范化条码匹配候选；不同标签值保留为不同版本，人工核验后合并。"
+}

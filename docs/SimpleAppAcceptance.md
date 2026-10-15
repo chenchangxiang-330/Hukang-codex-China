@@ -1,10 +1,10 @@
 # Hukang 中国大陆版：main 简易成品验收记录
 
-> 0.3.3 修复版已完成 ARM64 Release 构建和 APK 静态检查，设备验收尚未通过，不能宣布整条流程通过。0.3.2 的裁剪缺陷与失败证据保留在历史记录中，不作为本次最终交付包。
+> 0.3.3 已完成 ARM64 Release 构建、APK 静态检查及 Android 模拟器离线业务闭环；物理镜头、OPPO 和用户旧安装覆盖升级仍未验证。0.3.2 的裁剪缺陷及早期选图失败证据继续保留，不作为本次最终交付包。
 
 记录日期：2026-10-15（北京时间）。本文件对应本轮本地简易版收尾；它不是正式发行公告。
-下列“待填写”项尚未取得本轮构建或设备证据，不代表通过。构建、设备测试完成后须用同一
-源码提交及 APK 的实际记录更新，不能套用旧版本成功结果。
+构建和设备证据均绑定下述源码与 APK。设备成功结果只覆盖本文明确执行的路径，不能套用到
+其他设备、相机实拍或历史安装升级。
 
 ## 交付身份
 
@@ -13,7 +13,8 @@
 | 分支 | `main`；`codex/mainland-v2` 保留为参考分支 |
 | 本轮构建源码 SHA | `13449a2c51825fa1eec4f7bb7bc963a9bdb85bc8` |
 | Android 构建运行地址 | [38703696958](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958)，成功（ARM64 编译 11 分 13 秒，原生条码测试步骤 37 秒） |
-| Android 设备测试运行地址 | [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)，首次运行失败于系统选图；实际 checkout 为 `13449a2` |
+| Android 设备测试运行地址 | [38706597120](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38706597120)，通过；测试源码 `7e4c59678857e17410375d4f257d882dbaa4de07`，运行 APK 源码仍为 `13449a2` |
+| 完整设备证据 | [设备 artifact](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38706597120/artifacts/11958864204)，ZIP 17,099,024 字节，SHA-256 `ab37bbc6a9d483230be81744b2292fdba1f69963d28666958fcbfd14b07a2c47` |
 | 完整 APK 下载入口 | [完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压得到单个完整 `hukang-0.3.3-arm64.apk` |
 | applicationId | `com.hukang.china`（最终 APK 已核验） |
 | versionName / versionCode | `0.3.3` / `8`（最终 APK 已核验） |
@@ -26,7 +27,10 @@
 Actions artifact 是构建产物，不能称为已发布的正式 Release；本轮没有商店发行。
 当前工作流产物保留期为 14 天，交付链接需在有效期内下载。
 本轮 APK 检查记录为 [apk-inspection.json](evidence/simple-0.3.3/build/apk-inspection.json)，
-其 `errors` 为空、ABI 仅 `arm64-v8a`；其中 `deviceExecutionVerified: false` 不表示设备已通过。
+其 `errors` 为空、ABI 仅 `arm64-v8a`。构建检查在设备运行前生成，保留
+`deviceExecutionVerified: false`；随后同一 APK 的独立
+[设备记录](evidence/simple-0.3.3/device-passed/session.json) 为 `status: passed`、
+`deviceExecutionVerified: true`，两者职责和生成时间不同，不改写原始证据。
 
 ## 已实现的用户流程
 
@@ -55,7 +59,7 @@ Actions artifact 是构建产物，不能称为已发布的正式 Release；本�
 | --- | --- | --- |
 | `npm run typecheck` | 通过 | TypeScript 类型检查；不能证明 Android 运行 |
 | `npm test` | 75 / 75 通过 | 条码规则、坐标解析、SQLite 事务/历史、草稿恢复、库存、导出白名单等主机测试；0.3.3 构建内同样通过，见 [tests.txt](evidence/simple-0.3.3/build/tests.txt) |
-| `python3 -B -m unittest discover -s tests -p 'test_*.py'` | 21 / 21 通过 | 模型获取校验、设备证据规则、UI 选择器等；不等于已执行设备 UI |
+| `python3 -B -m unittest discover -s tests -p 'test_*.py'` | 26 / 26 通过 | 原 APK 构建为 21 项；后续增加 5 项选图选择器测试，见 [检查 38706597490](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38706597490)。测试修订没有更改 APK 运行代码 |
 | `npm run verify:assets` | 通过 | 本地原图标、固定模型及配置哈希验证；0.3.3 APK 内模型哈希也已核验 |
 | 原生条码解码本地 JVM 测试 | 8 / 8 通过 | 合成条码的纯解码路径；0.3.3 CI `:hukang-barcode:testReleaseUnitTest` 实际执行成功（37 秒，日志未列数量），物理镜头仍待验证 |
 
@@ -66,13 +70,14 @@ OCR 文字即使以 `file://` 开头也不被误当路径改写。
 草稿恢复测试验证：封面保存失败后重试仍使用原食品；保留用户新修正；重拍产生证据修订；
 不能将另一个条码绑定到该恢复记录。裁剪测试覆盖预览留白、反向拖动、边界及无效区域。
 
-上述主机检查对应本轮冻结的运行源码。若之后代码变化，应以最终构建产物 `tests.txt` 为准。
+运行代码检查对应冻结的 APK 源码；后续选图测试修订的源码和运行另列。不能将新增 Python 测试
+数量倒填到先前 APK 构建日志。
 
 ## 条码格式与固定资产
 
 | 格式 | 本地解码/规则测试 | 本轮 Android 业务闭环 |
 | --- | --- | --- |
-| EAN-13 | 本地 JVM 合成图与 JS 校验通过 | 合成图经相册原生解码，等待本轮设备结果 |
+| EAN-13 | 本地 JVM 合成图与 JS 校验通过 | 已执行合成图相册原生解码 → 未命中补录 → 保存 → 再次解码命中；非物理镜头 |
 | EAN-8 | 本地 JVM 合成图与 JS 校验通过 | 未单独执行 |
 | UPC-A | 本地 JVM 合成图、前导零与等价键测试通过 | 未单独执行 |
 | UPC-E | 本地 JVM 合成图、明确格式的展开规则测试通过 | 未单独执行 |
@@ -132,36 +137,44 @@ v6 新表并设置版本 5，执行真实迁移函数。测试比较迁移前后
 仅为 x86_64 模拟器 ARM 转译的实测，不能推断 OPPO 性能。
 
 
-## 0.3.3 Android 设备验收：等待实际结果
+## 0.3.3 选图失败历史与重测边界
 
-首次运行错误为 `UI not found: 00-barcode`。脚本从 Photo Picker 进入 DocumentsUI 后仍使用通用菜单分支，随后退出选图；失败截图还记录了模拟器 Google 应用的无关通知。见 [实际记录](evidence/simple-0.3.3/device-attempt1/session.json) 与 [截图](evidence/simple-0.3.3/device-attempt1/failure.png)。测试修订后复用同一 APK、核对运行源码差异，结果另行记录。
+首次运行错误为 `UI not found: 00-barcode`。脚本从 Photo Picker 进入 DocumentsUI 后仍使用通用菜单分支，随后退出选图；失败截图还记录了模拟器 Google 应用的无关通知。见 [实际记录](evidence/simple-0.3.3/device-attempt1/session.json) 与 [截图](evidence/simple-0.3.3/device-attempt1/failure.png)。后续修订测试选图分支并增加回归，复用同一 APK，没有通过重建 App 改变被测二进制。
 
-本轮设备运行 [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)
+此前设备运行 [38705352189](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38705352189)
 首次运行在选择条码图片时失败，未进入 OCR 与保存闭环。`workflow_run` 实际 checkout 为 APK 源码 `13449a2`；运行页显示的 head `09649e0`
 仅为后续文档提交，不能将其误称为 APK 的运行源码。此前 0.3.2 的部分成功和失败均不替代新包验收。
 
-`tests/device/simple-device.py` 计划在 API 35 x86_64 模拟器通过 ARM 转译安装完整
-ARM64 Release APK。脚本存在不代表已通过；本轮最终状态、失败位置、截图和 `session.json`
-须从上表的实际设备运行填写。模拟器不能替代 OPPO 物理镜头。
+## 0.3.3 Android 模拟器实际通过的流程
+
+[运行 38706597120](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38706597120)
+在 API 35 / Android 15 x86_64 模拟器通过 ARM 转译安装并执行上表的完整 ARM64 APK。
+设备指纹为 `google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys`。
+测试源码为 `7e4c59678857e17410375d4f257d882dbaa4de07`，APK 源码、文件哈希和证书保持不变；
+工作流检查了测试提交与 APK 源码之间的运行文件差异。归档
+[session.json](evidence/simple-0.3.3/device-passed/session.json) 的 14 项 `verifiedFlow` 全部实际通过，
+但 `physicalCameraVerified` 仍为 `false`。
 
 | 路径 | 本轮状态 / 所需证据 |
 | --- | --- |
-| 图像条码解码 → 未命中 → 包装/营养表 → 保存 | 待本轮设备结果；相册图像解码不能称为实时镜头通过 |
-| 草稿保存 → 强制停止 → 重启继续 | 待本轮设备结果，比较草稿 ID、照片、条码、规格 |
-| 本地 PaddleOCR 原始输出及坐标 | 待本轮原生结果 JSON；不得用人工值替代 |
-| 旋转、矩形裁剪、重新 OCR | 待 UI 实际操作、原图/处理图及哈希证据 |
-| 五项数值、单位、NRV%、每 100 mL 保存 | 待 UI 和 SQLite 对照；脚本人工输入，不计入 OCR 准确率 |
-| 故意选错钠单位后改回 mg 再保存 | 待本轮设备结果；这是人工制造的核对场景，不宣称模型原本识错 |
-| 再次图像解码 → 原商品 → 不运行 OCR | 待本轮设备结果，比较食品数量及原生 OCR 文件数 |
-| 分别加入 2 瓶、1 瓶，再减少/移除 | 待本轮设备结果，比较商品 1 条、库存批次及数量 |
-| 编辑规格和小数值仍保留原始证据 | 待 UI、修订与原始 JSON/hash 对照 |
-| 默认食品资料包不含库存、照片 | 待实际 ZIP 和系统分享截图 |
-| 个人导出包含照片、OCR 和修订清单 | 待实际 ZIP 条目、字节数及 SHA-256 验证 |
-| **食品资料包开启照片**与 EXIF 移除 | 已加入独立 ZIP/JPEG 元数据检查，待设备执行；不能用个人照片导出代替 |
+| 图像条码解码 → 未命中 → 包装/营养表 → 保存 | 已通过；EAN-13 合成条码由原生模块解码，保存 1 条食品；不是实时镜头验证 |
+| 草稿保存 → 强制停止 → 重启继续 | 已通过；同一草稿 ID、条码、包装照片及 `250 mL` 规格保留 |
+| 本地 PaddleOCR 原始输出及坐标 | 已通过；两份原生 JSON 分别保留 39 / 40 个文字块、坐标、confidence 和原文 |
+| 旋转、矩形裁剪、重新 OCR | 已通过右转 90°、左转 90°及触摸裁剪；实际裁剪范围 `(3,2)–(1277,1698)`，输出 **1274×1696**，无有效选区时禁止应用 |
+| 五项数值、单位、NRV%、每 100 mL 保存 | 已通过 UI 输入和 SQLite 对照；是人工核对结果，不计入 OCR 自动准确率 |
+| 故意选错钠单位后改回 mg 再保存 | 已通过；手动先选 g 再改 mg，最终保存 58 mg；不宣称这是模型原本识错 |
+| 再次图像解码 → 原商品 → 不运行 OCR | 已通过；仍为同一食品，原生 OCR 结果文件没有增加 |
+| 分别加入 2 瓶、1 瓶，再减少/移除 | 已通过；中间为 1 商品、2 库存批次、3 瓶；减少/移除后剩 1 批次、1 瓶 |
+| 编辑规格和小数值仍保留原始证据 | 已通过；规格改为 `250 mL checked`、蛋白质由 `3.6` 改为 `3.60`，保留 2 条修订，原始 OCR/初始解析及图像哈希不变 |
+| 默认食品资料包不含库存、照片 | 已实际生成并检查 ZIP；只有 `data.json`、`files.json`，不包含私人库存 |
+| 个人导出包含照片、OCR 和修订清单 | 已实际生成并检查 ZIP；图片、当前/源 OCR、初始解析及修订文件存在，清单字节数和 SHA-256 全部吻合 |
+| **食品资料包开启照片**与 EXIF 移除 | 已独立检查包含 2 张 JPEG，导出副本无 EXIF；不是以个人导出代替 |
+| 导出不修改原始图像 | 已在导出前后核对原图字节哈希；原始图片不变 |
 | OPPO 镜头、补光、权限拒绝、后台恢复、多条码 | **未验证**；需要真机操作 |
 | 用户原有安装覆盖升级、长期稳定性 | **未验证** |
 
-设备脚本会设置飞行模式、关闭 Wi-Fi/移动数据，并阻断 IPv4/IPv6 输出；保存相应规则。
+设备运行实际设置飞行模式、关闭 Wi-Fi/移动数据，并以 `OUTPUT -j DROP` 阻断 IPv4/IPv6 输出；
+规则保存在 session 中。GMS、GSF、Photos 等模拟器预装包已禁用，离线闭环仍通过。
 0.3.3 APK 已核验 INTERNET 和 ACCESS_NETWORK_STATE 均不存在、JS/模型随包、模型哈希正确；
 本轮解析的运行依赖未发现 Google 服务或 ML Kit。静态证据见
 [检查 JSON](evidence/simple-0.3.3/build/apk-inspection.json)、
@@ -169,9 +182,59 @@ ARM64 Release APK。脚本存在不代表已通过；本轮最终状态、失败
 [运行依赖图](evidence/simple-0.3.3/build/runtime-dependencies.txt)。这些检查不等于设备闭环通过。
 实际权限为 CAMERA、VIBRATE、仅 Android 12L 及以下的 READ/WRITE_EXTERNAL_STORAGE，及应用私有动态接收器权限。
 
-性能以本轮原生 OCR 的 `modelLoadMs`、`ocrMs`、`totalMs`、分阶段和内存字段为准，待填写实际数据。
-采样 PSS/RSS 不等于真实峰值；未观测到 OOM 也不能证明峰值安全。模拟器数据与 OPPO 数据分开记录。
+数据库终态为 1 食品、1 条码关联、1 份当前证据、1 份证据版本、2 条人工修订、1 张包装封面、
+1 条库存及 0 条未完成草稿；保存后的重启与再次命中均已执行。见
+[数据库摘要](evidence/simple-0.3.3/device-passed/database-summary.json)，各阶段 SQLite integrity 均为 `ok`、
+外键异常为 0。这仍不等于用户旧安装的覆盖升级测试。
+
+### 实际 OCR、解析候选与人工核对
+
+首次完整原图的 [原生 OCR](evidence/simple-0.3.3/device-passed/native-ocr/7cfd639b-cc8e-4667-91db-27e1085cda11.json)
+和旋转/裁剪后的 [原生 OCR](evidence/simple-0.3.3/device-passed/native-ocr/11cc80ff-d154-46d5-9873-7d4f5e24ce2a.json)
+均为设备真实输出。裁剪后仍有 `钠钙` 合并行和 `0860%2%` 粘连 NRV%；解析保存
+`completeCandidateTable: false`，没有把部分字段成功写成整表自动识别成功。
+
+| 项目 | 裁剪后初始解析 | 人工核对后保存（每 100 mL） |
+| --- | --- | --- |
+| 能量 | 309 kJ；NRV 4% 候选 | 309 kJ；4% |
+| 蛋白质 | 3.6 g；NRV 缺失 | 3.6 g；6%，编辑测试后为 3.60 g |
+| 脂肪 | 4.4 g；NRV 原文 `0860%2%` 待确认 | 4.4 g；7% |
+| 碳水化合物 | 5.0 g；NRV 缺失 | 5.0 g；2% |
+| 钠 | `钠钙` 无独立行，数值和 NRV 保持未知 | 58 mg；3% |
+
+这证明不确定结果可以通过人工确认完成保存，不证明本样本自动整表解析已成功。原始 OCR、
+初始解析和人工值分别保留；测试脚本对照数据库验证，而非把人工目读值写成 OCR 输出。
+可以直接对照 [初始解析](evidence/simple-0.3.3/device-passed/initial-parsed.json)、
+[首次人工保存](evidence/simple-0.3.3/device-passed/review-after-save.json) 和
+[后续人工编辑](evidence/simple-0.3.3/device-passed/review-after-edit.json)。
+
+### 模拟器性能记录
+
+| 本地 OCR 运行 | 模型加载 `modelLoadMs` | 检测推理 | 文字识别推理 | OCR 管线 | 总耗时 | 采样最大 PSS |
+| --- | --- | --- | --- | --- | --- | --- |
+| 原图 1280×1700 | 1,593 ms | 5,271 ms | 44,024 ms | 49,880 ms | **51,584 ms** | **533,870 KiB** |
+| 裁剪图 1274×1696 | 0 ms（复用） | 4,741 ms | 40,874 ms | 46,175 ms | **46,271 ms** | **674,343 KiB** |
+
+原生记录首次 `modelColdLoadMs` 为 1,235 ms，图片解码分别为 35 / 69 ms；PSS 采样间隔 50 ms，
+采样数分别为 1,032 / 925。以上是 x86_64 模拟器上的 ARM 转译数据，**不是 OPPO 耗时**。
+PSS 为采样观测最大值，不是真实物理设备峰值；两次调用不构成长时间稳定性或无泄漏证明。
 Phase 1 用户反馈“不到 5 秒”不能转用为本轮性能结果。
+
+### 实际界面证据
+
+| 页面/步骤 | 原始截图 |
+| --- | --- |
+| 今日 / 我的 | [今日](evidence/simple-0.3.3/device-passed/home.png)、[我的](evidence/simple-0.3.3/device-passed/mine.png) |
+| 库存 | [首次加入 2 瓶](evidence/simple-0.3.3/device-passed/inventory.png) |
+| 草稿重启恢复 | [继续录入](evidence/simple-0.3.3/device-passed/draft-resumed.png) |
+| OCR 与图像调整 | [首次 OCR 后](evidence/simple-0.3.3/device-passed/ocr-review-before-corrections.png)、[实际裁剪选区](evidence/simple-0.3.3/device-passed/crop-selected.png) |
+| 核对与保存后编辑 | [人工核对](evidence/simple-0.3.3/device-passed/review.png)、[编辑后商品](evidence/simple-0.3.3/device-passed/edited-product.png) |
+| 系统分享入口 | [默认资料包](evidence/simple-0.3.3/device-passed/actual-catalogue-share-sheet.png)、[附照片资料包](evidence/simple-0.3.3/device-passed/actual-catalogue-with-photos-share-sheet.png) |
+
+截图保持原样，没有修图。今日/我的顶部可见模拟器 Messages / Personal Safety 等系统预装应用发出的
+“Enable Google Play services”通知，非 Hukang 提示；GMS 确已禁用，不能由该通知推断 Hukang 依赖 GMS。
+分享面板出现 Gmail/Drive 等系统候选，但测试没有选择接收方或发送文件；已验证生成 ZIP 和打开系统
+分享入口，**没有声称外部接收端发送成功**。
 
 ## 测试素材与输出的归属
 
@@ -200,8 +263,22 @@ Phase 1 用户反馈“不到 5 秒”不能转用为本轮性能结果。
 原生导出限制单文件 64 MiB、最多 4,000 个附加文件；大库内存和超大批量导出尚未做压力测试。
 已保存商品在简易界面可修改文字和营养值，但尚未提供替换整张营养表照片的入口；既有底层证据版本能力保留。
 
-`tests/simple-export.test.mjs`、`tests/simple-app.test.mjs` 提供无真实个人信息的合成导出样例与断言；
-实际系统分享 ZIP 和界面截图待设备 artifact，不用手写样例冒充运行产物。
+本次 App 实际生成的无私人库存示例为
+[默认资料包 JSON](evidence/simple-0.3.3/device-passed/catalogue-data.json)，直接从实际 ZIP 提取，
+不是手写 JSON。名称、品牌、规格为上述人工测试数据，不能当作真实商品身份查询结果。
+
+| 实际导出 | 字节数 | SHA-256 / 检查范围 |
+| --- | --- | --- |
+| [默认食品资料包](evidence/simple-0.3.3/device-passed/actual-catalogue.zip) | 1,252 | `5406a4868bec39137064a723cc82e4c8c7a5481e57a8c36de8dceb2c47c80f40`；无照片、库存或购买数据 |
+| [附照片食品资料包](evidence/simple-0.3.3/device-passed/actual-catalogue-with-photos.zip) | 842,683 | `3537567d6842eb5531268e0eb800e3ae56746f3a81315b0a8a295ebef13e79db`；2 张导出 JPEG 无 EXIF，资产哈希正确 |
+| 个人数据包（完整设备 artifact 内） | 4,500,137 | `acc5bf78ef8d48e951cb44e0f8ec8e0668130049bd759696f2c7a11237e80cc0`；1 食品、1 库存、2 条修订、照片和 OCR/解析文件完整 |
+
+这些包只含测试采集数据。个人导出的原始照片保持原字节及可能存在的元数据，只有食品资料包
+照片副本执行 EXIF 移除；两类导出不能混淆。本轮验证了文件生成和分享面板，未验证接收端传输。
+
+仍未覆盖的边界：物理相机及 OPPO、其他条码格式的 Android 业务闭环、每 100 g/每份的设备录入、
+多食品/多标签长期使用、真实旧 APK 升级、故意中断写入后的设备恢复、删除食品级联、
+包含未完成草稿/包装 OCR/多版本证据历史的个人导出。对应主机测试或底层能力不能替代这些设备结果。
 
 ## OPPO Find X7 Ultra 简短验收
 

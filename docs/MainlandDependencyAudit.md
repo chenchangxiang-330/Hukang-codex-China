@@ -84,7 +84,7 @@ testing.
 Recorded earlier device attempts exercised the album/synthetic-barcode path on
 an Android emulator (`physicalCameraVerified: false`); their exact APK and
 partial results are listed in [SimpleAppAcceptance.md](SimpleAppAcceptance.md).
-They do not establish the result of the pending 0.3.3 build. Camera permission is
+The separate 0.3.3 replay `38706597120` passed the image-based offline flow; its exact APK and evidence are recorded there. Camera permission is
 declared and the live view is implemented, but physical camera focus, exposure,
 torch, continuous-frame decoding, and OPPO hardware behavior remain
 unverified. Do not use the image-only evidence as a physical-camera claim.
@@ -211,9 +211,11 @@ historical dependency resolution from this build's evidence. Final Manifest,
 model bundling, resolved dependencies, GitHub Actions compilation, installed
 Android execution and offline/network observations must each retain their
 individual status and source/APK identity in
-[SimpleAppAcceptance.md](SimpleAppAcceptance.md). The 0.3.3 results are pending
-until those artifacts are obtained; neither the historical graph nor source
-configuration establishes a successful device barcode/OCR run or packet capture.
+[SimpleAppAcceptance.md](SimpleAppAcceptance.md). The 0.3.3 build `38703696958` passed artifact and dependency checks; replay
+`38706597120` passed the installed image-barcode/OCR/inventory/export flow with
+IPv4/IPv6 OUTPUT blocked. Its source and APK hash are recorded in the acceptance
+report. This is emulator evidence, not physical-camera, OPPO, or packet-capture
+verification. The historical graph remains separate.
 
 Future Paddle Lite / Paddle-native runtime evaluation is recorded as an
 optional optimization. It does not block the fixed ONNX Runtime baseline.

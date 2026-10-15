@@ -1,0 +1,228 @@
+{
+  "sourceCommit": "13449a2c51825fa1eec4f7bb7bc963a9bdb85bc8",
+  "databases": {
+    "pending-draft.db": {
+      "schemaVersion": 6,
+      "integrity": "ok",
+      "foreignKeyViolations": 0,
+      "counts": {
+        "foods": 0,
+        "food_barcodes": 0,
+        "food_evidence": 0,
+        "food_revisions": 0,
+        "simple_inventory": 0,
+        "simple_capture_drafts": 1,
+        "simple_product_photos": 0
+      },
+      "stock": []
+    },
+    "two-purchases.db": {
+      "schemaVersion": 6,
+      "integrity": "ok",
+      "foreignKeyViolations": 0,
+      "counts": {
+        "foods": 1,
+        "food_barcodes": 1,
+        "food_evidence": 1,
+        "food_revisions": 1,
+        "simple_inventory": 2,
+        "simple_capture_drafts": 0,
+        "simple_product_photos": 1
+      },
+      "stock": [
+        {
+          "quantity": 2,
+          "unit": "瓶"
+        },
+        {
+          "quantity": 1,
+          "unit": "瓶"
+        }
+      ]
+    },
+    "after-stock.db": {
+      "schemaVersion": 6,
+      "integrity": "ok",
+      "foreignKeyViolations": 0,
+      "counts": {
+        "foods": 1,
+        "food_barcodes": 1,
+        "food_evidence": 1,
+        "food_revisions": 1,
+        "simple_inventory": 1,
+        "simple_capture_drafts": 0,
+        "simple_product_photos": 1
+      },
+      "stock": [
+        {
+          "quantity": 2,
+          "unit": "瓶"
+        }
+      ]
+    },
+    "final.db": {
+      "schemaVersion": 6,
+      "integrity": "ok",
+      "foreignKeyViolations": 0,
+      "counts": {
+        "foods": 1,
+        "food_barcodes": 1,
+        "food_evidence": 1,
+        "food_revisions": 2,
+        "simple_inventory": 1,
+        "simple_capture_drafts": 0,
+        "simple_product_photos": 1
+      },
+      "stock": [
+        {
+          "quantity": 1,
+          "unit": "瓶"
+        }
+      ]
+    }
+  },
+  "exports": {
+    "actual-personal-with-photos.zip": {
+      "sha256": "acc5bf78ef8d48e951cb44e0f8ec8e0668130049bd759696f2c7a11237e80cc0",
+      "bytes": 4500137,
+      "entries": [
+        "data.json",
+        "photos/food-mv9abni7-d-znsgtz0-front.jpg",
+        "photos/food-mv9abni7-d-znsgtz0-nutrition.jpg",
+        "photos/food-mv9abni7-d-znsgtz0-front-original.source",
+        "photos/food-mv9abni7-d-znsgtz0-original.source",
+        "evidence/food-mv9abni7-d-znsgtz0/current-ocr.json",
+        "evidence/food-mv9abni7-d-znsgtz0/current-parsed.json",
+        "evidence/food-mv9abni7-d-znsgtz0/current-evidence.json",
+        "evidence/food-mv9abni7-d-znsgtz0/revisions.json",
+        "evidence/food-mv9abni7-d-znsgtz0/current-source-document.json",
+        "evidence/food-mv9abni7-d-znsgtz0/current-source-ocr.json",
+        "files.json"
+      ],
+      "manifestHashesVerified": true,
+      "personalInventoryCount": 1,
+      "personalRevisionCount": 2,
+      "originalPhotosByteIdentical": true,
+      "photosMetadataPolicy": "Personal export preserves original evidence bytes; metadata removal verified only for catalogue JPEG copies."
+    },
+    "actual-catalogue.zip": {
+      "sha256": "5406a4868bec39137064a723cc82e4c8c7a5481e57a8c36de8dceb2c47c80f40",
+      "bytes": 1252,
+      "entries": [
+        "data.json",
+        "files.json"
+      ],
+      "manifestHashesVerified": true,
+      "privacyForbiddenFieldsAbsent": true,
+      "photoExifTags": {}
+    },
+    "actual-catalogue-with-photos.zip": {
+      "sha256": "3537567d6842eb5531268e0eb800e3ae56746f3a81315b0a8a295ebef13e79db",
+      "bytes": 842683,
+      "entries": [
+        "data.json",
+        "photos/product-1-front.jpg",
+        "photos/product-1-nutrition.jpg",
+        "files.json"
+      ],
+      "manifestHashesVerified": true,
+      "privacyForbiddenFieldsAbsent": true,
+      "photoExifTags": {
+        "photos/product-1-front.jpg": 0,
+        "photos/product-1-nutrition.jpg": 0
+      }
+    }
+  },
+  "evidence": {
+    "sourceEvidenceUnchangedAcrossManualEdit": true,
+    "persistedEvidenceUnchangedAcrossManualEdit": true,
+    "initialParsedUnchangedAcrossManualEdit": true,
+    "nativeOcrFilesUnchangedAfterManualReview": true,
+    "sourceOcrMatchesNativeDocumentExactly": true,
+    "originalSha256": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+    "processedSha256": "2e0ec194e00a902f280cfc4d009787db4a78c60e9054a71530d528fce8f97388",
+    "recordIdSameAsResumedDraft": true,
+    "originalDimensions": [
+      1280,
+      1700
+    ],
+    "savedProcessedDimensions": [
+      1274,
+      1696
+    ],
+    "manualReview": {
+      "name": "Test Milk",
+      "brand": "Test Brand",
+      "ingredients": "",
+      "columns": [
+        {
+          "id": "column-1",
+          "basisKind": "per_100ml",
+          "basisRawText": "每100mL",
+          "servingAmount": "",
+          "servingUnit": "unknown",
+          "servingSizeNotDeclared": false,
+          "reviewed": true,
+          "rows": [
+            {
+              "nutrient": "energy",
+              "label": "能量",
+              "amount": "309",
+              "unit": "kJ",
+              "nrvPercent": "4",
+              "nrvNotDeclared": false,
+              "reviewed": true
+            },
+            {
+              "nutrient": "protein",
+              "label": "蛋白质",
+              "amount": "3.60",
+              "unit": "g",
+              "nrvPercent": "6",
+              "nrvNotDeclared": false,
+              "reviewed": true
+            },
+            {
+              "nutrient": "fat",
+              "label": "脂肪",
+              "amount": "4.4",
+              "unit": "g",
+              "nrvPercent": "7",
+              "nrvNotDeclared": false,
+              "reviewed": true
+            },
+            {
+              "nutrient": "carbohydrate",
+              "label": "碳水化合物",
+              "amount": "5.0",
+              "unit": "g",
+              "nrvPercent": "2",
+              "nrvNotDeclared": false,
+              "reviewed": true
+            },
+            {
+              "nutrient": "sodium",
+              "label": "钠",
+              "amount": "58",
+              "unit": "mg",
+              "nrvPercent": "3",
+              "nrvNotDeclared": false,
+              "reviewed": true
+            }
+          ]
+        }
+      ],
+      "specification": "250 mL checked"
+    },
+    "rawOcrText": "6L\n好\n特仑苏\nR\n营养成分表\n项目\n每100mL\nNRV%\n能量\n309kJ\n4%\n蛋白质\n3.6g\n0860%2%\n脂肪\n4.4g\n碳水化合物\n5.0g\n钠钙\n58mg\n3%\n120mg\n15%\n配\n料：生牛乳\n产\n品类型：全脂灭菌乳\n产品标准号：GB25190\n生产日期：见包装喷码\n保质期：6个月\n生产厂级产地：具体见喷码前两位代码\n存条件：常温密闭保存。\n开启前，无需冷藏；\n开启后，请立即饮用。\n请勿连同包装在微波炉中加热。\n润费者热线：400-6603333\n请勿乱扔空包\n自\nPLEASE DISPOSE PROPERLY\n保持环境酒洁"
+  },
+  "limits": [
+    "Emulator only, not physical camera or OPPO hardware.",
+    "Synthetic EAN-13 image decoded; other symbologies and live camera not established by these files.",
+    "Archived real Chinese nutrition-side photo reused for both cover and nutrition capture; not a new front-face photo.",
+    "All five final values and units explicitly entered/confirmed, not an OCR accuracy score.",
+    "Wrong sodium unit deliberately selected in UI then corrected, not a claimed OCR error.",
+    "This dataset does not prove historical APK upgrade, forced failure recovery, long-term memory stability, food deletion cascade, or personal import restore.",
+    "Catalogue photos derived from CC-BY-SA test fixture; production runtime has no OFF service dependency."
+  ]
+}
