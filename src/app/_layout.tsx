@@ -1,5 +1,13 @@
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
+import { colors } from "../ui/tokens";
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerStyle: { backgroundColor: '#f3faf8' }, headerTintColor: '#14594e' }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.brand,
+      }}
+    />
+  );
 }
