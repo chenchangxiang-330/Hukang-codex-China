@@ -1,84 +1,191 @@
-import { Pressable, Text, TextInput, View, StyleSheet } from 'react-native';
-export const C = { bg: '#F2FAF8', ink: '#163F3C', muted: '#6C8480', teal: '#168F86', pale: '#E0F2EE', line: '#DDEBE7', white: '#FFFFFF', red: '#AA423D' };
-export function Button({ title, onPress, secondary = false, disabled = false }: { title: string; onPress: () => void; secondary?: boolean; disabled?: boolean; }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} disabled={disabled} onPress={onPress} style={[S.button, secondary && S.secondary, disabled && S.disabled]}><Text style={[S.buttonText, secondary && { color: C.teal }]}>{title}</Text></Pressable>;
+import { useState } from 'react';
+import { Pressable, Text, TextInput, View, StyleSheet, type TextInputProps } from 'react-native';
+import { colors, tokens } from '../../ui/tokens';
+
+/** Compatibility names keep existing screens on the shared UI V1 palette. */
+export const C = {
+  bg: colors.background,
+  ink: colors.ink,
+  muted: colors.muted,
+  teal: colors.brand,
+  pale: colors.brandSoft,
+  line: colors.line,
+  white: colors.surface,
+  red: colors.danger,
+  warm: colors.warm,
+  warmSoft: colors.warmSoft,
+  brandPressed: colors.brandPressed,
+};
+
+export function Button({ title, onPress, secondary = false, disabled = false }: {
+  title: string;
+  onPress: () => void;
+  secondary?: boolean;
+  disabled?: boolean;
+}) {
+  return <Pressable
+    accessibilityRole="button"
+    accessibilityLabel={title}
+    accessibilityState={{ disabled }}
+    disabled={disabled}
+    onPress={onPress}
+    style={({ pressed }) => [S.button, secondary && S.secondary, pressed && !disabled && (secondary ? S.secondaryPressed : S.buttonPressed), disabled && S.disabled]}
+  >
+    <Text style={[S.buttonText, secondary && { color: C.teal }]}>{title}</Text>
+  </Pressable>;
 }
-export function Field({ label, value, onChange, numeric = false, placeholder = '' }: { label: string; value: string; onChange: (s: string) => void; numeric?: boolean; placeholder?: string; }) {
-  return <View style={{ gap: 7 }}><Text style={S.label}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={numeric ? 'decimal-pad' : 'default'} style={S.input} /></View>;
+
+export function Field({ label, value, onChange, numeric = false, placeholder = '', hint, error, secureTextEntry = false, editable = true, keyboardType, autoCapitalize }: {
+  label: string;
+  value: string;
+  onChange: (s: string) => void;
+  numeric?: boolean;
+  placeholder?: string;
+  hint?: string;
+  error?: string;
+  secureTextEntry?: boolean;
+  editable?: boolean;
+  keyboardType?: TextInputProps['keyboardType'];
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+}) {
+  const [focused, setFocused] = useState(false);
+  return <View style={S.field}>
+    <Text style={S.label}>{label}</Text>
+    <TextInput
+      accessibilityLabel={label}
+      accessibilityHint={error || hint || ''}
+      accessibilityState={{ disabled: !editable }}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      placeholderTextColor={C.muted}
+      keyboardType={keyboardType ?? (numeric ? 'decimal-pad' : 'default')}
+      autoCapitalize={autoCapitalize ?? (secureTextEntry ? 'none' : 'sentences')}
+      autoCorrect={!secureTextEntry}
+      secureTextEntry={secureTextEntry}
+      editable={editable}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      selectionColor={C.teal}
+      underlineColorAndroid="transparent"
+      style={[S.input, focused && S.inputFocused, !!error && S.inputError, !editable && S.disabled]}
+    />
+    {!!error && <Text accessibilityLiveRegion="polite" style={S.fieldError}>{error}</Text>}
+    {!error && !!hint && <Text style={S.small}>{hint}</Text>}
+  </View>;
 }
-export function Choices({ value, options, onChange, accessibilityPrefix = '' }: { value: string; options: [string, string][]; onChange: (v: string) => void; accessibilityPrefix?: string; }) {
-  return <View style={S.wrap}>{options.map(([key, label]) => <Pressable key={key} accessibilityRole="radio" accessibilityState={{ selected: value === key }} accessibilityLabel={accessibilityPrefix ? `${accessibilityPrefix} ${label}` : label} onPress={() => onChange(key)} style={[S.chip, value === key && S.chipOn]}><Text style={{ color: value === key ? C.white : C.ink, fontSize: 14 }}>{label}</Text></Pressable>)}</View>;
+
+export function Choices({ value, options, onChange, accessibilityPrefix = '' }: {
+  value: string;
+  options: [string, string][];
+  onChange: (v: string) => void;
+  accessibilityPrefix?: string;
+}) {
+  return <View style={S.wrap}>{options.map(([key, label]) => <Pressable
+    key={key}
+    accessibilityRole="radio"
+    accessibilityState={{ selected: value === key, checked: value === key }}
+    accessibilityLabel={accessibilityPrefix ? `${accessibilityPrefix} ${label}` : label}
+    onPress={() => onChange(key)}
+    style={({ pressed }) => [S.chip, value === key && S.chipOn, pressed && S.controlPressed]}
+  ><Text style={[S.chipText, value === key && { color: C.white }]}>{label}</Text></Pressable>)}</View>;
 }
-export function Check({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void; }) {
-  return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: value }} onPress={() => onChange(!value)} style={S.checkRow}><View style={[S.checkbox, value && { backgroundColor: C.teal, borderColor: C.teal }]}><Text style={{ color: 'white' }}>{value ? '✓' : ''}</Text></View><Text style={[S.note, { flex: 1 }]}>{label}</Text></Pressable>;
+
+export function Check({ label, value, onChange }: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return <Pressable
+    accessibilityRole="checkbox"
+    accessibilityLabel={label}
+    accessibilityState={{ checked: value }}
+    onPress={() => onChange(!value)}
+    style={({ pressed }) => [S.checkRow, pressed && S.controlPressed]}
+  >
+    <View style={[S.checkbox, value && { backgroundColor: C.teal, borderColor: C.teal }]}>
+      <Text style={S.checkMark}>{value ? '✓' : ''}</Text>
+    </View>
+    <Text style={[S.note, { flex: 1, color: C.ink }]}>{label}</Text>
+  </Pressable>;
 }
+
 export const S = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  page: { padding: 24, gap: 20, paddingBottom: 35 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  brand: { fontSize: 34, fontWeight: '800', color: C.ink, letterSpacing: 1 },
-  tagline: { fontSize: 16, color: C.muted, lineHeight: 26, marginTop: 4 },
-  logo: { width: 54, height: 54, borderRadius: 18 },
-  eyebrow: { color: C.teal, fontSize: 14, fontWeight: '700' },
-  date: { fontSize: 32, color: C.ink, fontWeight: '700' },
-  hero: { backgroundColor: C.teal, borderRadius: 28, padding: 25, gap: 12, marginTop: 2 },
+  page: { padding: tokens.space.xl, gap: tokens.space.xxl, paddingBottom: tokens.space.xxxl, width: '100%', maxWidth: tokens.control.pageMaxWidth, alignSelf: 'center' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: tokens.space.lg },
+  brand: { ...tokens.type.title, color: C.ink },
+  tagline: { ...tokens.type.body, color: C.muted, marginTop: tokens.space.xs },
+  logo: { width: 48, height: 48, borderRadius: tokens.radius.md },
+  eyebrow: { ...tokens.type.label, color: C.teal },
+  date: { ...tokens.type.display, color: C.ink },
+  hero: { backgroundColor: C.teal, borderRadius: tokens.radius.lg, padding: tokens.space.xxl, gap: tokens.space.md },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cameraIcon: { width: 48, height: 36, borderRadius: 10, borderWidth: 2, borderColor: '#D8F4EF', alignItems: 'center', justifyContent: 'center' },
-  lens: { width: 17, height: 17, borderRadius: 12, borderWidth: 2, borderColor: '#D8F4EF' },
-  heroArrow: { color: 'white', fontSize: 30 },
-  heroTitle: { color: 'white', fontSize: 38, fontWeight: '800', marginTop: 10 },
-  heroNote: { fontSize: 16, color: '#D9F0EB', lineHeight: 25 },
-  heroBottom: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 18, marginTop: 4, borderTopWidth: 1, borderTopColor: '#59ADA2' },
-  stats: { flexDirection: 'row', backgroundColor: C.white, borderRadius: 24, padding: 22, alignItems: 'center' },
-  stat: { flex: 1, gap: 5 },
-  statDivider: { width: 1, height: 44, backgroundColor: C.line, marginRight: 24 },
-  number: { fontSize: 29, fontWeight: '700', color: C.ink },
-  countUnit: { fontSize: 14, fontWeight: '400', color: C.muted },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-  section: { fontSize: 21, fontWeight: '700', color: C.ink },
-  link: { fontSize: 14, color: C.teal, paddingVertical: 10 },
+  cameraIcon: { width: 44, height: 34, borderRadius: 10, borderWidth: 2, borderColor: '#DCEBDF', alignItems: 'center', justifyContent: 'center' },
+  lens: { width: 15, height: 15, borderRadius: 8, borderWidth: 2, borderColor: '#DCEBDF' },
+  heroArrow: { color: C.white, fontSize: 26 },
+  heroTitle: { ...tokens.type.display, color: C.white },
+  heroNote: { ...tokens.type.body, color: '#EDF5EE' },
+  heroBottom: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.space.sm, justifyContent: 'space-between', paddingTop: tokens.space.lg, marginTop: tokens.space.xs, borderTopWidth: 1, borderTopColor: '#72917E' },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.space.lg, backgroundColor: C.white, borderRadius: tokens.radius.lg, borderWidth: 1, borderColor: C.line, padding: tokens.space.xl, alignItems: 'center' },
+  stat: { flex: 1, minWidth: 104, gap: tokens.space.xs },
+  statDivider: { width: 1, height: 40, backgroundColor: C.line },
+  number: { fontSize: 28, lineHeight: 38, fontWeight: '700', fontVariant: ['tabular-nums'], color: C.ink },
+  countUnit: { ...tokens.type.caption, color: C.muted },
+  sectionRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: tokens.space.md },
+  section: { ...tokens.type.section, color: C.ink },
+  link: { ...tokens.type.label, color: C.teal, paddingVertical: tokens.space.md, minHeight: tokens.control.minimumTouchSize },
   note: { fontSize: 14, lineHeight: 23, color: C.muted },
-  small: { fontSize: 12, lineHeight: 20, color: C.muted },
-  footer: { fontSize: 12, color: C.muted, textAlign: 'center', paddingVertical: 10 },
-  empty: { padding: 25, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BCD9D1', borderRadius: 22, gap: 8 },
-  emptyTitle: { fontSize: 18, color: C.ink, fontWeight: '600' },
-  listRow: { flexDirection: 'row', gap: 14, alignItems: 'center', padding: 17, backgroundColor: C.white, borderRadius: 20 },
-  smallMark: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  rowTitle: { fontSize: 17, fontWeight: '600', color: C.ink, lineHeight: 26 },
-  chevron: { fontSize: 26, color: C.muted },
-  dock: { flexDirection: 'row', marginHorizontal: 17, marginTop: 4, marginBottom: 5, paddingVertical: 15, borderRadius: 28, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E9F1ED', boxShadow: '0 4px 22px rgba(16,63,53,0.08)' },
-  dockItem: { flex: 1, alignItems: 'center', gap: 6, padding: 4 },
-  dockText: { fontSize: 16, color: C.muted },
+  small: { ...tokens.type.caption, color: C.muted },
+  footer: { ...tokens.type.caption, color: C.muted, textAlign: 'center', paddingVertical: tokens.space.md },
+  empty: { backgroundColor: C.white, padding: tokens.space.xxl, borderWidth: 1, borderColor: C.line, borderRadius: tokens.radius.lg, gap: tokens.space.sm },
+  emptyTitle: { ...tokens.type.subtitle, color: C.ink },
+  listRow: { flexDirection: 'row', gap: tokens.space.md, alignItems: 'center', padding: tokens.space.lg, backgroundColor: C.white, borderColor: C.line, borderWidth: 1, borderRadius: tokens.radius.md, minHeight: 80 },
+  smallMark: { width: 44, height: 44, borderRadius: tokens.radius.sm, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  rowTitle: { ...tokens.type.subtitle, color: C.ink },
+  chevron: { fontSize: 24, color: C.muted },
+  dock: { flexDirection: 'row', paddingHorizontal: tokens.space.sm, paddingTop: tokens.space.sm, paddingBottom: tokens.space.xs, backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.line },
+  dockItem: { flex: 1, minHeight: tokens.control.minimumTouchSize, alignItems: 'center', justifyContent: 'center', gap: tokens.space.xs, paddingHorizontal: tokens.space.xs, paddingVertical: tokens.space.sm },
+  dockText: { ...tokens.type.caption, color: C.muted, textAlign: 'center' },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.teal },
-  header: { flexDirection: 'row', paddingHorizontal: 14, paddingVertical: 7, alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: C.ink },
-  back: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 27, lineHeight: 37, fontWeight: '700', color: C.ink },
-  card: { backgroundColor: C.white, borderRadius: 22, padding: 20, gap: 16 },
-  button: { backgroundColor: C.teal, borderRadius: 17, paddingVertical: 16, paddingHorizontal: 18, minHeight: 50, alignItems: 'center', justifyContent: 'center' },
-  secondary: { backgroundColor: C.pale },
-  buttonText: { fontSize: 16, fontWeight: '600', color: 'white' },
-  disabled: { opacity: 0.4 },
-  label: { fontSize: 15, color: C.ink, lineHeight: 23 },
-  input: { borderWidth: 1, borderColor: C.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: '#FFF' },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
-  chip: { paddingVertical: 10, paddingHorizontal: 13, borderRadius: 12, backgroundColor: C.pale },
+  header: { flexDirection: 'row', gap: tokens.space.sm, paddingHorizontal: tokens.space.md, paddingVertical: tokens.space.sm, alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: C.line, backgroundColor: C.bg },
+  headerTitle: { ...tokens.type.subtitle, color: C.ink, flex: 1, textAlign: 'center' },
+  back: { width: tokens.control.minimumTouchSize, height: tokens.control.minimumTouchSize, alignItems: 'center', justifyContent: 'center' },
+  title: { ...tokens.type.title, color: C.ink },
+  card: { backgroundColor: C.white, borderColor: C.line, borderWidth: 1, borderRadius: tokens.radius.lg, padding: tokens.space.xl, gap: tokens.space.lg },
+  button: { backgroundColor: C.teal, borderRadius: tokens.radius.sm, paddingVertical: 14, paddingHorizontal: tokens.space.lg, minHeight: 52, alignItems: 'center', justifyContent: 'center', flexShrink: 1, borderWidth: 1, borderColor: 'transparent' },
+  buttonPressed: { backgroundColor: C.brandPressed },
+  secondary: { backgroundColor: C.pale, borderColor: '#D8E5D9' },
+  secondaryPressed: { backgroundColor: '#D4E5D7' },
+  buttonText: { fontSize: 16, lineHeight: 24, fontWeight: '600', color: C.white, textAlign: 'center', flexShrink: 1 },
+  disabled: { opacity: 0.48 },
+  controlPressed: { opacity: 0.72 },
+  label: { ...tokens.type.label, color: C.ink },
+  field: { gap: tokens.space.sm, minWidth: 0 },
+  input: { minHeight: tokens.control.fieldMinHeight, borderWidth: 1, borderColor: C.line, borderRadius: tokens.radius.sm, paddingHorizontal: 14, paddingVertical: tokens.space.md, fontSize: 16, lineHeight: 24, color: C.ink, backgroundColor: C.white },
+  inputFocused: { borderColor: C.teal, backgroundColor: '#FCFEFC' },
+  inputError: { borderColor: C.red },
+  fieldError: { ...tokens.type.caption, color: C.red },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.space.sm, alignItems: 'center' },
+  chip: { minHeight: tokens.control.minimumTouchSize, paddingVertical: tokens.space.md, paddingHorizontal: 14, borderRadius: tokens.radius.sm, backgroundColor: C.pale, maxWidth: '100%', justifyContent: 'center', alignItems: 'center' },
+  chipText: { ...tokens.type.label, color: C.ink, textAlign: 'center', flexShrink: 1 },
   chipOn: { backgroundColor: C.teal },
-  two: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  checkbox: { width: 22, height: 22, borderWidth: 1, borderColor: C.muted, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  checkRow: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 },
-  error: { padding: 16, borderRadius: 15, backgroundColor: '#FFF0EE' },
-  notice: { padding: 16, borderRadius: 15, backgroundColor: '#E1F1EB' },
-  scanner: { height: 330, backgroundColor: '#173D35', borderRadius: 23, overflow: 'hidden', alignItems: 'stretch', justifyContent: 'center' },
-  scanFrame: { position: 'absolute', left: 30, right: 30, top: 105, height: 115, borderWidth: 2, borderColor: '#D0F3DC', borderRadius: 14 },
-  photo: { height: 260, width: '100%', backgroundColor: 'white', borderRadius: 20 },
-  nutritionPhoto: { height: 290, width: '100%', backgroundColor: 'white', borderRadius: 18 },
-  productPhoto: { height: 280, width: '100%', borderRadius: 24, backgroundColor: 'white' },
-  progress: { flexDirection: 'row', gap: 7 },
-  progressItem: { flex: 1, borderRadius: 20, alignItems: 'center', paddingVertical: 10, backgroundColor: C.pale },
-  tablePlaceholder: { backgroundColor: 'white', borderRadius: 23, padding: 25, gap: 15, borderWidth: 1, borderStyle: 'dashed', borderColor: '#BAD7CD' },
-  fakeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  fakeLine: { width: 75, height: 6, borderRadius: 3, backgroundColor: C.line },
-  nutrientRow: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.line },
-  busy: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: 'rgba(242,250,248,0.94)' }
+  two: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.space.md, alignItems: 'flex-start' },
+  checkbox: { width: 24, height: 24, borderWidth: 1.5, borderColor: C.muted, borderRadius: 7, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  checkMark: { color: C.white, fontSize: 16, lineHeight: 20, fontWeight: '700' },
+  checkRow: { flexDirection: 'row', gap: tokens.space.md, alignItems: 'center', minHeight: tokens.control.minimumTouchSize, paddingVertical: tokens.space.md },
+  error: { padding: tokens.space.lg, borderRadius: tokens.radius.md, borderWidth: 1, borderColor: '#F0D0CB', backgroundColor: colors.dangerSoft },
+  notice: { padding: tokens.space.lg, borderRadius: tokens.radius.md, backgroundColor: C.pale },
+  scanner: { height: 330, backgroundColor: '#172C23', borderRadius: tokens.radius.lg, overflow: 'hidden', alignItems: 'stretch', justifyContent: 'center' },
+  scanFrame: { position: 'absolute', left: 24, right: 24, top: 105, height: 115, borderWidth: 2, borderColor: '#E2F1E1', borderRadius: tokens.radius.sm },
+  photo: { height: 260, width: '100%', backgroundColor: C.white, borderRadius: tokens.radius.md },
+  nutritionPhoto: { height: 290, width: '100%', backgroundColor: C.white, borderRadius: tokens.radius.md },
+  productPhoto: { height: 280, width: '100%', borderRadius: tokens.radius.lg, backgroundColor: C.white },
+  progress: { flexDirection: 'row', gap: tokens.space.sm },
+  progressItem: { flex: 1, minWidth: 0, borderRadius: tokens.radius.sm, alignItems: 'center', justifyContent: 'center', paddingVertical: tokens.space.md, paddingHorizontal: tokens.space.xs, backgroundColor: C.pale },
+  tablePlaceholder: { backgroundColor: C.white, borderRadius: tokens.radius.lg, padding: tokens.space.xl, gap: tokens.space.lg, borderWidth: 1, borderColor: C.line },
+  fakeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: tokens.space.md },
+  fakeLine: { width: 64, height: 5, borderRadius: 3, backgroundColor: C.line },
+  nutrientRow: { gap: tokens.space.md, paddingTop: tokens.space.lg, borderTopWidth: 1, borderTopColor: C.line },
+  busy: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', gap: tokens.space.lg, padding: tokens.space.xxl, backgroundColor: 'rgba(247,248,245,0.97)' },
 });
