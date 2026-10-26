@@ -1,11 +1,13 @@
-# Hukang China — main 简易本地版架构
+# Hukang China — 本地产品与 UI V1 架构
 
 当前产品只查询用户自己的食品库。`codex/mainland-v2` 保留技术参考历史；旧 Provider 和 `server/` 仅为未启用的参考代码，不在入口、导航、扫码兜底或启动链路中。
+
+UI V1 位于 `codex/ui-v1`，只扩展展示层与页面状态枚举，未修改 schema、食品业务编排和原生识别链路。完整 UI 规范见 [UIV1Design.md](UIV1Design.md)。每日饮食为明确标注的临时演示，AI 为未连接的接口边界，不能视为新的食品数据源或营养分析能力。
 
 ## 用户和数据流程
 
 ```text
-Expo Router → SimpleApp（今日 / 库存 / 我的）
+Expo Router → SimpleApp（今日 / 记录 / 食品库〔资料 / 库存〕 / 我的）
   → 拍一拍 → CameraX 实时取景 / 相册 → ZXing 本地解码
   → BarcodeNormalizer / Validator → ChinaFoodRepository（SQLite）
       命中 → 商品详情 → 用户确认本次购买数量 → 独立库存批次
@@ -24,6 +26,9 @@ Android minSdk 26，仅 `arm64-v8a`。模型与 JS 随包提供；Release 移除
 | 路径 | 职责 |
 | --- | --- |
 | `src/app/` | 唯一生产路由，进入 SimpleApp |
+| `src/ui/` | 本地设计 tokens、通用卡片、状态、空状态与标题组件 |
+| `src/features/ui-v1/` | 饮食演示、AI 临时表单、本机用户与关于页面；不持久化或联网 |
+| `tests/ui-preview/` | 开发专用共享页面预览；用内存 controller 替换原生业务，不导入生产入口 |
 | `src/features/simple/` | 连续采集、照片调整、人工核对、商品/库存页面、持久草稿及导出 |
 | `src/domain/barcode/` | 字符串条码、校验位、UPC-E 展开与 GTIN 等价键 |
 | `src/domain/food/` | OCR 坐标行列关联、未知字段、人工核对及食品模型 |

@@ -225,3 +225,12 @@ optional optimization. It does not block the fixed ONNX Runtime baseline.
 Release signing and same-signature `adb install -r` data-preservation checks are
 defined in [AndroidSigningAndUpgradePolicy.md](AndroidSigningAndUpgradePolicy.md).
 The policy does not treat an ephemeral CI certificate as a production signing key.
+
+
+## UI V1 增量审计（2026-10-26）
+
+`codex/ui-v1` / 0.4.0 仅添加本地 UI，没有新的生产依赖。`LOCAL` 增加设计组件、每日记录临时演示和 AI 配置格式检查；后者没有 HTTP 客户端、密钥持久化或真实连接测试。原有离线运行边界不变，CHINA_SERVICE 与 FOREIGN_NETWORK_SERVICE 仍为 0。APK 实际检查见 [UIV1Acceptance.md](UIV1Acceptance.md)。
+
+新加入的 `@playwright/test`、`esbuild`、`prettier`、`react-native-web` 仅是开发/测试依赖，用于本地浏览器预览和截图，不是 Android 运行服务，也不把测试 controller 或样例食品导入 App。字体使用系统字体，导航图形用原生 View 绘制，没有远程字体或图标请求。预览照片是既有许可测试素材，截图内有持续演示提示，不能作为生产食品库内容或实际 OCR 输出。
+
+浏览器测试观察到的零外部请求只说明共享 UI 测试会话；不作为 Android 网络抓包或设备断网执行证据。

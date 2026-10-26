@@ -2,11 +2,15 @@
 
 Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应用。普通用户从首页「拍一拍」开始：实时扫描食品条码，命中本机食品库后查看商品并选择入库；未命中时依次保存包装正面、营养成分表，使用手机内置的 PP-OCRv5 国产模型识别，人工核对后保存食品资料。
 
-当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，包含「今日 / 库存 / 我的」三个入口。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
+当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，UI V1 包含「今日 / 记录 / 食品库 / 我的」四个入口，库存位于食品库内。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
 
-当前简易版的构建身份、下载入口、截图和验证边界见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
+UI V1 在独立分支 `codex/ui-v1` 开发，基于现有 React Native + Expo 项目，未创建 Flutter 项目。设计规范见 [UI V1 Design](docs/UIV1Design.md)，本轮检查、截图和安装包见 [UI V1 验收记录](docs/UIV1Acceptance.md)。
 
-当前测试包为 **0.3.3 / versionCode 8**（ARM64，Android 8.0 及以上）。[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压获得 `hukang-0.3.3-arm64.apk`；这是保留 14 天的 Actions 产物，不是正式 Release。
+每日记录目前提供主动开启的临时演示；AI 设置只做本地配置格式检查。二者均未连接存储或真实服务，不把演示数据写入食品库。
+
+以下 0.3.3 是历史基线，设备结果不能直接作为 UI V1 的验收；历史构建身份和证据见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
+
+历史基线测试包为 **0.3.3 / versionCode 8**（ARM64，Android 8.0 及以上）。[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/38703696958/artifacts/11958565529)，解压获得 `hukang-0.3.3-arm64.apk`；这是保留 14 天的 Actions 产物，不是正式 Release。
 
 已在断网 Android 模拟器完成图片条码解码、真实包装照片 OCR、人工修正、食品保存、重启、同商品两次入库及三个导出包检查。OPPO 实时镜头与历史安装升级仍未验证。当前临时签名不能保证覆盖已有 App；有本地数据时不要卸载。
 
@@ -27,6 +31,8 @@ Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。本版生产运行
 npm ci
 npm run typecheck
 npm test
+npm run format:ui:check
+npm run ui:test # 需要已安装 Chromium；共享 UI 的模拟 controller 测试
 npm run verify:assets
 cd android
 ./gradlew :app:assembleRelease
