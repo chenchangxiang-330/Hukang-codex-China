@@ -1,0 +1,1 @@
+ee8b0b9a20596c9040c4ecec3cb589d1397ba8fbde6c41f0bd7955c144804d8a  artifacts/hukang-0.4.0-arm64.apk

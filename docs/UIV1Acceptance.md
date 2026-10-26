@@ -14,6 +14,8 @@
 - 两个旧仓库只读；`codex/mainland-v2` 未改动。
 - 数据库仍为 schema 6。`src/domain`、`src/application`、`src/infrastructure`、`modules`、原图标和模型未修改；`useSimpleApp.ts` 只扩充 Tab/Screen 类型。
 
+本轮保护范围和两个旧仓库只读状态见 [scope-audit.json](evidence/ui-v1/scope-audit.json)。
+
 图标 `assets/icon.png` 实际 SHA-256：`d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2`，与原始资源一致。
 
 ## 已实现
@@ -54,7 +56,26 @@
 
 ## Android 构建
 
-构建已由 `095bb67` 推送触发。此节在获得实际 CI 结果后补齐，不提前将构建或设备测试写成通过。
+实际成功运行：[Actions 40323157930](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930)，源码 `095bb67903b30f4acb4706d686601701dd669416`，分支 `codex/ui-v1`。Gradle ARM64 `assembleRelease` 成功，原生 ZXing 合成条码 JVM 单测、运行期依赖审计、APK 检查全部通过。原生编译约 11 分 47 秒。后续提交只归档文档/证据，不改变本次已构建源码。
+
+[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930/artifacts/12651485154)，解压可得完整 `hukang-0.4.0-arm64.apk`；不是需要拼接的分片，也不是公开正式 Release。Actions artifact 保留至 **2026-11-09**，可能需要登录 GitHub。ZIP 包含源码和证据，约 99.90 MB；其中 APK 为 **60,841,504 bytes / 60.84 MB / 58.02 MiB**。
+
+| 身份 | 实际值 |
+| --- | --- |
+| applicationId | `com.hukang.china` |
+| versionName / versionCode | `0.4.0` / `9` |
+| ABI / minSdk | `arm64-v8a` / `26` |
+| APK SHA-256 | `ee8b0b9a20596c9040c4ecec3cb589d1397ba8fbde6c41f0bd7955c144804d8a` |
+| 签名证书 SHA-256 | `4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5` |
+| 签名模式 | `ephemeral-test`，非稳定发行签名 |
+| APK 检查错误 | `[]` |
+
+Actions 对实际 APK 的检查确认：JS bundle、固定 PP-OCRv5 detector/recognizer、配置和字典随包提供；模型 SHA-256 与原清单一致；无 `INTERNET`、`ACCESS_NETWORK_STATE`、`RECORD_AUDIO` 权限；保留相机权限，旧 Android 图片访问权限带 maxSdkVersion 32；依赖审计未发现 ML Kit、Firebase、GMS。原始证据见 [apk-inspection.json](evidence/ui-v1/build/apk-inspection.json)、[Manifest](evidence/ui-v1/build/final-manifest.txt)、[官方模型获取记录](evidence/ui-v1/build/official-model-acquisition.json) 和 [依赖树](evidence/ui-v1/build/runtime-dependencies.txt)。本机核对了小型检查 artifact 的 SHA-256、源码提交和内容，未将 CI 检查说成本机设备运行。
+
+**本轮没有实际安装执行 0.4.0 APK**；没有 Android 模拟器/物理手机的本轮运行证据。浏览器不执行原生相机、OCR 或 SQLite。最终无网络权限和源码审计是本轮实际结果，但不应称为新 APK 已完成断网设备全流程。
+
+覆盖安装限制：归档 0.3.3 的证书为 `10801899cf694fa6ca5d75ace622d0ed7e682e2a150a4175832e21026c31593e`，与本包不同，虽然 applicationId 相同且 versionCode 递增，**本包不能覆盖该归档旧签名包**。这是一致的证书比较结论，不是已在用户手机尝试升级。请保留已有安装和数据；可在独立测试设备/测试环境新装验证 UI，不默认要求卸载。稳定升级仍需要原来匹配的安全签名或另行规划迁移，参见 [签名与升级策略](AndroidSigningAndUpgradePolicy.md)。
+
 
 ## 未接入与未验证
 

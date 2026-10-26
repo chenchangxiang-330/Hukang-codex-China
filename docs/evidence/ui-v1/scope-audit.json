@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-10-26T12:38:39.594516+00:00",
+  "builtSourceCommit": "095bb67903b30f4acb4706d686601701dd669416",
+  "documentationHeadAtAudit": "5def4e069be652c03546604ee2bf1e936cf73fbc",
+  "baseline": "c81bc2b4ad4288e9825e39645c24b8bb7ab469e4",
+  "branch": "codex/ui-v1",
+  "protectedPaths": [
+    "src/domain",
+    "src/application",
+    "src/infrastructure",
+    "modules",
+    "assets",
+    "src/features/simple/store.ts",
+    "src/features/simple/Export.ts",
+    "src/features/simple/captureRecovery.ts",
+    "src/features/simple/NutritionImageEditor.tsx"
+  ],
+  "protectedPathChanges": [],
+  "productionDependenciesUnchanged": true,
+  "iconSha256": "d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2",
+  "browserSourceHashesMatch": true,
+  "referenceRepositories": {
+    "Hukang-codex": {
+      "head": "a98fc594cc8bc416d8f9f386f19e185126746e38",
+      "status": ""
+    },
+    "Hukang-deepseek": {
+      "head": "d23d5ff0ef9a2b57d1928d4cc1efd7a9ee450f6d",
+      "status": ""
+    }
+  },
+  "remoteRefsAtAudit": [
+    "6f86b1317aa4c2d560ca99365ca2f21fa5f27933\trefs/heads/codex/mainland-v2",
+    "5def4e069be652c03546604ee2bf1e936cf73fbc\trefs/heads/codex/ui-v1",
+    "c81bc2b4ad4288e9825e39645c24b8bb7ab469e4\trefs/heads/main"
+  ],
+  "nativeDeviceExecutionVerified": false
+}

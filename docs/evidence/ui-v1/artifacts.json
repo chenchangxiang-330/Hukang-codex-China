@@ -1,0 +1,187 @@
+{
+  "runUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930",
+  "artifacts": [
+    {
+      "id": 12651485154,
+      "name": "hukang-0.4.0-095bb67903b30f4acb4706d686601701dd669416",
+      "size_in_bytes": 99904529,
+      "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/12651485154",
+      "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/12651485154/zip",
+      "expired": false,
+      "created_at": "2026-10-26T12:46:17Z",
+      "expires_at": "2026-11-09T12:46:13Z",
+      "updated_at": "2026-10-26T12:46:17Z",
+      "digest": "sha256:78165745b5d19528f51ace2daf09e090ac16034a1a86e36e9e4958e4ab1dc59d",
+      "workflow_run": {
+        "id": 40323157930,
+        "repository_id": 1408452963,
+        "head_repository_id": 1408452963,
+        "head_branch": "codex/ui-v1",
+        "head_sha": "095bb67903b30f4acb4706d686601701dd669416"
+      }
+    },
+    {
+      "id": 12650846950,
+      "name": "build-inspection-095bb67903b30f4acb4706d686601701dd669416",
+      "size_in_bytes": 19179,
+      "url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/12650846950",
+      "archive_download_url": "https://api.github.com/repos/chenchangxiang-330/Hukang-codex-China/actions/artifacts/12650846950/zip",
+      "expired": false,
+      "created_at": "2026-10-26T12:46:13Z",
+      "expires_at": "2026-11-09T12:46:12Z",
+      "updated_at": "2026-10-26T12:46:13Z",
+      "digest": "sha256:9e7a7392aa933d2b971892a7dcd688347db865f4412e44c0f99f4a5dd38abf1b",
+      "workflow_run": {
+        "id": 40323157930,
+        "repository_id": 1408452963,
+        "head_repository_id": 1408452963,
+        "head_branch": "codex/ui-v1",
+        "head_sha": "095bb67903b30f4acb4706d686601701dd669416"
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": 121572970448,
+      "name": "release",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40323157930,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Record exact built source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Typecheck and database/domain/export tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Bundle fixed official offline OCR models",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Install Android build components",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Protected signing or clearly identified test signature",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Build actual ARM64 release",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Exercise native barcode decoder with synthetic images",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Inspect resolved runtime dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify APK identity, offline permissions, model hashes and signature",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Publish small build inspection evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Publish complete APK and evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Report validation boundary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Post Run actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        }
+      ]
+    }
+  ]
+}

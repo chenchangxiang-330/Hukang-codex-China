@@ -1,0 +1,147 @@
+
+> hukang-codex-china@0.4.0 test
+> node --test tests/*.test.mjs
+
+(node:2506) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/domain/barcode/normalize.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ scan gate accepts one valid result, rejects in-flight frames, then suppresses duplicates (3.604739ms)
+✔ invalid and unsupported scan results never create a gate task (0.348374ms)
+✔ latest lookup drops a stale result after the user scans another product (0.400382ms)
+✔ cancelling latest lookup prevents a route result from updating an unmounted screen (0.306481ms)
+✔ a stale lookup error is suppressed just like a stale success (2.498357ms)
+(node:2507) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/domain/barcode/normalize.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ EAN-13 keeps the scanned string and leading zero while producing a GTIN-14 lookup key (1.737662ms)
+✔ EAN-8 validates its check digit and does not silently pad the raw value (0.307222ms)
+✔ UPC-A remains a 12-digit GTIN while lookup uses an equivalent GTIN-14 key (0.358259ms)
+✔ UPC-E expands only when the scanner explicitly reports UPC-E (0.447843ms)
+✔ bad check digits are invalid, not a local-food miss (0.318869ms)
+✔ QR and unsupported formats are not guessed as food barcodes (0.248954ms)
+✔ whitespace is rejected without altering the original scanner value (0.368474ms)
+✔ camera-frame gate allows one task, rejects in-flight and repeated frames (1.176459ms)
+✔ latest-only local lookup cannot let a slow product A overwrite product B (0.580172ms)
+(node:2511) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ barcode association closes miss → save → repeat local hit without OCR (21.094896ms)
+✔ duplicate lookup key cannot silently move to another food and deletion removes index (21.209639ms)
+✔ schema v1 upgrade creates barcode index while retaining food rows and evidence (5.295472ms)
+(node:2527) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ product identity is stored separately, with provider source and confirmation revisions (22.644005ms)
+✔ provider identity with unknown cache authorization is not persisted (4.513586ms)
+✔ new nutrition record may atomically carry a pending product identity (3.668646ms)
+✔ pending identity survives restart lookup until nutrition is saved (3.633793ms)
+✔ v2 to v3 migration preserves foods and creates empty identity tables (4.101687ms)
+✔ deleting food cascades identity and identity revision rows (6.211509ms)
+(node:2533) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/domain/food/parseNutrition.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ geometry parser associates shuffled Chinese nutrition cells by row and column (18.589609ms)
+✔ ambiguous OCR is retained as a confirmation candidate instead of being repaired (1.540817ms)
+✔ draft review keeps blanks and confirmed validation requires every core row (1.474096ms)
+✔ per-100g keeps five core nutrients, units, decimals and NRV geometry (1.12354ms)
+✔ per-serving size is preserved and split digits remain confirmation-only (3.050116ms)
+✔ wrong units and missing NRV cannot become confirmed without explicit correction (2.405316ms)
+✔ service rejects arbitrary routes and malformed or forged barcode identity (64.410875ms)
+✔ service calls only the injected vendor with canonical identity and strips unsupported fields (26.699612ms)
+✔ not configured and not found remain distinct business results (22.619147ms)
+✔ vendor errors map to safe status codes without exposing details (7.35617ms)
+(node:2549) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ SQLite store persists draft, immutable evidence, revisions and cascade delete (26.278509ms)
+✔ new package OCR appends an evidence version without replacing history (7.300015ms)
+✔ nutrition evidence and edited identity commit together (10.020536ms)
+✔ synthetic v5 database migrates to v6 without changing food, OCR or revision snapshots (7.857254ms)
+(node:2556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/features/food/draftStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ identity draft travels into the nutrition draft without marking nutrition confirmed (3.122555ms)
+(node:2564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/infrastructure/food/providers/ConfiguredChinaFoodProvider.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ provider fails closed without an endpoint and never invokes fetch (2.755653ms)
+✔ disabled provider is an explicit status and does not fall back to a network call (0.386521ms)
+✔ provider rejects arbitrary origins and paths before sending a request (0.320081ms)
+✔ found response sends only validated identity fields and maps the result (1.055887ms)
+✔ duplicate identity calls for one barcode share a single in-flight request (0.487653ms)
+✔ provider maps business errors separately from transport errors (3.750508ms)
+✔ invalid response and barcode identity conflict fail closed (0.57151ms)
+✔ local-first lookup never calls provider for a local hit (0.368964ms)
+✔ local-first lookup exposes configured provider status on a miss (0.271929ms)
+✔ stale provider result cannot overwrite a later barcode lookup (24.126814ms)
+✔ preserves low-confidence decoder text rather than treating it as absent (1.744893ms)
+✔ rejects image/result mismatch and manually replaced raw text (2.189312ms)
+✔ rejects unpinned models, NaN confidence and inverted boxes (0.721745ms)
+(node:2577) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/features/ocr-lab/geometry.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ letterboxed portrait bounding box maps into actual image area rather than viewport origin (2.074839ms)
+✔ landscape image maps with vertical letterboxing (0.228944ms)
+✔ percent crop emits native left/top/right/bottom pixels including right edge (0.458659ms)
+✔ out-of-bounds, zero, invalid text and subpixel-empty crops reject instead of silently clamping (0.571269ms)
+✔ invalid viewport dimensions are rejected before creating overlay NaN coordinates (0.233751ms)
+✔ a blank crop origin is invalid rather than silently treated as a full-image OCR request (0.265089ms)
+(node:2585) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/infrastructure/ocr/validateNativeResult.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native bridge validator preserves zero-confidence text and does not clamp detector geometry (4.1069ms)
+✔ no-text native result is preserved without substituting text or a fallback model (0.333621ms)
+✔ rejects remote image files, nonfinite dimensions, missing lineage and invalid EXIF metadata (0.626332ms)
+✔ rejects old-image results, unpinned model identity and overwritten OCR raw text (0.581845ms)
+✔ rejects NaN score, malformed geometry, duplicate IDs and wrong page before overlay rendering (1.31014ms)
+✔ rejects invalid native durations and sampled memory rather than displaying fake measurements (2.117093ms)
+(node:2591) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/domain/inventory/rules.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ inventory quantities are positive whole package counts, not nutrition amounts (5.189152ms)
+✔ expiry dates validate actual calendar days and preserve unknown (1.473896ms)
+✔ shared catalogue includes only confirmed foods and preserves raw leading zeros (2.146387ms)
+✔ schema v6 adds independent inventory with foreign key protection and idempotency (11.0411ms)
+✔ production entry is the simple app, not OCR Lab or the network identity screen (1.818955ms)
+(node:2599) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/features/simple/imageSelection.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ crop touch selection handles contain letterboxing, reverse drag and bounds (3.956759ms)
+✔ capture retry after cover failure keeps same food and does not create redundant revisions (0.521054ms)
+✔ capture retry preserves corrections made after the first save failed (0.391108ms)
+✔ rephotographed recovery draft creates an evidence revision, not an overwrite (0.319861ms)
+✔ recovery refuses a different barcode instead of silently binding it (2.54787ms)
+(node:2606) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/features/simple/exportPaths.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ personal export remaps image paths without changing source evidence or OCR text (2.084925ms)
+✔ catalogue sharing excludes unlicensed legacy provider data without altering local foods (0.499971ms)
+(node:2613) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/runner/work/Hukang-codex-China/Hukang-codex-China/src/features/ui-v1/contracts.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/runner/work/Hukang-codex-China/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ diary dates preserve calendar boundaries and reject invented dates (1.30373ms)
+✔ diary totals preserve unknown rather than present a partial daily total as complete (1.029117ms)
+✔ AI configuration rejects unsafe or incomplete input without echoing keys (0.585931ms)
+✔ unavailable AI gateway refuses analysis and never reports a successful connection (0.507223ms)
+ℹ tests 79
+ℹ suites 0
+ℹ pass 79
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1269.513958
