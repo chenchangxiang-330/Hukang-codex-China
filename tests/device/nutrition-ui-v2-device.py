@@ -38,10 +38,24 @@ def bounds(node):
 
 
 def tree():
-    shell('uiautomator', 'dump', '--compressed', '/sdcard/hukang-v2.xml')
-    raw = adb('exec-out', 'cat', '/sdcard/hukang-v2.xml')
-    (OUT / 'last-window.xml').write_bytes(raw)
-    root = ET.fromstring(raw)
+    # Cold-start UIAutomator can return before it produces a valid hierarchy.
+    # Never reuse a stale file; preserve each invalid read and bound the retry.
+    for attempt in range(3):
+        shell('rm', '-f', '/sdcard/hukang-v2.xml')
+        output = shell('uiautomator', 'dump', '--compressed', '/sdcard/hukang-v2.xml')
+        raw = adb('exec-out', 'cat', '/sdcard/hukang-v2.xml', check=False)
+        (OUT / 'last-window.xml').write_bytes(raw)
+        try:
+            root = ET.fromstring(raw)
+            break
+        except ET.ParseError:
+            retries = report.setdefault('uiDumpRetries', [])
+            name = f'invalid-ui-dump-{len(retries) + 1}'
+            (OUT / (name + '.txt')).write_bytes(raw)
+            retries.append({'attempt': attempt + 1, 'output': output, 'evidence': name})
+            if attempt == 2:
+                raise
+            time.sleep(.5)
     # Only an unrelated, known emulator launcher dialog may be recovered.
     if any(n.get('resource-id') == 'android:id/alertTitle' and
            n.get('text') == "Pixel Launcher isn't responding" for n in root.iter('node')):
