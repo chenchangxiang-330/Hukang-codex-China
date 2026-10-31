@@ -6,13 +6,15 @@ module.exports = function withOfflineAndroid(config) {
     manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
     const app = manifest.application[0];
     manifest['uses-permission'] = (manifest['uses-permission'] || []).filter(item => item.$['android:name'] !== 'android.permission.INTERNET');
-    manifest['uses-permission'].push({ $: { 'android:name': 'android.permission.INTERNET', 'tools:node': 'remove' } });
+    manifest['uses-permission'].push({ $: { 'android:name': 'android.permission.INTERNET' } });
     // expo-image-picker declares an optional Google Play photo-picker backport.
     // OCR Lab uses the system document picker and never requests this download.
     app.service = (app.service || []).filter((service) => service.$['android:name'] !== 'com.google.android.gms.metadata.ModuleDependencies');
     app.service.push({ $: { 'android:name': 'com.google.android.gms.metadata.ModuleDependencies', 'tools:node': 'remove' } });
     app['meta-data'] = (app['meta-data'] || []).filter((item) => !item.$['android:name'].startsWith('expo.modules.updates.'));
     app['meta-data'].push({ $: { 'android:name': 'expo.modules.updates.ENABLED', 'android:value': 'false' } });
+    // Optional, explicit AI requests use HTTPS; OCR and local data remain offline.
+    app.$['android:usesCleartextTraffic'] = 'false';
     app.$['android:allowBackup'] = 'false';
     return mod;
   });

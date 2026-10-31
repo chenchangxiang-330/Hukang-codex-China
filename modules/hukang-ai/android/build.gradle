@@ -1,0 +1,14 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'com.hukang.ai'
+version = '0.1.0'
+android {
+  namespace 'com.hukang.ai'
+  defaultConfig { minSdkVersion 26 }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}

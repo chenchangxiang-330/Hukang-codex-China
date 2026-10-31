@@ -465,8 +465,8 @@ export function HomeScreens(p: AppController) {
             <View style={H.menuDivider} />
             <MenuRow
               title="AI 服务设置"
-              description="配置界面已准备好，暂不发起请求"
-              trailing={<StatusPill label="未接入" tone="neutral" />}
+              description="按需连接模型，密钥仅临时使用"
+              trailing={<StatusPill label="可配置" tone="brand" />}
               onPress={() => navigate("ai-settings")}
             />
           </Surface>

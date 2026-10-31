@@ -101,21 +101,25 @@ try {
   await button("拍一拍").click();
   await button("估算这餐营养").click();
   await expect(
-    page.getByText("请先拍照或从相册选择餐食照片。", { exact: true }),
+    page.getByText("请填写这一餐的文字描述，或在支持图片时勾选发送照片。", {
+      exact: true,
+    }),
   ).toBeVisible();
   await button("从相册选择").click();
   await page
     .getByLabel("餐食补充描述", { exact: true })
     .fill("牛肉鸡蛋面，一个鸡蛋，面条吃了一半，没有喝汤");
   await button("估算这餐营养").click();
-  await expect(page.getByText(/餐食 AI 尚未接入。照片和描述/)).toBeVisible();
+  await expect(
+    page.getByText(/请先在 AI 服务设置中填写有效地址/),
+  ).toBeVisible();
   await button("返回").click();
   await button("拍一拍").click();
   await expect(page.getByLabel("餐食补充描述", { exact: true })).toHaveValue(
     "牛肉鸡蛋面，一个鸡蛋，面条吃了一半，没有喝汤",
   );
   report.checks.push(
-    "Production empty / targets unset / missing sugar / photo+text retained / AI unavailable, no fictional result",
+    "Production empty / targets unset / missing sugar / photo+text retained / AI requires valid configuration, no fictional result",
   );
   await tab("包装食品").click();
   await expect(page.getByText(/这不表示食品库没有同款/)).toBeVisible();

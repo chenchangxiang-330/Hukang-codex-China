@@ -60,7 +60,9 @@ jobs:
           root=Path('artifacts/build');apks=sorted(root.glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];check=json.loads((root/'apk-inspection.json').read_text())
           assert apk.is_file() and hashlib.sha256(apk.read_bytes()).hexdigest()==check['sha256']
           assert not check['errors']
-          assert all(p not in check['permissions'] for p in ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'])
+          assert 'android.permission.INTERNET' in check['permissions']
+          assert 'android.permission.ACCESS_NETWORK_STATE' not in check['permissions']
+          assert check['networkPolicy'] == 'explicit-ai-only'
           import os
           source=(root/'source-commit.txt').read_text().strip()
           expected=os.environ.get('EXPECTED_BUILD_SHA')

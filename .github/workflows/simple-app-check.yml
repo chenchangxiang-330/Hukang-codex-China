@@ -42,4 +42,5 @@ jobs:
           path: |
             artifacts/ui-v1/
             artifacts/nutrition-ui-v2/
+            artifacts/ai-api/
           retention-days: 14

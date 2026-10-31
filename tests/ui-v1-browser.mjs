@@ -181,7 +181,11 @@ try {
     .getByLabel("API Base URL", { exact: true })
     .fill("https://example.invalid/v1");
   await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
-  await expect(page.getByText(/配置格式已通过/)).toBeVisible();
+  await page
+    .getByLabel("API Key", { exact: true })
+    .fill("ui-preview-not-real-key");
+  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
+  await expect(page.getByText(/请先确认本次发送/)).toBeVisible();
   expect(
     await page.getByLabel("API Key", { exact: true }).getAttribute("type"),
   ).toBe("password");
@@ -191,7 +195,7 @@ try {
   await page.getByRole("button", { name: /^AI 服务设置/ }).click();
   await expect(page.getByLabel("API Key", { exact: true })).toHaveValue("");
   report.checks.push(
-    "AI settings: invalid/valid local validation, masked key, leave-page key cleared, no network request",
+    "AI settings: invalid/valid local validation, masked key, key never redisplayed after navigation; no request without consent",
   );
 
   await open("library");

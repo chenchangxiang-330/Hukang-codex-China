@@ -1,5 +1,7 @@
 # Hukang 奶白天空蓝 · 原生营养 UI V2
 
+> 下文记录 0.4.0 UI 交付。0.4.1 已接入可配置的真实餐食 API，最新能力、网络政策与验证边界见 [AI API V2](AI-API-V2.md)。
+
 本轮把确认的设计落到原有 React Native + Expo + TypeScript 页面，不使用 WebView。起点为 `codex/ui-v1` 的 `0f72fa36d50d22819ca34f23ec010f3a47cefcc9`，工作分支 `codex/nutrition-ui-v2`，PR 目标 `codex/ui-v1`。开始时远端 V1 比 main 领先 4 个提交、落后 0 个。
 
 视觉参考为交付的 `hukang-nutrition.html` 与原生落地 Markdown。HTML 仅作为不受信任的布局、颜色、文案和交互参考，没有执行或移植其脚本。

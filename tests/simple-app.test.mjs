@@ -43,7 +43,7 @@ test('schema v6 adds independent inventory with foreign key protection and idemp
 test('production entry is the simple app, not OCR Lab or the network identity screen',()=>{
  const entry=readFileSync(new URL('../src/app/index.tsx',import.meta.url),'utf8');assert.match(entry,/simple\/SimpleApp/);
  const manifest=readFileSync(new URL('../android/app/src/main/AndroidManifest.xml',import.meta.url),'utf8');
- assert.match(manifest,/android.permission.INTERNET" tools:node="remove"/);
+ assert.match(manifest,/android.permission.INTERNET"\//);
  const ui=['SimpleApp.tsx','HomeScreens.tsx','ProductScreens.tsx','CaptureScreens.tsx'].map(f=>readFileSync(new URL('../src/features/simple/'+f,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(ui,/ConfiguredChinaFoodProvider|fetch\(/);
  for(const text of ['拍一拍','加入我的库存','导出食品资料包','确认并保存食品'])assert.ok(ui.includes(text));

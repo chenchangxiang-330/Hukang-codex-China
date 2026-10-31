@@ -80,11 +80,21 @@ export type Snapshot = {
   targets: Targets;
   message?: string;
 };
-export type MealRequest = { imageUri: string; description: string };
+export type MealRequest = {
+  imageUri: string;
+  description: string;
+  includeImage?: boolean;
+};
 export type MealEstimate = {
   food: Food;
   ingredients: readonly string[];
   uncertainties: readonly string[];
+  ai?: {
+    endpoint: string;
+    requestedModel: string;
+    responseModel: string;
+    imageSent: boolean;
+  };
 };
 /** No database, inventory, or model access belongs in a nutrition presentation adapter. */
 export interface NutritionAdapter {
@@ -94,7 +104,7 @@ export interface NutritionAdapter {
   updatePortion(id: string, amount: number): void;
   record(entry: Entry, operationId: string): void;
   configureTargets(targets: Targets): void;
-  estimateMeal(request: MealRequest): Promise<MealEstimate>;
+  demoEstimateMeal?(request: MealRequest): Promise<MealEstimate>;
   demoPackage?(): Food;
 }
 const unavailable: Snapshot = {
@@ -113,11 +123,6 @@ export const productionNutrition: NutritionAdapter = {
   record: notConnected,
   configureTargets: () => {
     throw new Error("个人目标保存尚未接入，本次没有保存。");
-  },
-  estimateMeal: async () => {
-    throw new Error(
-      "餐食 AI 尚未接入。照片和描述已留在当前页面，没有生成识别结果。",
-    );
   },
 };
 export type Total = {

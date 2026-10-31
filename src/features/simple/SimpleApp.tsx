@@ -92,7 +92,8 @@ type Page =
   | "capture-hub"
   | "food-detail"
   | "targets"
-  | "intake";
+  | "intake"
+  | "ai-settings";
 /** Only development previews inject a demo adapter. The production entry always uses unavailable nutrition storage. */
 export function SimpleAppView({
   controller: p,
@@ -225,7 +226,7 @@ export function SimpleAppView({
             ? "个人目标"
             : page === "intake"
               ? "拟食用预览"
-              : p.screen === "ai-settings"
+              : p.screen === "ai-settings" || page === "ai-settings"
                 ? "AI 服务设置"
                 : p.screen === "profile"
                   ? "本机用户"
@@ -378,6 +379,7 @@ export function SimpleAppView({
                   )}
                 </>
               )}
+              {page === "ai-settings" && <AiSettingsScreen />}
               {page === "nutrition-detail" && (
                 <NutritionScreen
                   snapshot={snapshot}
@@ -415,6 +417,7 @@ export function SimpleAppView({
                 meal={captureMeal}
                 snapshot={snapshot}
                 adapter={adapter}
+                onAiSettings={() => go("ai-settings")}
                 onScan={() => handoff(() => void p.startScan())}
                 onLibrary={() =>
                   handoff(() => {

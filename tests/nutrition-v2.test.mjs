@@ -24,10 +24,7 @@ test("production nutrition starts unavailable with no sample foods or targets an
   assert.throws(() => p.record(entry(packageFixture), "x"), /尚未接入/);
   assert.throws(() => p.updatePortion("x", 10), /尚未接入/);
   assert.throws(() => p.configureTargets({ energy: 2000 }), /尚未接入/);
-  await assert.rejects(
-    p.estimateMeal({ imageUri: "local://photo", description: "面条吃一半" }),
-    /尚未接入/,
-  );
+  assert.equal(p.demoEstimateMeal, undefined);
 });
 test("per-serving energy preserves raw kJ and converts once; package is not a serving; no g/mL guessing", () => {
   const e = entry(packageFixture, 25, "g");
@@ -110,7 +107,7 @@ test("meal estimate preserves photo-plus-text request and ranges after portion s
     imageUri: "local://photo",
     description: "一个鸡蛋，面条一半，没喝汤",
   };
-  const result = await d.estimateMeal(request);
+  const result = await d.demoEstimateMeal(request);
   assert.deepEqual(d.lastRequest, request);
   assert.deepEqual(
     m.contribution(entry(result.food, 0.5), "energy").range,

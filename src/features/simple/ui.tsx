@@ -101,6 +101,8 @@ export function Field({
         }
         autoCorrect={!secureTextEntry}
         secureTextEntry={secureTextEntry}
+        autoComplete={secureTextEntry ? "off" : undefined}
+        importantForAutofill={secureTextEntry ? "no" : "auto"}
         editable={editable}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

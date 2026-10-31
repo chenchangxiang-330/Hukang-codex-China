@@ -241,7 +241,7 @@ def png_barcode():
  p=O/'00-barcode.png';p.write_bytes(b);return p
 try:
  apks=sorted(Path('artifacts/build').glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];inspection=json.loads(Path('artifacts/build/apk-inspection.json').read_text())
- assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' not in inspection['permissions']
+ assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' in inspection['permissions'];assert inspection['networkPolicy']=='explicit-ai-only'
  report['apkSha256']=inspection['sha256'];report['sourceCommit']=Path('artifacts/build/source-commit.txt').read_text().strip()
  run(['root']);time.sleep(1);run(['wait-for-device'])
  shell('settings','put','global','airplane_mode_on','1');shell('svc','wifi','disable');shell('svc','data','disable',check=False)

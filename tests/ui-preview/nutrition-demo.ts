@@ -193,7 +193,7 @@ export class DemoNutritionAdapter implements NutritionAdapter {
   };
   configureTargets = (targets: Targets) =>
     this.publish({ ...this.snapshot, targets: { ...targets } });
-  estimateMeal = async (request: MealRequest) => {
+  demoEstimateMeal = async (request: MealRequest) => {
     this.lastRequest = { ...request };
     const food = demoFood("demo-meal", "牛肉鸡蛋面（估算）", {}, "份");
     food.version = `demo-${Date.now()}`;

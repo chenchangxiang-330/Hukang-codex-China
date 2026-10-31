@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Image,
   Pressable,
@@ -29,6 +29,8 @@ import {
   type Snapshot,
 } from "./model";
 import { dateLabel } from "./Screens";
+import { aiService } from "../../services/ai/runtime";
+import { aiErrorMessage } from "../../services/ai/errors";
 
 export function ImpactPreview({
   food,
@@ -245,8 +247,16 @@ export function ImpactPreview({
           }}
         />
         <Action
-          title={saved ? "已记入演示，勿重复提交" : "已食用 · 确认记录"}
-          disabled={!confirmed || !!validation || saved}
+          title={
+            adapter.kind === "production"
+              ? "饮食存储未接入 · 仅预览"
+              : saved
+                ? "已记入演示，勿重复提交"
+                : "已食用 · 确认记录"
+          }
+          disabled={
+            adapter.kind === "production" || !confirmed || !!validation || saved
+          }
           onPress={() => {
             if (!entry || submitted.current) return;
             submitted.current = true;
@@ -278,6 +288,7 @@ export function CaptureScreen({
   adapter,
   onScan,
   onLibrary,
+  onAiSettings,
 }: {
   visible: boolean;
   date: string;
@@ -286,7 +297,11 @@ export function CaptureScreen({
   adapter: NutritionAdapter;
   onScan: () => void;
   onLibrary: () => void;
+  onAiSettings: () => void;
 }) {
+  const ai = useSyncExternalStore(aiService.subscribe, aiService.getSnapshot);
+  const [includeImage, setIncludeImage] = useState(false);
+  const requestAbort = useRef<AbortController | null>(null);
   const [mode, setMode] = useState<"meal" | "package">("meal"),
     [photos, setPhotos] = useState({ meal: "", package: "" }),
     [description, setDescription] = useState(""),
@@ -305,24 +320,35 @@ export function CaptureScreen({
     live.current = true;
     return () => {
       live.current = false;
+      requestAbort.current?.abort();
       generation.current++;
     };
   }, []);
   useEffect(() => {
     if (!visible) {
+      requestAbort.current?.abort();
       generation.current++;
       setLoading(false);
     }
   }, [visible]);
   const invalidate = () => {
+    requestAbort.current?.abort();
+    requestAbort.current = null;
     generation.current++;
     setEstimate(null);
     setMessage("");
     setLoading(false);
   };
+  useEffect(() => {
+    if (adapter.kind === "production") {
+      invalidate();
+      setIncludeImage(false);
+    }
+  }, [ai.revision]);
   const choose = async (camera: boolean) => {
     if (picking.current) return;
     picking.current = true;
+    invalidate();
     setChoosing(true);
     setLoading(false);
     const ticket = ++generation.current;
@@ -362,22 +388,45 @@ export function CaptureScreen({
     }
   };
   const runEstimate = async () => {
-    if (!photos.meal) {
+    if (requestAbort.current || loading) return;
+    if (
+      !description.trim() &&
+      !(includeImage && photos.meal) &&
+      adapter.kind === "production"
+    ) {
+      setMessage("请填写这一餐的文字描述，或在支持图片时勾选发送照片。");
+      return;
+    }
+    if (adapter.kind === "demo" && !photos.meal) {
       setMessage("请先拍照或从相册选择餐食照片。");
       return;
     }
-    if (loading) return;
     const ticket = ++generation.current;
+    const controller = new AbortController();
+    requestAbort.current = controller;
     setLoading(true);
     setMessage("");
-    const request = Object.freeze({ imageUri: photos.meal, description });
+    setEstimate(null);
+    const request = Object.freeze({
+      imageUri: photos.meal,
+      description,
+      includeImage,
+    });
     try {
-      const result = await adapter.estimateMeal(request);
+      const result =
+        adapter.kind === "demo" && adapter.demoEstimateMeal
+          ? await adapter.demoEstimateMeal(request)
+          : await aiService.estimateMeal(request, controller.signal);
       if (live.current && ticket === generation.current) setEstimate(result);
-    } catch (e) {
+    } catch (error) {
       if (live.current && ticket === generation.current)
-        setMessage((e as Error).message);
+        setMessage(
+          adapter.kind === "production"
+            ? aiErrorMessage(error)
+            : (error as Error).message,
+        );
     } finally {
+      if (requestAbort.current === controller) requestAbort.current = null;
       if (live.current && ticket === generation.current) setLoading(false);
     }
   };
@@ -402,6 +451,8 @@ export function CaptureScreen({
             accessibilityState={{ selected: mode === key }}
             aria-selected={mode === key}
             onPress={() => {
+              requestAbort.current?.abort();
+              requestAbort.current = null;
               generation.current++;
               setLoading(false);
               setMode(key);
@@ -457,7 +508,7 @@ export function CaptureScreen({
       </Card>
       {mode === "meal" ? (
         <>
-          <Text style={N.heading}>再告诉我一点（选填）</Text>
+          <Text style={N.heading}>告诉我这一餐吃了什么</Text>
           <TextInput
             accessibilityLabel="餐食补充描述"
             value={description}
@@ -467,6 +518,7 @@ export function CaptureScreen({
             }}
             placeholder="牛肉鸡蛋香菜面，1 个鸡蛋，面条吃了一半，没有喝汤"
             multiline
+            maxLength={4000}
             textAlignVertical="top"
             placeholderTextColor={c.muted}
             style={K.description}
@@ -474,23 +526,72 @@ export function CaptureScreen({
           <Text style={N.caption}>
             食材、吃了多少、是否喝汤，都可以写下来。
           </Text>
+          {adapter.kind === "production" && (
+            <Card blue>
+              <Text style={N.heading}>本次 AI 请求</Text>
+              <Text selectable style={N.caption}>
+                服务地址：{ai.endpoint || "尚未配置"}
+              </Text>
+              <Text style={N.caption}>模型：{ai.model || "尚未配置"}</Text>
+              <Text style={N.caption}>
+                {ai.supportsImage
+                  ? "可发送文字；照片需单独勾选，支持 JPEG / PNG，最大 4 MB。"
+                  : "当前配置仅开放文字估算，照片不会发送，也不会声称已识别照片。"}
+              </Text>
+              {!!photos.meal && ai.supportsImage && (
+                <Check
+                  label="同时发送这张餐食照片"
+                  value={includeImage}
+                  onChange={(value) => {
+                    invalidate();
+                    setIncludeImage(value);
+                  }}
+                />
+              )}
+              <Text style={N.caption}>
+                将发送：餐食描述
+                {includeImage ? "和当前餐食照片" : "（不含照片）"}
+                。请求可能产生服务商费用；不发送食品库、库存或历史记录。
+              </Text>
+              <Check
+                label="我了解发送内容、服务地址及可能产生的费用"
+                value={ai.consent}
+                onChange={aiService.consent}
+              />
+              <Action title="配置 AI 服务" secondary onPress={onAiSettings} />
+            </Card>
+          )}
           <Action
-            title={loading ? "正在生成演示估算…" : "估算这餐营养"}
-            disabled={loading}
+            title={
+              loading
+                ? adapter.kind === "demo"
+                  ? "正在生成演示估算…"
+                  : "正在请求 AI 估算…"
+                : "估算这餐营养"
+            }
+            disabled={
+              loading ||
+              (adapter.kind === "production" && ai.operation !== null)
+            }
             onPress={() => void runEstimate()}
           />
-          {adapter.kind === "production" && (
-            <Feedback>
-              餐食 AI
-              尚未接入。可以先选择照片、填写描述；不会把固定示例当作识别结果。
-            </Feedback>
+          {loading && (
+            <Action
+              title="取消本次估算"
+              secondary
+              onPress={() => requestAbort.current?.abort()}
+            />
           )}
           {estimate && (
             <>
               <Card blue>
-                <Text style={N.heading}>餐食估算 · 演示结果</Text>
+                <Text style={N.heading}>
+                  {estimate.ai ? "餐食估算 · AI 估算" : "餐食估算 · 演示结果"}
+                </Text>
                 <Text style={N.caption}>
-                  照片与描述来自同一次请求；以下为固定演示样例，并非真实识别。
+                  {estimate.ai
+                    ? `${estimate.ai.imageSent ? "基于本次描述与照片" : "仅基于文字描述，未识别照片"} · ${estimate.ai.responseModel}。仅在当前页面预览，未保存饮食记录。`
+                    : "照片与描述来自同一次请求；以下为固定演示样例，并非真实识别。"}
                 </Text>
                 <Text style={N.body}>{estimate.ingredients.join(" · ")}</Text>
                 {estimate.uncertainties.map((u) => (

@@ -2,22 +2,24 @@
   "expo": {
     "name": "护康",
     "slug": "hukang-codex-china",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "scheme": "hukangchina",
     "android": {
       "package": "com.hukang.china",
-      "versionCode": 9,
+      "versionCode": 10,
       "allowBackup": false,
       "blockedPermissions": [
-        "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_AUDIO",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "permissions": [
+        "android.permission.INTERNET"
       ]
     },
     "plugins": [
@@ -25,8 +27,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "选择本机食品包装照片，用于完全离线 OCR。",
-          "cameraPermission": "拍摄食品包装和条码照片，用于完全离线识别。",
+          "photosPermission": "选择餐食或食品包装照片。营养表离线识别；AI 估算仅在明确确认后发送所选照片。",
+          "cameraPermission": "拍摄餐食、包装和条码。扫码与营养表 OCR 离线运行；AI 发送需另行确认。",
           "microphonePermission": false
         }
       ],

@@ -317,8 +317,8 @@ def keyboard():
     tap('^拍一拍$')
     require('Egg noddles half portion', True)
     tap('^估算这餐营养$', True)
-    require('请先拍照或从相册选择餐食照片', True)
-    shot('android-capture-empty-photo-feedback')
+    require('请先在 AI 服务设置中填写有效地址', True)
+    shot('android-capture-no-ai-config-feedback')
 
 
 def gesture_safe_area():
@@ -365,8 +365,8 @@ def camera():
     require('餐食照片预览', attempts=15)
     shot('android-captured-meal-original-photo')
     tap('^估算这餐营养$', True)
-    require('真实.*AI.*尚未接入|餐食 AI 尚未接入', True)
-    shot('android-ai-unavailable-feedback')
+    require('请填写这一餐的文字描述', True)
+    shot('android-ai-text-required-feedback')
     swipe(True)
     tap('^包装食品$')
     shot('android-capture-package-empty')
@@ -384,6 +384,39 @@ def camera():
     report['camera'] = {'permissionDeniedAndGranted': True, 'mealAndPackagePhotos': True,
                         'source': 'Android system camera / emulator virtual scene',
                         'physicalCamera': False, 'liveBarcodeDecoded': False}
+
+
+def ai_native_network_feedback():
+    # Reserved .invalid domain + non-secret fixture: no real provider/key/fees.
+    # The distinct native-module-unavailable error ensures this checks the bridge.
+    configure()
+    tap('^我的$')
+    tap('^AI 服务设置', True)
+    for label, value in [('API Base URL', 'https://example.invalid/v1'),
+                         ('API Key', 'non-secret-native-test'), ('模型名称', 'mock-model')]:
+        tap('^' + label + '$', True, 'content-desc')
+        shell('input', 'text', value)
+        shell('input', 'keyevent', 'KEYCODE_BACK')
+    tap('我了解发送内容、服务地址及可能产生的费用', True)
+    tap('^检查连接配置$', True)
+    require('网络连接失败', True, attempts=12)
+    root = shot('android-ai-native-network-failure')
+    assert 'non-secret-native-test' not in ET.tostring(root, encoding='unicode')
+    tap('^清除临时配置$', True)
+    require('临时配置已清除', True)
+    shot('android-ai-cleared')
+    tap('^返回$')
+    tap('^今日$')
+    tap('^拍一拍$')
+    tap('^餐食补充描述$', True, 'content-desc')
+    shell('input', 'text', 'Egg%snoddles')
+    shell('input', 'keyevent', 'KEYCODE_BACK')
+    tap('^估算这餐营养$', True)
+    require('请先在 AI 服务设置中填写有效地址', True)
+    shot('android-ai-clear-prevents-meal-call')
+    report['aiApi'] = {'nativeTransportLoaded': True, 'networkErrorDisplayed': True,
+                       'clearStopsOldCredentials': True, 'liveProviderTested': False,
+                       'credentials': 'non-secret-test-fixture-only', 'productionDietWrites': 0}
 
 
 try:
@@ -404,7 +437,8 @@ try:
     assert 'Success' in report['install']
     for name, action in [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
                          ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
-                         ('keyboard-state', keyboard), ('camera-permissions', camera)]:
+                         ('keyboard-state', keyboard), ('camera-permissions', camera),
+                         ('ai-native-network-feedback', ai_native_network_feedback)]:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'
 finally:
