@@ -60,7 +60,7 @@ Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 
 
 [截图与浏览器报告](evidence/nutrition-ui-v2/browser/README.md)；[检查输出](evidence/nutrition-ui-v2/checks)。浏览器运行实际 `SimpleAppView` 和生产 RN 页面组件，经 React Native Web 渲染；只替换原生 controller/相机/SQLite。不是另写 HTML 原型，也不是 Android 相机、OCR 或 SQLite 的设备实测。
 
-本机没有 Android SDK/模拟器或连接设备，因此本轮在 GitHub Actions 的 Android 15 / API 35 模拟器安装实际 ARM64 APK 执行原生验收。上一版构建 41192004209 成功，但重复原生测试发现键盘仍有裁切；正在修正共用表单，下一份 APK 和最终原生结果以验收文档为准。逐项原生结果、真实截图、签名兼容性、保留数据安装说明与手机手动清单集中在 [Android 交付和验收](NutritionUIV2AndroidAcceptance.md)。浏览器结果与 Android 原生结果分别归档。
+本机没有 Android SDK/模拟器或连接设备，因此本轮在 GitHub Actions 的 Android 15 / API 35 模拟器安装实际 ARM64 APK 执行原生验收。最终构建 41196378766 成功，APK 源码 `aae421f0dc80635450b98206c9575dffaf7a82f7`。页面六组及离线完整业务验收通过，包含重复键盘开合、连续字段输入、相机权限与虚拟场景拍照、实际 OCR、库存、导出和同 APK 重装的数据保留。逐项原生结果、真实截图、签名兼容性、保留数据安装说明与手机手动清单集中在 [Android 交付和验收](NutritionUIV2AndroidAcceptance.md)。浏览器结果与 Android 原生结果分别归档。
 
 检查与 APK 工作流已覆盖 `codex/nutrition-ui-v2`；PR 检查覆盖 `codex/ui-v1` 和 `main`，保留原 Node/Python 检查并加入格式、资源和共享 UI 检查。原生 UI 和离线业务在两个独立模拟器运行，验收同一 APK 并核对源码一致性。当前包采用临时测试签名，不能覆盖已归档的旧签名安装；不以卸载或清库绕过。PR 保持草稿，不自动合并。
 

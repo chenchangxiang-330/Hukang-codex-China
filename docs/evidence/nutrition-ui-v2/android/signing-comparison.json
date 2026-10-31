@@ -7,14 +7,6 @@
       "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
     ]
   },
-  "previousUiV1": {
-    "run": 40323157930,
-    "source": "095bb67903b30f4acb4706d686601701dd669416",
-    "apkSha256": "ee8b0b9a20596c9040c4ecec3cb589d1397ba8fbde6c41f0bd7955c144804d8a",
-    "certificateSha256": [
-      "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5"
-    ]
-  },
   "dateFixUiV2": {
     "run": 41189628525,
     "source": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
@@ -23,21 +15,44 @@
       "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8"
     ]
   },
-  "apkBuildRun": 41192004209,
-  "apkSource": "fd1b391bfa4d2a52c49a64f3851666a8b76a26fc",
+  "firstKeyboardFixUiV2": {
+    "run": 41192004209,
+    "source": "fd1b391bfa4d2a52c49a64f3851666a8b76a26fc",
+    "apkSha256": "ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f",
+    "certificateSha256": [
+      "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+    ]
+  },
+  "previousUiV1": {
+    "run": 40323157930,
+    "source": "095bb67903b30f4acb4706d686601701dd669416",
+    "apkSha256": "ee8b0b9a20596c9040c4ecec3cb589d1397ba8fbde6c41f0bd7955c144804d8a",
+    "certificateSha256": [
+      "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5"
+    ]
+  },
+  "apkBuildRun": 41196378766,
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
   "versionName": "0.4.0",
   "versionCode": 9,
-  "apkSha256": "ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
   "certificateSha256": [
-    "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+    "faf03098fa58b411d9f678e8b88acdf1fd03be626c9ce510f174cb130300c70a"
   ],
-  "signingMode": "ephemeral-test",
+  "signingMode": "ephemeral-test; cannot promise an in-place update of previous installs",
   "userPhoneCertificateRead": false,
   "oldSignedAppUpgradeVerified": false,
   "uninstallOrClearDataPerformed": false,
   "privateSigningMaterialAccessed": false,
+  "sameApkReinstall": {
+    "result": "Performing Streamed Install\nSuccess",
+    "databaseDumpSha256": "b4fdc91076a037a639e8e8326501f23197f0dec2577269e34c079be665979829",
+    "allTablesPreserved": true,
+    "olderSignedAppUpgradeVerified": false
+  },
+  "archived033CertificateSha256": "10801899cf694fa6ca5d75ace622d0ed7e682e2a150a4175832e21026c31593e",
   "matches_initialUiV2": false,
-  "matches_previousUiV1": false,
   "matches_dateFixUiV2": false,
-  "archived033CertificateSha256": "10801899cf694fa6ca5d75ace622d0ed7e682e2a150a4175832e21026c31593e"
+  "matches_firstKeyboardFixUiV2": false,
+  "matches_previousUiV1": false
 }

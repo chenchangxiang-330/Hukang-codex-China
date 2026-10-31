@@ -1,0 +1,28 @@
+{
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
+  "suites": {
+    "ui": {
+      "runId": 41198423881,
+      "jobId": 124529197841,
+      "runUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41198423881/job/124529197841",
+      "artifactId": 13042480144,
+      "artifactUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41198423881/artifacts/13042480144",
+      "artifactZipSha256": "2f3622f627271facef23a7671ece93b0519c715293cd3fe6fd7d577455d145f2",
+      "testSourceCommit": "11dff5d84704464880448208edf0d356c486c3dd",
+      "expiresAt": "2026-11-14T12:02:17Z",
+      "conclusion": "success"
+    },
+    "offline": {
+      "runId": 41197876666,
+      "jobId": 124527620082,
+      "runUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41197876666/job/124527620082",
+      "artifactId": 13041991140,
+      "artifactUrl": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41197876666/artifacts/13041991140",
+      "artifactZipSha256": "68b1b33f7a101e7f506b83b06fee2693308019543aa5b23c50b35bd504a061bc",
+      "testSourceCommit": "154225ea4e589ad11643870c7336df4e1b41a79b",
+      "expiresAt": "2026-11-14T11:55:17Z",
+      "conclusion": "success"
+    }
+  }
+}
