@@ -1,7 +1,7 @@
 name: Hukang simple app APK
 on:
   push:
-    branches: [main, codex/ui-v1]
+    branches: [main, codex/ui-v1, codex/nutrition-ui-v2]
     paths: ['src/**', 'modules/**', 'android/**', 'plugins/**', 'scripts/**', 'package*.json', 'app.json', '.delivery/**', '.github/workflows/simple-app-release.yml']
   workflow_dispatch:
 concurrency:

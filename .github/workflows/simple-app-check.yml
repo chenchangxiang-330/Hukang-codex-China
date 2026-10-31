@@ -1,8 +1,10 @@
 name: Simple app checks
 on:
   push:
-    branches: [main]
-    paths: ['src/**', 'tests/**', 'package*.json', '.github/workflows/simple-app-check.yml']
+    branches: [main, codex/ui-v1, codex/nutrition-ui-v2]
+    paths: ['src/**', 'tests/**', 'scripts/**', 'assets/**', 'models/**', 'package*.json', '.github/workflows/simple-app-check.yml']
+  pull_request:
+    branches: [main, codex/ui-v1]
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,3 +27,19 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
+
+      - run: npm run format:ui:check
+      - run: npm run verify:assets
+      - run: npx playwright install --with-deps chromium
+      - name: Shared native UI browser checks
+        run: |
+          export CHROMIUM_PATH="$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')"
+          npm run ui:test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: nutrition-ui-v2-rendered-evidence
+          path: |
+            artifacts/ui-v1/
+            artifacts/nutrition-ui-v2/
+          retention-days: 14

@@ -1,0 +1,21 @@
+
+> hukang-codex-china@0.4.0 verify:assets
+> node scripts/verify-assets.mjs
+
+{
+  "status": "verified_artifacts",
+  "icon": "d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2",
+  "models": {
+    "detector": {
+      "sha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+      "sizeBytes": 4826518,
+      "configSha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
+    },
+    "recognizer": {
+      "sha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+      "sizeBytes": 16534782,
+      "configSha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+    }
+  },
+  "dictionaryCount": 18383
+}

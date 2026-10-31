@@ -1,6 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  BackHandler,
+  Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,25 +14,40 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BlurTargetView, BlurView } from "expo-blur";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { C, S } from "./ui";
+import { C, S, Button } from "./ui";
+import { colors } from "../../ui/tokens";
 import { useSimpleApp, type AppController, type Tab } from "./useSimpleApp";
 import { HomeScreens } from "./HomeScreens";
 import { ScanScreen } from "./ScanScreen";
 import { CaptureScreens } from "./CaptureScreens";
 import { ProductScreens } from "./ProductScreens";
-import { DiaryScreen } from "../ui-v1/DiaryScreen";
 import { AiSettingsScreen } from "../ui-v1/AiSettingsScreen";
 import { SupportScreens } from "../ui-v1/SupportScreens";
-
+import {
+  TodayScreen,
+  DiaryScreenV2,
+  NutritionScreen,
+  FoodDetail,
+  TargetsScreen,
+} from "../nutrition-v2/Screens";
+import { CaptureScreen, ImpactPreview } from "../nutrition-v2/CaptureScreen";
+import {
+  productionNutrition,
+  foodFromRecord,
+  type Entry,
+  type Meal,
+  type NutritionAdapter,
+} from "../nutrition-v2/model";
+import { Action, N, useReducedMotion } from "../nutrition-v2/components";
 const tabs = [
   { key: "today", label: "今日" },
   { key: "diary", label: "记录" },
   { key: "library", label: "食品库" },
   { key: "mine", label: "我的" },
 ] as const;
-
 /** Native shapes avoid adding a font or network-backed icon dependency. */
 function TabMark({ kind, selected }: { kind: Tab; selected: boolean }) {
   const color = selected ? C.teal : C.muted;
@@ -64,41 +83,137 @@ function TabMark({ kind, selected }: { kind: Tab; selected: boolean }) {
 export default function SimpleApp() {
   return <SimpleAppView controller={useSimpleApp()} />;
 }
-
-/** The production view is also exercised by the isolated, labelled UI preview. */
+type Page =
+  | "nutrition-detail"
+  | "capture-hub"
+  | "food-detail"
+  | "targets"
+  | "intake";
+/** Only development previews inject a demo adapter. The production entry always uses unavailable nutrition storage. */
 export function SimpleAppView({
   controller: p,
+  nutritionAdapter = productionNutrition,
 }: {
   controller: AppController;
+  nutritionAdapter?: NutritionAdapter;
 }) {
-  const {
-    tab,
-    setTab,
-    screen,
-    busy,
-    error,
-    setError,
-    notice,
-    setNotice,
-    scroll,
-    back,
-    stepTitle,
-  } = p;
-  const activeTab = tab === "stock" ? "library" : tab;
-  const title =
-    screen === "ai-settings"
-      ? "AI 服务设置"
-      : screen === "about"
-        ? "关于护康"
-        : screen === "profile"
-          ? "本机用户"
-          : stepTitle;
+  const adapter = nutritionAdapter;
+  const snapshot = useSyncExternalStore(
+    adapter.subscribe,
+    adapter.getSnapshot,
+    adapter.getSnapshot,
+  );
+  const today = `${p.date.getFullYear()}-${String(p.date.getMonth() + 1).padStart(2, "0")}-${String(p.date.getDate()).padStart(2, "0")}`;
+  const [date, setDate] = useState(today),
+    [detailDate, setDetailDate] = useState(today),
+    [pages, setPages] = useState<Page[]>([]),
+    [food, setFood] = useState<Entry | null>(null),
+    [captureMeal, setCaptureMeal] = useState<Meal>("lunch"),
+    [keyboard, setKeyboard] = useState(false);
+  const page = pages.at(-1),
+    activeTab = p.tab === "stock" ? "library" : p.tab;
+  const offset = useRef(0),
+    returnOffsets = useRef<number[]>([]),
+    restore = useRef<number | null>(null),
+    target = useRef<View>(null);
+  const reduced = useReducedMotion(),
+    lens = useRef(new Animated.Value(0)).current,
+    [dockWidth, setDockWidth] = useState(300);
+  const go = (next: Page) => {
+    returnOffsets.current.push(offset.current);
+    setPages((a) => [...a, next]);
+  };
+  const close = () => {
+    if (p.busy) return true;
+    if (page) {
+      restore.current = returnOffsets.current.pop() ?? 0;
+      setPages((a) => a.slice(0, -1));
+      return true;
+    }
+    return p.back();
+  };
+  const capture = (meal: Meal = "lunch") => {
+    setCaptureMeal(meal);
+    setDetailDate(p.tab === "diary" ? date : today);
+    go("capture-hub");
+  };
+  const openNutrition = () => {
+    setDetailDate(p.tab === "diary" ? date : today);
+    go("nutrition-detail");
+  };
+  const handoff = (action: () => void) => {
+    setPages([]);
+    returnOffsets.current = [];
+    action();
+  };
   useEffect(() => {
-    scroll.current?.scrollTo({ y: 0, animated: false });
-  }, [tab, screen, scroll]);
-
+    p.scroll.current?.scrollTo({ y: restore.current ?? 0, animated: false });
+    restore.current = null;
+  }, [p.tab, p.screen, page, p.scroll]);
+  useEffect(() => {
+    if (!page) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", close);
+    return () => sub.remove();
+  }, [page, p.busy]);
+  useEffect(() => {
+    const a = Keyboard.addListener("keyboardDidShow", () => setKeyboard(true)),
+      b = Keyboard.addListener("keyboardDidHide", () => setKeyboard(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
+  useEffect(() => {
+    const animation = Animated.timing(lens, {
+      toValue:
+        (tabs.findIndex((t) => t.key === activeTab) * (dockWidth - 12)) / 4,
+      duration: reduced ? 0 : 280,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [activeTab, dockWidth, reduced, lens]);
+  const title =
+    page === "nutrition-detail"
+      ? "营养详情"
+      : page === "capture-hub"
+        ? "拍一拍"
+        : page === "food-detail"
+          ? "食用份量"
+          : page === "targets"
+            ? "个人目标"
+            : page === "intake"
+              ? "拟食用预览"
+              : p.screen === "ai-settings"
+                ? "AI 服务设置"
+                : p.screen === "profile"
+                  ? "本机用户"
+                  : p.screen === "about"
+                    ? "关于护康"
+                    : p.stepTitle;
+  const detail = page === "nutrition-detail",
+    showDock = p.screen === "home" && !page && !keyboard;
+  const resume = p.resume ? (
+    <Button
+      title="继续上次未完成的录入"
+      secondary
+      onPress={() => {
+        p.draftRef.current = p.resume;
+        p.setDraft(p.resume);
+        p.setReview(p.resume!.review ?? null);
+        p.setConfirmed(false);
+        p.navigate(p.resume!.step);
+      }}
+    />
+  ) : undefined;
+  const currentFood = food
+    ? (snapshot.entries.find((e) => e.id === food.id) ?? food)
+    : null;
   return (
-    <SafeAreaView style={S.safe} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[S.safe, detail && { backgroundColor: colors.detailBackground }]}
+      edges={["top", "bottom"]}
+    >
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="dark" />
       <KeyboardAvoidingView
@@ -107,98 +222,226 @@ export function SimpleAppView({
       >
         <View
           style={nav.flex}
-          importantForAccessibility={busy ? "no-hide-descendants" : "auto"}
+          importantForAccessibility={p.busy ? "no-hide-descendants" : "auto"}
         >
-          {screen !== "home" && (
-            <View style={nav.header}>
+          {(p.screen !== "home" || page) && (
+            <View
+              style={[
+                nav.header,
+                detail && { backgroundColor: colors.detailBackground },
+              ]}
+            >
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="返回首页"
-                onPress={back}
-                disabled={!!busy}
-                style={({ pressed }) => [nav.back, pressed && nav.pressed]}
+                accessibilityLabel="返回"
+                onPress={close}
+                disabled={!!p.busy}
+                style={({ pressed }) => [
+                  nav.back,
+                  pressed && { opacity: 0.65 },
+                ]}
               >
-                <Text style={nav.backText}>‹</Text>
+                <Text style={nav.backText}>‹ 返回</Text>
               </Pressable>
-              <Text accessibilityRole="header" style={nav.headerTitle}>
-                {title}
-              </Text>
-              <View style={nav.headerBalance} />
+              <Text style={nav.headerTitle}>护康 › {title}</Text>
             </View>
           )}
-          <ScrollView
-            ref={scroll}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            contentContainerStyle={[S.page, nav.content]}
-            showsVerticalScrollIndicator={false}
-          >
-            {error && (
-              <View accessibilityLiveRegion="assertive" style={S.error}>
-                <Text style={nav.errorTitle}>这一步没有完成</Text>
-                <Text style={nav.errorText}>{error}</Text>
-                <Text style={nav.errorText}>
-                  可以检查后重试，或返回继续其他操作。
-                </Text>
-              </View>
-            )}
-            {notice && (
-              <View accessibilityLiveRegion="polite" style={S.notice}>
-                <Text style={S.note}>{notice}</Text>
-              </View>
-            )}
-            <HomeScreens {...p} />
-            <ScanScreen {...p} />
-            <CaptureScreens {...p} />
-            <ProductScreens {...p} />
-            {screen === "home" && tab === "diary" && (
-              <DiaryScreen onOpenAi={() => p.navigate("ai-settings")} />
-            )}
-            {screen === "ai-settings" && <AiSettingsScreen />}
-            {(screen === "profile" || screen === "about") && (
-              <SupportScreens screen={screen} />
-            )}
-          </ScrollView>
-          {screen === "home" && (
-            <View style={nav.dock} accessibilityLabel="主导航">
-              {tabs.map((item) => (
-                <Pressable
-                  key={item.key}
-                  accessibilityRole="tab"
-                  accessibilityLabel={item.label}
-                  accessibilityState={{ selected: activeTab === item.key }}
-                  onPress={() => {
-                    setTab(item.key);
-                    setError(null);
-                    setNotice(null);
-                  }}
-                  style={({ pressed }) => [nav.tab, pressed && nav.pressed]}
-                >
-                  <View
-                    style={[
-                      nav.tabMark,
-                      activeTab === item.key && nav.tabMarkActive,
+          <BlurTargetView ref={target} style={nav.flex}>
+            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+              <Image
+                source={require("../../../assets/paper-grain.png")}
+                resizeMode="repeat"
+                style={[
+                  StyleSheet.absoluteFill,
+                  { opacity: 0.35, width: "100%", height: "100%" },
+                ]}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
+            </View>
+            <ScrollView
+              ref={p.scroll}
+              onScroll={(e) => {
+                offset.current = e.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={100}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={[
+                S.page,
+                nav.content,
+                { paddingBottom: showDock ? 190 : 32 },
+              ]}
+              showsVerticalScrollIndicator={false}
+            >
+              {adapter.kind === "demo" && (
+                <View style={nav.demo}>
+                  <Text style={N.tiny}>演示数据 · 仅在本次开发预览内存中</Text>
+                </View>
+              )}
+              {p.error && (
+                <View accessibilityLiveRegion="assertive" style={S.error}>
+                  <Text style={nav.errorTitle}>这一步没有完成</Text>
+                  <Text style={nav.errorText}>{p.error}</Text>
+                </View>
+              )}
+              {p.notice && (
+                <View accessibilityLiveRegion="polite" style={S.notice}>
+                  <Text style={S.note}>{p.notice}</Text>
+                </View>
+              )}
+              {!page && (
+                <>
+                  <HomeScreens {...p} startScan={async () => capture()} />
+                  <ScanScreen {...p} />
+                  <CaptureScreens {...p} />
+                  <ProductScreens
+                    {...p}
+                    onIntake={() => {
+                      setDetailDate(p.tab === "diary" ? date : today);
+                      go("intake");
+                    }}
+                  />
+                  {p.screen === "home" && p.tab === "today" && (
+                    <TodayScreen
+                      snapshot={snapshot}
+                      date={today}
+                      onNutrition={openNutrition}
+                      onCapture={() => capture()}
+                      onDiary={() => p.setTab("diary")}
+                      onTargets={() => go("targets")}
+                      resume={resume}
+                    />
+                  )}{" "}
+                  {p.screen === "home" && p.tab === "diary" && (
+                    <DiaryScreenV2
+                      snapshot={snapshot}
+                      date={date}
+                      onDate={setDate}
+                      onNutrition={openNutrition}
+                      onCapture={capture}
+                      onFood={(e) => {
+                        setFood(e);
+                        go("food-detail");
+                      }}
+                      onTargets={() => go("targets")}
+                    />
+                  )}{" "}
+                  {p.screen === "ai-settings" && <AiSettingsScreen />}
+                  {(p.screen === "profile" || p.screen === "about") && (
+                    <SupportScreens screen={p.screen} />
+                  )}
+                </>
+              )}
+              {page === "nutrition-detail" && (
+                <NutritionScreen
+                  snapshot={snapshot}
+                  date={detailDate}
+                  onTargets={() => go("targets")}
+                  onFiberScroll={(y) =>
+                    p.scroll.current?.scrollTo({ y, animated: !reduced })
+                  }
+                />
+              )}
+              {page === "food-detail" && currentFood && (
+                <FoodDetail
+                  entry={currentFood}
+                  adapter={adapter}
+                  onClose={close}
+                />
+              )}{" "}
+              {page === "targets" && (
+                <TargetsScreen adapter={adapter} targets={snapshot.targets} />
+              )}
+              {page === "intake" && p.product && (
+                <ImpactPreview
+                  key={p.product.id + p.product.updatedAt}
+                  food={foodFromRecord(p.product, p.cover ?? undefined)}
+                  snapshot={snapshot}
+                  date={detailDate}
+                  meal="lunch"
+                  adapter={adapter}
+                  onStock={() => handoff(p.showStock)}
+                />
+              )}
+              <CaptureScreen
+                visible={page === "capture-hub"}
+                date={detailDate}
+                meal={captureMeal}
+                snapshot={snapshot}
+                adapter={adapter}
+                onScan={() => handoff(() => void p.startScan())}
+                onLibrary={() =>
+                  handoff(() => {
+                    p.setTab("library");
+                    p.navigate("home");
+                  })
+                }
+              />
+            </ScrollView>
+          </BlurTargetView>
+          {showDock && (p.tab === "today" || p.tab === "diary") && (
+            <View style={nav.captureFloat}>
+              <Action title="拍一拍" onPress={() => capture()} />
+            </View>
+          )}
+          {showDock && (
+            <View style={nav.dockShadow} accessibilityLabel="主导航">
+              <BlurView
+                blurTarget={target}
+                blurMethod="dimezisBlurViewSdk31Plus"
+                intensity={42}
+                tint="light"
+                style={nav.dock}
+                onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}
+              >
+                <View pointerEvents="none" style={nav.glassHighlight} />
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    nav.lens,
+                    {
+                      width: (dockWidth - 12) / 4,
+                      transform: [{ translateX: lens }],
+                    },
+                  ]}
+                />
+                {tabs.map((item) => (
+                  <Pressable
+                    key={item.key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={item.label}
+                    accessibilityState={{ selected: activeTab === item.key }}
+                    aria-selected={activeTab === item.key}
+                    onPress={() => {
+                      p.setTab(item.key);
+                      p.setError(null);
+                      p.setNotice(null);
+                    }}
+                    style={({ pressed }) => [
+                      nav.tab,
+                      pressed && { opacity: 0.6 },
                     ]}
                   >
                     <TabMark
                       kind={item.key}
                       selected={activeTab === item.key}
                     />
-                  </View>
-                  <Text
-                    style={[
-                      nav.tabLabel,
-                      activeTab === item.key && nav.tabLabelActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        nav.tabLabel,
+                        activeTab === item.key && nav.tabLabelActive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </BlurView>
             </View>
           )}
         </View>
-        {!!busy && (
+        {!!p.busy && (
           <View
             style={S.busy}
             accessibilityViewIsModal
@@ -206,7 +449,7 @@ export function SimpleAppView({
           >
             <ActivityIndicator color={C.teal} size="large" />
             <Text accessibilityRole="header" style={S.rowTitle}>
-              {busy}
+              {p.busy}
             </Text>
             <Text style={S.note}>正在本机处理，请稍候</Text>
           </View>
@@ -215,7 +458,6 @@ export function SimpleAppView({
     </SafeAreaView>
   );
 }
-
 const nav = StyleSheet.create({
   flex: { flex: 1 },
   content: {
@@ -224,65 +466,106 @@ const nav = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: 32,
   },
+  captureFloat: {
+    position: "absolute",
+    left: 52,
+    right: 52,
+    bottom: 100,
+    shadowColor: "#6388A3",
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  demo: { backgroundColor: "#EAF4FB", padding: 8, borderRadius: 12 },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     backgroundColor: C.bg,
   },
   headerTitle: {
     flex: 1,
-    fontSize: 17,
-    fontWeight: "600",
-    color: C.ink,
-    textAlign: "center",
-    paddingVertical: 8,
+    fontSize: 12,
+    lineHeight: 20,
+    color: C.muted,
+    textAlign: "right",
   },
-  headerBalance: { width: 48 },
   back: {
-    width: 48,
-    minHeight: 48,
+    minWidth: 94,
+    minHeight: 50,
     borderRadius: 16,
+    paddingHorizontal: 16,
+    backgroundColor: C.teal,
     alignItems: "center",
     justifyContent: "center",
   },
-  backText: { fontSize: 32, lineHeight: 38, color: C.ink },
-  pressed: { backgroundColor: C.pale },
+  backText: {
+    fontSize: 17,
+    lineHeight: 25,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  dockShadow: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 12,
+    maxWidth: 640,
+    alignSelf: "center",
+    borderRadius: 38,
+    shadowColor: "#456986",
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 5,
+  },
   dock: {
     flexDirection: "row",
-    paddingTop: 8,
-    paddingBottom: 6,
-    paddingHorizontal: 8,
-    borderTopWidth: 1,
-    borderTopColor: C.line,
-    backgroundColor: C.white,
+    padding: 6,
+    minHeight: 74,
+    borderRadius: 38,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,254,250,0.76)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.95)",
+  },
+  glassHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  lens: {
+    position: "absolute",
+    top: 6,
+    bottom: 6,
+    left: 5,
+    borderRadius: 30,
+    backgroundColor: "rgba(189,222,242,0.65)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.8)",
   },
   tab: {
     flex: 1,
-    minHeight: 64,
-    borderRadius: 14,
-    paddingVertical: 4,
+    minHeight: 60,
+    paddingVertical: 6,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 5,
   },
-  tabMark: {
-    width: 52,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabMarkActive: { backgroundColor: C.pale },
   tabLabel: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 17,
     color: C.muted,
     textAlign: "center",
   },
-  tabLabelActive: { color: C.teal, fontWeight: "700" },
+  tabLabelActive: { color: C.teal, fontWeight: "600" },
   glyph: { width: 21, height: 21, alignItems: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 3 },
   square: { width: 9, height: 9, borderRadius: 2, borderWidth: 1.6 },

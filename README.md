@@ -1,14 +1,16 @@
 # Hukang China
 
+当前 `codex/nutrition-ui-v2` 将奶白天空蓝设计落实为原生页面：今天、记录、营养详情与双入口拍一拍。实际修改、数据边界、检查与截图见 [营养 UI V2 交付](docs/NutritionUIV2.md)。真实饮食存储、餐食 AI 与自动抠图尚未接入；现有扫码、离线 OCR、食品资料、库存和导出保留。
+
 Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应用。普通用户从首页「拍一拍」开始：实时扫描食品条码，命中本机食品库后查看商品并选择入库；未命中时依次保存包装正面、营养成分表，使用手机内置的 PP-OCRv5 国产模型识别，人工核对后保存食品资料。
 
 当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，UI V1 包含「今日 / 记录 / 食品库 / 我的」四个入口，库存位于食品库内。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
 
 UI V1 在独立分支 `codex/ui-v1` 开发，基于现有 React Native + Expo 项目，未创建 Flutter 项目。设计规范见 [UI V1 Design](docs/UIV1Design.md)，本轮检查、截图和安装包见 [UI V1 验收记录](docs/UIV1Acceptance.md)。
 
-本分支 UI 测试包为 **0.4.0 / versionCode 9**：[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930/artifacts/12651485154)（解压获取完整 APK，约 60.84 MB；保留至 2026-11-09）。构建与检查通过，尚未进行本轮 Android 安装执行。测试证书与归档 0.3.3 不同，不能覆盖该旧签名包，有本地数据时请保留原安装。
+历史 UI V1 测试包为 **0.4.0 / versionCode 9**：[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930/artifacts/12651485154)（解压获取完整 APK，约 60.84 MB；保留至 2026-11-09）。构建与检查通过，尚未进行本轮 Android 安装执行。测试证书与归档 0.3.3 不同，不能覆盖该旧签名包，有本地数据时请保留原安装。
 
-每日记录目前提供主动开启的临时演示；AI 设置只做本地配置格式检查。二者均未连接存储或真实服务，不把演示数据写入食品库。
+营养完整数据演示只在独立开发预览中运行，正式页面初始为空；AI 设置只做本地配置格式检查。二者均未连接存储或真实服务，不把演示数据写入食品库。
 
 以下 0.3.3 是历史基线，设备结果不能直接作为 UI V1 的验收；历史构建身份和证据见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
 

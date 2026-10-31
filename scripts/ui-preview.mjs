@@ -9,6 +9,10 @@ const out = path.join(root, "artifacts/ui-preview");
 export async function buildPreview() {
   await mkdir(path.join(out, "assets"), { recursive: true });
   await copyFile(
+    path.join(root, "assets/paper-grain.png"),
+    path.join(out, "assets/paper-grain.png"),
+  );
+  await copyFile(
     path.join(root, "assets/icon.png"),
     path.join(out, "assets/icon.png"),
   );
@@ -22,11 +26,26 @@ export async function buildPreview() {
     outfile: path.join(out, "app.js"),
     platform: "browser",
     jsx: "automatic",
-    define: { __DEV__: "true", "process.env.NODE_ENV": '"development"' },
+    define: {
+      global: "globalThis",
+      __DEV__: "true",
+      "process.env.NODE_ENV": '"development"',
+    },
     plugins: [
       {
         name: "explicit-test-native-boundary",
         setup(b) {
+          b.onResolve({ filter: /^expo-blur$/ }, () => ({
+            path: path.join(root, "tests/ui-preview/blur-shim.tsx"),
+          }));
+          b.onResolve({ filter: /^expo-image-picker$/ }, () => ({
+            path: path.join(root, "tests/ui-preview/media-shim.ts"),
+          }));
+          b.onLoad({ filter: /assets\/paper-grain\.png$/ }, () => ({
+            contents:
+              'module.exports = {uri:"/assets/paper-grain.png",width:128,height:128};',
+            loader: "js",
+          }));
           b.onResolve({ filter: /^react-native$/ }, () => ({
             path: path.join(root, "tests/ui-preview/react-native-shim.ts"),
           }));
@@ -59,7 +78,7 @@ export async function buildPreview() {
   });
   await writeFile(
     path.join(out, "index.html"),
-    `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"><title>Hukang UI V1 — 明确标注的界面预览</title><style>html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}#root{display:flex;flex-direction:column}body{font-family:system-ui,-apple-system,"Noto Sans CJK SC",sans-serif}*{box-sizing:border-box}button,input{font:inherit}#preview-notice{position:fixed;top:0;left:0;right:0;z-index:2147483647;height:36px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fff3d9;color:#6c5125;font:11px/15px system-ui;padding:3px 10px;flex-shrink:0}#preview-app{margin-top:36px;height:calc(100% - 36px);display:flex;flex-direction:column}</style></head><body><div id="preview-notice" role="note">UI 预览 · 模拟数据仅在内存中 · 非设备扫码 / OCR</div><div id="preview-app"><div id="root"></div></div><script src="/app.js"></script></body></html>`,
+    `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"><title>Hukang 营养 UI V2 — 明确标注的界面预览</title><style>html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}#root{display:flex;flex-direction:column}body{font-family:system-ui,-apple-system,"Noto Sans CJK SC",sans-serif}*{box-sizing:border-box}button,input{font:inherit}#preview-notice{position:fixed;top:0;left:0;right:0;z-index:2147483647;height:36px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fff3d9;color:#6c5125;font:11px/15px system-ui;padding:3px 10px;flex-shrink:0}#preview-app{margin-top:36px;height:calc(100% - 36px);display:flex;flex-direction:column}</style></head><body><div id="preview-notice" role="note">UI 预览 · 模拟数据仅在内存中 · 非设备扫码 / OCR</div><div id="preview-app"><div id="root"></div></div><script src="/app.js"></script></body></html>`,
   );
   return out;
 }

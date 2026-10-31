@@ -44,7 +44,7 @@ export const H = StyleSheet.create({
   },
   scanHeroPressed: { opacity: 0.88 },
   heroCopy: { flex: 1, gap: 7 },
-  heroEyebrow: { color: "#E0EDE5", fontSize: 12, lineHeight: 19 },
+  heroEyebrow: { color: "#E0EDF7", fontSize: 12, lineHeight: 19 },
   heroTitle: {
     color: "#FFF",
     fontSize: 30,
@@ -52,7 +52,7 @@ export const H = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
   },
-  heroDescription: { color: "#E0EDE5", fontSize: 13, lineHeight: 21 },
+  heroDescription: { color: "#E0EDF7", fontSize: 13, lineHeight: 21 },
   heroCamera: {
     alignItems: "center",
     justifyContent: "center",
@@ -64,7 +64,7 @@ export const H = StyleSheet.create({
     height: 36,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#D6E8DC",
+    borderColor: "#D6E8F7",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -73,9 +73,9 @@ export const H = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#D6E8DC",
+    borderColor: "#D6E8F7",
   },
-  heroArrow: { color: "#D6E8DC", fontSize: 23, lineHeight: 27 },
+  heroArrow: { color: "#D6E8F7", fontSize: 23, lineHeight: 27 },
   energyRow: {
     flexDirection: "row",
     justifyContent: "space-between",

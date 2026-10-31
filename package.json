@@ -12,11 +12,12 @@
     "verify:apk": "python3 scripts/verify-apk.py",
     "ui:preview": "node scripts/ui-preview.mjs --serve",
     "ui:preview:build": "node scripts/ui-preview.mjs",
-    "ui:test": "node tests/ui-v1-browser.mjs",
-    "format:ui:check": "prettier --check src/ui src/features/ui-v1 src/features/simple/SimpleApp.tsx src/features/simple/HomeScreens.tsx src/features/simple/HomeScreenStyles.ts src/features/simple/ScanScreen.tsx src/features/simple/CaptureScreens.tsx src/features/simple/ProductScreens.tsx src/features/simple/ui.tsx tests/ui-preview scripts/ui-preview.mjs tests/ui-v1-browser.mjs"
+    "ui:test": "node tests/ui-v1-browser.mjs && node tests/ui-v2-browser.mjs",
+    "format:ui:check": "prettier --check src/ui src/features/ui-v1 src/features/simple/SimpleApp.tsx src/features/simple/HomeScreens.tsx src/features/simple/HomeScreenStyles.ts src/features/simple/ScanScreen.tsx src/features/simple/CaptureScreens.tsx src/features/simple/ProductScreens.tsx src/features/simple/ui.tsx tests/ui-preview scripts/ui-preview.mjs tests/ui-v1-browser.mjs src/features/nutrition-v2 tests/ui-v2-browser.mjs tests/nutrition-v2.test.mjs"
   },
   "dependencies": {
     "expo": "57.0.27",
+    "expo-blur": "57.0.3",
     "expo-build-properties": "57.0.22",
     "expo-constants": "57.0.21",
     "expo-file-system": "57.0.7",
