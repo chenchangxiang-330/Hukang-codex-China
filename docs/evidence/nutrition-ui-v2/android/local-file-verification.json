@@ -1,10 +1,17 @@
 {
-  "downloadedArtifactId": 13037949348,
-  "artifactZipSha256": "01a79de5890a9a96f58dffc29548a287b600bd6ab4541e4803c9ad66efa1c9ed",
-  "apkSha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
-  "apkBytes": 60926377,
-  "certificateSha256FromApkV2Der": "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8",
-  "matchesBuildInspection": true,
-  "signatureCryptoVerification": "Android apksigner v2 verification transcript in apk-inspection.json",
-  "apkSource": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a"
+  "buildRun": 41192004209,
+  "artifactId": 13039861926,
+  "sourceCommit": "fd1b391bfa4d2a52c49a64f3851666a8b76a26fc",
+  "zipSha256": "81032cd64d2894121f3a79b6c75d07eacf70d4b418ed19ca1832aac941f76821",
+  "zipDigestMatchedGitHub": true,
+  "apkSha256": "ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f",
+  "apkBytes": 60927017,
+  "apkHashMatchesInspection": true,
+  "actualV2CertificateSha256": [
+    "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+  ],
+  "certificateReadFromDownloadedApk": true,
+  "matchesCiApksigner": true,
+  "privateSigningMaterialAccessed": false,
+  "signingMode": "ephemeral-test; cannot promise an in-place update of previous installs"
 }

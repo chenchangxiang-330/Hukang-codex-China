@@ -2,7 +2,7 @@
 import hashlib,json,re,shlex,sqlite3,struct,subprocess,time,xml.etree.ElementTree as ET,zipfile,zlib
 from pathlib import Path
 from urllib.parse import unquote,urlparse
-from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top
+from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top,keyboard_top
 from archive_checks import jpeg_has_exif
 from picker_selectors import next_picker_action,MEDIA,DOCUMENTS
 O=Path('artifacts/device');O.mkdir(parents=True,exist_ok=True)
@@ -60,10 +60,18 @@ def tap(pattern,scroll=False,clazz=None):
  raise RuntimeError('UI not found: '+pattern)
 def field(label,value):
  pattern='^'+re.escape(label)+'$'
- for _ in range(3):
-  tap(pattern,True,'android.widget.EditText');f=find(pattern,'android.widget.EditText')
-  if f and f[0].get('focused')=='true':break
- else:raise RuntimeError('Field did not receive focus; keyboard input refused: '+label)
+ if 'mIsInputViewShown=true' in shell('dumpsys','input_method'):shell('input','keyevent','KEYCODE_BACK');time.sleep(.6)
+ tap(pattern,True,'android.widget.EditText');previous=None
+ for _ in range(6):
+  f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
+  (O/'focused-input-window.txt').write_text(window)
+  box=f[1] if f else None
+  signature=(tuple(box),top) if box else None
+  if f and f[0].get('focused')=='true' and top is not None and box[3]<=top-12 and box[1]>=250 and box[3]-box[1]>=80 and signature==previous:break
+  previous=signature;time.sleep(.3)
+ else:raise RuntimeError('Focused field not fully visible above keyboard: '+repr((label,box,top)))
+ report.setdefault('inputVisibility',[]).append({'label':label,'bounds':box,'keyboardTop':top,'fullyVisible':True})
+ if label=='脂肪含量':shot('review-fat-keyboard')
  steps.append({'focusedField':label,'node':f[0].attrib})
  shell('input','keyevent','KEYCODE_MOVE_END');shell('input','keyevent',*(['KEYCODE_DEL']*50))
  shell('input','text',value.replace(' ','%s'))

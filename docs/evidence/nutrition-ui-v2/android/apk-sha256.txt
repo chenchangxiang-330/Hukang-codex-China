@@ -1,1 +1,1 @@
-fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928  artifacts/hukang-0.4.0-arm64.apk
+ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f  artifacts/hukang-0.4.0-arm64.apk

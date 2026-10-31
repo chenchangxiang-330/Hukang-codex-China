@@ -16,6 +16,13 @@ def row(label, y, unit='g', selected='false'):
 
 
 class DeviceUiSelectorsTest(unittest.TestCase):
+    def test_keyboard_frame_allows_optional_visible_frame_from_api35(self):
+        self.assertEqual(selectors.keyboard_top('InsetsSource id=3 type=ime frame=[0,1092][1080,1920] visibleFrame=[0,1092][1080,1920] visible=true flags= sideHint=BOTTOM'), 1092)
+
+    def test_keyboard_frame_without_optional_field_and_hidden_keyboard(self):
+        self.assertEqual(selectors.keyboard_top('type=ime frame=[0,1100][1080,1920] visible=true flags='), 1100)
+        self.assertIsNone(selectors.keyboard_top('type=ime frame=[0,0][0,0] visible=false flags='))
+
     def tree(self, content):
         return ET.fromstring('<hierarchy>' + content + '</hierarchy>')
 

@@ -19,7 +19,7 @@
 
 Dock 使用 `expo-blur@57.0.3`（当前 Expo 57 bundledNativeModules 推荐版本）与 `BlurTargetView`，背景模糊、半透明暖白、细高光、阴影与可减少动态效果的选中滑块。Android 使用 `dimezisBlurViewSdk31Plus`，旧版本提供半透明降级。依据 [Expo 57 官方 BlurView 文档](https://docs.expo.dev/versions/v57.0.0/sdk/blur-view/)。这不是系统原生液态玻璃的实现声明。
 
-Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 的滚动空间。拍摄/核对/详情隐藏 Dock，键盘显示时也隐藏。Android 键盘弹出后收缩内容区，并测量、滚动当前输入框使其保持在键盘上方；同一处理复用于原有食品录入和核对表单。保留系统字体缩放，能量数值与圆环可换行；原生字体放大时圆环同步增大。返回恢复上个页面的滚动位置和所选日期。Android 验收发现的 320dp / 1.5 倍系统字号日期按钮越界已修复：空间不足时月份独占一行，前后日期按钮等宽排列。
+Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 的滚动空间。拍摄/核对/详情隐藏 Dock，键盘显示时也隐藏。Android 键盘弹出后收缩内容区，按输入框完整内容坐标计算滚动位置，使其保持在键盘上方，避免窗口裁切和旧偏移导致竞争；同一处理复用于原有食品录入和核对表单。保留系统字体缩放，能量数值与圆环可换行；原生字体放大时圆环同步增大。返回恢复上个页面的滚动位置和所选日期。Android 验收发现的 320dp / 1.5 倍系统字号日期按钮越界已修复：空间不足时月份独占一行，前后日期按钮等宽排列。
 
 ## 业务边界
 
@@ -52,7 +52,7 @@ Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 
 | --- | --- |
 | `npm run typecheck` | 通过 |
 | `npm test` | 87/87 通过，包括新增 8 项营养数据/隔离测试 |
-| `python3 -B -m unittest discover -s tests -p 'test_*.py'` | 26/26 通过 |
+| `python3 -B -m unittest discover -s tests -p 'test_*.py'` | 28/28 通过 |
 | `npm run format:ui:check` | 通过 |
 | `npm run ui:test` | 旧界面回归 34 项 + 新营养交互 25 项；44 张截图；无页面异常、无外部网络请求 |
 | `npm run verify:assets` | 原图标、固定检测/识别模型、配套配置与字典校验通过 |
@@ -60,7 +60,7 @@ Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 
 
 [截图与浏览器报告](evidence/nutrition-ui-v2/browser/README.md)；[检查输出](evidence/nutrition-ui-v2/checks)。浏览器运行实际 `SimpleAppView` 和生产 RN 页面组件，经 React Native Web 渲染；只替换原生 controller/相机/SQLite。不是另写 HTML 原型，也不是 Android 相机、OCR 或 SQLite 的设备实测。
 
-本机没有 Android SDK/模拟器或连接设备，因此本轮在 GitHub Actions 的 Android 15 / API 35 模拟器安装实际 ARM64 APK 执行原生验收。修正版构建 41189628525 已成功；APK 源码为 `e7e0dae22dca1b9f1b253761b990908aa64b6b1a`。逐项原生结果、真实截图、签名兼容性、保留数据安装说明与手机手动清单集中在 [Android 交付和验收](NutritionUIV2AndroidAcceptance.md)。浏览器结果与 Android 原生结果分别归档。
+本机没有 Android SDK/模拟器或连接设备，因此本轮在 GitHub Actions 的 Android 15 / API 35 模拟器安装实际 ARM64 APK 执行原生验收。上一版构建 41192004209 成功，但重复原生测试发现键盘仍有裁切；正在修正共用表单，下一份 APK 和最终原生结果以验收文档为准。逐项原生结果、真实截图、签名兼容性、保留数据安装说明与手机手动清单集中在 [Android 交付和验收](NutritionUIV2AndroidAcceptance.md)。浏览器结果与 Android 原生结果分别归档。
 
 检查与 APK 工作流已覆盖 `codex/nutrition-ui-v2`；PR 检查覆盖 `codex/ui-v1` 和 `main`，保留原 Node/Python 检查并加入格式、资源和共享 UI 检查。原生 UI 和离线业务在两个独立模拟器运行，验收同一 APK 并核对源码一致性。当前包采用临时测试签名，不能覆盖已归档的旧签名安装；不以卸载或清库绕过。PR 保持草稿，不自动合并。
 

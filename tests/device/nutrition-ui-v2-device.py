@@ -12,6 +12,7 @@ import time
 import traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from ui_selectors import keyboard_top
 
 OUT = Path('artifacts/device/nutrition-ui-v2')
 OUT.mkdir(parents=True, exist_ok=True)
@@ -274,27 +275,30 @@ def keyboard():
     require('^餐食估算$')
     require('^包装食品$')
     shot('android-capture-meal-empty')
-    tap('^餐食补充描述$', True, 'content-desc')
-    shell('input', 'text', 'Egg%snoddles%shalf%sportion')
-    require('Egg noddles half portion')
-    ime = shell('dumpsys', 'input_method')
-    (OUT / 'keyboard-state.txt').write_text(ime)
-    assert 'mInputShown=true' in ime or 'mIsInputViewShown=true' in ime
-    assert find('^主导航$') is None
-    window = shell('dumpsys', 'window')
-    (OUT / 'keyboard-window.txt').write_text(window)
-    ime_tops = [int(y) for y in re.findall(
-        r'type=ime frame=\[0,(\d+)\]\[1080,\d+\][^\n]*\bvisible=true\b', window)]
-    assert ime_tops and min(ime_tops) > 0, 'Visible keyboard frame was not reported'
-    field_bounds = bounds(require('^餐食补充描述$', attribute='content-desc'))
-    # UI XML alone can report an input beneath the IME as present/focused.
-    # Its full box must actually be above the OS keyboard and below the header.
-    assert field_bounds[1] >= 270 and field_bounds[3] - field_bounds[1] >= 277, field_bounds
-    assert field_bounds[3] <= min(ime_tops) - 20, (field_bounds, ime_tops)
-    report['keyboardVisibility'] = {'inputBounds': field_bounds, 'keyboardTop': min(ime_tops),
-                                    'fullyAboveKeyboard': True}
-    shot('android-capture-keyboard')
-    shell('input', 'keyevent', 'KEYCODE_BACK')
+    for iteration in range(3):
+        tap('^餐食补充描述$', True, 'content-desc')
+        if iteration == 0:
+            shell('input', 'text', 'Egg%snoddles%shalf%sportion')
+        require('Egg noddles half portion')
+        ime = shell('dumpsys', 'input_method')
+        (OUT / 'keyboard-state.txt').write_text(ime)
+        assert 'mInputShown=true' in ime or 'mIsInputViewShown=true' in ime
+        assert find('^主导航$') is None
+        window = shell('dumpsys', 'window')
+        (OUT / 'keyboard-window.txt').write_text(window)
+        ime_top = keyboard_top(window)
+        assert ime_top is not None, 'Visible keyboard frame was not reported'
+        field_bounds = bounds(require('^餐食补充描述$', attribute='content-desc'))
+        # UI XML can report a focused input beneath the IME as present.
+        # Its full box must remain above the IME after repeated show/hide.
+        assert field_bounds[1] >= 270 and field_bounds[3] - field_bounds[1] >= 277, field_bounds
+        assert field_bounds[3] <= ime_top - 20, (field_bounds, ime_top)
+        report['keyboardVisibility'] = {'inputBounds': field_bounds, 'keyboardTop': ime_top,
+                                        'fullyAboveKeyboard': True}
+        report.setdefault('keyboardRepeats', []).append(dict(report['keyboardVisibility']))
+        shot('android-capture-keyboard' + (f'-repeat{iteration}' if iteration else ''))
+        shell('input', 'keyevent', 'KEYCODE_BACK')
+        time.sleep(.6)
     tap('^返回$')
     tap('^拍一拍$')
     require('Egg noddles half portion', True)

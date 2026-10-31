@@ -1,6 +1,6 @@
 {
   "kind": "shared-react-native-web-ui",
-  "generatedAt": "2026-10-31T10:13:49.986Z",
+  "generatedAt": "2026-10-31T11:17:49.839Z",
   "sourceHashes": {
     "app.json": "ef1119fcc59af74f104d7fb863dc62d0183080610d34e5c2cccd7e5266868bfc",
     "scripts/ui-preview.mjs": "ee4d9821618c733486131307c9d48b2feadc6b31e040333a92234df1954e2e86",
@@ -15,7 +15,7 @@
     "src/features/simple/NutritionImageEditor.tsx": "028adfa10a37eefac39ded882f58deef56ffbeb92bd5e3d664410248a7210dab",
     "src/features/simple/ProductScreens.tsx": "855fb8ffcfd6c4523d5e4e950edd3a2011791d9dbcd6d336f9aee63f06a7116f",
     "src/features/simple/ScanScreen.tsx": "968da94adbba4bc182908ad32fc15d1039bff96822749a96a5ac6c659d7ba6ea",
-    "src/features/simple/SimpleApp.tsx": "586587c58575feccfb63d539b52118a246f5e071d8c2450b2b57e8f0400c01b6",
+    "src/features/simple/SimpleApp.tsx": "9c1741bb07eebcfb153fd36ecc200af3bf97373371297b747106937ede631237",
     "src/features/simple/captureRecovery.ts": "a071d4953aa13303f37b3537c5c16f4bc206a24e1c2a9f370d7aa588f972e553",
     "src/features/simple/catalogue.ts": "f541ae2b3426680cd767dd80c9a9c199ee2c856aaba661c2476a25c536701781",
     "src/features/simple/exportPaths.ts": "26db9df60fd4a7ba7de4004d9921c67a7b873a26fb421598caa41118e33d7ee9",

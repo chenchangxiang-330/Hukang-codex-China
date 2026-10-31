@@ -1,29 +1,30 @@
 # UI V2 Android 测试包与原生验收
 
-## 日期修复包（键盘问题待复测）
+## 当前交付包
 
-指定构建 **41186160540 已成功**，没有重跑。原生检查随后发现 320dp / 系统字号 1.5 下“后一天”按钮被挤出屏幕，修复后由新源码生成以下测试包：
+指定构建 **41186160540 已成功**，没有重跑。实际 Android 验收发现并修复了两处问题：320dp / 系统字号 1.5 下日期按钮越界，以及餐食描述框被软键盘遮挡。首次键盘修复在重复测试中仍有裁切，目前继续修正共用输入框定位。以下为上一份待替换 APK，不能标记为最终验收通过：
 
-- [下载修正版 APK 与校验文件 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41189628525/artifacts/13037949348)。需要登录 GitHub；当前保留至 **2026-11-14 17:54（北京时间）**。解压后安装 `hukang-0.4.0-arm64.apk`。
-- [成功构建 41189628525](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41189628525)；源码提交 **`e7e0dae22dca1b9f1b253761b990908aa64b6b1a`**。
+- [上一份 APK 与校验文件 ZIP（未通过最终验收）](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41192004209/artifacts/13039861926)。需要登录 GitHub；当前保留至 **2026-11-14 18:32（北京时间）**。解压后安装 `hukang-0.4.0-arm64.apk`。
+- [成功构建 41192004209](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41192004209)；APK 源码提交 **`fd1b391bfa4d2a52c49a64f3851666a8b76a26fc`**。
 - 版本 **0.4.0**，versionCode **9**；包名 `com.hukang.china`。
-- Android 8.0 / API 26 及以上，ARM64；文件 **60,926,377 字节**（约 61 MB）。
-- APK SHA-256：`fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928`。
-- 实际签名证书 SHA-256：`f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8`。
-- 已核对下载 ZIP、APK 完整文件 SHA-256，以及 APK 内实际 v2 签名块的证书 DER 指纹；均与构建内 Android `apksigner` 校验报告一致。[原始证据](evidence/nutrition-ui-v2/android/apk-inspection.json) · [独立文件复核](evidence/nutrition-ui-v2/android/local-file-verification.json)。
+- Android 8.0 / API 26 及以上，ARM64 系统；APK **60,927,017 字节**（约 61 MB）。
+- APK SHA-256：`ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f`。
+- 实际签名证书 SHA-256：`f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62`。
+- 已独立核对下载 ZIP、完整 APK 的 SHA-256，以及 APK 内实际 v2 签名块的证书 DER 指纹；与构建内 `apksigner` 校验报告一致。[原始检查](evidence/nutrition-ui-v2/android/apk-inspection.json) · [下载文件复核](evidence/nutrition-ui-v2/android/local-file-verification.json)。
 
 ## 覆盖安装结论
 
-**签名模式为 ephemeral-test，不能覆盖已归档的旧安装，也不能覆盖本轮第一份 UI V2 包。**
+**签名模式为 ephemeral-test，不能覆盖已归档的旧签名安装，也不能覆盖前两份 UI V2 测试包。**
 
 | 对比对象 | 实际证书与当前包相同 | 能否覆盖 |
 | --- | --- | --- |
+| 日期修复版，构建 41189628525 | 否，`f4a0f644…` | 不能 |
 | 第一份 UI V2，构建 41186160540 | 否，`74ccdd39…` | 不能 |
 | UI V1，构建 40323157930 | 否，`4a168283…` | 不能 |
 | 归档 0.3.3 | 否，`10801899…` | 不能 |
-| 当前同一份修正版 APK 再安装 | 同一签名 | 已实测保留全部数据库表及图片；不代表旧版升级 |
+| 当前同一份最终 APK 再安装 | 同一签名 | 见下方本包重装实测结果 |
 
-[完整证书比对](evidence/nutrition-ui-v2/android/signing-comparison.json)。UI V1 的构建证据已重新下载复核。当前 APK 只有 v2 签名，没有旧证书的 v3 轮换链。
+[完整证书比对](evidence/nutrition-ui-v2/android/signing-comparison.json)。UI V1 的构建证据已重新下载复核；当前 APK 只有 v2 签名，没有旧证书的 v3 轮换链。
 
 用户手机当前安装的具体证书尚未读取，不能声称它已完成升级。**没有卸载、清除用户数据、更换包名或替换签名来绕过检查。** 数据库及存储实现未改，但这不能代替旧版升级测试。
 
@@ -31,35 +32,38 @@
 
 ## 实际修改
 
-- 记录页根据可用宽度和 Android 系统字号调整日期导航；空间不足时月份独占一行，前后日期按钮等宽，普通字号布局保持原样。
-- 修复 Android 键盘避让：键盘弹出时缩短内容区域，并测量、滚动当前输入框使其保持可见；原有表单共用该处理。增加真实键盘边界断言。
-- 新增原生验收：真实空数据三页、四项导航、营养展开/收起、日期联动、320/390dp、系统字号 1.5、手势安全区、键盘、相机拒绝/授权、两个拍照入口和返回。
-- 更新原有离线流程验收以适配双入口、整包规格标签和新版商品详情标题；增加同 APK `install -r` 前后全部数据库表及图片证据比较。
-- 修正自动化触控：从悬浮按钮外侧滑动，将目标滚入无遮挡区域后再点；通过无障碍标签识别 Dock，正确处理详情返回后的滚动位置。
-- 界面与离线业务使用两台独立模拟器，同时安装**同一个 APK**。运行前核对哈希，并拒绝测试源码与已构建业务源码有差异。
+- `Screens.tsx`：记录页根据屏幕宽度和系统字号调整日期导航；空间不足时月份独占一行，前后日期按钮等宽，普通字号布局保持原样。
+- `SimpleApp.tsx`：Android 软键盘弹出时收缩内容区，按完整内容坐标定位当前输入框并滚动到键盘上方，避免窗口裁切测量和旧滚动偏移产生竞争；复用于餐食描述及原有食品录入、核对表单。保留顶部返回入口与安全区。
+- 原生验收覆盖三页真实空数据、四项导航、七类展开/收起、日期联动、320/390dp、系统字号 1.5、手势安全区、键盘、相机拒绝/授权、两个拍照入口和返回。
+- 适配原有离线验收入口，增加同 APK `install -r` 前后全部数据库表和图片哈希比较。键盘检查同时验证输入框高度、位置及实际系统键盘边界，兼容系统可选 `visibleFrame` 字段。
+- 界面和离线业务使用独立模拟器验收**同一个 APK**；运行前校验哈希，并拒绝验收脚本源码与 APK 业务源码存在差异。支持只重跑受影响的测试组，不重复构建 APK。
 
 ## 原生执行结果
 
-修正版运行：[41190630319](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41190630319)。APK 源码 `e7e0dae22dca1b9f1b253761b990908aa64b6b1a`；测试脚本源码 `fb7743605bb51346c5262196481ad4385054bd1a`。
+上一份包的页面复测：[41195021926](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41195021926)。离线业务：[41193660053 的 offline 重试任务](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41193660053/job/124518856296)。
 
-**六组 UI 自动化与完整离线业务已通过，但人工截图复查发现描述输入框被键盘遮挡，整体 UI 验收仍未通过。** [保留的原生结果与键盘问题原图](evidence/nutrition-ui-v2/android/attempt3/)。已补充输入框与系统键盘边界断言；键盘修复后的新 APK 仍需复测。
+APK 源码 `fd1b391bfa4d2a52c49a64f3851666a8b76a26fc`；UI 脚本源码 `efbaa083f208ae30bc4edc458e3d340427b1cfbd`；离线脚本源码 `fd1b391bfa4d2a52c49a64f3851666a8b76a26fc`。脚本提交之间只有测试、工作流和验收文档变化，业务源码一致。
 
-测试设备为 Android 15 / API 35 Pixel 2 模拟器；x86_64 系统实际安装并运行 ARM64 APK（支持 ABI 为 `x86_64,arm64-v8a`）。这不是实体手机。首页、饮食记录和营养详情没有灌入演示饮食记录。离线业务随后仅在独立模拟器里，通过实际条码图片、营养表 OCR 和人工核对创建 Test Milk 食品与库存，它不计入饮食摄入。
+**复测失败，不能交付为验收通过。** 一次原图显示输入框完整，但重复运行只露出 y=865–1026；离线核对的脂肪字段也被遮挡。正在改用完整内容坐标定位，并对连续输入、键盘三次打开/收起增加原生边界检查。见 [原始失败证据](evidence/nutrition-ui-v2/android/attempt5/)。
 
-第一份 APK 的两次检查保留了失败证据，未被改写为通过：
+测试设备为 Android 15 / API 35 Pixel 2 模拟器；x86_64 系统实际安装、运行 ARM64 APK（支持 ABI `x86_64,arm64-v8a`）。这不是实体手机。首页、记录和营养详情始终没有灌入演示饮食记录。离线组仅在另一台独立模拟器里，通过真实条码图片、离线 OCR 和人工核对创建 Test Milk 食品与库存，不计入饮食摄入。
+
+早期运行和失败证据完整保留：
 
 | 运行 | 结果与发现 |
 | --- | --- |
-| [41187208931](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41187208931) | 实际安装成功；相机与键盘通过。脚本误判 1 像素取整边界，并把手势落在悬浮按钮上。[证据](evidence/nutrition-ui-v2/android/attempt1/) |
-| [41188276302](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41188276302) | 已执行真实 OCR、旋转/裁剪、五项人工核对、食品保存和首次入库。人工看图发现大字体日期按钮越界，已修复；导航标题、滚动恢复及商品标题的测试匹配问题也已修正。[证据](evidence/nutrition-ui-v2/android/attempt2/) |
+| [41187208931](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41187208931) | 首次安装成功；键盘输入及相机流程执行。脚本误判 1px 取整边界、滑动落在悬浮按钮上。[证据](evidence/nutrition-ui-v2/android/attempt1/) |
+| [41188276302](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41188276302) | 真实 OCR、裁剪、核对、保存及首次入库执行。人工看图发现大字体日期越界，已修复；同步修正标题与滚动恢复的测试匹配。[证据](evidence/nutrition-ui-v2/android/attempt2/) |
+| [41190630319](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41190630319) | 日期修复 APK 自动 UI、离线业务、三种导出及同包重装通过；人工看图发现键盘遮挡，因此整体 UI 没有通过。随后修复避让并加入边界检查。[证据](evidence/nutrition-ui-v2/android/attempt3/) |
+| [41193660053 首次任务](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41193660053/attempts/1) | 该 APK 的五组 UI 检查通过；键盘边界解析漏掉可选字段，原图已证实避让生效。仅修正测试脚本。离线模拟器在安装前掉线，仅重试失败任务。[证据](evidence/nutrition-ui-v2/android/attempt4/) |
 
-[大字体调整前 Android 原图](evidence/nutrition-ui-v2/android/attempt2/nutrition-ui-v2/android-diary-320-font150-empty.png)。第一轮 APK 的文件及证书校验单独保存在 [initial-build](evidence/nutrition-ui-v2/android/initial-build/)，不能与当前修正版混用。
+[第一份包校验](evidence/nutrition-ui-v2/android/initial-build/)与[日期修复包校验](evidence/nutrition-ui-v2/android/date-fix-build/)单独归档，不能与当前最终包混用。
 
 ## 构建和浏览器验证
 
-类型检查、87 项 Node 测试、26 项 Python 测试、格式及固定资源检查通过。日期布局修复后重新执行 34 项旧界面回归和 25 项营养界面浏览器检查，44 张截图，无页面异常和外部请求；源文件哈希与修复提交一致。
+类型检查、87 项 Node 测试、28 项 Python 测试、格式及固定资源检查通过；当前 APK 源码的 [云端检查 41192009419](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41192009419) 成功。键盘修复后重新执行 34 项既有界面回归和 25 项营养界面浏览器检查，44 张截图，无页面异常和外部请求；报告源文件哈希与修复源码一致。
 
-[浏览器截图与报告](evidence/nutrition-ui-v2/browser/README.md) · [修复后检查结果](evidence/nutrition-ui-v2/checks/post-native-layout-fix.json)。浏览器的相机、OCR、SQLite 是测试替身，不算 Android 原生验证。
+[浏览器截图与报告](evidence/nutrition-ui-v2/browser/README.md) · [键盘修复后本机检查](evidence/nutrition-ui-v2/checks/post-keyboard-fix.json)。浏览器相机、OCR、SQLite 为测试替身，不计入 Android 原生验收。
 
 ## 安装步骤
 

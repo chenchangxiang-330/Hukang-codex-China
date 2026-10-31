@@ -120,6 +120,7 @@ export function SimpleAppView({
   const offset = useRef(0),
     returnOffsets = useRef<number[]>([]),
     restore = useRef<number | null>(null),
+    content = useRef<View>(null!),
     target = useRef<View>(null);
   const reduced = useReducedMotion(),
     lens = useRef(new Animated.Value(0)).current,
@@ -154,26 +155,34 @@ export function SimpleAppView({
   const revealFocusedInput = () => {
     if (Platform.OS !== "android" || !Keyboard.isVisible()) return;
     const input = TextInput.State.currentlyFocusedInput();
-    if (!input) return;
-    p.scroll.current
-      ?.getNativeScrollRef()
-      ?.measureInWindow((_x, top, _width, height) => {
-        input.measureInWindow((_inputX, inputTop, _inputWidth, inputHeight) => {
-          if (TextInput.State.currentlyFocusedInput() !== input) return;
-          const bottom =
-            Math.min(
-              top + height,
-              Keyboard.metrics()?.screenY ?? top + height,
-            ) - 16;
-          const obscured = inputTop + inputHeight - bottom;
-          if (obscured > 0) {
-            p.scroll.current?.scrollTo({
-              y: offset.current + obscured,
+    const scroll = p.scroll.current;
+    if (!input || !scroll || !content.current) return;
+    // Use the full input layout in content coordinates. Window measurements
+    // can be clipped during IME resize; adding a stale scroll offset races
+    // Android's own focus scrolling and can leave later fields obscured.
+    input.measureLayout(
+      content.current,
+      (_x, inputTop, _width, inputHeight) => {
+        scroll
+          .getNativeScrollRef()
+          ?.measureInWindow((_sx, top, _sw, height) => {
+            if (
+              !Keyboard.isVisible() ||
+              TextInput.State.currentlyFocusedInput() !== input
+            )
+              return;
+            const bottom =
+              Math.min(
+                top + height,
+                Keyboard.metrics()?.screenY ?? top + height,
+              ) - 16;
+            scroll.scrollTo({
+              y: Math.max(0, inputTop + inputHeight - (bottom - top)),
               animated: false,
             });
-          }
-        });
-      });
+          });
+      },
+    );
   };
   useEffect(() => {
     p.scroll.current?.scrollTo({ y: restore.current ?? 0, animated: false });
@@ -294,6 +303,7 @@ export function SimpleAppView({
             </View>
             <ScrollView
               ref={p.scroll}
+              {...(Platform.OS === "android" ? { innerViewRef: content } : {})}
               onLayout={revealFocusedInput}
               onFocus={revealFocusedInput}
               onScroll={(e) => {

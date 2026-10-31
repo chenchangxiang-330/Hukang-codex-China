@@ -1,6 +1,8 @@
-# 共享原生页面实际渲染截图
+# 浏览器截图（React Native Web）
 
 2026-10-31，Chrome / React Native Web，生产 `SimpleAppView` 与 RN 页面组件。相机、OCR、SQLite、原 controller 在浏览器中由明确的开发测试替身替换。不是 Android 设备实测，不是单独绘制的 HTML 设计图。
+
+[Android 实际安装 APK 的原生截图（模拟器）](../android/verified/README.md) 单独归档。
 
 - 营养交互：25 项检查、22 张截图，见 [报告](nutrition/report.json)。
 - 原界面回归：34 项检查、22 张截图，见 [报告及源文件 SHA-256](regression/report.json)。
