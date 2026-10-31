@@ -367,7 +367,9 @@ def camera():
     tap('^估算这餐营养$', True)
     require('请填写这一餐的文字描述', True)
     shot('android-ai-text-required-feedback')
-    swipe(True)
+    # Explicit AI disclosure adds content; return to the mode tabs before tapping.
+    for _ in range(3):
+        swipe(True)
     tap('^包装食品$')
     shot('android-capture-package-empty')
     tap('^拍照$', True)
