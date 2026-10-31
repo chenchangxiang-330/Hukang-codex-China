@@ -1,0 +1,58 @@
+{
+  "status": "failed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "navigation-empty",
+      "status": "failed",
+      "error": "AssertionError([[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [772, 1635, 1004, 1801]])",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 125, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 154, in home_and_navigation\n    dock()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 142, in dock\n    assert all(a[2] <= b[0] for a, b in zip(positions, positions[1:])), positions\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: [[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [772, 1635, 1004, 1801]]\n"
+    },
+    {
+      "name": "nutrition-accordions-date",
+      "status": "failed",
+      "error": "AssertionError('Android control missing: 今日营养')",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 125, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 211, in details\n    require('今日营养')\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 90, in require\n    raise AssertionError(f'Android control missing: {pattern}')\nAssertionError: Android control missing: 今日营养\n"
+    },
+    {
+      "name": "small-screen-system-font",
+      "status": "failed",
+      "error": "AssertionError([[92, 1573, 317, 1776], [316, 1573, 540, 1776], [541, 1573, 765, 1776], [765, 1573, 990, 1776]])",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 125, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 221, in small_and_large\n    dock()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 142, in dock\n    assert all(a[2] <= b[0] for a, b in zip(positions, positions[1:])), positions\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: [[92, 1573, 317, 1776], [316, 1573, 540, 1776], [541, 1573, 765, 1776], [765, 1573, 990, 1776]]\n"
+    },
+    {
+      "name": "gesture-safe-area",
+      "status": "failed",
+      "error": "AssertionError([[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [772, 1635, 1004, 1801]])",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 125, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 266, in gesture_safe_area\n    dock()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 142, in dock\n    assert all(a[2] <= b[0] for a, b in zip(positions, positions[1:])), positions\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: [[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [772, 1635, 1004, 1801]]\n"
+    },
+    {
+      "name": "keyboard-state",
+      "status": "passed"
+    },
+    {
+      "name": "camera-permissions",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "sourceCommit": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "navigationOverlayBefore": [
+    "com.android.internal.systemui.navbar.gestural"
+  ],
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealAndPackagePhotos": true,
+    "source": "Android system camera / emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  }
+}

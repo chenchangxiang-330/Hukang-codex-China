@@ -2,7 +2,7 @@
 import hashlib,json,re,shlex,sqlite3,struct,subprocess,time,xml.etree.ElementTree as ET,zipfile,zlib
 from pathlib import Path
 from urllib.parse import unquote,urlparse
-from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top
+from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top,keyboard_top
 from archive_checks import jpeg_has_exif
 from picker_selectors import next_picker_action,MEDIA,DOCUMENTS
 O=Path('artifacts/device');O.mkdir(parents=True,exist_ok=True)
@@ -30,20 +30,23 @@ def tree():
   recoveries.append({'dialog':title.attrib,'evidence':name,'deviceTime':shell('date','-Iseconds')})
   a=bounds(close);shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));time.sleep(1);return tree()
  return root
-def find(pattern,clazz=None):
- for n in tree().iter('node'):
+def find(pattern,clazz=None,root=None):
+ for n in (root if root is not None else tree()).iter('node'):
   if clazz and n.get('class')!=clazz:continue
   if not any(re.search(pattern,n.get(k,'')) for k in ('text','content-desc')):continue
   a=list(map(int,re.findall(r'-?\d+',n.get('bounds',''))))
   if len(a)==4 and 0 <= (a[0]+a[2])/2 <1080 and 90<(a[1]+a[3])/2<1850 and a[2]>a[0] and a[3]>a[1]:return n,a
  return None
-def swipe(up=False):shell('input','swipe','540','420' if up else '1540','540','1540' if up else '420','300');time.sleep(.4)
+def swipe(up=False):shell('input','swipe','1030','420' if up else '1430','1030','1430' if up else '420','300');time.sleep(.4)
 def short_swipe(up=False):shell('input','swipe','1000','650' if up else '1350','1000','1050' if up else '950','300');time.sleep(.5)
 def tap(pattern,scroll=False,clazz=None):
  for _ in range(16 if scroll else 8):
-  f=find(pattern,clazz)
+  root=tree();f=find(pattern,clazz,root)
   if f:
    n,a=f
+   if scroll and find('^今日$',root=root) and find('^记录$',root=root):
+    overlays=[find('^拍一拍$',root=root),find('^今日$',root=root)];ceiling=min(x[1][1] for x in overlays if x)
+    if a[3]>ceiling-12:swipe();continue
    if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe();continue
    if clazz=='android.widget.EditText':
     # Image preparation and IME reflow can move fields after a dump. Never tap
@@ -55,18 +58,37 @@ def tap(pattern,scroll=False,clazz=None):
   if scroll:swipe()
   else:time.sleep(1)
  raise RuntimeError('UI not found: '+pattern)
+def dismiss_keyboard():
+ # Input-method service flags may outlive the visible IME. Sending Back again
+ # then leaves the form. Use the actual visible window and wait for it to hide.
+ before=keyboard_top(shell('dumpsys','window'))
+ if before is None:return
+ shell('input','keyevent','KEYCODE_BACK')
+ for _ in range(10):
+  time.sleep(.3)
+  if keyboard_top(shell('dumpsys','window')) is None:
+   report.setdefault('keyboardDismissals',[]).append({'keyboardTopBefore':before,'hiddenAfterSingleBack':True});return
+ raise RuntimeError('Keyboard remained visible after one Back; refusing another navigation action')
 def field(label,value):
  pattern='^'+re.escape(label)+'$'
- for _ in range(3):
-  tap(pattern,True,'android.widget.EditText');f=find(pattern,'android.widget.EditText')
-  if f and f[0].get('focused')=='true':break
- else:raise RuntimeError('Field did not receive focus; keyboard input refused: '+label)
+ dismiss_keyboard()
+ tap(pattern,True,'android.widget.EditText');previous=None
+ for _ in range(6):
+  f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
+  (O/'focused-input-window.txt').write_text(window)
+  box=f[1] if f else None
+  signature=(tuple(box),top) if box else None
+  if f and f[0].get('focused')=='true' and top is not None and box[3]<=top-12 and box[1]>=250 and box[3]-box[1]>=80 and signature==previous:break
+  previous=signature;time.sleep(.3)
+ else:raise RuntimeError('Focused field not fully visible above keyboard: '+repr((label,box,top)))
+ report.setdefault('inputVisibility',[]).append({'label':label,'bounds':box,'keyboardTop':top,'fullyVisible':True})
+ if label=='脂肪含量':shot('review-fat-keyboard')
  steps.append({'focusedField':label,'node':f[0].attrib})
  shell('input','keyevent','KEYCODE_MOVE_END');shell('input','keyevent',*(['KEYCODE_DEL']*50))
  shell('input','text',value.replace(' ','%s'))
  f=find('^'+re.escape(label)+'$','android.widget.EditText')
  if not f or f[0].get('text')!=value:raise RuntimeError('Field not retained: '+label)
- if 'mInputShown=true' in shell('dumpsys','input_method') or 'mIsInputViewShown=true' in shell('dumpsys','input_method'):shell('input','keyevent','KEYCODE_BACK')
+ dismiss_keyboard()
  time.sleep(.5)
 def unit_for(label,unit):
  for _ in range(24):
@@ -80,7 +102,7 @@ def unit_for(label,unit):
  raise RuntimeError('Unit control not found for '+label)
 def photo(button,stem):
  def selected():
-  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else '先记下它的样子|商品详情'
+  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else r'先记下它的样子|(?:护康\s*›\s*)?商品详情'
   deadline=time.monotonic()+(300 if button=='从相册选择营养表' else 45);previous=None
   while time.monotonic()<deadline:
    root=tree();nodes=list(root.iter('node'))
@@ -119,6 +141,8 @@ def database(name):
   if b:(O/(name+'.db'+suffix)).write_bytes(b)
  return sqlite3.connect(dest)
 def launch():shell('am','start','-n',PKG+'/.MainActivity');time.sleep(3)
+def open_scanner():
+ tap('^拍一拍$');tap('^包装食品$');tap('^扫描 / 输入条码$',True)
 def native_runs():return shell('ls',f'/data/user/0/{PKG}/files/ocr-lab/runs',check=False).splitlines()
 def wait_native(previous):
  deadline=time.monotonic()+300
@@ -217,7 +241,7 @@ def png_barcode():
  p=O/'00-barcode.png';p.write_bytes(b);return p
 try:
  apks=sorted(Path('artifacts/build').glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];inspection=json.loads(Path('artifacts/build/apk-inspection.json').read_text())
- assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' not in inspection['permissions']
+ assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' in inspection['permissions'];assert inspection['networkPolicy']=='explicit-ai-only'
  report['apkSha256']=inspection['sha256'];report['sourceCommit']=Path('artifacts/build/source-commit.txt').read_text().strip()
  run(['root']);time.sleep(1);run(['wait-for-device'])
  shell('settings','put','global','airplane_mode_on','1');shell('svc','wifi','disable');shell('svc','data','disable',check=False)
@@ -233,8 +257,8 @@ try:
   run(['push',str(p),remote+'/'+name]);shell('am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote+'/'+name)
  report['fixtures']={'syntheticBarcode':hashlib.sha256(barcode.read_bytes()).hexdigest(),'packagingPhoto':hashlib.sha256(fixture.read_bytes()).hexdigest(),'source':json.loads(fixture.with_suffix('.source.json').read_text())['source'],'limitation':'Archived real nutrition-side package photo reused for cover input; not a new front-facing camera photo. Synthetic barcode and manual identity are test-only.'}
  time.sleep(2);launch();tap('^我的$');shot('mine');tap('^今日$');shot('home')
- tap('^拍一拍$');shot('scanner');photo('从相册识别条码','00-barcode')
- photo('从相册选择包装','01-milk');field('商品名称','Test Milk');field('品牌（选填）','Test Brand');field('规格（选填）','250 mL');tap('^下一步，拍营养表$',True)
+ open_scanner();shot('scanner');photo('从相册识别条码','00-barcode')
+ photo('从相册选择包装','01-milk');field('商品名称','Test Milk');field('品牌（选填）','Test Brand');field('整包净含量 / 规格（选填）','250 mL');tap('^下一步，拍营养表$',True)
  c=database('pending-draft');pending=json.loads(c.execute('SELECT json FROM simple_capture_drafts').fetchone()[0]);assert pending['name']=='Test Milk' and pending['specification']=='250 mL';assert pending['step']=='nutrition';assert pending['barcode']['scan']['rawValue']=='6923644266066';assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==0;c.close()
  report['pendingDraftId']=pending['id'];launch();tap('^继续上次未完成的录入$',True);shot('draft-resumed')
  before=native_runs();photo('从相册选择营养表','01-milk');wait_native(before)
@@ -256,10 +280,10 @@ try:
  for uri_key,hash_key,file_name in [('originalUri','sourceImageHash','saved-original.source'),('uri','processedImageHash','saved-processed.png')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key];(O/file_name).write_bytes(payload)
  assert c.execute('SELECT raw_value,acquired_by FROM food_barcodes').fetchone()==('6923644266066','image');c.close()
- launch();before=native_runs();tap('^拍一拍$');photo('从相册识别条码','00-barcode');tap('^加入我的库存$',True);assert before==native_runs();field('本次购入数量','1');tap('^瓶$',True);tap('^确认加入库存$',True)
- c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^库存$')
+ launch();before=native_runs();open_scanner();photo('从相册识别条码','00-barcode');tap('^加入我的库存$',True);assert before==native_runs();field('本次购入数量','1');tap('^瓶$',True);tap('^确认加入库存$',True)
+ c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^食品库$');tap('^我的库存$')
  tap('^用掉1瓶$',True);tap('^用掉1瓶$',True);shot('inventory-reduced')
- tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
+ tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('整包净含量 / 规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
  tap('^我的$');data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
  tap('.*',True,'android.widget.Switch');switch=find('.*','android.widget.Switch');assert switch and switch[0].get('checked')=='true'
  data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue-with-photos');assert len(data['products'])==1 and 'inventory' not in data;assert data['photosIncluded'] is True and data['photoMetadataRemoved'] is True;assert len(assets)==2
@@ -267,7 +291,13 @@ try:
  assert any(a['path'].startswith('photos/') for a in assets);assert any(a['path'].endswith('/current-ocr.json') for a in assets);assert any(a['path'].endswith('/revisions.json') for a in assets)
  c=database('final');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM simple_inventory').fetchone()[0]==1;assert c.execute('SELECT SUM(quantity) FROM simple_inventory').fetchone()[0]==1
  final_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert final_review['specification']=='250 mL checked';assert next(r for r in final_review['columns'][0]['rows'] if r['nutrient']=='protein')['amount']=='3.60';assert c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone()==evidence_before
- assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1;c.close()
+ assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1
+ before_reinstall='\n'.join(c.iterdump());c.close()
+ # A same-binary update checks install -r data retention in this emulator. It
+ # does not claim compatibility with an older APK signed by a different key.
+ reinstall=run(['install','-r',str(apk.resolve())],timeout=180).decode();assert 'Success' in reinstall
+ c=database('after-same-apk-reinstall');assert '\n'.join(c.iterdump())==before_reinstall;c.close()
+ report['sameApkReinstall']={'result':reinstall.strip(),'databaseDumpSha256':hashlib.sha256(before_reinstall.encode()).hexdigest(),'allTablesPreserved':True,'olderSignedAppUpgradeVerified':False}
  for uri_key,hash_key in [('originalUri','sourceImageHash'),('uri','processedImageHash')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key],'Export modified source image bytes'
  report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']

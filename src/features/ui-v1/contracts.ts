@@ -1,4 +1,4 @@
-/** Presentation-only contracts. No database adapter or network client is installed. */
+/** Diary presentation contracts; AI configuration is shared with the real service. */
 export const mealTypes = [
   ["breakfast", "早餐"],
   ["lunch", "午餐"],
@@ -66,58 +66,8 @@ export function summarizeDiary(entries: readonly DiaryEntry[]): DiaryNutrients {
   }
   return result;
 }
-export interface AiConfiguration {
-  provider: "deepseek" | "qwen" | "custom";
-  baseUrl: string;
-  apiKey: string;
-  model: string;
-}
-export type AiConfigurationField = "baseUrl" | "apiKey" | "model";
-export function validateAiConfiguration(
-  config: AiConfiguration,
-): Partial<Record<AiConfigurationField, string>> {
-  const issues: Partial<Record<AiConfigurationField, string>> = {};
-  try {
-    const url = new URL(config.baseUrl.trim());
-    if (
-      url.protocol !== "https:" ||
-      !url.hostname.includes(".") ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash
-    )
-      throw new Error("invalid");
-  } catch {
-    issues.baseUrl = "请填写 HTTPS 地址，不包含账号、密码、查询参数或片段。";
-  }
-  if (!config.apiKey.trim() || /\s/.test(config.apiKey.trim()))
-    issues.apiKey = "请填写临时测试密钥，不包含空格或换行。";
-  if (
-    !config.model.trim() ||
-    config.model.length > 128 ||
-    /[\r\n]/.test(config.model)
-  )
-    issues.model = "请填写有效模型名称（最多 128 个字符）。";
-  return issues;
-}
-export type AiConnectionResult = { status: "unavailable"; message: string };
-export interface AiAnalysisGateway {
-  testConnection(config: AiConfiguration): Promise<AiConnectionResult>;
-  analyzeDay(day: string, entries: readonly DiaryEntry[]): Promise<never>;
-}
-/** A fail-closed placeholder: no requests, credentials storage, or fake results. */
-export class UnavailableAiGateway implements AiAnalysisGateway {
-  async testConnection(_config: AiConfiguration): Promise<AiConnectionResult> {
-    return {
-      status: "unavailable",
-      message: "AI 服务接口尚未接入，未执行联网测试。",
-    };
-  }
-  async analyzeDay(
-    _day: string,
-    _entries: readonly DiaryEntry[],
-  ): Promise<never> {
-    throw new Error("AI 分析尚未接入，没有生成分析结果。");
-  }
-}
+export {
+  validateAiConfiguration,
+  type AiConfiguration,
+  type AiConfigurationField,
+} from "../../services/ai/config";

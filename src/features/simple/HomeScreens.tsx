@@ -169,143 +169,6 @@ export function HomeScreens(p: AppController) {
 
   return (
     <>
-      {screen === "home" && tab === "today" && (
-        <>
-          <View style={H.brandRow}>
-            <View style={H.brandIdentity}>
-              <Image
-                source={require("../../../assets/icon.png")}
-                style={H.logo}
-                accessibilityLabel="护康 Logo"
-              />
-              <View>
-                <Text style={H.brandName}>护康</Text>
-                <Text style={H.brandEnglish}>HUKANG</Text>
-              </View>
-            </View>
-            <Text style={H.date}>
-              {date.getMonth() + 1}月{date.getDate()}日 · 周
-              {"日一二三四五六"[date.getDay()]}
-            </Text>
-          </View>
-          <PageIntro
-            title="今天，吃得更从容。"
-            description="认识每一份食物，慢慢养成自己的节奏。"
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="拍一拍"
-            onPress={() => void startScan()}
-            style={({ pressed }) => [H.scanHero, pressed && H.scanHeroPressed]}
-          >
-            <View style={H.heroCopy}>
-              <Text style={H.heroEyebrow}>从手边的一件食品开始</Text>
-              <Text style={H.heroTitle}>拍一拍</Text>
-              <Text style={H.heroDescription}>扫条码 · 拍包装 · 记录营养</Text>
-            </View>
-            <View
-              style={H.heroCamera}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              <View style={H.cameraBody}>
-                <View style={H.cameraLens} />
-              </View>
-              <Text style={H.heroArrow}>→</Text>
-            </View>
-          </Pressable>
-          <Surface>
-            <SectionHeading
-              title="今日饮食"
-              action={
-                <TextAction title="查看记录" onPress={() => setTab("diary")} />
-              }
-            />
-            <View style={H.energyRow}>
-              <View>
-                <Text style={H.energyValue}>
-                  — <Text style={H.energyUnit}>kcal</Text>
-                </Text>
-                <Text style={S.small}>今日摄入 · 尚未记录</Text>
-              </View>
-              <StatusPill label="饮食记录待接入" tone="neutral" />
-            </View>
-            <View style={H.nutrientGrid}>
-              {["蛋白质", "碳水化合物", "脂肪"].map((label) => (
-                <View key={label} style={H.nutrientItem}>
-                  <Text style={H.nutrientValue}>
-                    — <Text style={H.nutrientUnit}>g</Text>
-                  </Text>
-                  <Text style={S.small}>{label}</Text>
-                </View>
-              ))}
-            </View>
-            <Text style={S.small}>
-              还没有真实饮食记录。食品入库不会计入摄入量。
-            </Text>
-          </Surface>
-          <View style={H.statGrid}>
-            <View style={H.statCell}>
-              <StatTile label="我的食品" value={foods.length} unit="种" />
-            </View>
-            <View style={H.statCell}>
-              <StatTile
-                label="库存批次"
-                value={stock.length}
-                unit="笔"
-                tone="neutral"
-              />
-            </View>
-          </View>
-          {!!stockSummary && (
-            <Text style={S.small}>
-              现有库存：{stockSummary} · 不同单位分别计数
-            </Text>
-          )}
-          {resume && (
-            <Surface>
-              <StatusPill label="继续上次录入" tone="warning" />
-              <Text style={S.rowTitle}>
-                {resume.name || "有一件食品等你完成"}
-              </Text>
-              <Text style={S.note}>照片和条码已保存在本机，不必重新开始。</Text>
-              <Button
-                title="继续上次未完成的录入"
-                secondary
-                onPress={() => {
-                  draftRef.current = resume;
-                  setDraft(resume);
-                  setReview(resume.review ?? null);
-                  setConfirmed(false);
-                  navigate(resume.step);
-                }}
-              />
-            </Surface>
-          )}
-          <SectionHeading
-            title="最近保存"
-            description="属于你的食品小档案"
-            action={<TextAction title="全部食品 →" onPress={showLibrary} />}
-          />
-          {foods.length ? (
-            foods.slice(0, 4).map(renderFood)
-          ) : (
-            <EmptyState
-              title="从第一件食品开始"
-              description="拍下包装和营养表，核对后保存。以后再次扫描，就能直接找到它。"
-              action={
-                <Button
-                  title="录入第一件食品"
-                  secondary
-                  onPress={() => void startScan()}
-                />
-              }
-            />
-          )}
-          <Text style={S.footer}>本地识别 · 本机保存 · 数据由你掌握</Text>
-        </>
-      )}
-
       {libraryVisible && (
         <>
           <PageIntro
@@ -602,8 +465,8 @@ export function HomeScreens(p: AppController) {
             <View style={H.menuDivider} />
             <MenuRow
               title="AI 服务设置"
-              description="配置界面已准备好，暂不发起请求"
-              trailing={<StatusPill label="未接入" tone="neutral" />}
+              description="按需连接模型，密钥仅临时使用"
+              trailing={<StatusPill label="可配置" tone="brand" />}
               onPress={() => navigate("ai-settings")}
             />
           </Surface>
@@ -623,7 +486,7 @@ export function HomeScreens(p: AppController) {
                 accessibilityLabel="包含包装与营养表照片"
                 value={photos}
                 onValueChange={setPhotos}
-                trackColor={{ true: "#B7D6C8", false: C.line }}
+                trackColor={{ true: "#B7D8EB", false: C.line }}
                 thumbColor={photos ? C.teal : "#FFF"}
               />
             </View>

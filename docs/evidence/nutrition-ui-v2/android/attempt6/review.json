@@ -1,0 +1,12 @@
+{
+  "run": 41197435291,
+  "job": 124526341314,
+  "artifact": 13041515854,
+  "artifactZipSha256": "90b2d8d109a97427745cb76ec505ddef895cef111d8e67a34265db72fe82661a",
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
+  "status": "failed",
+  "finding": "Product name passed full input visibility. Before brand field, an extra Back based on input_method flags left the form; actual screenshot is Today with resumable draft. Use visible IME window and await hidden after only one Back.",
+  "runtimeChangeRequired": false,
+  "replaySameApk": true
+}

@@ -1,0 +1,3 @@
+
+> hukang-codex-china@0.4.0 typecheck
+> tsc --noEmit

@@ -1,0 +1,6 @@
+
+> hukang-codex-china@0.4.0 ui:test
+> node tests/ui-v1-browser.mjs && node tests/ui-v2-browser.mjs
+
+{"status":"passed","checks":34,"screenshots":22}
+{"status":"passed","checks":25,"screenshots":22}

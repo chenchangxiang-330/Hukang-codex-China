@@ -12,7 +12,7 @@ import {
   Surface,
 } from "../../ui/components";
 
-export function ProductScreens(p: AppController) {
+export function ProductScreens(p: AppController & { onIntake?: () => void }) {
   const {
     setTab,
     screen,
@@ -195,6 +195,13 @@ export function ProductScreens(p: AppController) {
               <Text style={S.small}>先核对商品资料，再加入库存。</Text>
             )}
           </Surface>
+          {p.onIntake && (
+            <Button
+              title="如果吃完这份 · 摄入预览"
+              secondary
+              onPress={p.onIntake}
+            />
+          )}
           <Button
             title="核对或修改商品资料"
             secondary
@@ -373,7 +380,7 @@ export function ProductScreens(p: AppController) {
 const productStyle = StyleSheet.create({
   cover: {
     borderRadius: 24,
-    backgroundColor: "#EEF2EC",
+    backgroundColor: "#EAF4FB",
     overflow: "hidden",
     minHeight: 240,
   },
@@ -416,7 +423,7 @@ const productStyle = StyleSheet.create({
     width: 64,
     height: 76,
     borderRadius: 12,
-    backgroundColor: "#F7F8F5",
+    backgroundColor: "#FFFDF7",
   },
   quantityRow: {
     flexDirection: "row",
@@ -432,7 +439,7 @@ const productStyle = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F1F5EF",
+    backgroundColor: "#EDF5FA",
   },
   quantitySign: {
     color: C.teal,

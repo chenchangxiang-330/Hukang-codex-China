@@ -198,7 +198,7 @@ export function CaptureScreens(p: AppController) {
               placeholder="包装上的品牌"
             />
             <Field
-              label="规格（选填）"
+              label="整包净含量 / 规格（选填）"
               value={draft.specification ?? ""}
               onChange={(specification) => patchDraft({ specification })}
               placeholder="例如：250 mL"
@@ -310,7 +310,7 @@ export function CaptureScreens(p: AppController) {
               onChange={(brand) => updateReview({ ...review, brand })}
             />
             <Field
-              label="规格（选填）"
+              label="整包净含量 / 规格（选填）"
               value={review.specification ?? ""}
               onChange={(specification) =>
                 updateReview({ ...review, specification })
@@ -359,6 +359,7 @@ export function CaptureScreens(p: AppController) {
                 <>
                   <Field
                     label="包装标明的每份大小"
+                    hint="例如整包 250g，每份 25g；每份不等于整包。"
                     value={column.servingAmount}
                     numeric
                     onChange={(value) =>
@@ -574,7 +575,7 @@ const captureStyle = StyleSheet.create({
     textAlign: "center",
   },
   emptyPhoto: {
-    backgroundColor: "#EDF2EB",
+    backgroundColor: "#EDF5FA",
     minHeight: 220,
     padding: 28,
     borderRadius: 22,
@@ -586,7 +587,7 @@ const captureStyle = StyleSheet.create({
     width: 64,
     height: 84,
     borderWidth: 2,
-    borderColor: "#9AB5A2",
+    borderColor: "#97B9D0",
     borderRadius: 10,
     padding: 8,
     gap: 10,
@@ -598,19 +599,19 @@ const captureStyle = StyleSheet.create({
     width: 43,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#C4D6C2",
+    backgroundColor: "#C4DEED",
   },
   packageLabel: {
     width: 30,
     height: 24,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#9AB5A2",
+    borderColor: "#97B9D0",
   },
   labelGuide: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#C6D7C7",
+    borderColor: "#C6DAE8",
     borderStyle: "dashed",
     borderRadius: 20,
     padding: 20,
@@ -639,7 +640,7 @@ const captureStyle = StyleSheet.create({
     marginLeft: "auto",
   },
   privacy: {
-    backgroundColor: "#EDF2EB",
+    backgroundColor: "#EDF5FA",
     borderRadius: 16,
     padding: 16,
     gap: 10,

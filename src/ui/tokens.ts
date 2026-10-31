@@ -1,19 +1,23 @@
-/** UI V1 uses platform fonts so Chinese text follows Android accessibility settings. */
+/** Milk / sky system uses platform fonts so Chinese text follows Android accessibility settings. */
 export const colors = {
-  background: "#F7F8F5",
-  surface: "#FFFFFF",
-  brand: "#286B52",
-  brandPressed: "#1C513E",
-  brandSoft: "#E8F0E9",
-  ink: "#20332A",
-  muted: "#617068",
-  line: "#DFE6DD",
-  warm: "#965D2F",
-  warmAccent: "#B87945",
-  warmSoft: "#F8EDE0",
-  danger: "#A73F38",
-  dangerSoft: "#FFF0ED",
-  neutralSoft: "#EFF2EC",
+  sky: "#96CAE9",
+  onSky: "#214C68",
+  detailBackground: "#EAF1F6",
+  detailHeader: "#DCEAF4",
+  background: "#FFFDF7",
+  surface: "#FFFEFA",
+  brand: "#386F95",
+  brandPressed: "#2D5A7B",
+  brandSoft: "#EAF4FB",
+  ink: "#30485C",
+  muted: "#697B88",
+  line: "#D8E4ED",
+  warm: "#8A6949",
+  warmAccent: "#B79874",
+  warmSoft: "#F5EEDF",
+  danger: "#9D5A53",
+  dangerSoft: "#FAEFEB",
+  neutralSoft: "#EFF4F7",
 } as const;
 
 export const tokens = {

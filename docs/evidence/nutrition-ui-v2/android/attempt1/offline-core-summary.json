@@ -1,0 +1,9 @@
+{
+  "status": "failed",
+  "error": "RuntimeError('UI not found: ^继续上次未完成的录入$')",
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "sourceCommit": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+  "pendingDraftId": "food-mvw6pdnh-d-1yiaoq2"
+}

@@ -1,7 +1,7 @@
 name: Hukang simple app APK
 on:
   push:
-    branches: [main, codex/ui-v1]
+    branches: [main, codex/ui-v1, codex/nutrition-ui-v2]
     paths: ['src/**', 'modules/**', 'android/**', 'plugins/**', 'scripts/**', 'package*.json', 'app.json', '.delivery/**', '.github/workflows/simple-app-release.yml']
   workflow_dispatch:
 concurrency:
@@ -90,7 +90,7 @@ jobs:
             echo 'Signing configuration is incomplete; refusing to substitute a new signature.' >&2
             exit 1
           else
-            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN'
+            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang 0.4.1 Test, OU=Local App, O=Hukang, C=CN'
             echo 'ephemeral-test; cannot promise an in-place update of previous installs' > artifacts/signing-mode.txt
           fi
       - name: Build actual ARM64 release
@@ -110,12 +110,12 @@ jobs:
             echo 'Forbidden production recognition or Google service dependency' >&2
             exit 1
           fi
-      - name: Verify APK identity, offline permissions, model hashes and signature
+      - name: Verify APK identity, explicit AI network policy, model hashes and signature
         run: |
           set -euo pipefail
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-0.4.0-arm64.apk
-          python scripts/verify-apk.py artifacts/hukang-0.4.0-arm64.apk --output artifacts/apk-inspection.json
-          sha256sum artifacts/hukang-0.4.0-arm64.apk > artifacts/apk-sha256.txt
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-0.4.1-arm64.apk
+          python scripts/verify-apk.py artifacts/hukang-0.4.1-arm64.apk --output artifacts/apk-inspection.json
+          sha256sum artifacts/hukang-0.4.1-arm64.apk > artifacts/apk-sha256.txt
       - name: Publish small build inspection evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -136,7 +136,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: hukang-0.4.0-${{ steps.source.outputs.sha }}
+          name: hukang-0.4.1-${{ steps.source.outputs.sha }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 14

@@ -1,0 +1,27 @@
+{
+  "run": 41190630319,
+  "apkSource": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
+  "uiAutomation": "passed",
+  "offlineAutomation": "passed",
+  "visualAcceptance": "failed",
+  "finding": "Meal description input is hidden underneath the Android keyboard. Presence/focus alone did not catch it.",
+  "inputBounds": [
+    55,
+    1157,
+    1025,
+    1468
+  ],
+  "keyboardVisibleTopApproximately": 1090,
+  "dateNavigationOverflowFixed": true,
+  "sameApkReinstallPreservedData": true,
+  "artifacts": [
+    {
+      "id": 13038248550,
+      "zipSha256": "9cf617cab3b149e861956b727e3cdea63092ccc80d57bb628f37db79bb47623d"
+    },
+    {
+      "id": 13038639237,
+      "zipSha256": "ad6b087ee1daf812c2e611e2963bbf4ebe905287406ad68d38357692228ac1c1"
+    }
+  ]
+}

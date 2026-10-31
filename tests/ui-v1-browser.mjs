@@ -19,6 +19,7 @@ async function sourceFiles(directory) {
 const inputs = [
   ...(await sourceFiles("src/features/simple")),
   ...(await sourceFiles("src/features/ui-v1")),
+  ...(await sourceFiles("src/features/nutrition-v2")),
   ...(await sourceFiles("src/ui")),
   ...(await sourceFiles("tests/ui-preview")),
   "app.json",
@@ -89,6 +90,15 @@ async function noHorizontalOverflow(label) {
     [...document.querySelectorAll("#root *")].flatMap((el) => {
       const r = el.getBoundingClientRect();
       const css = getComputedStyle(el);
+      let parent = el.parentElement;
+      while (parent && parent.id !== "root") {
+        if (
+          getComputedStyle(parent).overflowX === "auto" ||
+          getComputedStyle(parent).overflowX === "scroll"
+        )
+          return [];
+        parent = parent.parentElement;
+      }
       if (
         !r.width ||
         !r.height ||
@@ -144,55 +154,15 @@ try {
   await open();
   await page.getByRole("tab", { name: "记录", exact: true }).click();
   await expect(
-    page.getByText("饮食存储尚未接入", { exact: true }),
+    page.getByText("饮食存储尚未接入。这里还没有真实餐食记录。", {
+      exact: true,
+    }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "体验记录演示", exact: true }).click();
   await expect(
-    page.getByText("演示模式 · 非真实饮食", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "添加午餐演示记录", exact: true })
-    .click();
-  await page.getByLabel("演示餐食名称", { exact: true }).fill("界面测试午餐");
-  for (const [field, value] of [
-    ["能量（kcal）", "125"],
-    ["蛋白质（g）", "5"],
-    ["脂肪（g）", "3"],
-    ["碳水化合物（g）", "15"],
-  ])
-    await page.getByLabel(field, { exact: true }).fill(value);
-  await page
-    .getByRole("button", { name: "保留本次演示记录", exact: true })
-    .click();
-  await expect(page.getByText("425", { exact: true })).toBeVisible();
-  await screen("diary-demo");
-  await page
-    .getByRole("button", { name: "编辑界面测试午餐", exact: true })
-    .click();
-  await page.getByLabel("能量（kcal）", { exact: true }).fill("130");
-  await page
-    .getByRole("button", { name: "保留本次演示记录", exact: true })
-    .click();
-  await expect(page.getByText("430", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "前一天", exact: true }).click();
-  await expect(page.getByText("界面测试午餐", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "后一天", exact: true }).click();
-  await expect(page.getByText("界面测试午餐", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "编辑界面测试午餐", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "删除这条演示记录", exact: true })
-    .click();
-  await expect(page.getByText("300", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "结束演示并清除", exact: true })
-    .click();
-  await expect(
-    page.getByText("饮食存储尚未接入", { exact: true }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "体验记录演示", exact: true }),
+  ).toHaveCount(0);
   report.checks.push(
-    "Explicit diary demo: add/edit/date isolation/delete/end; no production persistence",
+    "Production diary stays empty; demos are isolated in a development adapter. Shared nutrition editing and date tests run in ui-v2-browser.mjs.",
   );
 
   await open("ai-settings");
@@ -211,17 +181,21 @@ try {
     .getByLabel("API Base URL", { exact: true })
     .fill("https://example.invalid/v1");
   await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
-  await expect(page.getByText(/配置格式已通过/)).toBeVisible();
+  await page
+    .getByLabel("API Key", { exact: true })
+    .fill("ui-preview-not-real-key");
+  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
+  await expect(page.getByText(/请先确认本次发送/)).toBeVisible();
   expect(
     await page.getByLabel("API Key", { exact: true }).getAttribute("type"),
   ).toBe("password");
   await screen("ai-local-validation");
-  await page.getByRole("button", { name: "返回首页", exact: true }).click();
+  await page.getByRole("button", { name: "返回", exact: true }).click();
   await page.getByRole("tab", { name: "我的", exact: true }).click();
   await page.getByRole("button", { name: /^AI 服务设置/ }).click();
   await expect(page.getByLabel("API Key", { exact: true })).toHaveValue("");
   report.checks.push(
-    "AI settings: invalid/valid local validation, masked key, leave-page key cleared, no network request",
+    "AI settings: invalid/valid local validation, masked key, key never redisplayed after navigation; no request without consent",
   );
 
   await open("library");
@@ -250,6 +224,10 @@ try {
 
   await open();
   await page.getByRole("button", { name: "拍一拍", exact: true }).click();
+  await page.getByRole("tab", { name: "包装食品", exact: true }).click();
+  await page
+    .getByRole("button", { name: "扫描 / 输入条码", exact: true })
+    .click();
   await page
     .getByLabel("条码数字（保留前导零）", { exact: true })
     .fill("6923644266066");

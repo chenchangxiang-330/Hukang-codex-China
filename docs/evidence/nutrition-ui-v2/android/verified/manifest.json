@@ -1,0 +1,872 @@
+{
+  "runUrls": {
+    "ui": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41198423881/job/124529197841",
+    "offline": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41197876666/job/124527620082"
+  },
+  "artifactUrls": [
+    "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41198423881/artifacts/13042480144",
+    "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41197876666/artifacts/13041991140"
+  ],
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
+  "testSources": {
+    "ui": "11dff5d84704464880448208edf0d356c486c3dd",
+    "offline": "154225ea4e589ad11643870c7336df4e1b41a79b"
+  },
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "files": [
+    {
+      "path": "actual-catalogue-share-sheet.png",
+      "bytes": 95684,
+      "sha256": "17d3b854aa462c785814fe71ef5721bc95c6fc98455696e7349ff9c92183beaa",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "actual-catalogue-with-photos-share-sheet.png",
+      "bytes": 97045,
+      "sha256": "600dab8227cead777c7cc59b146de3645e75728579b09cd9b49256a058367796",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "actual-personal-with-photos-share-sheet.png",
+      "bytes": 96332,
+      "sha256": "65cc3b6e0d13fe8806b1c64e63a032cdf18ab5efb976a27f5c064d5a5fc6ad1f",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "apk-source-commit.txt",
+      "bytes": 41,
+      "sha256": "acdc1244b847a567fe16565253850044b6d37dea3d6d041b398b49e48bf4a36f"
+    },
+    {
+      "path": "artifact-provenance.json",
+      "bytes": 1354,
+      "sha256": "4c177fff10a474055bfa116ca5d172524425286deec31fffa66f1dc0e2482ba5"
+    },
+    {
+      "path": "crop-modal-before-drag.png",
+      "bytes": 788757,
+      "sha256": "56faae7ecc1898289c6948b9c323db237a7d64e91e5698b3cd35961ebae29b3b",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "crop-selected.png",
+      "bytes": 789173,
+      "sha256": "a9279fe7866d394c488493cfdbe94056af1a223cd1bd930419160e965ef25849",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "draft-resumed.png",
+      "bytes": 306178,
+      "sha256": "726eca268e666565612e73e05db5c51f5b74591018415d575e7cf3c79dad44d0",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "edited-product.png",
+      "bytes": 838566,
+      "sha256": "9ab78492d6966fc50b8ff7e9773de2cf9773f98841a4db0f4042bd0de46d9b47",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "focused-input-window.txt",
+      "bytes": 54376,
+      "sha256": "d5c7bebbe0fe33336b9735a9fd4f7f6fc5dec241967fe8610185e1eef0aa2202"
+    },
+    {
+      "path": "home.png",
+      "bytes": 521653,
+      "sha256": "4ea2cb41a50e4c8a23ada134ee0bc3d91c3816663243ddfe5a8c409511f38f92",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "inventory-reduced.png",
+      "bytes": 435833,
+      "sha256": "5584589badf386cd35d0b70052f3815b98bdacd80d2d2424cc82ccbcee0e632b",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "inventory.png",
+      "bytes": 588505,
+      "sha256": "fc8066f50c93d6dcaaf4699ba7f6decf31c23ed1f7d37e76b87844e565b1bdf0",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "mine.png",
+      "bytes": 482864,
+      "sha256": "6843c10b41d0b11972c6e55c7fec94f984ae668243ea520ae9598015d4f35489",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "native-ocr/30742dc8-6c48-4b2a-b286-de42dcfd9fb6.json",
+      "bytes": 24941,
+      "sha256": "abf02607b3f70652d747e0ce1e930e62a38e39252f58379650c44ef360065d97"
+    },
+    {
+      "path": "native-ocr/780213d1-24c9-47fd-b42c-729b3a84d0bd.json",
+      "bytes": 25842,
+      "sha256": "977e1b3396d26838df758615772d9169a363c67eddb9e496e470372f52adcdae"
+    },
+    {
+      "path": "nutrition-ui-v2/android-ai-unavailable-feedback.png",
+      "bytes": 346761,
+      "sha256": "43c4774889d460ec5a6b9ad1552e0d68fc85c97804cc0a7a3065f50f2a2cfa12",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-ai-unavailable-feedback.xml",
+      "bytes": 6583,
+      "sha256": "e9c44066c7b726d6fce7244414312cd3eed18f967384224f5df63e0b10691c97"
+    },
+    {
+      "path": "nutrition-ui-v2/android-camera-permission-denied.png",
+      "bytes": 305456,
+      "sha256": "8e2fae4022c51c4b05a028ee571cc556849a083d75a6a10c77f16de182a4a1a8",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-camera-permission-denied.xml",
+      "bytes": 6611,
+      "sha256": "4f5086b8fc7aa2d2e8663ee1f0b84591e88ee5959e45a0ec64c7a51ddb06d806"
+    },
+    {
+      "path": "nutrition-ui-v2/android-camera-permission-request.png",
+      "bytes": 210865,
+      "sha256": "335e8ec2281ce45e2c5ef5f6d951837ef77fc57ae7858272034a97543ba19a60",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-camera-permission-request.xml",
+      "bytes": 2457,
+      "sha256": "f16f54e70f50fa13dd8762c2672e3a78fa9288961df185c7698812f89d8bbd18"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-empty-photo-feedback.png",
+      "bytes": 295145,
+      "sha256": "e853b4688e317c858b5b7e44524ec71642dc23f7b91fb165ed051a27b916653c",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-empty-photo-feedback.xml",
+      "bytes": 6564,
+      "sha256": "363f6225e9de410999c3d9ff032970e7bfd04ceba1f58945a9324b180c346220"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard-repeat1.png",
+      "bytes": 208043,
+      "sha256": "9763e33a140559093ba8f75254f9bcd14c4805e28c367c2df63023cace3cf20e",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard-repeat1.xml",
+      "bytes": 4052,
+      "sha256": "89b08732805dcaf0d85a8bb6e59b69177db61bc20f8815a17896e03de23b5a09"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard-repeat2.png",
+      "bytes": 207980,
+      "sha256": "2631c79da916e0efc60f36417b904aeed89058eaa8f9c22880731c9d762f8a86",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard-repeat2.xml",
+      "bytes": 4052,
+      "sha256": "89b08732805dcaf0d85a8bb6e59b69177db61bc20f8815a17896e03de23b5a09"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard.png",
+      "bytes": 207986,
+      "sha256": "e8bf8dc706a58f43a897929eab1bdf1789d136fa6bf48c1ccc5ba44a0a43076b",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-keyboard.xml",
+      "bytes": 4052,
+      "sha256": "89b08732805dcaf0d85a8bb6e59b69177db61bc20f8815a17896e03de23b5a09"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-meal-empty.png",
+      "bytes": 277421,
+      "sha256": "766c5b0178a8d29b773174d3d63dd69bc1dd48298f35297fbf89636491cce860",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-meal-empty.xml",
+      "bytes": 7099,
+      "sha256": "fefea493f425666e0e94317654f8f4141d196725893a1f0415b4eb219a090ec8"
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-package-empty.png",
+      "bytes": 259323,
+      "sha256": "7436275b955b995050fc9a0c990f118b7617ab96bca37f5d6373d9bfc51d174e",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-capture-package-empty.xml",
+      "bytes": 7106,
+      "sha256": "7f97c481d61948c410e77dce01a058cf0a2bd0d58ad9212bfbd5b1fdf2cadc3e"
+    },
+    {
+      "path": "nutrition-ui-v2/android-captured-meal-original-photo.png",
+      "bytes": 427992,
+      "sha256": "597f1d81dafb44da129408ffd212e8e26076da1081a670735ffd709d2493af5a",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-captured-meal-original-photo.xml",
+      "bytes": 6186,
+      "sha256": "f662779e51c8898b75fbae2d27a17ba5b316ed3d8536e67c16d9f0a3c374873b"
+    },
+    {
+      "path": "nutrition-ui-v2/android-captured-package-original-photo.png",
+      "bytes": 432079,
+      "sha256": "7d5cb5b12e09c5d6fa3dd9d22cb0797e3948956770be686b97027c8a2a8c5c8e",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-captured-package-original-photo.xml",
+      "bytes": 6750,
+      "sha256": "7559cd1e550a1880527e5c637cdfe9e8b1fba3ed79e77502eb45583d3d72936a"
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-320-empty.png",
+      "bytes": 492710,
+      "sha256": "e1fa521511f2ffeab931d286ee9043ccc6e6d644041945fb0c31ff8f006252c0",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-320-empty.xml",
+      "bytes": 16618,
+      "sha256": "98dae57676d4b880d095b73344a252fabcf136caf851a94f80880cd81e529ec0"
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-320-font150-empty.png",
+      "bytes": 592167,
+      "sha256": "f33fbbd5c297a7a1b4ee8d2784b4d0caa27654620e9d1cbf527c8c74956e8adc",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-320-font150-empty.xml",
+      "bytes": 15614,
+      "sha256": "9b301fcdf78eab6defb4cc2b864912eddb6d35dfb7f1c13f844ae1a65c4baed1"
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-390-empty.png",
+      "bytes": 450596,
+      "sha256": "053b70e3e9d93908ec5b474dd8530ccab57ef31be391bfa0c3dd9f3d98d74a2a",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-390-empty.xml",
+      "bytes": 18682,
+      "sha256": "83ac753dbd87aa0f64a80fdeabd9a25cf343331ea086804ddd1adffb63fa6b9c"
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-390-font150-empty.png",
+      "bytes": 487506,
+      "sha256": "980dcdec3f6bc918d89194506caf79317a7df5c9e58e36359653bea1654be397",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-390-font150-empty.xml",
+      "bytes": 17975,
+      "sha256": "5a950a97e1c099054762e392f6a9a4ebd4096d8211a17d44c3a8f0bd31c6082a"
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-scroll-end-gesture-safe-area.png",
+      "bytes": 432762,
+      "sha256": "fb068c3ad52b3f0675c2655bc38f9cbb2a3608163c4da9f091331f6f1055b7e7",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-diary-scroll-end-gesture-safe-area.xml",
+      "bytes": 10672,
+      "sha256": "5d17798186905ec291a3ad7e6b01fcb40c1b7c243adc4776d35ac3bb3af8f74c"
+    },
+    {
+      "path": "nutrition-ui-v2/android-library-390-empty.png",
+      "bytes": 596017,
+      "sha256": "fd3c26eee931942561cf3699deca00baba43fd9d518e91464b981421122de811",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-library-390-empty.xml",
+      "bytes": 11199,
+      "sha256": "78582184ec854e492960352ad5024e3252beac7c0269609919f440a7c90c22cc"
+    },
+    {
+      "path": "nutrition-ui-v2/android-live-barcode-scanner.png",
+      "bytes": 889720,
+      "sha256": "739c20e86b9b80dae5c40513d8fd0c46313616b356de989810728721b53b7b3d",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-live-barcode-scanner.xml",
+      "bytes": 4474,
+      "sha256": "a4ec2ef571a1663ecb24ab792e44fc04082ff54d004ff90b108c93bb03a2c554"
+    },
+    {
+      "path": "nutrition-ui-v2/android-mine-390-empty.png",
+      "bytes": 536087,
+      "sha256": "5fe590368eda5d2f9f4e0d0caecf55948bfa5729983ffda00b2a7ce7c4e8c4bf",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-mine-390-empty.xml",
+      "bytes": 11200,
+      "sha256": "fdc1dd3de20fe1c071df038f153c97deb91cbe645123c40a6161c2600214c23b"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-320-empty.png",
+      "bytes": 264037,
+      "sha256": "256879bc5ffda3064ca461a33bcc1e12d1fb64ea6ca08ab48cf0a70fa983c740",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-320-empty.xml",
+      "bytes": 6154,
+      "sha256": "74e2a17ec58b2a994fba5b059648519b99e3c8be5a5047db9e895c925e15c36e"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-320-font150-empty.png",
+      "bytes": 279665,
+      "sha256": "5f0016603656fd60276833d514084ee1bcb8abe6e7cfc896515b72a899168f2c",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-320-font150-empty.xml",
+      "bytes": 5816,
+      "sha256": "c9f9db0409a305e5877875b6385662608ea9fff5c89edee99cc4b76fa0701992"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-390-empty.png",
+      "bytes": 258052,
+      "sha256": "5a04ac98905add77fbf66a8487264cf4af260641d9e96ab4f30f44711133e216",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-390-empty.xml",
+      "bytes": 8171,
+      "sha256": "e4178ab7ce4916edba2f83faa45c3a5814b14ed4d63a2516bedf34425ff96d34"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-390-font150-empty.png",
+      "bytes": 278724,
+      "sha256": "ecbc1b41db1816d4a535ffb38873bd0f00fa8fa4e521ed47213c5709edc0f42f",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-390-font150-empty.xml",
+      "bytes": 7489,
+      "sha256": "e33e21bf785c0083ace8cf68db42498516411dcd8b80cdbfff9c988f1e990380"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-carbohydrate-empty.png",
+      "bytes": 249473,
+      "sha256": "b7afe755d1fceba9ac20656d6ef1905640dc3e0ed372689c52d7aa665a9db7a7",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-carbohydrate-empty.xml",
+      "bytes": 9915,
+      "sha256": "d6b50ca5e30b60f979b002c5bf8d18142053a4857daee50c9ca7c9b787fa1288"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-fat-empty.png",
+      "bytes": 220668,
+      "sha256": "a0f603676bbd86b21ec402e6797a8c1bd164ba0add01feb7562ad4550faa0dad",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-fat-empty.xml",
+      "bytes": 10062,
+      "sha256": "c6de0131e1a55ca509ee7ceca3787093573b60be9bd18346b0cd9937c354d835"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-fiber-empty.png",
+      "bytes": 277314,
+      "sha256": "571da4e6947dc304161c112a50759d890a4f97e9d2c96b163c5ad5a088bf0e2d",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-fiber-empty.xml",
+      "bytes": 9575,
+      "sha256": "0ed557954c566f27a330e0b3082033dd42e7c4b24c9d5762b8d73580dc808da2"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-from-selected-diary-date.png",
+      "bytes": 257658,
+      "sha256": "ac31995c3f67d05516642fd74385cd33c537270444dc23e67d25c0df3769199c",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-from-selected-diary-date.xml",
+      "bytes": 8171,
+      "sha256": "7889a8018e85a977c54237973ab1dd23ac7047b777bc2dc72ed230e3ba32e654"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-minerals-empty.png",
+      "bytes": 204892,
+      "sha256": "21067cba1f9db3838c23febe6e97a58782f3be6427e40db50dbeafdbd79bd6c1",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-minerals-empty.xml",
+      "bytes": 10028,
+      "sha256": "9d6b7a47a96f47c72acd1775b5bc3f16afe5a7be0c676eb2ef362a1b4283848a"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-protein-empty.png",
+      "bytes": 234497,
+      "sha256": "2c24d51a2b12d36daee4d1a6802096a5d74ad1d840639c4eb1b92895e814de8b",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-protein-empty.xml",
+      "bytes": 9466,
+      "sha256": "6a20b963931c2b8bf4d6b6137da546dc8cdc7cdbf003bd0a0dd2c8585196b241"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-320-font150.png",
+      "bytes": 287006,
+      "sha256": "e28972e7b68d4bca99d74dafceec70279e25f96ccb62fe2e593afaa5a316c66b",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-320-font150.xml",
+      "bytes": 7432,
+      "sha256": "8a2f8d92536b8c81ef12f3f337d19b24bf302c8b0b003c6acebc4da9216897e0"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-320.png",
+      "bytes": 260957,
+      "sha256": "e22e613d00ba79c84198b974683b99d31bf0506212404387dcf2be4a20f2c647",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-320.xml",
+      "bytes": 7803,
+      "sha256": "acbee666a8aadd3ff980260acf5cef88ea0d291b2c2c5bc8a91840244427e10a"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-390-font150.png",
+      "bytes": 287840,
+      "sha256": "886b08cccb2113d7ad033672ca60ddca76d15b084e8a62d5f956ebf070045613",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-scroll-end-390-font150.xml",
+      "bytes": 9814,
+      "sha256": "dbf4b08e286f2f51b1fce561a9ba2d944ac068677183947567feb69f332ace22"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-vitamins-empty.png",
+      "bytes": 223886,
+      "sha256": "b053ca0232dc8fada31b9b14c79b63f6e2b1294130d866b8edfedf181857d9be",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-vitamins-empty.xml",
+      "bytes": 10081,
+      "sha256": "8e4f1e4552ee9a71a6b4e2eff2f191570029c58c72c1269af8dda4f63803092a"
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-water-empty.png",
+      "bytes": 247372,
+      "sha256": "7d35e24352ed5a4904221c30bd9119be5f31c6ab00cc0b5100279a01d8db91b8",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-nutrition-water-empty.xml",
+      "bytes": 9814,
+      "sha256": "918e06ec25d5bb7bc23f5ead1a2270847273ee061d069b1c72b82d6b9e41c0f2"
+    },
+    {
+      "path": "nutrition-ui-v2/android-system-camera-virtual-scene.png",
+      "bytes": 1244361,
+      "sha256": "0ddfc20a89b0f277164d983c4fe974634f1a10e5dcf9e882e1b9a7e215083896",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-system-camera-virtual-scene.xml",
+      "bytes": 1839,
+      "sha256": "1979a1a494ffd2941979ec4722963f9c015ec05169310248fa57c52bcac49c52"
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-320-empty.png",
+      "bytes": 501672,
+      "sha256": "aefbe0037533e35f091b01e0dcef06509692f9a95f5f9f21dd3cd6c7e428c1bd",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-320-empty.xml",
+      "bytes": 11724,
+      "sha256": "ae0099f3fa304bcd605419c947087b2ba74a071d0b0b98003f8061d3bf193da5"
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-320-font150-empty.png",
+      "bytes": 622029,
+      "sha256": "70b568131cb01e8354d360a740cab2ce3c200502b73f8bc19f877312e74dbf7f",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-320-font150-empty.xml",
+      "bytes": 10717,
+      "sha256": "d599141114c2616c5a57d07f14058745fceeba244ea94467dd9b588bfe5a0cb5"
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-390-empty.png",
+      "bytes": 447129,
+      "sha256": "5aedb2b7897b7ca5c256baae7b6b4dc19e7b3c457d116abf9a0bd6156462ccb9",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-390-empty.xml",
+      "bytes": 12787,
+      "sha256": "9bb61fcc4311ba44cd97927a8146d6bb72704d7d9dba2752ac7fc097bf70839b"
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-390-font150-empty.png",
+      "bytes": 486843,
+      "sha256": "ce0186c24b52b864a38503794d8909a014f629619b08278675c836f2689b3194",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-390-font150-empty.xml",
+      "bytes": 12446,
+      "sha256": "7019f02bd92fa9b9c9694889d12b3ff68b832ba35ca2da7e9cd7d59b35463e27"
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-gesture-safe-area.png",
+      "bytes": 446999,
+      "sha256": "260b34984ddba58cc7a446c1ce87768d9aa6f3fd28b01616269c36a32accdf5f",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "nutrition-ui-v2/android-today-gesture-safe-area.xml",
+      "bytes": 12787,
+      "sha256": "9bb61fcc4311ba44cd97927a8146d6bb72704d7d9dba2752ac7fc097bf70839b"
+    },
+    {
+      "path": "nutrition-ui-v2/invalid-ui-dump-1.txt",
+      "bytes": 54,
+      "sha256": "5fdc8c59caaeb103c4f33890c22020b00c2c51a1996b5bb963798877223d67a1"
+    },
+    {
+      "path": "nutrition-ui-v2/invalid-ui-dump-2.txt",
+      "bytes": 54,
+      "sha256": "5fdc8c59caaeb103c4f33890c22020b00c2c51a1996b5bb963798877223d67a1"
+    },
+    {
+      "path": "nutrition-ui-v2/invalid-ui-dump-3.txt",
+      "bytes": 54,
+      "sha256": "5fdc8c59caaeb103c4f33890c22020b00c2c51a1996b5bb963798877223d67a1"
+    },
+    {
+      "path": "nutrition-ui-v2/invalid-ui-dump-4.txt",
+      "bytes": 54,
+      "sha256": "5fdc8c59caaeb103c4f33890c22020b00c2c51a1996b5bb963798877223d67a1"
+    },
+    {
+      "path": "nutrition-ui-v2/invalid-ui-dump-5.txt",
+      "bytes": 54,
+      "sha256": "5fdc8c59caaeb103c4f33890c22020b00c2c51a1996b5bb963798877223d67a1"
+    },
+    {
+      "path": "nutrition-ui-v2/keyboard-state.txt",
+      "bytes": 746465,
+      "sha256": "7812f2db30ad132f9ec4ae9efe1c31329bc47d40eef0dae9231bc9c8138768f1"
+    },
+    {
+      "path": "nutrition-ui-v2/keyboard-window.txt",
+      "bytes": 54100,
+      "sha256": "42c383991c1702b1fc167d224b1f4268c7b2ce8f97603a31bdcb7554a6287309"
+    },
+    {
+      "path": "nutrition-ui-v2/last-window.xml",
+      "bytes": 12843,
+      "sha256": "d0be8c8a26473cc66d6b3f00d265041bd0c2cba9d8e148f5791d8ca67757261c"
+    },
+    {
+      "path": "nutrition-ui-v2/session.json",
+      "bytes": 8844,
+      "sha256": "1ba15ac5628be7f030ef9d8e4a099c65ce72bf13226eca324e809f11f27158b7"
+    },
+    {
+      "path": "ocr-review-before-corrections.png",
+      "bytes": 716410,
+      "sha256": "ddf4b7f2fae7d2c81d546a71d9ec70defd9963f942bef342ac63e61cae5a1605",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "offline-suite-results.json",
+      "bytes": 27,
+      "sha256": "4e1908ec90e5d74c60ccdebab532ad38e389a551ddda20a696782d4aec7fa482"
+    },
+    {
+      "path": "offline-test-source-commit.txt",
+      "bytes": 41,
+      "sha256": "3c059413c9e9363e4b1e48f960c23027381278d950c6138c98f1b4061b7591d8"
+    },
+    {
+      "path": "review-fat-keyboard.png",
+      "bytes": 180919,
+      "sha256": "0e53bafc637851da635de012910caa88d5982a7bea17c58de5a8d70af156273a",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "review.png",
+      "bytes": 240733,
+      "sha256": "040ac4551e2c148789a1a612464fc7f6ef8f2b71d4136f8721c2bf260e437cc1",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "scanner.png",
+      "bytes": 308760,
+      "sha256": "10476795a1dac6f28db92b87d90a13b5a5ae8928226b6e75df42b9a93c2342d9",
+      "pixelDimensions": [
+        1080,
+        1920
+      ],
+      "modifiedOrResized": false
+    },
+    {
+      "path": "session.json",
+      "bytes": 87034,
+      "sha256": "8c4d2e447dda060ed1f69bfdee54247c06fd642435b7d653fa9034cc7d655545"
+    },
+    {
+      "path": "suite-results.json",
+      "bytes": 62,
+      "sha256": "ee360c2699d042015e84653b6f5f5f6764aa83842be1cac8c56b1fe55f8f8b10"
+    },
+    {
+      "path": "ui-suite-results.json",
+      "bytes": 36,
+      "sha256": "b24e40c57c59ec38220f457b04454f80b8bd7292c3a80c1d6bc688f540a069e9"
+    },
+    {
+      "path": "ui-test-source-commit.txt",
+      "bytes": 41,
+      "sha256": "1b835910115a85e0d69b058c81879d41b957c86099e7ace39c1a560e9467f2a5"
+    }
+  ]
+}

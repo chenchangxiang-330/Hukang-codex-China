@@ -1,0 +1,21 @@
+{
+  "kind": "browser-shared-RN-UI-mock-HTTP",
+  "liveProviderTested": false,
+  "nativeDevice": false,
+  "checks": [
+    "Explicit minimal test succeeds only after valid model content; actual endpoint/model visible; key masked and not reloaded.",
+    "Meal uses settings config; text-only preview, unknown sodium, half-portion recomputation; no production storage action.",
+    "Changed model used by next meal; unsupported/custom vision never uploads photo.",
+    "Authentication/rate/malformed responses fail visibly once; cancel restores controls; clear prevents reuse of old credentials.",
+    "Known official vision model sends image only after opt-in using documented multimodal payload (provider response mocked)."
+  ],
+  "screenshots": [
+    "browser-settings-mock-success.png",
+    "browser-meal-mock-preview.png",
+    "browser-settings-auth-rate-format.png",
+    "browser-ai-settings-320.png"
+  ],
+  "errors": [],
+  "requestCount": 9,
+  "status": "passed"
+}

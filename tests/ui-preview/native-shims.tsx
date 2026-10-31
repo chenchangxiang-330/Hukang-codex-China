@@ -51,3 +51,7 @@ export function requireNativeViewManager() {
   );
 }
 export default { expoConfig: { version: app.expo.version } };
+
+export function requireNativeModule() {
+  throw new Error("Native module unavailable in browser preview");
+}

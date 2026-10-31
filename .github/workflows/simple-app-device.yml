@@ -9,9 +9,15 @@ on:
   workflow_dispatch:
     inputs:
       build_run:
-        description: Successful main APK build run
+        description: Successful APK build run (exact binary replay; no rebuild)
         required: true
         type: string
+      suite:
+        description: Replay only the affected acceptance suite
+        required: true
+        type: choice
+        default: all
+        options: [all, ui, offline]
 permissions:
   contents: read
   actions: read
@@ -26,6 +32,12 @@ jobs:
     if: (github.event_name == 'push' && !contains(github.event.head_commit.message, '[fresh-apk]')) || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: ${{ fromJSON(inputs.suite == 'ui' && '["ui"]' || inputs.suite == 'offline' && '["offline"]' || '["ui","offline"]') }}
+    env:
+      HUKANG_DEVICE_SUITE: ${{ matrix.suite }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -48,7 +60,9 @@ jobs:
           root=Path('artifacts/build');apks=sorted(root.glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];check=json.loads((root/'apk-inspection.json').read_text())
           assert apk.is_file() and hashlib.sha256(apk.read_bytes()).hexdigest()==check['sha256']
           assert not check['errors']
-          assert all(p not in check['permissions'] for p in ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'])
+          assert 'android.permission.INTERNET' in check['permissions']
+          assert 'android.permission.ACCESS_NETWORK_STATE' not in check['permissions']
+          assert check['networkPolicy'] == 'explicit-ai-only'
           import os
           source=(root/'source-commit.txt').read_text().strip()
           expected=os.environ.get('EXPECTED_BUILD_SHA')
@@ -83,12 +97,12 @@ jobs:
           disable-linux-hw-accel: false
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back virtualscene -camera-front none -no-metrics
-          script: python3 tests/device/simple-device.py
+          script: python3 tests/device/run-acceptance.py
       - name: Preserve success or failure evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: simple-device-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          name: simple-device-${{ github.run_id }}-${{ matrix.suite }}-attempt-${{ github.run_attempt }}
           path: artifacts/device/
           retention-days: 14
           if-no-files-found: warn
