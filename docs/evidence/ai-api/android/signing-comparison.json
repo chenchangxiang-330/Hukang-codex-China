@@ -1,0 +1,51 @@
+{
+  "currentCertificateSha256": [
+    "dc046c6ff30bb7223175d4f40a4ae23244a103cf621e43ae3f8cadf6a7d9cc9e"
+  ],
+  "comparisons": [
+    {
+      "name": "initialUiV2",
+      "run": 41186160540,
+      "certificateSha256": [
+        "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "dateFixUiV2",
+      "run": 41189628525,
+      "certificateSha256": [
+        "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "firstKeyboardFixUiV2",
+      "run": 41192004209,
+      "certificateSha256": [
+        "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "previousUiV1",
+      "run": 40323157930,
+      "certificateSha256": [
+        "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "delivered-0.4.0-code9",
+      "run": 41196378766,
+      "certificateSha256": [
+        "faf03098fa58b411d9f678e8b88acdf1fd03be626c9ce510f174cb130300c70a"
+      ],
+      "sameCertificate": false
+    }
+  ],
+  "hasRotationBlock": false,
+  "canReplaceArchivedInstallations": false,
+  "userDeviceCertificateRead": false,
+  "userDataDeleted": false
+}

@@ -46,7 +46,7 @@
 - 三组浏览器测试通过：原 UI V1 34 项、营养 UI V2 25 项、新 API 联动 5 组 / 9 次受控请求。检查模型切换、份量、清除配置、失败和取消；320px 页面渲染。浏览器相机 / 本地数据是测试替身，API 回复由模拟服务提供。
 - 浏览器证据：[连接设置](evidence/ai-api/browser/browser-settings-mock-success.png)、[餐食预览](evidence/ai-api/browser/browser-meal-mock-preview.png)、[报告](evidence/ai-api/browser/report.json)。这些不是 Android 截图，也不表示真实服务商验证成功。
 - 本轮未使用真实 API Key；真实服务商文字 / 图片响应、计费和手机网络尚未实测。没有向用户索取或在聊天中展示密钥。
-- Android 新模块已被 Expo 自动发现；新的实际 APK、签名对照和设备回归结果另见本轮交付记录，不能用浏览器结果代替。
+- Android 新包已成功构建并安装；原生 UI 七组、断网业务十四项及同 APK 重装保留数据通过。包、签名差异、实际截图和未实测项目见 [Android 交付记录](AI-API-AndroidDelivery.md)。
 
 ## 手机手动验收
 
