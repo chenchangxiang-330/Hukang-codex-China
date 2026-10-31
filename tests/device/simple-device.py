@@ -58,9 +58,20 @@ def tap(pattern,scroll=False,clazz=None):
   if scroll:swipe()
   else:time.sleep(1)
  raise RuntimeError('UI not found: '+pattern)
+def dismiss_keyboard():
+ # Input-method service flags may outlive the visible IME. Sending Back again
+ # then leaves the form. Use the actual visible window and wait for it to hide.
+ before=keyboard_top(shell('dumpsys','window'))
+ if before is None:return
+ shell('input','keyevent','KEYCODE_BACK')
+ for _ in range(10):
+  time.sleep(.3)
+  if keyboard_top(shell('dumpsys','window')) is None:
+   report.setdefault('keyboardDismissals',[]).append({'keyboardTopBefore':before,'hiddenAfterSingleBack':True});return
+ raise RuntimeError('Keyboard remained visible after one Back; refusing another navigation action')
 def field(label,value):
  pattern='^'+re.escape(label)+'$'
- if 'mIsInputViewShown=true' in shell('dumpsys','input_method'):shell('input','keyevent','KEYCODE_BACK');time.sleep(.6)
+ dismiss_keyboard()
  tap(pattern,True,'android.widget.EditText');previous=None
  for _ in range(6):
   f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
@@ -77,7 +88,7 @@ def field(label,value):
  shell('input','text',value.replace(' ','%s'))
  f=find('^'+re.escape(label)+'$','android.widget.EditText')
  if not f or f[0].get('text')!=value:raise RuntimeError('Field not retained: '+label)
- if 'mInputShown=true' in shell('dumpsys','input_method') or 'mIsInputViewShown=true' in shell('dumpsys','input_method'):shell('input','keyevent','KEYCODE_BACK')
+ dismiss_keyboard()
  time.sleep(.5)
 def unit_for(label,unit):
  for _ in range(24):
