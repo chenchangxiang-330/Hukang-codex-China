@@ -281,6 +281,18 @@ def keyboard():
     (OUT / 'keyboard-state.txt').write_text(ime)
     assert 'mInputShown=true' in ime or 'mIsInputViewShown=true' in ime
     assert find('^主导航$') is None
+    window = shell('dumpsys', 'window')
+    (OUT / 'keyboard-window.txt').write_text(window)
+    ime_tops = [int(y) for y in re.findall(
+        r'type=ime frame=\[0,(\d+)\]\[1080,\d+\] visible=true', window)]
+    assert ime_tops and min(ime_tops) > 0, 'Visible keyboard frame was not reported'
+    field_bounds = bounds(require('^餐食补充描述$', attribute='content-desc'))
+    # UI XML alone can report an input beneath the IME as present/focused.
+    # Its full box must actually be above the OS keyboard and below the header.
+    assert field_bounds[1] >= 270 and field_bounds[3] - field_bounds[1] >= 277, field_bounds
+    assert field_bounds[3] <= min(ime_tops) - 20, (field_bounds, ime_tops)
+    report['keyboardVisibility'] = {'inputBounds': field_bounds, 'keyboardTop': min(ime_tops),
+                                    'fullyAboveKeyboard': True}
     shot('android-capture-keyboard')
     shell('input', 'keyevent', 'KEYCODE_BACK')
     tap('^返回$')

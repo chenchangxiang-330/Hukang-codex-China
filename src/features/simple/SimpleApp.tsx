@@ -11,9 +11,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -98,6 +102,7 @@ export function SimpleAppView({
   nutritionAdapter?: NutritionAdapter;
 }) {
   const adapter = nutritionAdapter;
+  const insets = useSafeAreaInsets();
   const snapshot = useSyncExternalStore(
     adapter.subscribe,
     adapter.getSnapshot,
@@ -146,6 +151,30 @@ export function SimpleAppView({
     returnOffsets.current = [];
     action();
   };
+  const revealFocusedInput = () => {
+    if (Platform.OS !== "android" || !Keyboard.isVisible()) return;
+    const input = TextInput.State.currentlyFocusedInput();
+    if (!input) return;
+    p.scroll.current
+      ?.getNativeScrollRef()
+      ?.measureInWindow((_x, top, _width, height) => {
+        input.measureInWindow((_inputX, inputTop, _inputWidth, inputHeight) => {
+          if (TextInput.State.currentlyFocusedInput() !== input) return;
+          const bottom =
+            Math.min(
+              top + height,
+              Keyboard.metrics()?.screenY ?? top + height,
+            ) - 16;
+          const obscured = inputTop + inputHeight - bottom;
+          if (obscured > 0) {
+            p.scroll.current?.scrollTo({
+              y: offset.current + obscured,
+              animated: false,
+            });
+          }
+        });
+      });
+  };
   useEffect(() => {
     p.scroll.current?.scrollTo({ y: restore.current ?? 0, animated: false });
     restore.current = null;
@@ -156,7 +185,10 @@ export function SimpleAppView({
     return () => sub.remove();
   }, [page, p.busy]);
   useEffect(() => {
-    const a = Keyboard.addListener("keyboardDidShow", () => setKeyboard(true)),
+    const a = Keyboard.addListener("keyboardDidShow", () => {
+        setKeyboard(true);
+        requestAnimationFrame(revealFocusedInput);
+      }),
       b = Keyboard.addListener("keyboardDidHide", () => setKeyboard(false));
     return () => {
       a.remove();
@@ -218,7 +250,8 @@ export function SimpleAppView({
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         style={nav.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "android" ? insets.top : 0}
       >
         <View
           style={nav.flex}
@@ -261,6 +294,8 @@ export function SimpleAppView({
             </View>
             <ScrollView
               ref={p.scroll}
+              onLayout={revealFocusedInput}
+              onFocus={revealFocusedInput}
               onScroll={(e) => {
                 offset.current = e.nativeEvent.contentOffset.y;
               }}

@@ -19,7 +19,7 @@
 
 Dock 使用 `expo-blur@57.0.3`（当前 Expo 57 bundledNativeModules 推荐版本）与 `BlurTargetView`，背景模糊、半透明暖白、细高光、阴影与可减少动态效果的选中滑块。Android 使用 `dimezisBlurViewSdk31Plus`，旧版本提供半透明降级。依据 [Expo 57 官方 BlurView 文档](https://docs.expo.dev/versions/v57.0.0/sdk/blur-view/)。这不是系统原生液态玻璃的实现声明。
 
-Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 的滚动空间。拍摄/核对/详情隐藏 Dock，键盘显示时也隐藏。保留系统字体缩放，能量数值与圆环可换行；原生字体放大时圆环同步增大。返回恢复上个页面的滚动位置和所选日期。
+Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 的滚动空间。拍摄/核对/详情隐藏 Dock，键盘显示时也隐藏。Android 键盘弹出后收缩内容区，并测量、滚动当前输入框使其保持在键盘上方；同一处理复用于原有食品录入和核对表单。保留系统字体缩放，能量数值与圆环可换行；原生字体放大时圆环同步增大。返回恢复上个页面的滚动位置和所选日期。Android 验收发现的 320dp / 1.5 倍系统字号日期按钮越界已修复：空间不足时月份独占一行，前后日期按钮等宽排列。
 
 ## 业务边界
 
@@ -60,9 +60,9 @@ Dock 位于安全区内部、距边缘留空；正文预留浮动操作与 Dock 
 
 [截图与浏览器报告](evidence/nutrition-ui-v2/browser/README.md)；[检查输出](evidence/nutrition-ui-v2/checks)。浏览器运行实际 `SimpleAppView` 和生产 RN 页面组件，经 React Native Web 渲染；只替换原生 controller/相机/SQLite。不是另写 HTML 原型，也不是 Android 相机、OCR 或 SQLite 的设备实测。
 
-本机无 Android SDK/模拟器或连接设备，本轮尚未执行 Android 设备验收。Android 真正的模糊降级、实时相机预览、键盘避让、安全区、系统字体缩放与 TalkBack 仍待设备检查。旧版的设备测试结果没有被当作本轮证据。
+本机没有 Android SDK/模拟器或连接设备，因此本轮在 GitHub Actions 的 Android 15 / API 35 模拟器安装实际 ARM64 APK 执行原生验收。修正版构建 41189628525 已成功；APK 源码为 `e7e0dae22dca1b9f1b253761b990908aa64b6b1a`。逐项原生结果、真实截图、签名兼容性、保留数据安装说明与手机手动清单集中在 [Android 交付和验收](NutritionUIV2AndroidAcceptance.md)。浏览器结果与 Android 原生结果分别归档。
 
-检查与 APK 工作流已覆盖 `codex/nutrition-ui-v2`；PR 检查覆盖 `codex/ui-v1` 和 `main`，保留原 Node/Python 检查并加入格式、资源和共享 UI 检查。云端执行结果见 PR Checks；不预先声明 CI 或 APK 构建成功。不自动合并 PR。
+检查与 APK 工作流已覆盖 `codex/nutrition-ui-v2`；PR 检查覆盖 `codex/ui-v1` 和 `main`，保留原 Node/Python 检查并加入格式、资源和共享 UI 检查。原生 UI 和离线业务在两个独立模拟器运行，验收同一 APK 并核对源码一致性。当前包采用临时测试签名，不能覆盖已归档的旧签名安装；不以卸载或清库绕过。PR 保持草稿，不自动合并。
 
 ## 开发预览
 

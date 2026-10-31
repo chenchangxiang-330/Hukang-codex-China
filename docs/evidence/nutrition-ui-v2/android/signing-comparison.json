@@ -1,12 +1,20 @@
 {
-  "apkBuildRun": 41186160540,
-  "apkSource": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+  "apkBuildRun": 41189628525,
+  "apkSource": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
   "versionName": "0.4.0",
   "versionCode": 9,
-  "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "apkSha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
   "certificateSha256": [
-    "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
+    "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8"
   ],
+  "initialUiV2": {
+    "run": 41186160540,
+    "source": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+    "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+    "certificateSha256": [
+      "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
+    ]
+  },
   "previousUiV1": {
     "run": 40323157930,
     "source": "095bb67903b30f4acb4706d686601701dd669416",
@@ -15,8 +23,10 @@
       "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5"
     ]
   },
-  "sameCertificateAsPreviousUiV1": false,
-  "olderUiV1InPlaceUpgradeAllowed": false,
+  "matchesInitialUiV2Certificate": false,
+  "matchesUiV1Certificate": false,
+  "signingMode": "ephemeral-test",
+  "oldSignedAppUpgradeVerified": false,
   "userPhoneCertificateRead": false,
   "uninstallOrClearDataPerformed": false,
   "privateSigningMaterialAccessed": false

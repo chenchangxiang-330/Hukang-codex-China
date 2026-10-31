@@ -1,7 +1,7 @@
 {
   "apk": "/home/runner/work/Hukang-codex-China/Hukang-codex-China/artifacts/hukang-0.4.0-arm64.apk",
-  "bytes": 60926113,
-  "sha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "bytes": 60926377,
+  "sha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
   "nativeAbis": [
     "arm64-v8a"
   ],
@@ -51,12 +51,12 @@
       "sha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
     }
   },
-  "signatureVerification": "Verifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): false\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN\nSigner #1 certificate SHA-256 digest: 74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793\nSigner #1 certificate SHA-1 digest: f40cef123bd0b9c393470e2e5d63169ca50a2aa6\nSigner #1 certificate MD5 digest: 8f5d1c48cce2ccbcd7b510120eac89db\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 2048\nSigner #1 public key SHA-256 digest: 7e27c546e82f8feb0f29065043ad1d2af3743d65cae295548ddc1ee122dd1695\nSigner #1 public key SHA-1 digest: 921a687d7db3d98361733a23585a7cb30d3ff64b\nSigner #1 public key MD5 digest: 03f3f830c8b83ecf85a4dfb59937171d\n",
+  "signatureVerification": "Verifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): false\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN\nSigner #1 certificate SHA-256 digest: f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8\nSigner #1 certificate SHA-1 digest: a0f4efed0fd62a537b3bc9e72e8308faeca776ac\nSigner #1 certificate MD5 digest: 96fc75a8fca33e6341a753f2d137b2d5\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 2048\nSigner #1 public key SHA-256 digest: 8d59ddc3e495be27a94784eb5044dc45a3cd1bda813d036c7467e0c620379886\nSigner #1 public key SHA-1 digest: 87cb394d9192f01d79609a7dd2fa6ee593c2d942\nSigner #1 public key MD5 digest: 58c927741fb7f62a4b5de9508e31f654\n",
   "certificateSha256Digests": [
     {
       "signer": 1,
       "dn": "CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN",
-      "sha256": "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
+      "sha256": "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8"
     }
   ],
   "errors": [],

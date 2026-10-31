@@ -1,0 +1,16 @@
+{
+  "typecheck": "passed",
+  "nodeTests": {
+    "passed": 87,
+    "failed": 0
+  },
+  "browserChecks": {
+    "existing": 34,
+    "nutritionV2": 25,
+    "screenshots": 44
+  },
+  "sourceFilesMatchBrowserReport": true,
+  "appSourceSha256": "586587c58575feccfb63d539b52118a246f5e071d8c2450b2b57e8f0400c01b6",
+  "nativeVerification": "pending new APK; previous UI automation missed keyboard occlusion",
+  "browserIsNotNativeAcceptance": true
+}

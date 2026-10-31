@@ -2,7 +2,7 @@
   "kind": "shared-react-native-web",
   "nativeDeviceVerified": false,
   "cameraOcrSqliteMocked": true,
-  "generatedAt": "2026-10-31T08:47:43.191Z",
+  "generatedAt": "2026-10-31T10:14:03.507Z",
   "checks": [
     "Production empty / targets unset / missing sugar / photo+text retained / AI unavailable, no fictional result",
     "Both capture routes and all four tabs; existing scanner and export callbacks",
