@@ -284,7 +284,7 @@ def keyboard():
     window = shell('dumpsys', 'window')
     (OUT / 'keyboard-window.txt').write_text(window)
     ime_tops = [int(y) for y in re.findall(
-        r'type=ime frame=\[0,(\d+)\]\[1080,\d+\] visible=true', window)]
+        r'type=ime frame=\[0,(\d+)\]\[1080,\d+\][^\n]*\bvisible=true\b', window)]
     assert ime_tops and min(ime_tops) > 0, 'Visible keyboard frame was not reported'
     field_bounds = bounds(require('^餐食补充描述$', attribute='content-desc'))
     # UI XML alone can report an input beneath the IME as present/focused.

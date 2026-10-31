@@ -12,6 +12,12 @@ on:
         description: Successful APK build run (exact binary replay; no rebuild)
         required: true
         type: string
+      suite:
+        description: Replay only the affected acceptance suite
+        required: true
+        type: choice
+        default: all
+        options: [all, ui, offline]
 permissions:
   contents: read
   actions: read
@@ -29,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [ui, offline]
+        suite: ${{ fromJSON(inputs.suite == 'ui' && '["ui"]' || inputs.suite == 'offline' && '["offline"]' || '["ui","offline"]') }}
     env:
       HUKANG_DEVICE_SUITE: ${{ matrix.suite }}
     steps:
