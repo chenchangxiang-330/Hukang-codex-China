@@ -26,6 +26,12 @@ jobs:
     if: (github.event_name == 'push' && !contains(github.event.head_commit.message, '[fresh-apk]')) || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [ui, offline]
+    env:
+      HUKANG_DEVICE_SUITE: ${{ matrix.suite }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -88,7 +94,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: simple-device-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          name: simple-device-${{ github.run_id }}-${{ matrix.suite }}-attempt-${{ github.run_attempt }}
           path: artifacts/device/
           retention-days: 14
           if-no-files-found: warn
