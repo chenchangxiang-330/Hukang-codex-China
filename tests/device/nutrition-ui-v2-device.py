@@ -227,7 +227,7 @@ def details():
                     if re.fullmatch(r'\d{4}-\d{2}-\d{2}', n.get('content-desc', '')) and n.get('checked') == 'true')
     assert current != selected
     tap('^今日营养摘要$', True)
-    require('今日营养')
+    require('^今日营养$')
     y, m, d = selected.split('-')
     require(f'{y}年{int(m)}月{int(d)}日')
     shot('android-nutrition-from-selected-diary-date')
@@ -243,6 +243,17 @@ def small_and_large():
         dock()
         shot('android-today-' + name + '-empty')
         tap('^记录$')
+        controls = [require('^‹ 前一天$'), require('^后一天 ›$')]
+        control_bounds = [bounds(n) for n in controls]
+        assert all(30 <= b[0] < b[2] <= 1050 for b in control_bounds), control_bounds
+        report.setdefault('dateNavigationBounds', []).append({
+            'logicalWidth': width, 'fontScale': scale, 'bounds': control_bounds})
+        original = next(n.get('content-desc') for n in tree().iter('node')
+                        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', n.get('content-desc', '')) and n.get('checked') == 'true')
+        press(controls[1])
+        assert not any(n.get('content-desc') == original and n.get('checked') == 'true' for n in tree().iter('node'))
+        tap('^‹ 前一天$')
+        assert any(n.get('content-desc') == original and n.get('checked') == 'true' for n in tree().iter('node'))
         shot('android-diary-' + name + '-empty')
         tap('^今日营养摘要$', True)
         shot('android-nutrition-' + name + '-empty')

@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { colors as c } from "../../ui/tokens";
@@ -233,23 +234,36 @@ export function DiaryScreenV2({
   onTargets: () => void;
 }) {
   const entries = s.entries.filter((e) => e.date === date);
+  const { width, fontScale } = useWindowDimensions();
+  const separateMonth =
+    (Math.min(width, 680) - 40) / Math.max(1, fontScale) < 270;
+  const month = (
+    <Text style={[N.caption, { textAlign: "center" }]}>{date.slice(0, 7)}</Text>
+  );
   return (
     <>
       <Text accessibilityRole="header" style={N.title}>
         饮食记录
       </Text>
-      <View style={V.sectionRow}>
-        <Action
-          title="‹ 前一天"
-          secondary
-          onPress={() => onDate(shiftDateKey(date, -1))}
-        />
-        <Text style={N.caption}>{date.slice(0, 7)}</Text>
-        <Action
-          title="后一天 ›"
-          secondary
-          onPress={() => onDate(shiftDateKey(date, 1))}
-        />
+      <View style={{ gap: 8 }}>
+        {separateMonth && month}
+        <View style={V.sectionRow}>
+          <View style={separateMonth ? N.grow : undefined}>
+            <Action
+              title="‹ 前一天"
+              secondary
+              onPress={() => onDate(shiftDateKey(date, -1))}
+            />
+          </View>
+          {!separateMonth && month}
+          <View style={separateMonth ? N.grow : undefined}>
+            <Action
+              title="后一天 ›"
+              secondary
+              onPress={() => onDate(shiftDateKey(date, 1))}
+            />
+          </View>
+        </View>
       </View>
       <ScrollView
         horizontal
