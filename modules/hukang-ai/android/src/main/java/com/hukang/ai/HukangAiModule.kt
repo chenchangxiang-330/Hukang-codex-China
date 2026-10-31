@@ -5,6 +5,7 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.ByteArrayOutputStream
 import java.net.URI
+import java.net.HttpRetryException
 import java.net.SocketTimeoutException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -69,6 +70,10 @@ class HukangAiModule : Module() {
           }
           check(!destroyed.get() && !cancelled.contains(id))
           promise.resolve(mapOf("status" to status, "body" to output.toString("UTF-8"), "url" to endpoint))
+        } catch (error: HttpRetryException) {
+          // Fixed-length mode can signal 401/redirect this way instead of a body.
+          // Preserve the status for the shared error classifier; never retry.
+          promise.resolve(mapOf("status" to error.responseCode(), "body" to "", "url" to endpoint))
         } catch (_: SocketTimeoutException) {
           promise.reject("AI_TIMEOUT", "Request timed out", null)
         } catch (_: ResponseTooLarge) {

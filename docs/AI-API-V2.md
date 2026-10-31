@@ -27,6 +27,7 @@
 - API Key 只在当前应用进程内存中暂存；不提供“记住密钥”。输入始终遮盖，返回设置页不重新显示；不写入 SQLite、普通存储、日志、导出或图片。清除配置会取消在途请求并使旧结果失效。换页可临时共用；进程结束需重新填写。
 - 只有主动点击测试 / 估算才请求。第一次及配置改变后需确认目的地址、资料范围、可能费用。进入后台取消等待，不自动恢复请求。
 - 文字估算只发送本次描述和营养结构提示，不上传历史、食品库或库存。选择照片本身不会上传；只有已核实视觉模型、单独勾选发送照片后才读入 JPEG / PNG（最大 4 MB）并按 `image_url` data URI 协议发送。其他模型提示只支持文字。没有自动抠图。
+- 根据 [Android HttpURLConnection 文档](https://developer.android.com/reference/java/net/HttpURLConnection#setFixedLengthStreamingMode(int))，固定长度请求的认证 / 跳转可能以 `HttpRetryException` 返回；保留其 HTTP 状态用于错误分类，绝不重试。
 - Android 新增小型 `hukang-ai` Expo 模块，使用系统 HTTPS 证书校验、禁用跳转、固定长度 POST、响应大小上限、主动取消与超时；不重试收费请求，不把底层异常或供应商错误正文写入日志 / UI。
 - `app.json`、源 Manifest、`withOfflineAndroid`、APK 检查和当前设备 CI 一致允许 INTERNET，同时禁止明文流量。仍禁用 OTA、Google 模型下载、联网 OCR 与无关权限。历史 Phase 3 的无网络二进制证据校验继续按旧合同执行，未改写历史验收。
 - 连接 30 秒、餐食 60 秒超时；全局并发一项。取消、超时不等于服务商未处理或未计费；UI 明确提示，无自动重试。
