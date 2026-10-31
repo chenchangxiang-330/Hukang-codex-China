@@ -154,7 +154,8 @@ def check(name, action):
 
 
 def dock():
-    nodes = [require('^' + label + '$') for label in ['今日', '记录', '食品库', '我的']]
+    # Match navigation accessibility labels, not a same-named page heading.
+    nodes = [require('^' + label + '$', attribute='content-desc') for label in ['今日', '记录', '食品库', '我的']]
     positions = [bounds(n) for n in nodes]
     assert all(60 < b[1] < b[3] <= 1855 for b in positions), positions
     # Native fractional dp bounds round independently to physical pixels.
@@ -233,6 +234,9 @@ def details():
     shot('android-nutrition-from-selected-diary-date')
     report['selectedDateNavigation'] = {'before': current, 'after': selected}
     tap('^返回$')
+    # The app intentionally restores the diary's scroll position. Its page
+    # title/date strip may be above the viewport until scrolled back up.
+    swipe(True)
     require('饮食记录')
     assert any(n.get('content-desc') == selected and n.get('checked') == 'true' for n in tree().iter('node'))
 

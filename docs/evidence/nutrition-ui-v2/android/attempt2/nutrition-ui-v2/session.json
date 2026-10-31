@@ -1,0 +1,390 @@
+{
+  "status": "failed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "navigation-empty",
+      "status": "failed",
+      "error": "AssertionError([[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [55, 226, 1025, 332]])",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 143, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 182, in home_and_navigation\n    dock()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 161, in dock\n    assert all(a[2] <= b[0] + 2 for a, b in zip(positions, positions[1:])), positions\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: [[74, 1635, 306, 1801], [307, 1635, 540, 1801], [540, 1635, 773, 1801], [55, 226, 1025, 332]]\n"
+    },
+    {
+      "name": "nutrition-accordions-date",
+      "status": "failed",
+      "error": "AssertionError('Android control missing: 饮食记录')",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 143, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 236, in details\n    require('饮食记录')\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 92, in require\n    raise AssertionError(f'Android control missing: {pattern}')\nAssertionError: Android control missing: 饮食记录\n"
+    },
+    {
+      "name": "small-screen-system-font",
+      "status": "passed"
+    },
+    {
+      "name": "gesture-safe-area",
+      "status": "passed"
+    },
+    {
+      "name": "keyboard-state",
+      "status": "passed"
+    },
+    {
+      "name": "camera-permissions",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "sourceCommit": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "dockBounds": [
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          92,
+          1573,
+          317,
+          1776
+        ],
+        [
+          316,
+          1573,
+          540,
+          1776
+        ],
+        [
+          541,
+          1573,
+          765,
+          1776
+        ],
+        [
+          765,
+          1573,
+          990,
+          1776
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          92,
+          1573,
+          317,
+          1776
+        ],
+        [
+          316,
+          1573,
+          540,
+          1776
+        ],
+        [
+          541,
+          1573,
+          765,
+          1776
+        ],
+        [
+          765,
+          1573,
+          990,
+          1776
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          74,
+          1630,
+          306,
+          1801
+        ],
+        [
+          307,
+          1630,
+          540,
+          1801
+        ],
+        [
+          540,
+          1630,
+          773,
+          1801
+        ],
+        [
+          772,
+          1630,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          74,
+          1630,
+          306,
+          1801
+        ],
+        [
+          307,
+          1630,
+          540,
+          1801
+        ],
+        [
+          540,
+          1630,
+          773,
+          1801
+        ],
+        [
+          772,
+          1630,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          92,
+          1567,
+          317,
+          1775
+        ],
+        [
+          316,
+          1567,
+          540,
+          1775
+        ],
+        [
+          541,
+          1567,
+          765,
+          1775
+        ],
+        [
+          765,
+          1567,
+          990,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          92,
+          1567,
+          317,
+          1775
+        ],
+        [
+          316,
+          1567,
+          540,
+          1775
+        ],
+        [
+          541,
+          1567,
+          765,
+          1775
+        ],
+        [
+          765,
+          1567,
+          990,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    }
+  ],
+  "selectedDateNavigation": {
+    "before": "2026-10-31",
+    "after": "2026-10-30"
+  },
+  "navigationOverlayBefore": [
+    "com.android.internal.systemui.navbar.gestural"
+  ],
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealAndPackagePhotos": true,
+    "source": "Android system camera / emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  }
+}

@@ -1,0 +1,600 @@
+{
+  "status": "failed",
+  "error": "RuntimeError('Selected photo did not reach expected ready screen: 从相册识别条码')",
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "apkSha256": "4849fe25c19e48dd419b158d82f006d9b95f6612eeaac783d1c6a667dfbf53b3",
+  "sourceCommit": "0bb96d81d9cce6a92e4da1296323380161b41aa4",
+  "pendingDraftId": "food-mvw7del0-d-e78i71k",
+  "imageTransformUi": {
+    "rotationsDegrees": [
+      90,
+      -90
+    ],
+    "crop": "near-full image selected by touch; empty selection disabled",
+    "actualNativeCrop": {
+      "kind": "crop",
+      "left": 3,
+      "top": 2,
+      "right": 1277,
+      "bottom": 1698
+    },
+    "actualDimensions": [
+      1274,
+      1696
+    ],
+    "physicalCameraVerified": false
+  },
+  "manualReviewExpected": [
+    [
+      "能量",
+      "309",
+      "kJ",
+      "4"
+    ],
+    [
+      "蛋白质",
+      "3.6",
+      "g",
+      "6"
+    ],
+    [
+      "脂肪",
+      "4.4",
+      "g",
+      "7"
+    ],
+    [
+      "碳水化合物",
+      "5.0",
+      "g",
+      "2"
+    ],
+    [
+      "钠",
+      "58",
+      "mg",
+      "3"
+    ]
+  ],
+  "nativeOcrMeasurements": {
+    "da4b5174-bc5a-468a-9d69-3b20c9925233.json": {
+      "sha256": "bbf23603e70da19e7a8db35355cdeebe653327f6d31793c791b7aefc86dae4b3",
+      "modelLoadMs": 1874,
+      "modelColdLoadMs": 1113,
+      "imageDecodeMs": 43,
+      "ocrMs": 90378,
+      "totalMs": 92362,
+      "timings": {
+        "detPreprocessMs": 160,
+        "detInferenceMs": 9436,
+        "detPostprocessMs": 46,
+        "recPreprocessMs": 160,
+        "recInferenceMs": 80373,
+        "recPostprocessMs": 52,
+        "pipelineOverheadMs": 151,
+        "detInputShape": [
+          1,
+          3,
+          960,
+          736
+        ],
+        "recInputShapes": [
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            354
+          ],
+          [
+            1,
+            3,
+            48,
+            377
+          ],
+          [
+            1,
+            3,
+            48,
+            396
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            509
+          ],
+          [
+            1,
+            3,
+            48,
+            427
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            333
+          ],
+          [
+            1,
+            3,
+            48,
+            428
+          ],
+          [
+            1,
+            3,
+            48,
+            415
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            401
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ]
+        ]
+      },
+      "memory": {
+        "observedPeakPssKb": 565149,
+        "observedPeakJavaHeapBytes": 54037760,
+        "observedPeakNativeHeapBytes": 297671136,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1847
+      }
+    },
+    "e1a48364-5b88-4912-bd06-9b862552b524.json": {
+      "sha256": "4019500e975f1f2b503e6cf3158c6d61e6cf165e8455c7160a2828056adde2bf",
+      "modelLoadMs": 0,
+      "modelColdLoadMs": 1113,
+      "imageDecodeMs": 39,
+      "ocrMs": 86950,
+      "totalMs": 87063,
+      "timings": {
+        "detPreprocessMs": 200,
+        "detInferenceMs": 8695,
+        "detPostprocessMs": 30,
+        "recPreprocessMs": 124,
+        "recInferenceMs": 77731,
+        "recPostprocessMs": 38,
+        "pipelineOverheadMs": 132,
+        "detInputShape": [
+          1,
+          3,
+          960,
+          736
+        ],
+        "recInputShapes": [
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            350
+          ],
+          [
+            1,
+            3,
+            48,
+            358
+          ],
+          [
+            1,
+            3,
+            48,
+            388
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            520
+          ],
+          [
+            1,
+            3,
+            48,
+            429
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            337
+          ],
+          [
+            1,
+            3,
+            48,
+            440
+          ],
+          [
+            1,
+            3,
+            48,
+            429
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            391
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ]
+        ]
+      },
+      "memory": {
+        "observedPeakPssKb": 721590,
+        "observedPeakJavaHeapBytes": 53833616,
+        "observedPeakNativeHeapBytes": 473232096,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1741
+      }
+    }
+  }
+}
