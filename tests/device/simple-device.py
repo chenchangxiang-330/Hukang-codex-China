@@ -119,6 +119,8 @@ def database(name):
   if b:(O/(name+'.db'+suffix)).write_bytes(b)
  return sqlite3.connect(dest)
 def launch():shell('am','start','-n',PKG+'/.MainActivity');time.sleep(3)
+def open_scanner():
+ tap('^拍一拍$');tap('^包装食品$');tap('^扫描 / 输入条码$',True)
 def native_runs():return shell('ls',f'/data/user/0/{PKG}/files/ocr-lab/runs',check=False).splitlines()
 def wait_native(previous):
  deadline=time.monotonic()+300
@@ -233,8 +235,8 @@ try:
   run(['push',str(p),remote+'/'+name]);shell('am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote+'/'+name)
  report['fixtures']={'syntheticBarcode':hashlib.sha256(barcode.read_bytes()).hexdigest(),'packagingPhoto':hashlib.sha256(fixture.read_bytes()).hexdigest(),'source':json.loads(fixture.with_suffix('.source.json').read_text())['source'],'limitation':'Archived real nutrition-side package photo reused for cover input; not a new front-facing camera photo. Synthetic barcode and manual identity are test-only.'}
  time.sleep(2);launch();tap('^我的$');shot('mine');tap('^今日$');shot('home')
- tap('^拍一拍$');shot('scanner');photo('从相册识别条码','00-barcode')
- photo('从相册选择包装','01-milk');field('商品名称','Test Milk');field('品牌（选填）','Test Brand');field('规格（选填）','250 mL');tap('^下一步，拍营养表$',True)
+ open_scanner();shot('scanner');photo('从相册识别条码','00-barcode')
+ photo('从相册选择包装','01-milk');field('商品名称','Test Milk');field('品牌（选填）','Test Brand');field('整包净含量 / 规格（选填）','250 mL');tap('^下一步，拍营养表$',True)
  c=database('pending-draft');pending=json.loads(c.execute('SELECT json FROM simple_capture_drafts').fetchone()[0]);assert pending['name']=='Test Milk' and pending['specification']=='250 mL';assert pending['step']=='nutrition';assert pending['barcode']['scan']['rawValue']=='6923644266066';assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==0;c.close()
  report['pendingDraftId']=pending['id'];launch();tap('^继续上次未完成的录入$',True);shot('draft-resumed')
  before=native_runs();photo('从相册选择营养表','01-milk');wait_native(before)
@@ -256,10 +258,10 @@ try:
  for uri_key,hash_key,file_name in [('originalUri','sourceImageHash','saved-original.source'),('uri','processedImageHash','saved-processed.png')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key];(O/file_name).write_bytes(payload)
  assert c.execute('SELECT raw_value,acquired_by FROM food_barcodes').fetchone()==('6923644266066','image');c.close()
- launch();before=native_runs();tap('^拍一拍$');photo('从相册识别条码','00-barcode');tap('^加入我的库存$',True);assert before==native_runs();field('本次购入数量','1');tap('^瓶$',True);tap('^确认加入库存$',True)
- c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^库存$')
+ launch();before=native_runs();open_scanner();photo('从相册识别条码','00-barcode');tap('^加入我的库存$',True);assert before==native_runs();field('本次购入数量','1');tap('^瓶$',True);tap('^确认加入库存$',True)
+ c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^食品库$');tap('^我的库存$')
  tap('^用掉1瓶$',True);tap('^用掉1瓶$',True);shot('inventory-reduced')
- tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
+ tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('整包净含量 / 规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
  tap('^我的$');data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
  tap('.*',True,'android.widget.Switch');switch=find('.*','android.widget.Switch');assert switch and switch[0].get('checked')=='true'
  data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue-with-photos');assert len(data['products'])==1 and 'inventory' not in data;assert data['photosIncluded'] is True and data['photoMetadataRemoved'] is True;assert len(assets)==2
@@ -267,7 +269,13 @@ try:
  assert any(a['path'].startswith('photos/') for a in assets);assert any(a['path'].endswith('/current-ocr.json') for a in assets);assert any(a['path'].endswith('/revisions.json') for a in assets)
  c=database('final');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM simple_inventory').fetchone()[0]==1;assert c.execute('SELECT SUM(quantity) FROM simple_inventory').fetchone()[0]==1
  final_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert final_review['specification']=='250 mL checked';assert next(r for r in final_review['columns'][0]['rows'] if r['nutrient']=='protein')['amount']=='3.60';assert c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone()==evidence_before
- assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1;c.close()
+ assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1
+ before_reinstall='\n'.join(c.iterdump());c.close()
+ # A same-binary update checks install -r data retention in this emulator. It
+ # does not claim compatibility with an older APK signed by a different key.
+ reinstall=run(['install','-r',str(apk.resolve())],timeout=180).decode();assert 'Success' in reinstall
+ c=database('after-same-apk-reinstall');assert '\n'.join(c.iterdump())==before_reinstall;c.close()
+ report['sameApkReinstall']={'result':reinstall.strip(),'databaseDumpSha256':hashlib.sha256(before_reinstall.encode()).hexdigest(),'allTablesPreserved':True,'olderSignedAppUpgradeVerified':False}
  for uri_key,hash_key in [('originalUri','sourceImageHash'),('uri','processedImageHash')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key],'Export modified source image bytes'
  report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       build_run:
-        description: Successful main APK build run
+        description: Successful APK build run (exact binary replay; no rebuild)
         required: true
         type: string
 permissions:
@@ -83,7 +83,7 @@ jobs:
           disable-linux-hw-accel: false
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back virtualscene -camera-front none -no-metrics
-          script: python3 tests/device/simple-device.py
+          script: python3 tests/device/run-acceptance.py
       - name: Preserve success or failure evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
