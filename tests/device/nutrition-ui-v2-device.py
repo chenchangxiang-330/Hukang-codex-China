@@ -74,7 +74,9 @@ def press(node):
 
 
 def swipe(up=False):
-    shell('input', 'swipe', '920', '500' if up else '1430', '920', '1430' if up else '500', '350')
+    # The floating camera button owns the middle of the lower screen. Swipe
+    # the exposed right edge of the actual ScrollView, not that overlay.
+    shell('input', 'swipe', '1030', '500' if up else '1430', '1030', '1430' if up else '500', '350')
     time.sleep(.4)
 
 
@@ -91,11 +93,27 @@ def require(pattern, scroll=False, attribute=None, attempts=8):
 
 
 def tap(pattern, scroll=False, attribute=None):
-    node = require(pattern, scroll, attribute)
-    if node.get('enabled') == 'false':
-        raise AssertionError(f'Disabled control: {pattern}')
-    press(node)
-    return node
+    for _ in range(16 if scroll else 8):
+        root = tree()
+        node = find(pattern, root, attribute)
+        if node is not None:
+            if node.get('enabled') == 'false':
+                raise AssertionError(f'Disabled control: {pattern}')
+            # UIAutomator exposes content even while the floating action is
+            # drawn above it. Scroll it into the unobscured viewport first.
+            if scroll and find('^今日$', root) is not None and find('^记录$', root) is not None:
+                overlays = [find('^拍一拍$', root), find('^今日$', root)]
+                ceiling = min(bounds(n)[1] for n in overlays if n is not None)
+                if bounds(node)[3] > ceiling - 12:
+                    swipe()
+                    continue
+            press(node)
+            return node
+        if scroll:
+            swipe()
+        else:
+            time.sleep(.6)
+    raise AssertionError(f'Unobscured Android control missing: {pattern}')
 
 
 def shot(name):
@@ -139,7 +157,8 @@ def dock():
     nodes = [require('^' + label + '$') for label in ['今日', '记录', '食品库', '我的']]
     positions = [bounds(n) for n in nodes]
     assert all(60 < b[1] < b[3] <= 1855 for b in positions), positions
-    assert all(a[2] <= b[0] for a, b in zip(positions, positions[1:])), positions
+    # Native fractional dp bounds round independently to physical pixels.
+    assert all(a[2] <= b[0] + 2 for a, b in zip(positions, positions[1:])), positions
     report.setdefault('dockBounds', []).append({'density': shell('wm', 'density'),
         'fontScale': shell('settings', 'get', 'system', 'font_scale'), 'bounds': positions})
 
@@ -209,10 +228,13 @@ def details():
     assert current != selected
     tap('^今日营养摘要$', True)
     require('今日营养')
+    y, m, d = selected.split('-')
+    require(f'{y}年{int(m)}月{int(d)}日')
     shot('android-nutrition-from-selected-diary-date')
     report['selectedDateNavigation'] = {'before': current, 'after': selected}
     tap('^返回$')
     require('饮食记录')
+    assert any(n.get('content-desc') == selected and n.get('checked') == 'true' for n in tree().iter('node'))
 
 
 def small_and_large():

@@ -30,20 +30,23 @@ def tree():
   recoveries.append({'dialog':title.attrib,'evidence':name,'deviceTime':shell('date','-Iseconds')})
   a=bounds(close);shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));time.sleep(1);return tree()
  return root
-def find(pattern,clazz=None):
- for n in tree().iter('node'):
+def find(pattern,clazz=None,root=None):
+ for n in (root if root is not None else tree()).iter('node'):
   if clazz and n.get('class')!=clazz:continue
   if not any(re.search(pattern,n.get(k,'')) for k in ('text','content-desc')):continue
   a=list(map(int,re.findall(r'-?\d+',n.get('bounds',''))))
   if len(a)==4 and 0 <= (a[0]+a[2])/2 <1080 and 90<(a[1]+a[3])/2<1850 and a[2]>a[0] and a[3]>a[1]:return n,a
  return None
-def swipe(up=False):shell('input','swipe','540','420' if up else '1540','540','1540' if up else '420','300');time.sleep(.4)
+def swipe(up=False):shell('input','swipe','1030','420' if up else '1430','1030','1430' if up else '420','300');time.sleep(.4)
 def short_swipe(up=False):shell('input','swipe','1000','650' if up else '1350','1000','1050' if up else '950','300');time.sleep(.5)
 def tap(pattern,scroll=False,clazz=None):
  for _ in range(16 if scroll else 8):
-  f=find(pattern,clazz)
+  root=tree();f=find(pattern,clazz,root)
   if f:
    n,a=f
+   if scroll and find('^今日$',root=root) and find('^记录$',root=root):
+    overlays=[find('^拍一拍$',root=root),find('^今日$',root=root)];ceiling=min(x[1][1] for x in overlays if x)
+    if a[3]>ceiling-12:swipe();continue
    if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe();continue
    if clazz=='android.widget.EditText':
     # Image preparation and IME reflow can move fields after a dump. Never tap
