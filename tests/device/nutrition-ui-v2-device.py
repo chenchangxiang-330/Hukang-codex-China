@@ -184,7 +184,7 @@ def dock():
 def home_and_navigation():
     configure()
     require('今天，吃得刚刚好')
-    require('尚未记录', scroll=True)
+    require('还没有今天的餐食', scroll=True)
     assert find('1285|1,285|62g|158g') is None, 'Demo values appeared in production'
     # Return to the top before the cover screenshot.
     swipe(True)
@@ -488,6 +488,8 @@ def diet_closed_loop():
     tap('^确认调整份量$', True)
     require('饮食记录已更新', True)
     tap('^返回饮食记录$', True)
+    # Returning deliberately restores the tapped food's position; summary is above it.
+    for _ in range(7): swipe(True)
     tap('^今日营养摘要$', True); require('600', True)
     shot('android-isolated-nutrition-diet')
     tap('^返回$'); tap('^查看食物 Edited native meal$', True, 'content-desc')
@@ -503,6 +505,25 @@ def diet_closed_loop():
     c = diet_db('deleted-diet'); assert c.execute('SELECT count(*) FROM nutrition_entries').fetchone()[0] == 0; assert c.execute('SELECT count(*) FROM nutrition_operations').fetchone()[0] == 1; c.close()
     report['nutritionRecordsInserted'] = 1
     report['dietStorage'] = {'isolatedUserEnteredRecords': 1, 'demoAdapter': False, 'relaunchPersisted': True, 'threePageSync': True, 'dateMealNameAmountEdit': True, 'confirmedDelete': True, 'inventoryUnchanged': True, 'targetsPersisted': True}
+
+
+def identify_fixture(file):
+    from datetime import datetime, timezone
+    day = int(file.name[:2])
+    millis = int(datetime(2030, 1, day, 12, tzinfo=timezone.utc).timestamp() * 1000)
+    uri = 'content://media/external/images/media'
+    where = "_display_name='" + file.name + "'"
+    for _ in range(15):
+        row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:datetaken', '--where', where)
+        if file.name in row and str(file.stat().st_size) in row:
+            break
+        time.sleep(1)
+    else: raise AssertionError('MediaStore has not indexed exact fixture: ' + row)
+    shell('content', 'update', '--uri', uri, '--bind', 'datetaken:l:' + str(millis), '--where', where)
+    row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:datetaken', '--where', where)
+    assert str(millis) in row, row
+    report.setdefault('fixtureMediaRows', []).append(row)
+    return f'Jan {day}, 2030'
 
 
 def upload_photos():
@@ -526,19 +547,20 @@ def upload_photos():
         original_file = next(fixtures.glob(stem + '.*'))
         adb('push', str(original_file), '/sdcard/Pictures/HukangSimple/' + original_file.name)
         shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file:///sdcard/Pictures/HukangSimple/' + original_file.name)
-        time.sleep(2)
+        fixture_date = identify_fixture(original_file)
         for _ in range(7): swipe(True)
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), stem, stage, newest_fixture=True)
+            action = next_picker_action(tree(), stem, stage, fixture_date=fixture_date)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break
             else: time.sleep(.5)
         else: raise AssertionError('Image fixture not selectable: ' + stem)
         require('上传副本已在本机准备', True, attempts=18)
+        for _ in range(7): swipe(True)
         require(str(original_file.stat().st_size), True)
         paths = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg').splitlines()) - before
         assert len(paths) == 1, paths
@@ -565,6 +587,31 @@ def upload_photos():
             saved_path = unquote(urlparse(saved['food']['image']).path)
             assert '/nutrition-photos/' in saved_path
             assert hashlib.sha256(adb('exec-out', 'cat', saved_path)).hexdigest() == hashlib.sha256(payload).hexdigest()
+            # Export a real retained diet photo with no food-library products.
+            launch(); tap('^我的$')
+            tap('^包含食品与饮食照片$', True, 'content-desc')
+            export_root = f'/data/user/0/{PKG}/cache/hukang-exports'
+            previous = set(shell('find', export_root, '-name', '*.zip', check=False).splitlines())
+            tap('^导出个人数据（含库存）$', True); tap('^生成文件$'); time.sleep(3)
+            shot('android-isolated-diet-export-share-sheet')
+            shell('input', 'keyevent', 'KEYCODE_BACK'); time.sleep(1)
+            archives = set(shell('find', export_root, '-name', '*.zip').splitlines()) - previous
+            assert len(archives) == 1, archives
+            archive_path, = archives
+            archive_bytes = adb('exec-out', 'cat', archive_path)
+            import io, zipfile
+            with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+                document = json.loads(archive.read('data.json'))
+                assert document['schemaVersion'] == 2 and document['products'] == []
+                exported, = document['nutrition']
+                assert exported['id'] == saved['id'] and exported['food']['name'] == 'Photo snapshot test'
+                assert exported['food']['image'].startswith('nutrition-photos/')
+                assert archive.read(exported['food']['image']) == payload
+                for item in json.loads(archive.read('files.json')):
+                    asset = archive.read(item['path'])
+                    assert len(asset) == item['bytes'] and hashlib.sha256(asset).hexdigest() == item['sha256']
+                assert 'file://' not in archive.read('data.json').decode()
+            report['dietPhotoExport'] = {'realNativeZip':True,'dietOnlyWithoutProducts':True,'retainedImageHashMatches':True,'portablePaths':True,'sha256':hashlib.sha256(archive_bytes).hexdigest()}
             # Restart, delete the record through UI; this removes only its private retained photo.
             launch(); tap('^记录$'); tap('^查看食物 Photo snapshot test$', True, 'content-desc')
             tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
@@ -600,14 +647,14 @@ def upload_failures():
         remote = '/sdcard/Pictures/HukangSimple/' + filename
         adb('push', str(original), remote)
         shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
-        time.sleep(2)
+        fixture_date = identify_fixture(original)
         for _ in range(7): swipe(True)
         cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
         before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), original.stem, stage, newest_fixture=True)
+            action = next_picker_action(tree(), original.stem, stage, fixture_date=fixture_date)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break
@@ -617,6 +664,7 @@ def upload_failures():
         shot('android-' + original.stem + '-feedback')
         assert set(shell('find', cache, '-type', 'f', check=False).splitlines()) == before
         assert hashlib.sha256(adb('exec-out', 'cat', remote)).digest() == hashlib.sha256(original.read_bytes()).digest()
+        for _ in range(7): swipe(True)
         require('^从相册选择$', True)
         failures.append({'file':filename,'errorDisplayed':True,'failedWorkRemoved':True,'originalUnchanged':True})
     for _ in range(7): swipe(True)

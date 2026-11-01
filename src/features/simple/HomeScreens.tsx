@@ -477,13 +477,13 @@ export function HomeScreens(p: AppController) {
             />
             <View style={H.photoOption}>
               <View style={H.grow}>
-                <Text style={S.label}>包含包装与营养表照片</Text>
+                <Text style={S.label}>包含食品与饮食照片</Text>
                 <Text style={S.small}>
                   默认不包含。分享前请检查照片中的私人信息。
                 </Text>
               </View>
               <Switch
-                accessibilityLabel="包含包装与营养表照片"
+                accessibilityLabel="包含食品与饮食照片"
                 value={photos}
                 onValueChange={setPhotos}
                 trackColor={{ true: "#B7D8EB", false: C.line }}
@@ -503,8 +503,9 @@ export function HomeScreens(p: AppController) {
               onPress={() => exportData("personal")}
             />
             <Text style={S.small}>
-              包含库存、OCR 和修订。文件在本机生成，不会自动上传；当前尚不支持
-              App 内一键恢复。
+              包含饮食、个人目标、食品、库存、OCR
+              和修订。文件在本机生成，不会自动上传；当前尚不支持 App
+              内一键恢复。
             </Text>
           </Surface>
           <Surface style={H.menuSurface}>

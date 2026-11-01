@@ -43,11 +43,12 @@ class PickerSelectorsTest(unittest.TestCase):
     def test_transient_empty_documents_does_not_send_back(self):
         self.assertIsNone(picker.next_picker_action(root(node(DOCS)), '01-milk', 'browse'))
 
-    def test_modern_picker_requires_explicit_newest_fixture_mode(self):
+    def test_modern_picker_requires_exact_isolated_fixture_date(self):
         tree = root(node(MEDIA, 'Photo taken on Nov 1, 2026, 9:03 AM'))
         self.assertIsNone(picker.next_picker_action(tree, '02-ai-large', 'initial'))
-        self.assertEqual(picker.next_picker_action(tree, '02-ai-large', 'initial', newest_fixture=True)[0], 'fixture')
-        self.assertIsNone(picker.next_picker_action(root(node('com.hukang.china', 'Photo taken on Nov 1, 2026')), '02-ai-large', 'initial', newest_fixture=True))
+        self.assertEqual(picker.next_picker_action(tree, '02-ai-large', 'initial', fixture_date='Nov 1, 2026')[0], 'fixture')
+        self.assertIsNone(picker.next_picker_action(tree, '02-ai-large', 'initial', fixture_date='Jan 2, 2030'))
+        self.assertIsNone(picker.next_picker_action(root(node('com.hukang.china', 'Photo taken on Nov 1, 2026, 9:03 AM')), '02-ai-large', 'initial', fixture_date='Nov 1, 2026'))
 
 
 if __name__ == '__main__':
