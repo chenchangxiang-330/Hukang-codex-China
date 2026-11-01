@@ -2,7 +2,7 @@
 import hashlib,json,re,shlex,sqlite3,struct,subprocess,time,xml.etree.ElementTree as ET,zipfile,zlib
 from pathlib import Path
 from urllib.parse import unquote,urlparse
-from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top,keyboard_top
+from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top,keyboard_top,NUTRIENTS
 from archive_checks import jpeg_has_exif
 from picker_selectors import next_picker_action,MEDIA,DOCUMENTS
 from emulator_setup import ensure_root
@@ -40,7 +40,7 @@ def find(pattern,clazz=None,root=None):
  return None
 def swipe(up=False):shell('input','swipe','1030','420' if up else '1430','1030','1430' if up else '420','300');time.sleep(.4)
 def short_swipe(up=False):shell('input','swipe','1000','650' if up else '1350','1000','1050' if up else '950','300');time.sleep(.5)
-def tap(pattern,scroll=False,clazz=None):
+def tap(pattern,scroll=False,clazz=None,nutrient=None):
  for _ in range(16 if scroll else 8):
   root=tree();f=find(pattern,clazz,root)
   if f:
@@ -48,7 +48,7 @@ def tap(pattern,scroll=False,clazz=None):
    if scroll and find('^今日$',root=root) and find('^记录$',root=root):
     overlays=[find('^拍一拍$',root=root),find('^今日$',root=root)];ceiling=min(x[1][1] for x in overlays if x)
     if a[3]>ceiling-12:swipe();continue
-   if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe();continue
+   if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe(a[1]<300);continue
    if clazz=='android.widget.EditText':
     # Image preparation and IME reflow can move fields after a dump. Never tap
     # stale geometry that could now belong to Save draft or another action.
@@ -56,7 +56,8 @@ def tap(pattern,scroll=False,clazz=None):
     if not fresh or fresh[1]!=a:continue
     n,a=fresh
    shell('input','tap',str((a[0]+a[2])//2),str((a[1]+a[3])//2));steps.append({'tap':pattern,'node':n.attrib});time.sleep(.6);return
-  if scroll:swipe()
+  if scroll and nutrient:short_swipe(nutrient_scroll_towards_top(root,nutrient))
+  elif scroll:swipe()
   else:time.sleep(1)
  raise RuntimeError('UI not found: '+pattern)
 def dismiss_keyboard():
@@ -73,7 +74,8 @@ def dismiss_keyboard():
 def field(label,value):
  pattern='^'+re.escape(label)+'$'
  dismiss_keyboard()
- tap(pattern,True,'android.widget.EditText');previous=None
+ nutrient=next((name for name in NUTRIENTS if label in (name+'含量',name+' NRV%')),None)
+ tap(pattern,True,'android.widget.EditText',nutrient);previous=None
  for _ in range(6):
   f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
   (O/'focused-input-window.txt').write_text(window)
