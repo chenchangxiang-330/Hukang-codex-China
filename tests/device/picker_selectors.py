@@ -52,7 +52,7 @@ def next_picker_action(root, stem, stage, isolated_media=False):
             # Caller has independently verified that MediaStore contains only
             # this exact fixture (name, bytes and path). Modern Photo Picker
             # omits filenames and doesn't expose arbitrary filesystem albums.
-            photos = [n for n in media if re.match(r'^Photo taken on ', n.get('content-desc', ''))]
+            photos = [n for n in media if re.match(r'^(?:Photo|GIF) taken on ', n.get('content-desc', ''))]
             if len(photos) == 1: return 'fixture', photos[0]
             return None
         browse = matching(media, r'Browse(?:…|\.\.\.)?|浏览(?:…|\.\.\.)?')
