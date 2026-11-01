@@ -479,7 +479,7 @@ def diet_closed_loop():
     c.close()
     from datetime import date as calendar_date, timedelta
     moved_date = (calendar_date.fromisoformat(e['date']) - timedelta(days=1)).isoformat()
-    launch(); require('300', True); shot('android-isolated-today-diet')
+    configure(320, '1.5'); require('300', True); shot('android-isolated-today-diet-320-large-font')
     tap('^记录$'); tap('^查看食物 Native meal test$', True, 'content-desc')
     enter('食物名称', 'Edited native meal')
     enter('修改实际食用份量（份）', '1')
