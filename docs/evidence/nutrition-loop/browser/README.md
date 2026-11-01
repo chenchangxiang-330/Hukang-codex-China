@@ -1,6 +1,6 @@
 # 浏览器证据：隔离的模拟服务和 UI 测试
 
-来源：最终运行时源码 `066e8a639c2d1da8b062f22cfa08f57c64bbb302`，CI 检查 [41292775841](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41292775841)。
+来源：最终运行时源码 `a7ae6b1aec1751578baa1acafd297e31369fa65d`，CI 检查 [41296910259](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41296910259)。
 
 以下是共享 React Native 页面在 Chrome 中渲染的浏览器截图，**不是 Android 截图，也不是真实服务商实测**。
 
