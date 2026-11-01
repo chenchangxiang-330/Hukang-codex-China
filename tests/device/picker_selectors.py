@@ -54,6 +54,7 @@ def next_picker_action(root, stem, stage, fixture_date=None):
             target = matching(media, r'Photo taken on ' + re.escape(fixture_date) + r',.*')
             if target is not None:
                 return 'fixture', target
+            return None  # Wait for MediaStore sync; do not open the unrelated cloud-media menu.
         browse = matching(media, r'Browse(?:…|\.\.\.)?|浏览(?:…|\.\.\.)?')
         if browse is not None and stage != 'browse':
             return 'browse', browse

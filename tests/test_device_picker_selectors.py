@@ -48,6 +48,7 @@ class PickerSelectorsTest(unittest.TestCase):
         self.assertIsNone(picker.next_picker_action(tree, '02-ai-large', 'initial'))
         self.assertEqual(picker.next_picker_action(tree, '02-ai-large', 'initial', fixture_date='Nov 1, 2026')[0], 'fixture')
         self.assertIsNone(picker.next_picker_action(tree, '02-ai-large', 'initial', fixture_date='Jan 2, 2030'))
+        self.assertIsNone(picker.next_picker_action(root(node(MEDIA, 'More options')), '02-ai-large', 'initial', fixture_date='Jan 2, 2030'))
         self.assertIsNone(picker.next_picker_action(root(node('com.hukang.china', 'Photo taken on Nov 1, 2026, 9:03 AM')), '02-ai-large', 'initial', fixture_date='Nov 1, 2026'))
 
 
