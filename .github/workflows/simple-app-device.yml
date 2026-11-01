@@ -17,7 +17,7 @@ on:
         required: true
         type: choice
         default: all
-        options: [all, ui, offline, images]
+        options: [all, ui, offline, images, flows]
 permissions:
   contents: read
   actions: read
@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: ${{ fromJSON(inputs.suite == 'ui' && '["ui"]' || inputs.suite == 'offline' && '["offline"]' || inputs.suite == 'images' && '["images"]' || '["ui","offline"]') }}
+        suite: ${{ fromJSON(inputs.suite == 'ui' && '["ui"]' || inputs.suite == 'offline' && '["offline"]' || inputs.suite == 'images' && '["images"]' || inputs.suite == 'flows' && '["flows"]' || '["ui","offline","images"]') }}
     env:
       HUKANG_DEVICE_SUITE: ${{ matrix.suite }}
     steps:

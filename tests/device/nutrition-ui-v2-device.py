@@ -355,7 +355,7 @@ def camera():
     require('未获得相机权限', True)
     shot('android-camera-permission-denied')
     # Return to the top so the same photo control is visible again.
-    swipe(True)
+    for _ in range(7): swipe(True)
     tap('^拍照$', True)
     allow = require(r':id/permission_allow_foreground_only_button$', attribute='resource-id')
     press(allow)
@@ -364,20 +364,22 @@ def camera():
     press(shutter)
     done = require(r':id/done_button$', attribute='resource-id', attempts=15)
     press(done)
-    require('餐食照片预览', attempts=15)
+    for _ in range(7): swipe(True)
+    require('餐食照片预览', True, attempts=15)
     shot('android-captured-meal-original-photo')
     tap('^估算这餐营养$', True)
     require('请填写这一餐的文字描述', True)
     shot('android-ai-text-required-feedback')
     # Explicit AI disclosure adds content; return to the mode tabs before tapping.
-    for _ in range(3):
+    for _ in range(7):
         swipe(True)
     tap('^包装食品$')
     shot('android-capture-package-empty')
     tap('^拍照$', True)
     press(require(r':id/shutter_button$', attribute='resource-id', attempts=20))
     press(require(r':id/done_button$', attribute='resource-id', attempts=15))
-    require('包装正面照片预览', attempts=15)
+    for _ in range(7): swipe(True)
+    require('包装正面照片预览', True, attempts=15)
     shot('android-captured-package-original-photo')
     tap('^扫描 / 输入条码$', True)
     require('对准包装条形码')
@@ -427,11 +429,15 @@ def enter(label, value):
     for _ in range(7):
         swipe(True)
     tap('^' + re.escape(label) + '$', True, 'content-desc')
+    field = require('^' + re.escape(label) + '$', attribute='content-desc')
+    assert field.get('focused') == 'true', (label, field.attrib)
     shell('input', 'keyevent', 'KEYCODE_MOVE_END')
     shell('input', 'keyevent', *(['KEYCODE_DEL'] * 80))
     if value:
         shell('input', 'text', value.replace(' ', '%s'))
     time.sleep(.5)
+    field = require('^' + re.escape(label) + '$', attribute='content-desc')
+    assert field.get('text') == value, (label, value, field.attrib)
     if keyboard_top(shell('dumpsys', 'window')) is not None:
         shell('input', 'keyevent', 'KEYCODE_BACK')
         time.sleep(.5)
@@ -490,7 +496,10 @@ def diet_closed_loop():
     tap('^返回饮食记录$', True)
     # Returning deliberately restores the tapped food's position; summary is above it.
     for _ in range(7): swipe(True)
-    tap('^今日营养摘要$', True); require('600', True)
+    tap('^今日营养摘要$', True)
+    shot('android-nutrition-after-portion-open')
+    for _ in range(7): swipe(True)
+    require('600', True)
     shot('android-isolated-nutrition-diet')
     tap('^返回$'); tap('^查看食物 Edited native meal$', True, 'content-desc')
     enter('修改记录日期（YYYY-MM-DD）', moved_date)
@@ -508,12 +517,20 @@ def diet_closed_loop():
 
 
 def identify_fixture(file):
+    # The emulator is disposable, but do not delete arbitrary gallery media.
+    # Retire ONLY prior synthetic fixtures this harness itself registered,
+    # after the app's original-preservation assertions. Host originals remain.
+    uri = 'content://media/external/images/media'
+    for prior in report.get('ownedMediaFixtures', []):
+        if not prior.get('retiredByTestHarness'):
+            shell('content', 'delete', '--uri', uri + '/' + prior['id'])
+            shell('rm', '-f', prior['path'])
+            prior['retiredByTestHarness'] = True
     album = 'HukangAi' + file.name[:2]
     remote = '/sdcard/Pictures/' + album + '/' + file.name
     shell('mkdir', '-p', '/sdcard/Pictures/' + album)
     adb('push', str(file), remote)
     shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
-    uri = 'content://media/external/images/media'
     where = "_display_name='" + file.name + "'"
     for _ in range(15):
         row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:bucket_display_name', '--where', where)
@@ -522,7 +539,28 @@ def identify_fixture(file):
         time.sleep(1)
     else: raise AssertionError('MediaStore has not indexed exact fixture: ' + row)
     report.setdefault('fixtureMediaRows', []).append(row)
-    return album, remote
+    media_id = re.search(r'_id=(\d+)', row).group(1)
+    all_rows = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:_data')
+    actual_rows = [r for r in all_rows.splitlines() if r.startswith('Row:')]
+    assert len(actual_rows) == 1 and file.name in all_rows and str(file.stat().st_size) in all_rows and album in all_rows, all_rows
+    report.setdefault('ownedMediaFixtures', []).append({'id':media_id,'path':remote,'file':file.name,'bytes':file.stat().st_size,'onlyMediaStoreImage':True})
+    return remote
+
+
+def select_isolated_fixture(stem):
+    from picker_selectors import next_picker_action
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        root = tree()
+        action = next_picker_action(root, stem, 'initial', isolated_media=True)
+        if action:
+            # Do not take another UI dump between reading geometry and tapping:
+            # the system sheet can expand and invalidate the earlier bounds.
+            (OUT / (stem + '-picker.xml')).write_bytes(ET.tostring(root, encoding='utf-8'))
+            press(action[1])
+            return
+        time.sleep(.5)
+    raise AssertionError('The verified single image was not selectable: ' + stem)
 
 
 def upload_photos():
@@ -544,21 +582,11 @@ def upload_photos():
     results = []
     for stem in ['02-ai-large', '03-ai-transparent']:
         original_file = next(fixtures.glob(stem + '.*'))
-        fixture_album, original_path = identify_fixture(original_file)
+        original_path = identify_fixture(original_file)
         for _ in range(7): swipe(True)
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
-        stage = 'initial'; deadline = time.monotonic() + 90; picker_scrolls = 0
-        while time.monotonic() < deadline:
-            action = next_picker_action(tree(), stem, stage, fixture_album=fixture_album)
-            if action:
-                stage, node = action
-                shot(stem + '-picker-' + stage); press(node)
-                if stage == 'fixture': break
-            elif stage in ('fixture_albums', 'fixture_folder') and picker_scrolls < 6:
-                swipe(); picker_scrolls += 1
-            else: time.sleep(.5)
-        else: raise AssertionError('Image fixture not selectable: ' + stem)
+        select_isolated_fixture(stem)
         require('上传副本已在本机准备', True, attempts=18)
         for _ in range(7): swipe(True)
         require(str(original_file.stat().st_size), True)
@@ -644,22 +672,12 @@ def upload_failures():
     for filename, expected in [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码'),
                                ('05-ai-oversize.jpg', '原图超过本机 50 MB')]:
         original = fixtures / filename
-        fixture_album, remote = identify_fixture(original)
+        remote = identify_fixture(original)
         for _ in range(7): swipe(True)
         cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
         before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
         tap('^从相册选择$', True)
-        stage = 'initial'; deadline = time.monotonic() + 90; picker_scrolls = 0
-        while time.monotonic() < deadline:
-            action = next_picker_action(tree(), original.stem, stage, fixture_album=fixture_album)
-            if action:
-                stage, node = action
-                shot(original.stem + '-picker-' + stage); press(node)
-                if stage == 'fixture': break
-            elif stage in ('fixture_albums', 'fixture_folder') and picker_scrolls < 6:
-                swipe(); picker_scrolls += 1
-            else: time.sleep(.5)
-        else: raise AssertionError('Failure fixture not selectable: ' + filename)
+        select_isolated_fixture(original.stem)
         require(expected, True, attempts=18)
         shot('android-' + original.stem + '-feedback')
         assert set(shell('find', cache, '-type', 'f', check=False).splitlines()) == before
@@ -694,6 +712,10 @@ try:
                          ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
     if os.environ.get('HUKANG_DEVICE_SUITE') == 'images':
         cases = [('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
+    elif os.environ.get('HUKANG_DEVICE_SUITE') == 'flows':
+        cases = [('camera-permissions', camera), ('real-diet-local-storage', diet_closed_loop)]
+    elif os.environ.get('HUKANG_DEVICE_SUITE') == 'ui':
+        cases = cases[:-2]
     for name, action in cases:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'

@@ -43,15 +43,13 @@ class PickerSelectorsTest(unittest.TestCase):
     def test_transient_empty_documents_does_not_send_back(self):
         self.assertIsNone(picker.next_picker_action(root(node(DOCS)), '01-milk', 'browse'))
 
-    def test_modern_picker_requires_isolated_album_and_single_photo(self):
+    def test_modern_picker_requires_verified_isolation_and_single_photo(self):
         tree = root(node(MEDIA, 'Photo taken on Nov 1, 2026, 9:03 AM'))
         self.assertIsNone(picker.next_picker_action(tree, '02-ai-large', 'initial'))
-        self.assertEqual(picker.next_picker_action(root(node(MEDIA, 'Albums')), '02-ai-large', 'initial', fixture_album='HukangAi02')[0], 'fixture_albums')
-        self.assertEqual(picker.next_picker_action(root(node(MEDIA, text='HukangAi02')), '02-ai-large', 'fixture_albums', fixture_album='HukangAi02')[0], 'fixture_folder')
-        self.assertEqual(picker.next_picker_action(tree, '02-ai-large', 'fixture_folder', fixture_album='HukangAi02')[0], 'fixture')
-        self.assertIsNone(picker.next_picker_action(root(node(MEDIA, 'More options')), '02-ai-large', 'initial', fixture_album='HukangAi02'))
-        self.assertIsNone(picker.next_picker_action(root(node('com.hukang.china', 'Photo taken on Nov 1, 2026, 9:03 AM')), '02-ai-large', 'fixture_folder', fixture_album='HukangAi02'))
-        self.assertIsNone(picker.next_picker_action(root(node(MEDIA, 'Photo taken on Nov 1, 2026, 9:03 AM'), node(MEDIA, 'Photo taken on Nov 1, 2026, 9:04 AM')), '02-ai-large', 'fixture_folder', fixture_album='HukangAi02'))
+        self.assertEqual(picker.next_picker_action(tree, '02-ai-large', 'initial', isolated_media=True)[0], 'fixture')
+        self.assertIsNone(picker.next_picker_action(root(node(MEDIA, 'More options')), '02-ai-large', 'initial', isolated_media=True))
+        self.assertIsNone(picker.next_picker_action(root(node('com.hukang.china', 'Photo taken on Nov 1, 2026, 9:03 AM')), '02-ai-large', 'initial', isolated_media=True))
+        self.assertIsNone(picker.next_picker_action(root(node(MEDIA, 'Photo taken on Nov 1, 2026, 9:03 AM'), node(MEDIA, 'Photo taken on Nov 1, 2026, 9:04 AM')), '02-ai-large', 'initial', isolated_media=True))
 
 
 if __name__ == '__main__':

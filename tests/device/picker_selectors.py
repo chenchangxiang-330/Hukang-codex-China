@@ -18,7 +18,7 @@ def matching(nodes, pattern):
     return next((node for node in nodes if any(re.fullmatch(pattern, node.get(key, '')) for key in ('text', 'content-desc'))), None)
 
 
-def next_picker_action(root, stem, stage, fixture_album=None):
+def next_picker_action(root, stem, stage, isolated_media=False):
     """Return (action, node) for the known media→DocumentsUI flow or wait.
 
     Each navigation action runs once per picker invocation. DocumentsUI's
@@ -48,18 +48,12 @@ def next_picker_action(root, stem, stage, fixture_album=None):
         target = matching(media, filename)
         if target is not None:
             return 'fixture', target
-        if fixture_album:
-            # One file per isolated album avoids relying on mutable metadata
-            # or filename labels omitted by the modern system picker.
-            if stage == 'initial':
-                albums = matching(media, r'Albums|相册')
-                if albums is not None: return 'fixture_albums', albums
-            if stage == 'fixture_albums':
-                album = matching(media, re.escape(fixture_album) + r'(?:[,，].*)?')
-                if album is not None: return 'fixture_folder', album
-            if stage == 'fixture_folder':
-                photos = [n for n in media if re.match(r'^Photo taken on ', n.get('content-desc', ''))]
-                if len(photos) == 1: return 'fixture', photos[0]
+        if isolated_media:
+            # Caller has independently verified that MediaStore contains only
+            # this exact fixture (name, bytes and path). Modern Photo Picker
+            # omits filenames and doesn't expose arbitrary filesystem albums.
+            photos = [n for n in media if re.match(r'^Photo taken on ', n.get('content-desc', ''))]
+            if len(photos) == 1: return 'fixture', photos[0]
             return None
         browse = matching(media, r'Browse(?:…|\.\.\.)?|浏览(?:…|\.\.\.)?')
         if browse is not None and stage != 'browse':
