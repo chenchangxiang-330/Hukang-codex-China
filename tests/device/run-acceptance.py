@@ -5,9 +5,10 @@ import subprocess
 from pathlib import Path
 
 results = {}
-scripts = {'ui': ['nutrition-ui-v2-device.py'], 'images': ['nutrition-ui-v2-device.py'], 'flows': ['nutrition-ui-v2-device.py'], 'offline': ['simple-device.py'],
-           'all': ['nutrition-ui-v2-device.py', 'simple-device.py']}
-for script in scripts[os.environ.get('HUKANG_DEVICE_SUITE', 'all')]:
+suite = os.environ.get('HUKANG_DEVICE_SUITE', 'ui')
+scripts = {'ui': ['nutrition-ui-v2-device.py'], 'flows': ['nutrition-ui-v2-device.py'], 'offline': ['simple-device.py'],
+           **{name:['nutrition-ui-v2-device.py'] for name in ['image-large','image-transparent','image-gif','image-oversize']}}
+for script in scripts[suite]:
     results[script] = subprocess.run(['python3', str(Path(__file__).with_name(script))]).returncode
     print(json.dumps(results), flush=True)
 Path('artifacts/device/suite-results.json').write_text(json.dumps(results, indent=2))

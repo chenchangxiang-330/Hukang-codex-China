@@ -517,15 +517,11 @@ def diet_closed_loop():
 
 
 def identify_fixture(file):
-    # The emulator is disposable, but do not delete arbitrary gallery media.
-    # Retire ONLY prior synthetic fixtures this harness itself registered,
-    # after the app's original-preservation assertions. Host originals remain.
+    # Modern Photo Picker doesn't expose filenames. Each image case gets its
+    # own fresh emulator, and the exact sole MediaStore row is checked first.
+    # Do not delete or rewrite gallery rows to influence picker ordering.
+    assert not report.get('ownedMediaFixtures'), 'One image fixture per isolated emulator'
     uri = 'content://media/external/images/media'
-    for prior in report.get('ownedMediaFixtures', []):
-        if not prior.get('retiredByTestHarness'):
-            shell('content', 'delete', '--uri', uri + '/' + prior['id'])
-            shell('rm', '-f', prior['path'])
-            prior['retiredByTestHarness'] = True
     album = 'HukangAi' + file.name[:2]
     remote = '/sdcard/Pictures/' + album + '/' + file.name
     shell('mkdir', '-p', '/sdcard/Pictures/' + album)
@@ -580,7 +576,8 @@ def upload_photos():
     shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
     tap('^拍一拍$')
     results = []
-    for stem in ['02-ai-large', '03-ai-transparent']:
+    stems = ['02-ai-large'] if os.environ['HUKANG_DEVICE_SUITE'] == 'image-large' else ['03-ai-transparent']
+    for stem in stems:
         original_file = next(fixtures.glob(stem + '.*'))
         original_path = identify_fixture(original_file)
         for _ in range(7): swipe(True)
@@ -604,6 +601,8 @@ def upload_photos():
             else: assert min(image.getpixel((0, 0))) >= 250
             results.append({'source': stem, 'sourceBytes': len(original_bytes), 'originalSha256': hashlib.sha256(original_bytes).hexdigest(), 'originalUnchanged': True, 'size': image.size, 'bytes': len(payload), 'exifRemoved': True, 'sha256': hashlib.sha256(payload).hexdigest()})
         if stem == '02-ai-large':
+            for _ in range(7): swipe(True)
+            shot('android-' + stem + '-preview')
             tap('^手动记录这一餐$', True)
             enter('食物名称', 'Photo snapshot test')
             tap('我已确认日期、餐次和实际食用份量', True)
@@ -644,6 +643,7 @@ def upload_photos():
             launch(); tap('^记录$'); tap('^查看食物 Photo snapshot test$', True, 'content-desc')
             tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
             assert saved_path not in shell('find', f'/data/user/0/{PKG}/files', '-name', 'photo.source', check=False)
+            assert hashlib.sha256(adb('exec-out', 'cat', original_path)).digest() == hashlib.sha256(original_file.read_bytes()).digest()
             report['nutritionRecordsInserted'] += 1
             report['savedPhotoLifecycle'] = {'separatePersistentCopy':True,'copyHashMatches':True,'recordDeletionRemovesOnlyOwnedPhoto':True}
             tap('^拍一拍$')
@@ -669,8 +669,8 @@ def upload_failures():
         f.truncate(50_000_001)
     shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
     failures = []
-    for filename, expected in [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码'),
-                               ('05-ai-oversize.jpg', '原图超过本机 50 MB')]:
+    cases = [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码')] if os.environ['HUKANG_DEVICE_SUITE'] == 'image-gif' else [('05-ai-oversize.jpg', '原图超过本机 50 MB')]
+    for filename, expected in cases:
         original = fixtures / filename
         remote = identify_fixture(original)
         for _ in range(7): swipe(True)
@@ -709,13 +709,13 @@ try:
     cases = [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
                          ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
                          ('keyboard-state', keyboard), ('camera-permissions', camera),
-                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
-    if os.environ.get('HUKANG_DEVICE_SUITE') == 'images':
-        cases = [('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
+                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop)]
+    if os.environ.get('HUKANG_DEVICE_SUITE') in ('image-large', 'image-transparent'):
+        cases = [('local-upload-images', upload_photos)]
+    elif os.environ.get('HUKANG_DEVICE_SUITE') in ('image-gif', 'image-oversize'):
+        cases = [('image-errors-and-picker-cancel', upload_failures)]
     elif os.environ.get('HUKANG_DEVICE_SUITE') == 'flows':
         cases = [('camera-permissions', camera), ('real-diet-local-storage', diet_closed_loop)]
-    elif os.environ.get('HUKANG_DEVICE_SUITE') == 'ui':
-        cases = cases[:-2]
     for name, action in cases:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'
