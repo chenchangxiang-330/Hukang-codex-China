@@ -1,5 +1,7 @@
 # 浏览器证据：隔离的模拟服务和 UI 测试
 
+来源：最终运行时源码 `066e8a639c2d1da8b062f22cfa08f57c64bbb302`，CI 检查 [41292775841](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41292775841)。
+
 以下是共享 React Native 页面在 Chrome 中渲染的浏览器截图，**不是 Android 截图，也不是真实服务商实测**。
 
 - `browser-confirmed-meal-nutrition.png`：模拟模型回复，经人工确认、份量调整后显示同一份营养汇总。浏览器存储为隔离内存适配器；真正 SQLite 另由 Node 与 Android 验收验证。
