@@ -49,6 +49,13 @@ export type Food = {
   packageSize?: string | undefined;
   nutrients: Partial<Record<Nutrient, Fact>>;
   rawEnergy?: { value: string; unit: string } | undefined;
+  provenance?: {
+    kind: "ai" | "label" | "manual";
+    model?: string;
+    ingredients?: readonly string[];
+    uncertainties?: readonly string[];
+    nameEdited?: boolean;
+  };
 };
 export const meals = {
   breakfast: "早餐",
@@ -64,6 +71,8 @@ export type Entry = {
   food: Food;
   amount: number;
   unit: PortionUnit;
+  confirmedAt?: string;
+  updatedAt?: string;
 };
 export type Targets = {
   energy?: number;
@@ -79,6 +88,7 @@ export type Snapshot = {
   entries: readonly Entry[];
   targets: Targets;
   message?: string;
+  saving?: boolean;
 };
 export type MealRequest = {
   imageUri: string;
@@ -96,35 +106,20 @@ export type MealEstimate = {
     imageSent: boolean;
   };
 };
-/** No database, inventory, or model access belongs in a nutrition presentation adapter. */
+/** One shared store; screens never write inventory or call SQL directly. */
 export interface NutritionAdapter {
   readonly kind: "production" | "demo";
   getSnapshot(): Snapshot;
   subscribe(listener: () => void): () => void;
-  updatePortion(id: string, amount: number): void;
-  record(entry: Entry, operationId: string): void;
-  configureTargets(targets: Targets): void;
+  updatePortion(id: string, amount: number): void | Promise<void>;
+  updateEntry?(entry: Entry): void | Promise<void>;
+  deleteEntry?(id: string): void | Promise<void>;
+  record(entry: Entry, operationId: string): void | Promise<void>;
+  configureTargets(targets: Targets): void | Promise<void>;
+  reload?(): Promise<void>;
   demoEstimateMeal?(request: MealRequest): Promise<MealEstimate>;
   demoPackage?(): Food;
 }
-const unavailable: Snapshot = {
-  status: "unavailable",
-  entries: [],
-  targets: {},
-};
-const notConnected = () => {
-  throw new Error("饮食存储尚未接入，本次没有保存真实记录。");
-};
-export const productionNutrition: NutritionAdapter = {
-  kind: "production",
-  getSnapshot: () => unavailable,
-  subscribe: () => () => {},
-  updatePortion: notConnected,
-  record: notConnected,
-  configureTargets: () => {
-    throw new Error("个人目标保存尚未接入，本次没有保存。");
-  },
-};
 export type Total = {
   value: number | null;
   range?: readonly [number, number];
@@ -354,5 +349,6 @@ export function foodFromRecord(record: FoodScanRecord, image?: string): Food {
     packageSize: record.review.specification,
     nutrients,
     rawEnergy: energy ? { value: energy.amount, unit: energy.unit } : undefined,
+    provenance: { kind: "label" },
   };
 }

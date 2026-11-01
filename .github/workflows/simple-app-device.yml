@@ -83,6 +83,8 @@ jobs:
         run: |
           test -c /dev/kvm
           sudo chmod a+rw /dev/kvm
+      - name: Install isolated image test support
+        run: python3 -m pip install Pillow==11.3.0
       - name: Execute actual installed ARM64 APK offline
         uses: ReactiveCircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed
         with:

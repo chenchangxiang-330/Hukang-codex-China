@@ -79,7 +79,14 @@ await page.route("**/*", async (route) => {
                 : completion(
                     body.messages.length === 1
                       ? "OK · 模拟服务"
-                      : JSON.stringify(meal),
+                      : body.messages[0]?.content.includes("包装正面文字助手")
+                        ? JSON.stringify({
+                            candidates: [
+                              { name: "包装候选", brand: "模拟品牌" },
+                            ],
+                            uncertainties: ["模拟服务结果，待核对"],
+                          })
+                        : JSON.stringify(meal),
                     body.model,
                   ),
             ),
@@ -133,7 +140,7 @@ try {
   expect(requests.at(-1).body.model).toBe("model-a");
   expect(requests.at(-1).body.messages[1].content).toContain("半份面条");
   await expect(page.getByText(/仅基于文字描述，未识别照片/)).toBeVisible();
-  await expect(button("饮食存储未接入 · 仅预览")).toBeDisabled();
+  await expect(button("已食用 · 确认记录")).toBeDisabled();
   await page
     .getByText("餐食估算 · AI 估算", { exact: true })
     .scrollIntoViewIfNeeded();
@@ -141,7 +148,40 @@ try {
   await button("0.5 × 基准份量").click();
   await expect(page.getByText(/200–300/).first()).toBeVisible();
   report.checks.push(
-    "Meal uses settings config; text-only preview, unknown sodium, half-portion recomputation; no production storage action.",
+    "Meal uses settings config; text-only preview, unknown sodium and half-portion recomputation before confirmation.",
+  );
+  await field("食物名称").fill("浏览器确认餐食");
+  await page
+    .getByRole("checkbox", {
+      name: "我已确认日期、餐次和实际食用份量",
+      exact: true,
+    })
+    .click();
+  await button("已食用 · 确认记录").click();
+  await expect(
+    page.getByText(/已保存饮食记录，今天、记录与营养详情已同步/),
+  ).toBeVisible();
+  await expect(button("已保存这次食用，请勿重复提交")).toBeDisabled();
+  await button("返回").click();
+  await page.getByRole("tab", { name: "记录", exact: true }).click();
+  await button("查看食物 浏览器确认餐食").click();
+  await field("修改实际食用份量（份）").fill("1");
+  await button("确认调整份量").click();
+  await expect(page.getByText(/饮食记录已更新/)).toBeVisible();
+  await button("返回饮食记录").click();
+  await button("今日营养摘要").click();
+  await expect(page.getByText(/400–600/).first()).toBeVisible();
+  await screenshot("browser-confirmed-meal-nutrition");
+  await button("返回").click();
+  await button("查看食物 浏览器确认餐食").click();
+  await button("删除这条饮食记录").click();
+  await button("保留记录").click();
+  await button("删除这条饮食记录").click();
+  await button("确定删除这次食用").click();
+  await expect(button("查看食物 浏览器确认餐食")).toHaveCount(0);
+  await button("拍一拍").click();
+  report.checks.push(
+    "Isolated browser store: explicit confirm, duplicate guard, record editor, shared nutrition summary and confirmed deletion; no user database touched.",
   );
   await button("配置 AI 服务").click();
   await expect(field("API Key")).toHaveValue("");
@@ -152,7 +192,7 @@ try {
   await expect(page.getByText(/model-b。仅在当前页面预览/)).toBeVisible();
   expect(requests.at(-1).body.model).toBe("model-b");
   await button("从相册选择").click();
-  await expect(page.getByText(/照片仅保留/)).toBeVisible();
+  await expect(page.getByText(/上传副本已在本机准备/)).toBeVisible();
   await button("估算这餐营养").click();
   await expect(page.getByText(/未识别照片/)).toBeVisible();
   expect(typeof requests.at(-1).body.messages[1].content).toBe("string");
@@ -216,8 +256,28 @@ try {
   report.checks.push(
     "Known official vision model sends image only after opt-in using documented multimodal payload (provider response mocked).",
   );
+  await page.getByRole("tab", { name: "包装食品", exact: true }).click();
+  await button("从相册选择").click();
+  await button("确认发送包装照片").click();
+  await expect(
+    page.getByText("AI 推测 · 待人工核对", { exact: true }),
+  ).toBeVisible();
+  await expect(button("核对后在食品库查找候选")).toBeDisabled();
+  await field("核对候选名称").fill("已核对的候选");
+  await page
+    .getByRole("checkbox", { name: "已核对照片中的名称和品牌", exact: true })
+    .click();
+  await screenshot("browser-package-candidate-mock");
+  await button("核对后在食品库查找候选").click();
+  await expect(
+    page.getByLabel("搜索食品名称或品牌", { exact: true }),
+  ).toHaveValue("已核对的候选");
+  report.checks.push(
+    "Package image uses separate prompt/schema; human-confirmed name becomes a library search, never an automatic match or nutrition fact.",
+  );
+  await page.getByRole("tab", { name: "我的", exact: true }).click();
+  await page.getByRole("button", { name: /^AI 服务设置/ }).click();
   await page.setViewportSize({ width: 320, height: 740 });
-  await button("配置 AI 服务").click();
   await field("API Base URL").scrollIntoViewIfNeeded();
   await screenshot("browser-ai-settings-320");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(

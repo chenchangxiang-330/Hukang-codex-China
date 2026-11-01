@@ -8,9 +8,6 @@ const { chatEndpoint, supportsMealImage } = await import(
 const { parseMeal, requestBody, fetchChatTransport } = await import(
   "../src/services/ai/protocol.ts"
 );
-const { productionNutrition } = await import(
-  "../src/features/nutrition-v2/model.ts"
-);
 const config = {
   provider: "custom",
   baseUrl: "https://mock.example/v1",
@@ -124,7 +121,7 @@ test("connection test is a minimal text request; meal reuses the same session co
   assert.equal(result.food.nutrients.fiber.status, "unknown");
   assert.deepEqual(result.food.nutrients.energy.range, [400, 600]);
   assert.equal(result.food.nutrients.protein.status, "estimated");
-  assert.deepEqual(productionNutrition.getSnapshot().entries, []);
+  assert.equal(result.food.provenance.kind, "ai");
 });
 test("provider/model changes invalidate consent and result; destination changes discard old credentials", async () => {
   const seen = [];
@@ -365,4 +362,91 @@ test("browser transport posts once with auth, blocks redirects and does not send
   } finally {
     global.fetch = original;
   }
+});
+
+test("package uses separate schema and prompt, explicit image request and current shared configuration", async () => {
+  const requests = [];
+  const s = new AiService(
+    async (r) => {
+      requests.push(r);
+      return {
+        url: r.endpoint,
+        status: 200,
+        body: completion(
+          JSON.stringify({
+            candidates: [{ name: "可见名称", brand: "可见品牌" }],
+            uncertainties: ["未确认规格"],
+          }),
+        ),
+      };
+    },
+    async () => ({ base64: "/9j/AA==", mime: "image/jpeg" }),
+  );
+  s.update({
+    provider: "deepseek",
+    baseUrl: "https://api.deepseek.com",
+    model: "deepseek-flash",
+    apiKey: "only-a-test-key",
+  });
+  s.consent(true);
+  const result = await s.identifyPackage("file:///upload.jpg");
+  assert.equal(result.candidates[0].name, "可见名称");
+  const body = JSON.parse(requests[0].body);
+  assert.match(body.messages[0].content, /禁止编造条码/);
+  assert.equal(body.messages[1].content[1].type, "image_url");
+  assert(!JSON.stringify(result).includes("only-a-test-key"));
+  s.clear();
+  await assert.rejects(
+    s.identifyPackage("file:///upload.jpg"),
+    code("configuration"),
+  );
+  assert.equal(requests.length, 1);
+});
+test("packaging rejects barcode or nutrition hallucinations and malformed candidates", async () => {
+  const { parsePackage } = await import("../src/services/ai/protocol.ts");
+  for (const data of [
+    { candidates: [], uncertainties: [], barcode: "123" },
+    {
+      candidates: [{ name: "Food", brand: "", nutrients: { energy: 1 } }],
+      uncertainties: [],
+    },
+    { candidates: [{ name: "", brand: "" }], uncertainties: [] },
+  ])
+    assert.throws(
+      () => parsePackage(JSON.stringify(data), "m"),
+      code("format"),
+    );
+  assert.deepEqual(
+    parsePackage('{"candidates":[],"uncertainties":["无法判断"]}', "m")
+      .candidates,
+    [],
+  );
+});
+test("4,000,000-byte input and UTF-8 request limits are exact, ranges carry no conflicting point", async () => {
+  const { validateImage, requestByteLength } = await import(
+    "../src/services/ai/protocol.ts"
+  );
+  validateImage({
+    base64: Buffer.alloc(4_000_000).toString("base64"),
+    mime: "image/jpeg",
+  });
+  assert.throws(
+    () =>
+      validateImage({
+        base64: Buffer.alloc(4_000_001).toString("base64"),
+        mime: "image/jpeg",
+      }),
+    code("image_invalid"),
+  );
+  for (const v of ["中文😀", "a", ""])
+    assert.equal(requestByteLength(v), Buffer.byteLength(v));
+  const value = parseMeal(
+    JSON.stringify({
+      ...meal,
+      nutrients: { energy: { value: 450, range: [400, 600] } },
+    }),
+    "AI",
+    undefined,
+  );
+  assert.equal(value.food.nutrients.energy.value, null);
 });

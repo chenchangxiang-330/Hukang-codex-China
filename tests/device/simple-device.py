@@ -300,6 +300,21 @@ try:
  report['sameApkReinstall']={'result':reinstall.strip(),'databaseDumpSha256':hashlib.sha256(before_reinstall.encode()).hexdigest(),'allTablesPreserved':True,'olderSignedAppUpgradeVerified':False}
  for uri_key,hash_key in [('originalUri','sourceImageHash'),('uri','processedImageHash')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key],'Export modified source image bytes'
+ # Recreate only a v6 schema on this disposable emulator, keeping real test food/OCR data.
+ # This tests the migration, not cross-signature APK upgrades.
+ c=database('migration-v6-source')
+ assert c.execute('SELECT count(*) FROM nutrition_entries').fetchone()[0]==0
+ original_tables=[r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'") if not r[0].startswith('nutrition_') and r[0]!='simple_package_hints']
+ originals={t:c.execute('SELECT * FROM '+t).fetchall() for t in original_tables}
+ c.executescript('DROP TABLE nutrition_entries; DROP TABLE nutrition_operations; DROP TABLE nutrition_settings; DROP TABLE nutrition_photo_cleanup; DROP TABLE simple_package_hints; PRAGMA user_version=6;')
+ c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
+ db_paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines();assert len(db_paths)==1
+ for suffix in ('-wal','-shm'):shell('rm','-f',db_paths[0]+suffix)
+ run(['push',str(O/'migration-v6-source.db'),db_paths[0]])
+ shell('chmod','666',db_paths[0]);launch();time.sleep(2)
+ c=database('migration-v7-result');assert c.execute('PRAGMA user_version').fetchone()[0]==7
+ for t in original_tables:assert c.execute('SELECT * FROM '+t).fetchall()==originals[t],t
+ c.close();report['v6Migration']={'disposableEmulatorOnly':True,'allExistingTablesPreserved':True,'versionAfter':7,'oldSignatureUpgrade':False}
  report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']
  for filename,measurement in report['nativeOcrMeasurements'].items():
   payload=run(['exec-out','cat',f'/data/user/0/{PKG}/files/ocr-lab/runs/{filename}']);assert hashlib.sha256(payload).hexdigest()==measurement['sha256'],'Native OCR evidence changed after review'

@@ -122,7 +122,7 @@ try {
     "Production empty / targets unset / missing sugar / photo+text retained / AI requires valid configuration, no fictional result",
   );
   await tab("包装食品").click();
-  await expect(page.getByText(/这不表示食品库没有同款/)).toBeVisible();
+  await expect(page.getByText(/扫码命中食品库时优先复用/)).toBeVisible();
   await button("扫描 / 输入条码").click();
   await expect(
     page.getByLabel("条码数字（保留前导零）", { exact: true }),
@@ -181,7 +181,7 @@ try {
     })
     .click();
   await button("已食用 · 确认记录").click();
-  await expect(button("已记入演示，勿重复提交")).toBeDisabled();
+  await expect(button("已保存这次食用，请勿重复提交")).toBeDisabled();
   await button("返回").click();
   await expect(page.getByText("1545–1635 kcal", { exact: true })).toBeVisible();
   report.checks.push(

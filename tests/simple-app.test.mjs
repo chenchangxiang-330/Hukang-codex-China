@@ -28,7 +28,7 @@ test('schema v6 adds independent inventory with foreign key protection and idemp
  const driver={async exec(s){database.exec(s)},async run(s,...v){database.prepare(s).run(...v)},async get(s,...v){return database.prepare(s).get(...v)??null},async all(s,...v){return database.prepare(s).all(...v)},async transaction(task){database.exec('BEGIN IMMEDIATE');try{const r=await task(driver);database.exec('COMMIT');return r}catch(e){database.exec('ROLLBACK');throw e}}};
  const store=createSQLiteFoodStore(driver,{});
  assert.deepEqual(await store.listFoods(),[]);
- assert.equal(database.prepare('PRAGMA user_version').get().user_version,6);
+ assert.equal(database.prepare('PRAGMA user_version').get().user_version,7);
  database.exec(`INSERT INTO foods VALUES('product','a','a','confirmed','牛奶','','{}')`);
  const add=database.prepare("INSERT INTO simple_inventory VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING");
  add.run('purchase1','product',2,'瓶',null,'a');add.run('purchase1','product',2,'瓶',null,'a');add.run('purchase2','product',1,'瓶',null,'b');

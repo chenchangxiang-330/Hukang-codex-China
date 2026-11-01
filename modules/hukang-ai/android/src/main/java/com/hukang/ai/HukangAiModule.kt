@@ -20,12 +20,27 @@ class HukangAiModule : Module() {
   private val cancelled = ConcurrentHashMap.newKeySet<String>()
   private val destroyed = AtomicBoolean(false)
 
+  private val imageQueue = Executors.newSingleThreadExecutor()
+  private val images by lazy { UploadImageProcessor(requireNotNull(appContext.reactContext)) }
+
   override fun definition() = ModuleDefinition {
     Name("HukangAi")
     Function("cancel") { id: String ->
       cancelled.add(id)
       connections.remove(id)?.disconnect()
     }
+    AsyncFunction("prepareImage") { id: String, uri: String, promise: Promise ->
+      imageQueue.execute {
+        try {
+          promise.resolve(images.prepare(uri) { destroyed.get() || cancelled.contains(id) })
+        } catch(error: ImageFailure) {
+          promise.reject(error.errorCode, "Local image processing failed", null)
+        } catch (_: Throwable) {
+          promise.reject("IMAGE_READ", "Local image processing failed", null)
+        } finally { cancelled.remove(id) }
+      }
+    }
+    AsyncFunction("removeUpload") { uri: String -> images.remove(uri) }
     AsyncFunction("post") { id: String, endpoint: String, key: String, body: String, timeoutMs: Int, promise: Promise ->
       if (destroyed.get()) {
         promise.reject("AI_CANCELLED", "Request cancelled", null)
@@ -93,6 +108,7 @@ class HukangAiModule : Module() {
       connections.values.forEach { it.disconnect() }
       connections.clear()
       queue.shutdownNow()
+      imageQueue.shutdownNow()
       cancelled.clear()
     }
   }

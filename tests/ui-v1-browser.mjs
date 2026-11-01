@@ -154,7 +154,7 @@ try {
   await open();
   await page.getByRole("tab", { name: "记录", exact: true }).click();
   await expect(
-    page.getByText("饮食存储尚未接入。这里还没有真实餐食记录。", {
+    page.getByText("所选日期尚未记录餐食。", {
       exact: true,
     }),
   ).toBeVisible();

@@ -10,6 +10,11 @@ import { AiError, httpError, redact, type AiErrorCode } from "./errors";
 import {
   parseCompletion,
   parseMeal,
+  parsePackage,
+  validateImage,
+  requestByteLength,
+  REQUEST_LIMIT_BYTES,
+  type PackageIdentityEstimate,
   requestBody,
   type ChatTransport,
   type MealImage,
@@ -35,7 +40,7 @@ export type AiSnapshot = {
   revision: number;
   consent: boolean;
   supportsImage: boolean;
-  operation: "connection" | "meal" | null;
+  operation: "connection" | "meal" | "package" | null;
   connection: ConnectionResult | null;
 };
 type ImageReader = (uri: string) => Promise<MealImage>;
@@ -141,7 +146,7 @@ export class AiService {
     this.#publish({ operation: null });
   };
   async #run<T>(
-    operation: "connection" | "meal",
+    operation: "connection" | "meal" | "package",
     signal: AbortSignal | undefined,
     action: (
       config: AiConfiguration,
@@ -205,17 +210,20 @@ export class AiService {
   async #completion(
     config: AiConfiguration,
     text: string,
-    meal: boolean,
+    meal: boolean | "package",
     signal: AbortSignal,
     timeoutMs: number,
     image?: MealImage,
   ) {
     if (signal.aborted) throw new AiError("cancelled");
     const endpoint = chatEndpoint(config);
+    const body = JSON.stringify(requestBody(config, text, meal, image));
+    if (requestByteLength(body) > REQUEST_LIMIT_BYTES)
+      throw new AiError("image_invalid");
     const response = await this.#transport({
       endpoint,
       apiKey: config.apiKey,
-      body: JSON.stringify(requestBody(config, text, meal, image)),
+      body,
       signal,
       timeoutMs,
     });
@@ -272,13 +280,7 @@ export class AiService {
         } catch {
           throw new AiError("image_invalid");
         }
-        if (
-          !image.base64 ||
-          image.base64.length > 5_592_408 ||
-          !/^[A-Za-z0-9+/]+={0,2}$/.test(image.base64) ||
-          !["image/jpeg", "image/png"].includes(image.mime)
-        )
-          throw new AiError("image_invalid");
+        validateImage(image);
       }
       const response = await this.#completion(
         config,
@@ -295,6 +297,12 @@ export class AiService {
         source,
         request.imageUri || undefined,
       );
+      result.food.provenance = {
+        kind: "ai",
+        model: response.model,
+        ingredients: result.ingredients,
+        uncertainties: result.uncertainties,
+      };
       return {
         ...result,
         ai: {
@@ -304,5 +312,28 @@ export class AiService {
           imageSent: includeImage,
         },
       };
+    });
+  identifyPackage = (
+    imageUri: string,
+    signal?: AbortSignal,
+  ): Promise<PackageIdentityEstimate> =>
+    this.#run("package", signal, async (config, abort, ms) => {
+      if (!supportsMealImage(config)) throw new AiError("image_unsupported");
+      let image: MealImage;
+      try {
+        image = await this.#readImage(imageUri);
+      } catch {
+        throw new AiError("image_invalid");
+      }
+      validateImage(image);
+      const response = await this.#completion(
+        config,
+        "请读取这张包装正面照片中的食品名称、品牌候选。不推断条码或营养。",
+        "package",
+        abort,
+        ms,
+        image,
+      );
+      return parsePackage(response.text, response.model);
     });
 }

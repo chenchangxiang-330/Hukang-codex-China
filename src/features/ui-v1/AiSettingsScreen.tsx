@@ -95,7 +95,7 @@ export function AiSettingsScreen() {
             <Text style={S.note}>模型回复：{session.connection.response}</Text>
             <Text style={S.small}>
               测试时间：{new Date(session.connection.testedAt).toLocaleString()}
-              。连接成功仅代表本次文字请求有效。
+              。连接成功仅代表本次文字请求有效，不代表图片能力已经实测。
             </Text>
           </>
         )}
@@ -117,8 +117,9 @@ export function AiSettingsScreen() {
           }}
         />
         <Text style={S.small}>
-          支持 Chat Completions
-          兼容协议。通义千问的地址与密钥须属于同一地域；代理服务请选择自定义。
+          支持 Chat Completions 兼容协议（HTTPS、Bearer、非流式）。DeepSeek
+          预设支持文字与照片；千问预设为北京地域
+          qwen3-vl-plus，需开通该模型权限并使用同地域密钥。费用以服务商为准；代理服务请选择自定义（仅文字）。官方也支持工作空间专属域名，可在下方替换。
         </Text>
         <Field
           label="API Base URL"

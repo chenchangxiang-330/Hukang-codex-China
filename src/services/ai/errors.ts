@@ -35,7 +35,7 @@ const messages: Record<AiErrorCode, string> = {
   image_unsupported:
     "本次配置不支持已验证的图片请求，请使用文字描述；照片未按识别结果处理。",
   image_invalid:
-    "图片无法读取或不符合要求。请选择不超过 4 MB 的 JPEG / PNG 图片，或仅使用文字。",
+    "图片无法读取或不符合要求。请重新处理照片，上传副本上限为 4,000,000 字节，或仅使用文字。",
   format: "模型响应格式异常或内容不完整，没有生成有效结果，也没有自动重试。",
   request:
     "服务商不接受本次请求。请核对 Chat Completions 协议、地址及模型能力。",

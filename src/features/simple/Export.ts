@@ -36,7 +36,10 @@ export async function exportLocal(kind: 'catalogue' | 'personal', includePhotos:
     ? await (await db()).getAllAsync<{ json: string }>('SELECT json FROM simple_capture_drafts ORDER BY updated_at DESC')
       .then(rows => rows.map(r => JSON.parse(r.json) as CaptureDraft))
     : [];
-  if (!records.length && !pending.length) throw new Error('还没有可导出的食品。食品资料包仅包含已确认且允许分享的记录。');
+  const nutrition = kind === 'personal' ? await (await db()).getAllAsync<{snapshot_json: string}>('SELECT snapshot_json FROM nutrition_entries ORDER BY date,confirmed_at,id').then(rows => rows.map(row => JSON.parse(row.snapshot_json))) : [];
+  const targets = kind === 'personal' ? await (await db()).getFirstAsync<{targets_json: string}>('SELECT targets_json FROM nutrition_settings WHERE id=1').then(row => row ? JSON.parse(row.targets_json) : {}) : {};
+  const packageHints = kind === 'personal' ? await (await db()).getAllAsync<{food_id:string;json:string}>('SELECT food_id,json FROM simple_package_hints').then(rows => rows.map(row => ({foodId:row.food_id, candidate:JSON.parse(row.json)}))) : [];
+  if (!records.length && !pending.length && !nutrition.length && !Object.keys(targets).length) throw new Error('还没有可导出的食品。食品资料包仅包含已确认且允许分享的记录。');
 
   const exportedAt = new Date().toISOString();
   const assets: Asset[] = [];
@@ -165,13 +168,15 @@ export async function exportLocal(kind: 'catalogue' | 'personal', includePhotos:
       }
     }
 
+    if (kind === 'personal' && includePhotos) for (const entry of nutrition) add(entry.food.image, `nutrition-photos/${safeId(entry.id, 'entry')}.source`, false);
     const content = kind === 'catalogue' ? {
       ...sharedCatalogue(records, exportedAt), images, photosIncluded: includePhotos, photoMetadataRemoved: includePhotos,
       mergePolicy: '按规范化条码匹配候选；不同标签值保留为不同版本，人工核验后合并。',
     } : {
-      schemaVersion: 1, format: 'hukang-personal-export', exportedAt,
+      schemaVersion: 2, format: 'hukang-personal-export', exportedAt,
       photosIncluded: includePhotos,
-      notice: '包含个人购买数量和到期日。数据导出供保管或开发者处理；本版本尚不提供 App 内导入还原。',
+      nutrition: portable(nutrition), targets, packageHints,
+      notice: '包含饮食、个人目标、购买数量和到期日。数据导出供保管或开发者处理；本版本尚不提供 App 内导入还原。',
       products: portable(records), images, packageEvidence: portable(packageEvidence), inventory: await listStock(), pending: portable(pending),
     };
     const native = requireNativeModule<{ exportArchive(json: string, assets: Asset[]): Promise<Archive> }>('HukangBarcode');

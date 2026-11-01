@@ -7,6 +7,7 @@ import { parseQuantity, validateExpiry } from '../../domain/inventory/rules';
 import { persistCapturedFood } from './captureRecovery';
 export interface CaptureDraft {
   id: string; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod;
+  packageAi?: { name: string; brand: string; model: string; uncertainties: readonly string[] };
   step: 'package' | 'nutrition' | 'review'; name: string; brand: string; specification?: string;
   packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutritionImage?: ImageAsset; nutrition?: OcrEvidence; review?: FoodReviewValues;
 }
@@ -56,6 +57,7 @@ export async function finishFood(record: FoodScanRecord, draft: CaptureDraft): P
   await draftWrites;
   await (await db()).withExclusiveTransactionAsync(async transaction => {
     if (draft.packageImage) await transaction.runAsync('INSERT INTO simple_product_photos(food_id,json,ocr_json) VALUES(?,?,?) ON CONFLICT(food_id) DO UPDATE SET json=excluded.json,ocr_json=excluded.ocr_json', saved.id, JSON.stringify(draft.packageImage), draft.packageOcr ? JSON.stringify(draft.packageOcr) : null);
+    if (draft.packageAi) await transaction.runAsync('INSERT INTO simple_package_hints(food_id,json) VALUES(?,?) ON CONFLICT(food_id) DO UPDATE SET json=excluded.json', saved.id, JSON.stringify(draft.packageAi));
     await transaction.runAsync('DELETE FROM simple_capture_drafts WHERE id=?', draft.id);
     if (draft.barcode.lookupKey) await transaction.runAsync('DELETE FROM food_identity_pending WHERE lookup_key=?', draft.barcode.lookupKey);
   });

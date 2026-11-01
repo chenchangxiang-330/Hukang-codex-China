@@ -35,6 +35,12 @@ export async function buildPreview() {
       {
         name: "explicit-test-native-boundary",
         setup(b) {
+          b.onResolve({ filter: /services\/nutrition\/runtime$/ }, () => ({
+            path: path.join(root, "tests/ui-preview/nutrition-runtime-shim.ts"),
+          }));
+          b.onResolve({ filter: /services\/ai\/images$/ }, () => ({
+            path: path.join(root, "tests/ui-preview/ai-processing-shim.ts"),
+          }));
           b.onResolve(
             { filter: /services\/ai\/readImage$|^\.\/readImage$/ },
             () => ({

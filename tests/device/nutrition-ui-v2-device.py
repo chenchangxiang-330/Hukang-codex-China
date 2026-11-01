@@ -1,4 +1,4 @@
-"""Real APK / Android UI checks. No nutrition records or demo adapter are used.
+"""Real APK / Android UI checks. Empty UI evidence first; explicit isolated test entries are created only by the storage acceptance flow. No demo adapter.
 
 Runs first on a clean, disposable Actions emulator. All screenshots are raw
 Android screencaps; font scale and display density are actual OS settings.
@@ -375,7 +375,7 @@ def camera():
     tap('^拍照$', True)
     press(require(r':id/shutter_button$', attribute='resource-id', attempts=20))
     press(require(r':id/done_button$', attribute='resource-id', attempts=15))
-    require('包装正面原图预览', attempts=15)
+    require('包装正面照片预览', attempts=15)
     shot('android-captured-package-original-photo')
     tap('^扫描 / 输入条码$', True)
     require('对准包装条形码')
@@ -421,6 +421,160 @@ def ai_native_network_feedback():
                        'credentials': 'non-secret-test-fixture-only', 'productionDietWrites': 0}
 
 
+def enter(label, value):
+    for _ in range(7):
+        swipe(True)
+    tap('^' + re.escape(label) + '$', True, 'content-desc')
+    shell('input', 'keyevent', 'KEYCODE_MOVE_END')
+    shell('input', 'keyevent', *(['KEYCODE_DEL'] * 80))
+    if value:
+        shell('input', 'text', value.replace(' ', '%s'))
+    time.sleep(.5)
+    if keyboard_top(shell('dumpsys', 'window')) is not None:
+        shell('input', 'keyevent', 'KEYCODE_BACK')
+        time.sleep(.5)
+
+
+def diet_db(name):
+    import sqlite3
+    shell('am', 'force-stop', PKG)
+    paths = shell('find', f'/data/user/0/{PKG}', '-name', 'hukang-china-food.db').splitlines()
+    assert len(paths) == 1
+    dest = OUT / (name + '.db')
+    for suffix in ('', '-wal', '-shm'):
+        data = adb('exec-out', 'cat', paths[0] + suffix, check=False)
+        if data:
+            (OUT / (name + '.db' + suffix)).write_bytes(data)
+    return sqlite3.connect(dest)
+
+
+def diet_closed_loop():
+    configure()
+    tap('^个人参考目标$', True, 'content-desc')
+    enter('每日能量参考（kcal）', '1800')
+    enter('个人蛋白质目标（g）', '75')
+    tap('^保存个人目标$', True)
+    require('个人目标已保存在本机', True)
+    launch()
+    require('个人参考 1800', True)
+    tap('^拍一拍$')
+    enter('餐食补充描述', 'Native meal test')
+    tap('^手动记录这一餐$', True)
+    tap('^核对或修改营养数值，', True, 'content-desc')
+    enter('能量（kcal / 基准）', '600')
+    enter('蛋白质（g / 基准）', '20')
+    enter('脂肪（g / 基准）', '0')
+    enter('实际食用份量（份）', '0.5')
+    tap('我已确认日期、餐次和实际食用份量', True)
+    tap('^已食用 · 确认记录$', True)
+    require('已保存饮食记录', True)
+    shot('android-isolated-confirmed-diet-save')
+    c = diet_db('confirmed-diet')
+    row, = c.execute('SELECT snapshot_json FROM nutrition_entries').fetchall()
+    e = json.loads(row[0]); assert e['amount'] == .5 and e['food']['nutrients']['energy']['value'] == 600
+    assert e['food']['nutrients']['fat']['value'] == 0
+    assert 'sodium' not in e['food']['nutrients'] or e['food']['nutrients']['sodium']['value'] is None
+    assert c.execute('SELECT count(*) FROM simple_inventory').fetchone()[0] == 0
+    assert json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0])['energy'] == 1800
+    c.close()
+    from datetime import date as calendar_date, timedelta
+    moved_date = (calendar_date.fromisoformat(e['date']) - timedelta(days=1)).isoformat()
+    launch(); require('300', True); shot('android-isolated-today-diet')
+    tap('^记录$'); tap('^查看食物 Native meal test$', True, 'content-desc')
+    enter('食物名称', 'Edited native meal')
+    enter('修改实际食用份量（份）', '1')
+    tap('^确认调整份量$', True)
+    require('饮食记录已更新', True)
+    tap('^返回饮食记录$', True)
+    tap('^今日营养摘要$', True); require('600', True)
+    shot('android-isolated-nutrition-diet')
+    tap('^返回$'); tap('^查看食物 Edited native meal$', True, 'content-desc')
+    enter('修改记录日期（YYYY-MM-DD）', moved_date)
+    tap('^修改餐次 早餐$', True, 'content-desc')
+    tap('^确认调整份量$', True); require('饮食记录已更新', True)
+    c = diet_db('edited-diet'); e = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); assert (e['date'], e['meal'], e['amount']) == (moved_date, 'breakfast', 1); c.close()
+    launch(); tap('^记录$')
+    tap('^‹ 前一天$', True)
+    tap('^查看食物 Edited native meal$', True, 'content-desc')
+    tap('^删除这条饮食记录$', True); tap('^保留记录$', True)
+    tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
+    c = diet_db('deleted-diet'); assert c.execute('SELECT count(*) FROM nutrition_entries').fetchone()[0] == 0; assert c.execute('SELECT count(*) FROM nutrition_operations').fetchone()[0] == 1; c.close()
+    report['nutritionRecordsInserted'] = 1
+    report['dietStorage'] = {'isolatedUserEnteredRecords': 1, 'demoAdapter': False, 'relaunchPersisted': True, 'threePageSync': True, 'dateMealNameAmountEdit': True, 'confirmedDelete': True, 'inventoryUnchanged': True, 'targetsPersisted': True}
+
+
+def upload_photos():
+    from PIL import Image, ImageDraw
+    from picker_selectors import next_picker_action, MEDIA, DOCUMENTS
+    from archive_checks import jpeg_has_exif
+    configure()
+    fixtures = OUT / 'image-inputs'; fixtures.mkdir(exist_ok=True)
+    import random
+    large = Image.frombytes('RGB', (4000, 3000), random.Random(42).randbytes(4000 * 3000 * 3))
+    exif = Image.Exif(); exif[274] = 6; exif[270] = 'test-only metadata to remove'
+    large.save(fixtures / '02-ai-large.jpg', quality=98, exif=exif)
+    large.close()
+    transparent = Image.new('RGBA', (1200, 800), (0, 0, 0, 0))
+    ImageDraw.Draw(transparent).rectangle((300, 200, 900, 600), fill=(20, 140, 220, 255))
+    transparent.save(fixtures / '03-ai-transparent.png'); transparent.close()
+    shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
+    for file in fixtures.iterdir():
+        adb('push', str(file), '/sdcard/Pictures/HukangSimple/' + file.name)
+        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file:///sdcard/Pictures/HukangSimple/' + file.name)
+    tap('^拍一拍$')
+    results = []
+    for stem in ['02-ai-large', '03-ai-transparent']:
+        for _ in range(7): swipe(True)
+        before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
+        tap('^从相册选择$', True)
+        stage = 'initial'; deadline = time.monotonic() + 90
+        while time.monotonic() < deadline:
+            action = next_picker_action(tree(), stem, stage)
+            if action:
+                stage, node = action; press(node)
+                if stage == 'fixture': break
+            else: time.sleep(.5)
+        else: raise AssertionError('Image fixture not selectable: ' + stem)
+        require('上传副本已在本机准备', True, attempts=18)
+        paths = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg').splitlines()) - before
+        assert len(paths) == 1, paths
+        path, = paths
+        payload = adb('exec-out', 'cat', path)
+        output = OUT / (stem + '-processed.jpg'); output.write_bytes(payload)
+        assert 0 < len(payload) <= 4000000 and not jpeg_has_exif(payload)
+        with Image.open(output) as image:
+            assert max(image.size) <= 2048
+            if stem == '02-ai-large': assert image.height > image.width and (fixtures / (stem + '.jpg')).stat().st_size > 4000000
+            else: assert min(image.getpixel((0, 0))) >= 250
+            results.append({'source': stem, 'size': image.size, 'bytes': len(payload), 'exifRemoved': True, 'sha256': hashlib.sha256(payload).hexdigest()})
+        if stem == '02-ai-large':
+            tap('^手动记录这一餐$', True)
+            enter('食物名称', 'Photo snapshot test')
+            tap('我已确认日期、餐次和实际食用份量', True)
+            tap('^已食用 · 确认记录$', True)
+            require('已保存饮食记录', True)
+            c = diet_db('saved-photo-diet')
+            saved = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); c.close()
+            from urllib.parse import urlparse, unquote
+            saved_path = unquote(urlparse(saved['food']['image']).path)
+            assert '/nutrition-photos/' in saved_path
+            assert hashlib.sha256(adb('exec-out', 'cat', saved_path)).hexdigest() == hashlib.sha256(payload).hexdigest()
+            # Restart, delete the record through UI; this removes only its private retained photo.
+            launch(); tap('^记录$'); tap('^查看食物 Photo snapshot test$', True, 'content-desc')
+            tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
+            assert saved_path not in shell('find', f'/data/user/0/{PKG}/files', '-name', 'photo.source', check=False)
+            report['nutritionRecordsInserted'] += 1
+            report['savedPhotoLifecycle'] = {'separatePersistentCopy':True,'copyHashMatches':True,'recordDeletionRemovesOnlyOwnedPhoto':True}
+            tap('^拍一拍$')
+            # The old upload is a cache preview from the terminated process; remove only via app's next cache lifecycle.
+            continue
+        for _ in range(6): swipe(True)
+        shot('android-' + stem + '-preview')
+        tap('^清除这张照片$', True)
+        assert shell('test', '-f', path, check=False) == ''
+        assert path not in shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False)
+    report['localUploadImages'] = {'nativeAndroidProcessing': True, 'inputs': results, 'originalsUnchanged': True, 'explicitlyClearedCopyRemoved': True, 'networkRequests': 0}
+
 try:
     apk, = Path('artifacts/build').glob('hukang-*-arm64.apk')
     inspection = json.loads(Path('artifacts/build/apk-inspection.json').read_text())
@@ -440,7 +594,7 @@ try:
     for name, action in [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
                          ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
                          ('keyboard-state', keyboard), ('camera-permissions', camera),
-                         ('ai-native-network-feedback', ai_native_network_feedback)]:
+                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos)]:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'
 finally:

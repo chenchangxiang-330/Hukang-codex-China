@@ -5,6 +5,7 @@ import type { FoodIdentity, FoodIdentityRevision, FoodIdentityRevisionKind, Food
 import type { BarcodeAcquisitionMethod, FoodBarcodeAssociation, ValidatedBarcode } from '../../domain/barcode/types';
 import { normalizeBarcode } from '../../domain/barcode/normalize';
 import { validateFoodReview } from '../../domain/food/review';
+import { NUTRITION_MIGRATION_V7 } from '../../services/nutrition/store';
 
 export type SqlValue = string | number | null;
 /** This adapter is exercised with real SQLite on the host and Expo SQLite on Android. */
@@ -436,8 +437,9 @@ export function createSQLiteFoodStore(
       });
     } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
     else if (version === 4) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V5); });
-    else if (version !== 5 && version !== 6) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    else if (version !== 5 && version !== 6 && version !== 7) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     if (version !== undefined && version < 6) await driver.transaction(async transaction => { await transaction.exec(MIGRATION_V6); });
+    if (version !== undefined && version < 7) await driver.transaction(async transaction => { await transaction.exec(NUTRITION_MIGRATION_V7); });
     await cleanupExpiredIdentities();
     await cleanupFiles();
   }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { FoodEditor } from "./FoodEditor";
+import { useState, useRef } from "react";
 import {
   Image,
   Pressable,
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { colors as c } from "../../ui/tokens";
-import { Field } from "../simple/ui";
+import { Field, Choices } from "../simple/ui";
 import { shiftDateKey } from "../ui-v1/contracts";
 import {
   Action,
@@ -152,7 +153,7 @@ export function TodayScreen({
             ? "正在读取今日记录…"
             : s.status === "error"
               ? s.message || "暂时无法读取记录，请稍后重试。"
-              : "尚未记录 · 饮食存储尚未接入，食品库存不会计入摄入。"}
+              : "尚未记录 · 确认吃过后再保存，食品库存不会计入摄入。"}
         </Feedback>
       )}
       <Card blue>
@@ -592,8 +593,46 @@ export function FoodDetail({
   adapter: NutritionAdapter;
   onClose: () => void;
 }) {
-  const [amount, setAmount] = useState(String(e.amount)),
-    [feedback, setFeedback] = useState("");
+  const [amount, setAmount] = useState(String(e.amount));
+  const [food, setFood] = useState(e.food);
+  const [day, setDay] = useState(e.date);
+  const [meal, setMeal] = useState(e.meal);
+  const [feedback, setFeedback] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const lock = useRef(false);
+  const run = async (remove: boolean) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try {
+      if (remove) {
+        if (!adapter.deleteEntry) throw Error("当前演示不支持删除。");
+        await adapter.deleteEntry(e.id);
+        onClose();
+      } else {
+        if (adapter.updateEntry)
+          await adapter.updateEntry({
+            ...e,
+            food,
+            date: day,
+            meal,
+            amount: parsePortion(amount),
+          });
+        else await adapter.updatePortion(e.id, parsePortion(amount));
+        setFeedback(
+          adapter.kind === "production"
+            ? "饮食记录已更新，相关日期汇总已同步；食品库和库存没有改变。"
+            : "演示份量已更新，首页、记录与营养详情已同步；未写入真实记录。",
+        );
+      }
+    } catch (err) {
+      setFeedback((err as Error).message);
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
   return (
     <>
       <Text accessibilityRole="header" style={N.title}>
@@ -602,7 +641,7 @@ export function FoodDetail({
       <Card>
         <FoodArt name={e.food.name} image={e.food.image} />
         <Text style={N.caption}>
-          {dateLabel(e.date)} · {meals[e.meal]}
+          {dateLabel(e.date)} · {meals[e.meal]} · 已确认保存
         </Text>
         <Text style={N.body}>
           实际食用 {e.amount}
@@ -611,51 +650,106 @@ export function FoodDetail({
         <Text style={N.caption}>
           {e.food.source} · 资料版本 {e.food.version}
         </Text>
+        <Text style={N.caption}>
+          保存时的营养快照，食品库变化不会自动改写。确认保存不等于营养已经验证。
+        </Text>
+        {e.food.provenance?.uncertainties?.map((u, i) => (
+          <Text key={i} style={N.caption}>
+            · {u}
+          </Text>
+        ))}
         {(Object.keys(nutrientInfo) as Nutrient[])
           .filter(
             (k) =>
-              ["energy", "protein", "carbohydrate", "fat"].includes(k) ||
-              e.food.nutrients[k],
+              [
+                "energy",
+                "protein",
+                "carbohydrate",
+                "fat",
+                "sodium",
+                "added_sugars",
+                "fiber",
+                "total_sugars",
+              ].includes(k) ||
+              (e.food.nutrients[k]?.status !== "unknown" &&
+                e.food.nutrients[k]),
           )
           .map((k) => (
-            <NutrientLine
-              key={k}
-              title={nutrientInfo[k][0]}
-              total={contribution(e, k)}
-            />
+            <View key={k}>
+              <NutrientLine
+                title={nutrientInfo[k][0]}
+                total={contribution(e, k)}
+              />
+              <Text style={N.tiny}>
+                {e.food.nutrients[k]?.source ?? "未知"}
+              </Text>
+            </View>
           ))}
       </Card>
-      <Field
-        label={`修改实际食用份量（${e.unit}）`}
-        value={amount}
-        onChange={setAmount}
-        numeric
-      />
-      <View style={N.wrap}>
-        {[0.5, 1, 1.5].map((n) => (
+      <View pointerEvents={busy ? "none" : "auto"}>
+        <FoodEditor food={food} onChange={setFood} />
+        <Field
+          label="修改记录日期（YYYY-MM-DD）"
+          value={day}
+          onChange={setDay}
+        />
+        <Choices
+          options={Object.entries(meals)}
+          value={meal}
+          onChange={(v) => setMeal(v as Meal)}
+          accessibilityPrefix="修改餐次"
+        />
+        <Field
+          label={`修改实际食用份量（${e.unit}）`}
+          value={amount}
+          onChange={setAmount}
+          numeric
+        />
+        <View style={N.wrap}>
+          {[0.5, 1, 1.5].map((n) => (
+            <Action
+              key={n}
+              title={`${n} 倍份量`}
+              secondary
+              onPress={() => setAmount(formatNumber(e.amount * n, 3))}
+            />
+          ))}
+        </View>
+        <Action
+          title={busy ? "正在保存…" : "确认调整份量"}
+          disabled={busy}
+          onPress={() => void run(false)}
+        />
+        <Text style={N.tiny}>同时保存上方名称、营养、日期和餐次的修改。</Text>
+        {adapter.deleteEntry && (
           <Action
-            key={n}
-            title={`${n} 倍份量`}
+            title="删除这条饮食记录"
             secondary
-            onPress={() => setAmount(formatNumber(e.amount * n, 3))}
+            onPress={() => setDeleting(true)}
           />
-        ))}
+        )}
+        {deleting && (
+          <Card>
+            <Text style={N.body}>
+              确定删除「{e.food.name}
+              」这一次食用？删除后会更新营养汇总，不会恢复库存或删除食品库商品。
+            </Text>
+            <Action title="确定删除这次食用" onPress={() => void run(true)} />
+            <Action
+              title="保留记录"
+              secondary
+              onPress={() => setDeleting(false)}
+            />
+          </Card>
+        )}
       </View>
-      <Action
-        title="确认调整份量"
-        onPress={() => {
-          try {
-            adapter.updatePortion(e.id, parsePortion(amount));
-            setFeedback(
-              "演示份量已更新，首页、记录与营养详情已同步；未写入真实记录。",
-            );
-          } catch (err) {
-            setFeedback((err as Error).message);
-          }
-        }}
-      />
       {feedback && <Feedback>{feedback}</Feedback>}
-      <Action title="返回饮食记录" secondary onPress={onClose} />
+      <Action
+        title="返回饮食记录"
+        disabled={busy}
+        secondary
+        onPress={onClose}
+      />
     </>
   );
 }
@@ -685,6 +779,8 @@ export function TargetsScreen({
       fatMax: targets.fat?.[1]?.toString() ?? "",
     }),
     [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+  const lock = useRef(false);
   return (
     <>
       <Text style={N.title}>个人参考目标</Text>
@@ -711,8 +807,12 @@ export function TargetsScreen({
         />
       ))}
       <Action
-        title="保存个人目标"
-        onPress={() => {
+        title={saving ? "正在保存目标…" : "保存个人目标"}
+        disabled={saving}
+        onPress={async () => {
+          if (lock.current) return;
+          lock.current = true;
+          setSaving(true);
           try {
             const next: Targets = {};
             for (const [k] of config)
@@ -729,10 +829,17 @@ export function TargetsScreen({
                 next[k] = [l, h];
               }
             }
-            adapter.configureTargets(next);
-            setMessage("演示目标已更新，仅保留在当前预览内存。");
+            await adapter.configureTargets(next);
+            setMessage(
+              adapter.kind === "production"
+                ? "个人目标已保存在本机，首页与营养详情已同步。"
+                : "演示目标已更新，仅保留在当前预览内存。",
+            );
           } catch (e) {
             setMessage((e as Error).message);
+          } finally {
+            lock.current = false;
+            setSaving(false);
           }
         }}
       />

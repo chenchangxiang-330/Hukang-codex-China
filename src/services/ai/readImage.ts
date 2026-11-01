@@ -6,7 +6,7 @@ import type { MealImage } from "./protocol";
 export async function readMealImage(uri: string): Promise<MealImage> {
   if (!/^(file|content):\/\//.test(uri)) throw new AiError("image_invalid");
   const file = new File(uri);
-  if (!file.exists || file.size <= 0 || file.size > 4 * 1024 * 1024)
+  if (!file.exists || file.size <= 0 || file.size > 4_000_000)
     throw new AiError("image_invalid");
   const base64 = await file.base64();
   // Check bytes, not the filename extension or an untrusted MIME claim.

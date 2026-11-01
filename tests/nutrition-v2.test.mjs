@@ -14,17 +14,22 @@ const entry = (food, amount = food.basis.amount, unit = food.basis.unit) => ({
   amount,
   unit,
 });
-test("production nutrition starts unavailable with no sample foods or targets and refuses writes", async () => {
-  const p = m.productionNutrition;
-  assert.deepEqual(p.getSnapshot(), {
-    status: "unavailable",
+test("production adapter starts loading, with no sample foods or default targets", async () => {
+  const { createNutritionAdapter } = await import(
+    "../src/services/nutrition/adapter.ts"
+  );
+  const adapter = createNutritionAdapter(async () => ({
+    load: async () => ({ entries: [], targets: {} }),
+  }));
+  assert.deepEqual(adapter.getSnapshot(), {
+    status: "loading",
     entries: [],
     targets: {},
   });
-  assert.throws(() => p.record(entry(packageFixture), "x"), /尚未接入/);
-  assert.throws(() => p.updatePortion("x", 10), /尚未接入/);
-  assert.throws(() => p.configureTargets({ energy: 2000 }), /尚未接入/);
-  assert.equal(p.demoEstimateMeal, undefined);
+  await adapter.reload();
+  assert.equal(adapter.getSnapshot().status, "ready");
+  assert.deepEqual(adapter.getSnapshot().entries, []);
+  assert.equal(adapter.demoEstimateMeal, undefined);
 });
 test("per-serving energy preserves raw kJ and converts once; package is not a serving; no g/mL guessing", () => {
   const e = entry(packageFixture, 25, "g");

@@ -1,3 +1,4 @@
+import { productionNutrition } from "../../services/nutrition/runtime";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
@@ -39,7 +40,6 @@ import {
 } from "../nutrition-v2/Screens";
 import { CaptureScreen, ImpactPreview } from "../nutrition-v2/CaptureScreen";
 import {
-  productionNutrition,
   foodFromRecord,
   type Entry,
   type Meal,
@@ -131,7 +131,7 @@ export function SimpleAppView({
     setPages((a) => [...a, next]);
   };
   const close = () => {
-    if (p.busy) return true;
+    if (p.busy || snapshot.saving) return true;
     if (page) {
       restore.current = returnOffsets.current.pop() ?? 0;
       setPages((a) => a.slice(0, -1));
@@ -193,7 +193,7 @@ export function SimpleAppView({
     if (!page) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", close);
     return () => sub.remove();
-  }, [page, p.busy]);
+  }, [page, p.busy, snapshot.saving]);
   useEffect(() => {
     const a = Keyboard.addListener("keyboardDidShow", () => {
         setKeyboard(true);
@@ -265,7 +265,10 @@ export function SimpleAppView({
       >
         <View
           style={nav.flex}
-          importantForAccessibility={p.busy ? "no-hide-descendants" : "auto"}
+          pointerEvents={snapshot.saving ? "none" : "auto"}
+          importantForAccessibility={
+            p.busy || snapshot.saving ? "no-hide-descendants" : "auto"
+          }
         >
           {(p.screen !== "home" || page) && (
             <View
@@ -278,7 +281,7 @@ export function SimpleAppView({
                 accessibilityRole="button"
                 accessibilityLabel="返回"
                 onPress={close}
-                disabled={!!p.busy}
+                disabled={!!p.busy || snapshot.saving === true}
                 style={({ pressed }) => [
                   nav.back,
                   pressed && { opacity: 0.65 },
@@ -331,6 +334,15 @@ export function SimpleAppView({
                   <Text style={nav.errorText}>{p.error}</Text>
                 </View>
               )}
+              {snapshot.status === "error" && (
+                <View>
+                  <Text style={S.note}>{snapshot.message}</Text>
+                  <Action
+                    title="重试读取饮食"
+                    onPress={() => void adapter.reload?.()}
+                  />
+                </View>
+              )}
               {p.notice && (
                 <View accessibilityLiveRegion="polite" style={S.notice}>
                   <Text style={S.note}>{p.notice}</Text>
@@ -340,7 +352,10 @@ export function SimpleAppView({
                 <>
                   <HomeScreens {...p} startScan={async () => capture()} />
                   <ScanScreen {...p} />
-                  <CaptureScreens {...p} />
+                  <CaptureScreens
+                    {...p}
+                    onAiSettings={() => go("ai-settings")}
+                  />
                   <ProductScreens
                     {...p}
                     onIntake={() => {
@@ -419,8 +434,9 @@ export function SimpleAppView({
                 adapter={adapter}
                 onAiSettings={() => go("ai-settings")}
                 onScan={() => handoff(() => void p.startScan())}
-                onLibrary={() =>
+                onLibrary={(name) =>
                   handoff(() => {
+                    if (name) p.setSearch(name);
                     p.setTab("library");
                     p.navigate("home");
                   })
@@ -489,7 +505,7 @@ export function SimpleAppView({
             </View>
           )}
         </View>
-        {!!p.busy && (
+        {(!!p.busy || snapshot.saving) && (
           <View
             style={S.busy}
             accessibilityViewIsModal
@@ -497,7 +513,7 @@ export function SimpleAppView({
           >
             <ActivityIndicator color={C.teal} size="large" />
             <Text accessibilityRole="header" style={S.rowTitle}>
-              {p.busy}
+              {p.busy || "正在保存饮食资料"}
             </Text>
             <Text style={S.note}>正在本机处理，请稍候</Text>
           </View>
