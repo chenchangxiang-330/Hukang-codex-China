@@ -508,22 +508,21 @@ def diet_closed_loop():
 
 
 def identify_fixture(file):
-    from datetime import datetime, timezone
-    day = int(file.name[:2])
-    millis = int(datetime(2030, 1, day, 12, tzinfo=timezone.utc).timestamp() * 1000)
+    album = 'HukangAi' + file.name[:2]
+    remote = '/sdcard/Pictures/' + album + '/' + file.name
+    shell('mkdir', '-p', '/sdcard/Pictures/' + album)
+    adb('push', str(file), remote)
+    shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
     uri = 'content://media/external/images/media'
     where = "_display_name='" + file.name + "'"
     for _ in range(15):
-        row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:datetaken', '--where', where)
-        if file.name in row and str(file.stat().st_size) in row:
+        row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:bucket_display_name', '--where', where)
+        if file.name in row and str(file.stat().st_size) in row and album in row:
             break
         time.sleep(1)
     else: raise AssertionError('MediaStore has not indexed exact fixture: ' + row)
-    shell('content', 'update', '--uri', uri, '--bind', 'datetaken:l:' + str(millis), '--where', where)
-    row = shell('content', 'query', '--uri', uri, '--projection', '_id:_display_name:_size:datetaken', '--where', where)
-    assert str(millis) in row, row
     report.setdefault('fixtureMediaRows', []).append(row)
-    return f'Jan {day}, 2030'
+    return album, remote
 
 
 def upload_photos():
@@ -545,15 +544,13 @@ def upload_photos():
     results = []
     for stem in ['02-ai-large', '03-ai-transparent']:
         original_file = next(fixtures.glob(stem + '.*'))
-        adb('push', str(original_file), '/sdcard/Pictures/HukangSimple/' + original_file.name)
-        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file:///sdcard/Pictures/HukangSimple/' + original_file.name)
-        fixture_date = identify_fixture(original_file)
+        fixture_album, original_path = identify_fixture(original_file)
         for _ in range(7): swipe(True)
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), stem, stage, fixture_date=fixture_date)
+            action = next_picker_action(tree(), stem, stage, fixture_album=fixture_album)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break
@@ -568,7 +565,7 @@ def upload_photos():
         payload = adb('exec-out', 'cat', path)
         output = OUT / (stem + '-processed.jpg'); output.write_bytes(payload)
         assert 0 < len(payload) <= 4000000 and not jpeg_has_exif(payload)
-        original_bytes = adb('exec-out', 'cat', '/sdcard/Pictures/HukangSimple/' + original_file.name)
+        original_bytes = adb('exec-out', 'cat', original_path)
         assert hashlib.sha256(original_bytes).digest() == hashlib.sha256(original_file.read_bytes()).digest()
         with Image.open(output) as image:
             assert max(image.size) <= 2048
@@ -644,17 +641,14 @@ def upload_failures():
     for filename, expected in [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码'),
                                ('05-ai-oversize.jpg', '原图超过本机 50 MB')]:
         original = fixtures / filename
-        remote = '/sdcard/Pictures/HukangSimple/' + filename
-        adb('push', str(original), remote)
-        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
-        fixture_date = identify_fixture(original)
+        fixture_album, remote = identify_fixture(original)
         for _ in range(7): swipe(True)
         cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
         before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), original.stem, stage, fixture_date=fixture_date)
+            action = next_picker_action(tree(), original.stem, stage, fixture_album=fixture_album)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break
