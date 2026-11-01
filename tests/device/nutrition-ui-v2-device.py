@@ -548,12 +548,15 @@ def upload_photos():
         for _ in range(7): swipe(True)
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
-        stage = 'initial'; deadline = time.monotonic() + 90
+        stage = 'initial'; deadline = time.monotonic() + 90; picker_scrolls = 0
         while time.monotonic() < deadline:
             action = next_picker_action(tree(), stem, stage, fixture_album=fixture_album)
             if action:
-                stage, node = action; press(node)
+                stage, node = action
+                shot(stem + '-picker-' + stage); press(node)
                 if stage == 'fixture': break
+            elif stage in ('fixture_albums', 'fixture_folder') and picker_scrolls < 6:
+                swipe(); picker_scrolls += 1
             else: time.sleep(.5)
         else: raise AssertionError('Image fixture not selectable: ' + stem)
         require('上传副本已在本机准备', True, attempts=18)
@@ -646,12 +649,15 @@ def upload_failures():
         cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
         before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
         tap('^从相册选择$', True)
-        stage = 'initial'; deadline = time.monotonic() + 90
+        stage = 'initial'; deadline = time.monotonic() + 90; picker_scrolls = 0
         while time.monotonic() < deadline:
             action = next_picker_action(tree(), original.stem, stage, fixture_album=fixture_album)
             if action:
-                stage, node = action; press(node)
+                stage, node = action
+                shot(original.stem + '-picker-' + stage); press(node)
                 if stage == 'fixture': break
+            elif stage in ('fixture_albums', 'fixture_folder') and picker_scrolls < 6:
+                swipe(); picker_scrolls += 1
             else: time.sleep(.5)
         else: raise AssertionError('Failure fixture not selectable: ' + filename)
         require(expected, True, attempts=18)
