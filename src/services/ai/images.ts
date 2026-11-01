@@ -17,6 +17,7 @@ type NativeImages = {
   prepareImage(id: string, uri: string): Promise<UploadImage>;
   cancel(id: string): void;
   removeUpload(uri: string): Promise<void>;
+  removePickerCopy(uri: string): Promise<void>;
 };
 const native = () => requireNativeModule<NativeImages>("HukangAi");
 const messages: Record<string, string> = {
@@ -72,5 +73,14 @@ export async function removeUpload(uri: string) {
     await native().removeUpload(uri);
   } catch {
     /* app-owned cache expires after 24h; never touches originals */
+  }
+}
+
+/** Only the picker copy from the current capture, never a saved photo or album original. */
+export async function removePickerCopy(uri: string) {
+  try {
+    await native().removePickerCopy(uri);
+  } catch {
+    /* OS-managed picker cache; no other files are touched */
   }
 }

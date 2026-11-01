@@ -40,6 +40,7 @@ class HukangAiModule : Module() {
         } finally { cancelled.remove(id) }
       }
     }
+    AsyncFunction("removePickerCopy") { uri: String -> images.removePickerCopy(uri) }
     AsyncFunction("removeUpload") { uri: String -> images.remove(uri) }
     AsyncFunction("post") { id: String, endpoint: String, key: String, body: String, timeoutMs: Int, promise: Promise ->
       if (destroyed.get()) {

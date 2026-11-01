@@ -85,7 +85,7 @@ internal class UploadImageProcessor(private val context: Context) {
           // Re-encoding never copies EXIF, GPS, XMP, thumbnails, comments or original filenames.
           val result = mapOf("uri" to Uri.fromFile(output).toString(),"width" to width,"height" to height,
             "bytes" to output.length(),"mime" to "image/jpeg","originalBytes" to source.length(),
-            "originalWidth" to bounds.outWidth,"originalHeight" to bounds.outHeight,"originalMime" to bounds.outMimeType,
+            "originalWidth" to bounds.outWidth,"originalHeight" to bounds.outHeight,"originalMime" to bounds.outMimeType.orEmpty(),
             "orientation" to orientation,"steps" to index+1,"metadataRemoved" to true)
           source.delete()
           return result
@@ -101,6 +101,15 @@ internal class UploadImageProcessor(private val context: Context) {
       if(oriented !== decoded) oriented?.recycle()
       decoded?.recycle()
     }
+  }
+  fun removePickerCopy(value: String) {
+    val uri = Uri.parse(value)
+    if(uri.scheme != "file") return
+    val file = File(uri.path ?: return).canonicalFile
+    // Called only for the just-returned picker asset owned by this capture invocation.
+    // Never follows content://, photo-library paths, OCR evidence, or durable food/diet photos.
+    if(file.parentFile == File(context.cacheDir,"ImagePicker").canonicalFile &&
+      file.name.matches(Regex("[A-Za-z0-9_-]+\\.[A-Za-z0-9]+"))) file.delete()
   }
   fun remove(value: String) {
     val uri = Uri.parse(value)

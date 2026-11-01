@@ -21,3 +21,5 @@ export async function prepareUpload(
   };
 }
 export async function removeUpload(_uri: string) {}
+
+export async function removePickerCopy(_uri: string) {}

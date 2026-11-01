@@ -1,6 +1,7 @@
 import {
   prepareUpload,
   removeUpload,
+  removePickerCopy,
   type UploadImage,
 } from "../../services/ai/images";
 import { PackageAssistant } from "./PackageAssistant";
@@ -396,6 +397,7 @@ export function CaptureScreen({
     setChoosing(true);
     setLoading(false);
     const ticket = ++generation.current;
+    let pickerCopy = "";
     try {
       if (camera) {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -412,6 +414,7 @@ export function CaptureScreen({
             quality: 1,
             allowsEditing: false,
           });
+      pickerCopy = result.assets?.[0]?.uri ?? "";
       if (
         !live.current ||
         ticket !== generation.current ||
@@ -443,6 +446,7 @@ export function CaptureScreen({
       if (live.current && ticket === generation.current)
         setMessage((e as Error).message);
     } finally {
+      if (pickerCopy) void removePickerCopy(pickerCopy);
       picking.current = false;
       processing.current = null;
       if (live.current) setChoosing(false);
