@@ -542,11 +542,14 @@ def upload_photos():
         payload = adb('exec-out', 'cat', path)
         output = OUT / (stem + '-processed.jpg'); output.write_bytes(payload)
         assert 0 < len(payload) <= 4000000 and not jpeg_has_exif(payload)
+        original_file = next(fixtures.glob(stem + '.*'))
+        original_bytes = adb('exec-out', 'cat', '/sdcard/Pictures/HukangSimple/' + original_file.name)
+        assert hashlib.sha256(original_bytes).digest() == hashlib.sha256(original_file.read_bytes()).digest()
         with Image.open(output) as image:
             assert max(image.size) <= 2048
             if stem == '02-ai-large': assert image.height > image.width and (fixtures / (stem + '.jpg')).stat().st_size > 4000000
             else: assert min(image.getpixel((0, 0))) >= 250
-            results.append({'source': stem, 'size': image.size, 'bytes': len(payload), 'exifRemoved': True, 'sha256': hashlib.sha256(payload).hexdigest()})
+            results.append({'source': stem, 'sourceBytes': len(original_bytes), 'originalSha256': hashlib.sha256(original_bytes).hexdigest(), 'originalUnchanged': True, 'size': image.size, 'bytes': len(payload), 'exifRemoved': True, 'sha256': hashlib.sha256(payload).hexdigest()})
         if stem == '02-ai-large':
             tap('^手动记录这一餐$', True)
             enter('食物名称', 'Photo snapshot test')
