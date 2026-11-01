@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 results = {}
-scripts = {'ui': ['nutrition-ui-v2-device.py'], 'offline': ['simple-device.py'],
+scripts = {'ui': ['nutrition-ui-v2-device.py'], 'images': ['nutrition-ui-v2-device.py'], 'offline': ['simple-device.py'],
            'all': ['nutrition-ui-v2-device.py', 'simple-device.py']}
 for script in scripts[os.environ.get('HUKANG_DEVICE_SUITE', 'all')]:
     results[script] = subprocess.run(['python3', str(Path(__file__).with_name(script))]).returncode

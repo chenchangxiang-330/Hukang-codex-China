@@ -5,6 +5,7 @@ Android screencaps; font scale and display density are actual OS settings.
 """
 import hashlib
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -579,6 +580,49 @@ def upload_photos():
         assert path not in shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False)
     report['localUploadImages'] = {'nativeAndroidProcessing': True, 'inputs': results, 'originalsUnchanged': True, 'explicitlyClearedCopyRemoved': True, 'networkRequests': 0}
 
+def upload_failures():
+    from PIL import Image
+    from picker_selectors import next_picker_action
+    configure(); tap('^拍一拍$')
+    fixtures = OUT / 'image-inputs'; fixtures.mkdir(exist_ok=True)
+    image = Image.new('RGB', (20, 20), (60, 140, 200))
+    image.save(fixtures / '04-ai-unsupported.gif')
+    image.save(fixtures / '05-ai-oversize.jpg'); image.close()
+    # Readable JPEG with padding isolates the raw-byte cap without a huge bitmap.
+    with (fixtures / '05-ai-oversize.jpg').open('ab') as f:
+        f.truncate(50_000_001)
+    shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
+    failures = []
+    for filename, expected in [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码'),
+                               ('05-ai-oversize.jpg', '原图超过本机 50 MB')]:
+        original = fixtures / filename
+        remote = '/sdcard/Pictures/HukangSimple/' + filename
+        adb('push', str(original), remote)
+        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
+        for _ in range(7): swipe(True)
+        cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
+        before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
+        tap('^从相册选择$', True)
+        stage = 'initial'; deadline = time.monotonic() + 90
+        while time.monotonic() < deadline:
+            action = next_picker_action(tree(), original.stem, stage)
+            if action:
+                stage, node = action; press(node)
+                if stage == 'fixture': break
+            else: time.sleep(.5)
+        else: raise AssertionError('Failure fixture not selectable: ' + filename)
+        require(expected, True, attempts=18)
+        shot('android-' + original.stem + '-feedback')
+        assert set(shell('find', cache, '-type', 'f', check=False).splitlines()) == before
+        assert hashlib.sha256(adb('exec-out', 'cat', remote)).digest() == hashlib.sha256(original.read_bytes()).digest()
+        require('^从相册选择$', True)
+        failures.append({'file':filename,'errorDisplayed':True,'failedWorkRemoved':True,'originalUnchanged':True})
+    for _ in range(7): swipe(True)
+    tap('^从相册选择$', True); shell('input', 'keyevent', 'KEYCODE_BACK')
+    require('^从相册选择$', True)
+    report['localImageFailures'] = {'cases':failures,'pickerCancelRecovered':True,'networkRequests':0}
+
+
 try:
     apk, = Path('artifacts/build').glob('hukang-*-arm64.apk')
     inspection = json.loads(Path('artifacts/build/apk-inspection.json').read_text())
@@ -594,10 +638,13 @@ try:
     assert not shell('pm', 'path', PKG, check=False), 'UI probe expects a fresh disposable emulator, never clears user data'
     report['install'] = adb('install', '-r', str(apk.resolve()), timeout=180).decode()
     assert 'Success' in report['install']
-    for name, action in [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
+    cases = [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
                          ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
                          ('keyboard-state', keyboard), ('camera-permissions', camera),
-                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos)]:
+                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos)]
+    if os.environ.get('HUKANG_DEVICE_SUITE') == 'images':
+        cases = [('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
+    for name, action in cases:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'
 finally:
