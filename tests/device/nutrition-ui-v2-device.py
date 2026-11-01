@@ -187,7 +187,7 @@ def home_and_navigation():
     require('还没有今天的餐食', scroll=True)
     assert find('1285|1,285|62g|158g') is None, 'Demo values appeared in production'
     # Return to the top before the cover screenshot.
-    swipe(True)
+    for _ in range(7): swipe(True)
     dock()
     shot('android-today-390-empty')
     for label, expected, name in [
@@ -691,7 +691,7 @@ try:
     cases = [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
                          ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
                          ('keyboard-state', keyboard), ('camera-permissions', camera),
-                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos)]
+                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop), ('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
     if os.environ.get('HUKANG_DEVICE_SUITE') == 'images':
         cases = [('local-upload-images', upload_photos), ('image-errors-and-picker-cancel', upload_failures)]
     for name, action in cases:
