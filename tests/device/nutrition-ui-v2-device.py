@@ -13,6 +13,7 @@ import traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from ui_selectors import keyboard_top
+from emulator_setup import ensure_root
 
 OUT = Path('artifacts/device/nutrition-ui-v2')
 OUT.mkdir(parents=True, exist_ok=True)
@@ -584,8 +585,7 @@ try:
     assert hashlib.sha256(apk.read_bytes()).hexdigest() == inspection['sha256']
     report['apkSha256'] = inspection['sha256']
     report['sourceCommit'] = Path('artifacts/build/source-commit.txt').read_text().strip()
-    adb('root')
-    adb('wait-for-device')
+    report['emulatorRootSetup'] = ensure_root(ADB)
     report['device'] = shell('getprop', 'ro.build.fingerprint')
     report['abis'] = shell('getprop', 'ro.product.cpu.abilist')
     report['screen'] = shell('wm', 'size')

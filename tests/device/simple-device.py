@@ -5,6 +5,7 @@ from urllib.parse import unquote,urlparse
 from ui_selectors import bounds,nutrient_unit,nutrient_scroll_towards_top,keyboard_top
 from archive_checks import jpeg_has_exif
 from picker_selectors import next_picker_action,MEDIA,DOCUMENTS
+from emulator_setup import ensure_root
 O=Path('artifacts/device');O.mkdir(parents=True,exist_ok=True)
 PKG='com.hukang.china';ADB=['adb','-s','emulator-5554'];steps=[]
 report={'status':'running','steps':steps,'physicalCameraVerified':False,'limitation':'Emulator, not OPPO hardware; package identity text is entered manually.'}
@@ -243,7 +244,7 @@ try:
  apks=sorted(Path('artifacts/build').glob('hukang-*-arm64.apk'));assert len(apks)==1, apks;apk=apks[0];inspection=json.loads(Path('artifacts/build/apk-inspection.json').read_text())
  assert hashlib.sha256(apk.read_bytes()).hexdigest()==inspection['sha256'];assert not inspection['errors'];assert 'android.permission.INTERNET' in inspection['permissions'];assert inspection['networkPolicy']=='explicit-ai-only'
  report['apkSha256']=inspection['sha256'];report['sourceCommit']=Path('artifacts/build/source-commit.txt').read_text().strip()
- run(['root']);time.sleep(1);run(['wait-for-device'])
+ report['emulatorRootSetup']=ensure_root(ADB)
  shell('settings','put','global','airplane_mode_on','1');shell('svc','wifi','disable');shell('svc','data','disable',check=False)
  shell('iptables','-I','OUTPUT','1','-j','DROP');shell('ip6tables','-I','OUTPUT','1','-j','DROP')
  report['offlineRules']=[shell('iptables','-S','OUTPUT'),shell('ip6tables','-S','OUTPUT')]
