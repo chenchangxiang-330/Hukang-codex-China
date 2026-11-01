@@ -520,31 +520,32 @@ def upload_photos():
     ImageDraw.Draw(transparent).rectangle((300, 200, 900, 600), fill=(20, 140, 220, 255))
     transparent.save(fixtures / '03-ai-transparent.png'); transparent.close()
     shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
-    for file in fixtures.iterdir():
-        adb('push', str(file), '/sdcard/Pictures/HukangSimple/' + file.name)
-        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file:///sdcard/Pictures/HukangSimple/' + file.name)
     tap('^拍一拍$')
     results = []
     for stem in ['02-ai-large', '03-ai-transparent']:
+        original_file = next(fixtures.glob(stem + '.*'))
+        adb('push', str(original_file), '/sdcard/Pictures/HukangSimple/' + original_file.name)
+        shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file:///sdcard/Pictures/HukangSimple/' + original_file.name)
+        time.sleep(2)
         for _ in range(7): swipe(True)
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), stem, stage)
+            action = next_picker_action(tree(), stem, stage, newest_fixture=True)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break
             else: time.sleep(.5)
         else: raise AssertionError('Image fixture not selectable: ' + stem)
         require('上传副本已在本机准备', True, attempts=18)
+        require(str(original_file.stat().st_size), True)
         paths = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg').splitlines()) - before
         assert len(paths) == 1, paths
         path, = paths
         payload = adb('exec-out', 'cat', path)
         output = OUT / (stem + '-processed.jpg'); output.write_bytes(payload)
         assert 0 < len(payload) <= 4000000 and not jpeg_has_exif(payload)
-        original_file = next(fixtures.glob(stem + '.*'))
         original_bytes = adb('exec-out', 'cat', '/sdcard/Pictures/HukangSimple/' + original_file.name)
         assert hashlib.sha256(original_bytes).digest() == hashlib.sha256(original_file.read_bytes()).digest()
         with Image.open(output) as image:
@@ -599,13 +600,14 @@ def upload_failures():
         remote = '/sdcard/Pictures/HukangSimple/' + filename
         adb('push', str(original), remote)
         shell('am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', 'file://' + remote)
+        time.sleep(2)
         for _ in range(7): swipe(True)
         cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
         before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
         tap('^从相册选择$', True)
         stage = 'initial'; deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
-            action = next_picker_action(tree(), original.stem, stage)
+            action = next_picker_action(tree(), original.stem, stage, newest_fixture=True)
             if action:
                 stage, node = action; press(node)
                 if stage == 'fixture': break

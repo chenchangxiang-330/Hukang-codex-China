@@ -18,7 +18,7 @@ def matching(nodes, pattern):
     return next((node for node in nodes if any(re.fullmatch(pattern, node.get(key, '')) for key in ('text', 'content-desc'))), None)
 
 
-def next_picker_action(root, stem, stage):
+def next_picker_action(root, stem, stage, newest_fixture=False):
     """Return (action, node) for the known media→DocumentsUI flow or wait.
 
     Each navigation action runs once per picker invocation. DocumentsUI's
@@ -26,7 +26,7 @@ def next_picker_action(root, stem, stage):
     """
     documents = list(actionable_nodes(root, DOCUMENTS))
     media = list(actionable_nodes(root, MEDIA))
-    filename = re.escape(stem) + r'\.(?:png|jpg)(?:[,，].*)?'
+    filename = re.escape(stem) + r'\.(?:png|jpg|gif)(?:[,，].*)?'
     if documents:
         target = matching(documents, filename)
         if target is not None:
@@ -48,6 +48,14 @@ def next_picker_action(root, stem, stage):
         target = matching(media, filename)
         if target is not None:
             return 'fixture', target
+        if newest_fixture:
+            # Modern Photo Picker omits filenames. This option is only used
+            # after pushing ONE new fixture to an isolated emulator; callers
+            # must verify source dimensions/bytes or the exact expected error.
+            photos = [n for n in media if re.match(r'^Photo taken on ', n.get('content-desc', ''))]
+            if photos:
+                photos.sort(key=lambda n: tuple(map(int, re.findall(r'\d+', n.get('bounds', ''))))[1::-1])
+                return 'fixture', photos[0]
         browse = matching(media, r'Browse(?:…|\.\.\.)?|浏览(?:…|\.\.\.)?')
         if browse is not None and stage != 'browse':
             return 'browse', browse
