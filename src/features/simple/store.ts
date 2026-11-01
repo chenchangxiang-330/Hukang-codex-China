@@ -7,7 +7,7 @@ import { parseQuantity, validateExpiry } from '../../domain/inventory/rules';
 import { persistCapturedFood } from './captureRecovery';
 export interface CaptureDraft {
   id: string; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod;
-  packageAi?: { name: string; brand: string; model: string; uncertainties: readonly string[] };
+  packageAi?: { name: string; brand: string; model: string; uncertainties: readonly string[]; originalCandidates: readonly {name: string; brand: string}[]; editedByUser: boolean; imageHash?: string };
   step: 'package' | 'nutrition' | 'review'; name: string; brand: string; specification?: string;
   packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutritionImage?: ImageAsset; nutrition?: OcrEvidence; review?: FoodReviewValues;
 }

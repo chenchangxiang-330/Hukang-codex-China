@@ -15,6 +15,8 @@ export type PackageHint = {
   brand: string;
   model: string;
   uncertainties: readonly string[];
+  originalCandidates: readonly { name: string; brand: string }[];
+  editedByUser: boolean;
 };
 export function PackageAssistant({
   image,
@@ -210,6 +212,13 @@ export function PackageAssistant({
               setConfirmed(false);
             }}
           />
+          {!result.candidates.some(
+            (c) => c.name === name.trim() && c.brand === brand.trim(),
+          ) && (
+            <Text style={N.tiny}>
+              名称或品牌由你修改；原始 AI 候选会另行保留。
+            </Text>
+          )}
           {blocked && (
             <Text style={N.caption}>
               已有填写或确认的身份资料，AI
@@ -236,6 +245,10 @@ export function PackageAssistant({
                 brand: brand.trim(),
                 model: result.model,
                 uncertainties: result.uncertainties,
+                originalCandidates: result.candidates.map((c) => ({ ...c })),
+                editedByUser: !result.candidates.some(
+                  (c) => c.name === name.trim() && c.brand === brand.trim(),
+                ),
               });
               setConfirmed(false);
               setMessage("候选已交给你选择的下一步，未保存食品或饮食。");

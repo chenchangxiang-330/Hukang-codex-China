@@ -155,7 +155,10 @@ export function CaptureScreens(
                 patchDraft({
                   name: candidate.name,
                   brand: candidate.brand,
-                  packageAi: candidate,
+                  packageAi: {
+                    ...candidate,
+                    imageHash: draft.packageImage!.processedImageHash,
+                  },
                 })
               }
             />

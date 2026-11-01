@@ -264,6 +264,11 @@ try {
   ).toBeVisible();
   await expect(button("核对后在食品库查找候选")).toBeDisabled();
   await field("核对候选名称").fill("已核对的候选");
+  await expect(
+    page.getByText("名称或品牌由你修改；原始 AI 候选会另行保留。", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page
     .getByRole("checkbox", { name: "已核对照片中的名称和品牌", exact: true })
     .click();
