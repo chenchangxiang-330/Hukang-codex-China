@@ -1,0 +1,84 @@
+{
+  "apkBuild": {
+    "run": 41299810218,
+    "artifact": 13080948427,
+    "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+    "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41299810218/artifacts/13080948427",
+    "fullArchiveDownloadedAndVerified": false,
+    "entireApkDownloadedAndVerified": true,
+    "apkSha256": "90c0a148842a76861b65941401d5a9e3dc2a40b6e9fd2e7b95b8270c851f15ca"
+  },
+  "inspection": {
+    "artifact": 13081117393,
+    "fullArchiveDownloadedAndVerified": true,
+    "archiveSha256": "3e8a08c660799d6a3f5a8c2071925f9136a73b1fd15842040547025e14ed72b1"
+  },
+  "nativeAcceptance": [
+    {
+      "id": 13081431061,
+      "name": "simple-device-41300861910-image-oversize-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13081431061",
+      "bytes": 1594744,
+      "archiveSha256": "65529971f4dbf38664a519861fc6533a0e4622834cb0bdf9ce0da0f6bf7496fe",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:15:51Z"
+    },
+    {
+      "id": 13081281425,
+      "name": "simple-device-41300861910-image-transparent-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13081281425",
+      "bytes": 19772398,
+      "archiveSha256": "a458b3280bab1063ff4fd2292892827efb5c37dfe343ea2077620e48a0b1c736",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:15:30Z"
+    },
+    {
+      "id": 13081176899,
+      "name": "simple-device-41300861910-image-large-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13081176899",
+      "bytes": 22425323,
+      "archiveSha256": "23c995b2bea9601107311bd9928360f7a376cec85a1f11d7b8a46d8df820c5e8",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:17:30Z"
+    },
+    {
+      "id": 13080799886,
+      "name": "simple-device-41300861910-image-gif-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13080799886",
+      "bytes": 1602695,
+      "archiveSha256": "d92a53a315b600637eb421e491b88682eec49db8759e96d27d1d46b16599c6dc",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:15:45Z"
+    },
+    {
+      "id": 13081672681,
+      "name": "simple-device-41300861910-offline-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13081672681",
+      "bytes": 19093133,
+      "archiveSha256": "1ec0af0848181223111cdf92400500e3e7a913b0bcef01ae8b83ce2e7f00e647",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:27:59Z"
+    },
+    {
+      "id": 13081758402,
+      "name": "simple-device-41300861910-ui-attempt-1",
+      "run": 41300861910,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41300861910/artifacts/13081758402",
+      "bytes": 19681900,
+      "archiveSha256": "1dca4080f19d8e760ec317388cdfc1b9c1adc28019e101d22d7efa51d4f5af4d",
+      "fullArchiveDownloadedAndVerified": true,
+      "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+      "expiresAt": "2026-11-15T11:34:19Z"
+    }
+  ]
+}

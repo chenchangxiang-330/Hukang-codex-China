@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "image-errors-and-picker-cancel",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "90c0a148842a76861b65941401d5a9e3dc2a40b6e9fd2e7b95b8270c851f15ca",
+  "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "fixtureMediaRows": [
+    "Row: 0 _id=1000000020, _display_name=04-ai-unsupported.gif, _size=73, bucket_display_name=HukangAi04"
+  ],
+  "ownedMediaFixtures": [
+    {
+      "id": "1000000020",
+      "path": "/sdcard/Pictures/HukangAi04/04-ai-unsupported.gif",
+      "file": "04-ai-unsupported.gif",
+      "bytes": 73,
+      "onlyMediaStoreImage": true
+    }
+  ],
+  "localImageFailures": {
+    "cases": [
+      {
+        "file": "04-ai-unsupported.gif",
+        "errorDisplayed": true,
+        "failedWorkRemoved": true,
+        "originalUnchanged": true
+      }
+    ],
+    "pickerCancelRecovered": true,
+    "networkRequests": 0
+  }
+}

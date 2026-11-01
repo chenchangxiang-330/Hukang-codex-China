@@ -1,6 +1,6 @@
 # 浏览器证据：隔离的模拟服务和 UI 测试
 
-来源：UI 与业务源码 `a7ae6b1aec1751578baa1acafd297e31369fa65d`，CI 检查 [41296910259](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41296910259)。
+来源：UI 与业务源码 `3940c6daa284951511d1c8074c044aa5d58c2114`，CI 检查 [41299814392](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41299814392)。
 
 以下是共享 React Native 页面在 Chrome 中渲染的浏览器截图，**不是 Android 截图，也不是真实服务商实测**。
 
@@ -11,4 +11,4 @@
 
 图片处理在浏览器边界使用测试替身。大图、方向、透明像素、元数据和本机文件生命周期必须以 Android 验收结果为准。
 
-最终原生构建在 `70540e4f797a368deddb10c89bef5a59e3415895` 统一 Gradle 与附件版本来源，JavaScript 页面与本组截图源码一致。
+本组与最终 0.5.2 原生 APK 使用相同源码。完整浏览器验收附件 SHA-256：`1323e2f5e0c397da04856c2a9da15ae4966914df6af3d6941aeb98d6b7199946`，下载后已验证。
