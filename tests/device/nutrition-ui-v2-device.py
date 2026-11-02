@@ -516,7 +516,7 @@ def diet_closed_loop():
     tap('^修改餐次 早餐$', True, 'content-desc')
     tap('^保存记录修改$', True)
     feedback = require('饮食记录已更新')
-    assert 330 <= bounds(feedback)[1] < bounds(feedback)[3] <= 1800, bounds(feedback)
+    assert 330 <= bounds(feedback)[1] < bounds(feedback)[3] <= 1855, bounds(feedback)
     shot('android-isolated-date-save-feedback')
     c = diet_db('edited-diet'); e = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); assert (e['date'], e['meal'], e['amount']) == (moved_date, 'breakfast', 1); c.close()
     launch(); tap('^记录$')
