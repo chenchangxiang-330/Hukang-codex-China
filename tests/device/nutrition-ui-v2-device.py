@@ -433,8 +433,22 @@ def ai_native_network_feedback():
 def enter(label, value):
     for _ in range(7):
         swipe(True)
-    tap('^' + re.escape(label) + '$', True, 'content-desc')
-    field = require('^' + re.escape(label) + '$', attribute='content-desc')
+    pattern = '^' + re.escape(label) + '$'
+    # IME resize/focus scrolling can consume the first tap after a long scroll.
+    # Re-read geometry and reacquire focus before any key events; never type
+    # into an unfocused field or weaken the persisted-value assertions below.
+    for attempt in range(3):
+        tap(pattern, True, 'content-desc')
+        field = require(pattern, attribute='content-desc')
+        if field.get('focused') == 'true':
+            break
+        evidence = f'input-focus-wait-{len(report.get("inputFocusWaits", [])) + 1}'
+        shot(evidence)
+        report.setdefault('inputFocusWaits', []).append({
+            'label': label, 'attempt': attempt + 1, 'evidence': evidence,
+            'bounds': bounds(field),
+        })
+        time.sleep(.8)
     assert field.get('focused') == 'true', (label, field.attrib)
     shell('input', 'keyevent', 'KEYCODE_MOVE_END')
     shell('input', 'keyevent', *(['KEYCODE_DEL'] * 80))
