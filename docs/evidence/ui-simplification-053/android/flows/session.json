@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 1,
+  "checks": [
+    {
+      "name": "camera-permissions",
+      "status": "passed"
+    },
+    {
+      "name": "real-diet-local-storage",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "2fb4689cd26d404f59294176c6fa5840ff83368f84a847b50c1d9bcd1888872e",
+  "sourceCommit": "328a2dca96d3df104ec484522ea686e63b88e39c",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "restarting adbd as root",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealAndPackagePhotos": true,
+    "source": "Android system camera / emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  },
+  "dietStorage": {
+    "isolatedUserEnteredRecords": 1,
+    "demoAdapter": false,
+    "relaunchPersisted": true,
+    "threePageSync": true,
+    "dateMealNameAmountEdit": true,
+    "confirmedDelete": true,
+    "inventoryUnchanged": true,
+    "targetsPersisted": true
+  }
+}
