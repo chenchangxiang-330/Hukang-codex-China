@@ -418,6 +418,7 @@ export function SimpleAppView({
                 <View
                   style={{
                     display: page === "nutrition-detail" ? "flex" : "none",
+                    gap: 12,
                   }}
                 >
                   <NutritionScreen

@@ -648,6 +648,7 @@ export function CaptureScreen({
       )}
       <Action
         title="拍照"
+        secondary={!!photos[mode]}
         disabled={choosing || loading}
         onPress={() => void choose(true)}
       />
@@ -752,6 +753,7 @@ export function CaptureScreen({
           )}
           <Action
             title={loading ? "正在请求 AI 估算…" : "估算这餐营养"}
+            secondary={stage === "photo" && !photos.meal}
             disabled={
               loading ||
               choosing ||
