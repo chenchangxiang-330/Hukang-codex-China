@@ -155,6 +155,42 @@ export class DemoNutritionAdapter implements NutritionAdapter {
         saturatedPercent: 10,
       },
     };
+    if (scenario.startsWith("protein-")) {
+      const food = demoFood("protein-case", "进度测试餐（演示）", {
+        energy: 500,
+        protein:
+          scenario === "protein-unknown"
+            ? null
+            : scenario === "protein-exceeded"
+              ? 120
+              : 50,
+      });
+      if (scenario === "protein-estimated")
+        food.nutrients.protein!.status = "estimated";
+      this.snapshot = {
+        status: "ready",
+        targets: scenario === "protein-unset" ? {} : { protein: 100 },
+        entries: [
+          {
+            id: "protein-case",
+            date,
+            meal: "lunch",
+            amount: 1,
+            unit: "份",
+            food,
+          },
+        ],
+      };
+      if (scenario === "protein-missing")
+        this.snapshot.entries.push({
+          id: "unknown",
+          date,
+          meal: "dinner",
+          amount: 1,
+          unit: "份",
+          food: demoFood("unknown", "缺数据测试餐（演示）", {}),
+        });
+    }
   }
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => {

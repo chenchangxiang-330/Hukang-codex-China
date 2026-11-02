@@ -4,6 +4,8 @@ import {
   removePickerCopy,
   type UploadImage,
 } from "../../services/ai/images";
+import { AiDisclosure } from "./AiDisclosure";
+import { aiDisclosure } from "../../services/ai/disclosure";
 import { PackageAssistant } from "./PackageAssistant";
 import { FoodEditor } from "./FoodEditor";
 import { snapshotEntry } from "../../services/nutrition/validation";
@@ -19,7 +21,15 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { colors as c } from "../../ui/tokens";
 import { Check, Choices, Field } from "../simple/ui";
-import { Action, Card, Feedback, N, NutrientLine } from "./components";
+import {
+  Accordion,
+  Action,
+  Card,
+  Feedback,
+  N,
+  NutrientLine,
+  Link,
+} from "./components";
 import {
   contribution,
   findings,
@@ -48,6 +58,7 @@ export function ImpactPreview({
   meal,
   adapter,
   onStock,
+  onSaved,
 }: {
   food: Food;
   snapshot: Snapshot;
@@ -55,8 +66,10 @@ export function ImpactPreview({
   meal: Meal;
   adapter: NutritionAdapter;
   onStock?: () => void;
+  onSaved?: () => void;
 }) {
   const [food, setFood] = useState(initialFood);
+  const [details, setDetails] = useState(false);
   const [saving, setSaving] = useState(false);
   const [day, setDay] = useState(date),
     [selectedMeal, setMeal] = useState<Meal>(meal),
@@ -103,7 +116,6 @@ export function ImpactPreview({
     <>
       <View pointerEvents={saving || saved ? "none" : "auto"}>
         <Card>
-          <Text style={N.heading}>{food.name}</Text>
           <FoodEditor
             food={food}
             onChange={(f) => {
@@ -119,40 +131,6 @@ export function ImpactPreview({
               accessibilityLabel="本机照片预览"
             />
           )}
-          <Text style={N.caption}>{food.source}</Text>
-          <Text style={N.caption}>
-            {food.packageSize ? `整包净含量 ${food.packageSize} · ` : ""}
-            营养基准：每 {food.basis.amount}
-            {food.basis.unit}
-            {food.serving
-              ? `（每份 ${food.serving.amount}${food.serving.unit}）`
-              : ""}
-          </Text>
-          {food.rawEnergy && (
-            <Text style={N.caption}>
-              标签原值 {food.rawEnergy.value} {food.rawEnergy.unit} ·
-              换算后的能量单独展示
-            </Text>
-          )}
-          <Text style={N.tiny}>
-            {food.image
-              ? "未做自动抠图，保存时将保留当前本机照片副本。"
-              : "尚无包装原图；自动抠图也未接入。"}
-          </Text>
-          {food.image && (
-            <Action
-              title="查看照片说明"
-              secondary
-              onPress={() =>
-                setMessage(
-                  "这里显示本机照片副本，未做自动抠图。相册原图未改动；营养表和 OCR 证据由原食品流程独立保留。",
-                )
-              }
-            />
-          )}
-        </Card>
-        <Card>
-          <Text style={N.heading}>如果吃完这份</Text>
           <Field
             label="拟食用日期"
             value={day}
@@ -215,50 +193,74 @@ export function ImpactPreview({
             <Feedback>{validation}</Feedback>
           ) : (
             <>
-              <Text style={N.caption}>
-                {dateLabel(day)} · 当前记录 → 拟食用后
-              </Text>
-              {(["energy", "protein", "carbohydrate", "fat"] as const).map(
-                (k) => (
-                  <View key={k} style={N.metricRow}>
-                    <Text style={[N.body, { flex: 1 }]}>
-                      {nutrientInfo[k][0]}
-                    </Text>
-                    <Text style={N.caption}>
-                      {formatTotal(total(snapshot.entries, day, k))} →{" "}
-                      {formatTotal(total(projected, day, k))}{" "}
-                      {nutrientInfo[k][1]}
-                    </Text>
-                  </View>
-                ),
+              {entry && (
+                <NutrientLine
+                  title="这份能量"
+                  total={contribution(entry, "energy")}
+                />
               )}
-              <Text style={N.tiny}>
-                {adapter.kind === "production"
-                  ? "右侧为已记录食物与本次拟食用的已知小计，缺失值不会按 0 计算。确认前不会写入。"
-                  : "演示数据 · 预览不会提前写入记录。"}
-              </Text>
-              {entry &&
-                (
-                  [
-                    "energy",
-                    "protein",
-                    "carbohydrate",
-                    "fat",
-                    "added_sugars",
-                    "sodium",
-                  ] as const
-                ).map((k) => (
-                  <NutrientLine
-                    key={k}
-                    title={`这份${nutrientInfo[k][0]}`}
-                    total={contribution(entry!, k)}
-                  />
-                ))}
-              {findings(projected, day, snapshot.targets).map((line) => (
-                <Text key={line} style={N.caption}>
-                  · {line}
+              <Accordion
+                title="营养与来源"
+                value="查看详情"
+                open={details}
+                onToggle={() => setDetails(!details)}
+              >
+                <Text style={N.caption}>{food.source}</Text>
+                {food.packageSize && (
+                  <Text style={N.caption}>
+                    整包净含量 {food.packageSize} · 每份 {food.serving?.amount}
+                    {food.serving?.unit}
+                  </Text>
+                )}
+                {food.rawEnergy && (
+                  <Text style={N.caption}>
+                    标签原值 {food.rawEnergy.value} {food.rawEnergy.unit}
+                  </Text>
+                )}
+                <Text style={N.caption}>
+                  {dateLabel(day)} · 当前记录 → 拟食用后
                 </Text>
-              ))}
+                {(["energy", "protein", "carbohydrate", "fat"] as const).map(
+                  (k) => (
+                    <View key={k} style={N.metricRow}>
+                      <Text style={[N.body, { flex: 1 }]}>
+                        {nutrientInfo[k][0]}
+                      </Text>
+                      <Text style={N.caption}>
+                        {formatTotal(total(snapshot.entries, day, k))} →{" "}
+                        {formatTotal(total(projected, day, k))}{" "}
+                        {nutrientInfo[k][1]}
+                      </Text>
+                    </View>
+                  ),
+                )}
+                <Text style={N.tiny}>
+                  {adapter.kind === "production"
+                    ? "右侧为已记录食物与本次拟食用的已知小计，缺失值不会按 0 计算。确认前不会写入。"
+                    : "演示数据 · 预览不会提前写入记录。"}
+                </Text>
+                {entry &&
+                  (
+                    [
+                      "protein",
+                      "carbohydrate",
+                      "fat",
+                      "added_sugars",
+                      "sodium",
+                    ] as const
+                  ).map((k) => (
+                    <NutrientLine
+                      key={k}
+                      title={`这份${nutrientInfo[k][0]}`}
+                      total={contribution(entry!, k)}
+                    />
+                  ))}
+                {findings(projected, day, snapshot.targets).map((line) => (
+                  <Text key={line} style={N.caption}>
+                    · {line}
+                  </Text>
+                ))}
+              </Accordion>
             </>
           )}
           <Check
@@ -290,9 +292,10 @@ export function ImpactPreview({
               try {
                 await adapter.record(entry, operation.current);
                 setSaved(true);
+                onSaved?.();
                 setMessage(
                   adapter.kind === "production"
-                    ? "已保存饮食记录，今天、记录与营养详情已同步。库存没有变化。"
+                    ? "已保存饮食记录。"
                     : "已记入本次演示，三处营养汇总已同步；未保存真实饮食。",
                 );
               } catch (e) {
@@ -326,7 +329,11 @@ export function CaptureScreen({
   onScan,
   onLibrary,
   onAiSettings,
+  registerBack,
+  onStepChange,
 }: {
+  registerBack: (back: (() => boolean) | null) => void;
+  onStepChange: () => void;
   visible: boolean;
   date: string;
   meal: Meal;
@@ -342,6 +349,12 @@ export function CaptureScreen({
   >({});
   const copies = useRef<Partial<Record<"meal" | "package", UploadImage>>>({});
   const processing = useRef<AbortController | null>(null);
+  const [stage, setStage] = useState<"choose" | "photo" | "text" | "package">(
+    "choose",
+  );
+  const [packagePhoto, setPackagePhoto] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
   const [includeImage, setIncludeImage] = useState(false);
   const requestAbort = useRef<AbortController | null>(null);
   const [mode, setMode] = useState<"meal" | "package">("meal"),
@@ -439,9 +452,7 @@ export function CaptureScreen({
       setPhotos((p) => ({ ...p, [mode]: copy.uri }));
       setEstimate(null);
       setPack(null);
-      setMessage(
-        "上传副本已在本机准备，尚未上传；请检查清晰度后确认发送。相册原图没有改变。",
-      );
+      setMessage("照片已准备好，请检查后确认发送。");
     } catch (e) {
       if (live.current && ticket === generation.current)
         setMessage((e as Error).message);
@@ -464,6 +475,23 @@ export function CaptureScreen({
     }
     if (adapter.kind === "demo" && !photos.meal) {
       setMessage("请先拍照或从相册选择餐食照片。");
+      return;
+    }
+    if (
+      adapter.kind === "production" &&
+      Object.keys(aiService.issues()).length
+    ) {
+      setMessage("请先在 AI 服务设置中填写有效地址、密钥和模型。");
+      return;
+    }
+    if (
+      adapter.kind === "production" &&
+      !aiDisclosure.allows(
+        aiService.getSnapshot(),
+        includeImage ? "meal-image" : "meal-text",
+      )
+    ) {
+      setMessage("请先确认本次发送内容与服务地址。");
       return;
     }
     const ticket = ++generation.current;
@@ -495,101 +523,155 @@ export function CaptureScreen({
       if (live.current && ticket === generation.current) setLoading(false);
     }
   };
+  const manual = () => {
+    invalidate();
+    setMode("meal");
+    setStage("text");
+    const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setEstimate({
+      food: {
+        id,
+        version: id,
+        name: description.trim().slice(0, 80) || "手动餐食",
+        basis: { amount: 1, unit: "份" },
+        source: "用户手动录入 · 营养未经独立验证",
+        provenance: { kind: "manual" },
+        nutrients: {},
+        ...(photos.meal ? { image: photos.meal } : {}),
+      },
+      ingredients: [],
+      uncertainties: ["未填写的营养保持未知。"],
+    });
+  };
+  useEffect(() => {
+    registerBack(() => {
+      if (loading || choosing) return true;
+      if (hasSaved) return false;
+      if (estimate) {
+        setEstimate(null);
+        return true;
+      }
+      if (stage !== "choose") {
+        setStage("choose");
+        return true;
+      }
+      return false;
+    });
+    return () => registerBack(null);
+  }, [stage, estimate, loading, choosing, hasSaved]);
+  useEffect(() => {
+    if (visible) onStepChange();
+  }, [stage, !!estimate]);
   if (!visible) return null;
-  return (
-    <>
-      <Text accessibilityRole="header" style={N.title}>
-        拍一拍
-      </Text>
-      <Text style={N.caption}>一餐的营养，从认识食物开始。</Text>
-      <View style={K.modes}>
-        {(
-          [
-            ["meal", "餐食估算", "家常菜 · 一餐食物"],
-            ["package", "包装食品", "扫码 · 营养表核对"],
-          ] as const
-        ).map(([key, label, detail]) => (
-          <Pressable
-            key={key}
-            accessibilityRole="tab"
-            accessibilityLabel={label}
-            accessibilityState={{ selected: mode === key }}
-            aria-selected={mode === key}
-            onPress={() => {
-              processing.current?.abort();
-              requestAbort.current?.abort();
-              requestAbort.current = null;
-              generation.current++;
-              setLoading(false);
-              setMode(key);
-              setMessage("");
-            }}
-            style={[K.mode, mode === key && K.activeMode]}
-          >
-            <Text style={N.heading}>{label}</Text>
-            <Text style={N.tiny}>{detail}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Card>
-        <View style={K.photo}>
-          {photos[mode] ? (
-            <Image
-              source={{ uri: photos[mode] }}
-              style={K.photoImage}
-              resizeMode="contain"
-              accessibilityLabel={
-                mode === "meal" ? "餐食照片预览" : "包装正面照片预览"
-              }
-            />
-          ) : (
-            <>
-              <View style={K.camera}>
-                <View style={K.lens} />
-              </View>
-              <Text style={N.caption}>
-                {mode === "meal" ? "把这餐拍清楚" : "拍下完整的包装正面"}
-              </Text>
-              <Text style={N.tiny}>照片会保留在当前页面</Text>
-            </>
-          )}
-        </View>
-        <View style={K.buttons}>
-          <View style={N.grow}>
-            <Action
-              title="拍照"
-              disabled={choosing}
-              onPress={() => void choose(true)}
-            />
-          </View>
-          <View style={N.grow}>
-            <Action
-              title="从相册选择"
-              disabled={choosing}
-              secondary
-              onPress={() => void choose(false)}
-            />
-          </View>
-        </View>
-        {!!photos[mode] && (
-          <Action
-            title="清除这张照片"
-            secondary
-            disabled={choosing || loading}
-            onPress={() => {
-              invalidate();
-              const copy = copies.current[mode];
-              if (copy) void removeUpload(copy.uri);
-              delete copies.current[mode];
-              setProcessed({ ...copies.current });
-              setPhotos((p) => ({ ...p, [mode]: "" }));
-              setMessage(
-                "已清除页面临时照片；已保存的饮食照片和相册原图不会删除。",
-              );
-            }}
-          />
+  const select = (next: "photo" | "text" | "package") => {
+    invalidate();
+    setHasSaved(false);
+    setMode(next === "package" ? "package" : "meal");
+    setStage(next);
+    setPackagePhoto(false);
+  };
+  if (stage === "choose")
+    return (
+      <>
+        <Text accessibilityRole="header" style={N.title}>
+          记录一餐
+        </Text>
+        <Text style={N.caption}>选择记录方式</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="餐食估算"
+          onPress={() => select("photo")}
+          style={K.mode}
+        >
+          <Text style={N.heading}>餐食</Text>
+          <Text style={N.caption}>拍摄餐食，AI 估算 ›</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="包装食品"
+          onPress={() => select("package")}
+          style={K.mode}
+        >
+          <Text style={N.heading}>包装食品</Text>
+          <Text style={N.caption}>扫码或识别营养标签 ›</Text>
+        </Pressable>
+        <Link title="文字描述" onPress={() => select("text")} />
+        <Link title="手动填写" onPress={manual} />
+      </>
+    );
+  if (estimate)
+    return (
+      <>
+        <Text accessibilityRole="header" style={N.title}>
+          核对这一餐
+        </Text>
+        <Text style={N.caption}>
+          {estimate.ai
+            ? `AI 估算 · ${estimate.ai.imageSent ? "文字与照片" : "仅文字"}`
+            : estimate.food.provenance?.kind === "manual"
+              ? "手动填写 · 未填营养为未知"
+              : "演示结果 · 不写入真实记录"}
+        </Text>
+        {estimate.ingredients.length > 0 && (
+          <Text style={N.caption}>{estimate.ingredients.join(" · ")}</Text>
         )}
-      </Card>
+        {estimate.uncertainties.map((u, i) => (
+          <Text key={i} style={N.caption}>
+            {u}
+          </Text>
+        ))}
+        <ImpactPreview
+          key={estimate.food.version}
+          food={estimate.food}
+          snapshot={snapshot}
+          date={date}
+          meal={meal}
+          adapter={adapter}
+          onSaved={() => setHasSaved(true)}
+        />
+        {!hasSaved && (
+          <Link title="补充描述后重新估算" onPress={() => setEstimate(null)} />
+        )}
+      </>
+    );
+  const photoControls = (
+    <>
+      {!!photos[mode] && (
+        <Image
+          source={{ uri: photos[mode] }}
+          style={K.resultImage}
+          resizeMode="contain"
+          accessibilityLabel={
+            mode === "meal" ? "餐食照片预览" : "包装正面照片预览"
+          }
+        />
+      )}
+      <Action
+        title="拍照"
+        disabled={choosing || loading}
+        onPress={() => void choose(true)}
+      />
+      <Link
+        title="从相册选择"
+        onPress={() => {
+          if (!choosing && !loading) void choose(false);
+        }}
+      />
+      {!!photos[mode] && (
+        <Link
+          title="清除这张照片"
+          onPress={() => {
+            if (choosing || loading) return;
+            invalidate();
+            const copy = copies.current[mode];
+            if (copy) void removeUpload(copy.uri);
+            delete copies.current[mode];
+            setProcessed({ ...copies.current });
+            setPhotos((p) => ({ ...p, [mode]: "" }));
+            setMessage("照片已清除，相册原图保留。");
+          }}
+        />
+      )}
       {choosing && (
         <Action
           title="取消图片处理"
@@ -598,45 +680,55 @@ export function CaptureScreen({
         />
       )}
       {processed[mode] && (
-        <Text style={N.tiny}>
-          本机副本 {processed[mode]!.width} × {processed[mode]!.height} ·{" "}
-          {processed[mode]!.bytes} 字节；原图 {processed[mode]!.originalWidth} ×{" "}
-          {processed[mode]!.originalHeight} · {processed[mode]!.originalBytes}{" "}
-          字节 · 已去除定位等元数据
-        </Text>
+        <Text style={N.caption}>已在本机处理 · 尚未上传</Text>
       )}
+    </>
+  );
+  return (
+    <>
+      <Text accessibilityRole="header" style={N.title}>
+        {mode === "package"
+          ? "包装食品"
+          : stage === "text"
+            ? "描述这一餐"
+            : "拍摄餐食"}
+      </Text>
+      <Link
+        title="更换记录方式"
+        onPress={() => {
+          if (!loading && !choosing) {
+            invalidate();
+            setStage("choose");
+          }
+        }}
+      />
       {mode === "meal" ? (
         <>
-          <Text style={N.heading}>告诉我这一餐吃了什么</Text>
-          <TextInput
-            accessibilityLabel="餐食补充描述"
-            value={description}
-            onChangeText={(v) => {
-              setDescription(v);
-              invalidate();
-            }}
-            placeholder="牛肉鸡蛋香菜面，1 个鸡蛋，面条吃了一半，没有喝汤"
-            multiline
-            maxLength={4000}
-            textAlignVertical="top"
-            placeholderTextColor={c.muted}
-            style={K.description}
-          />
-          <Text style={N.caption}>
-            食材、吃了多少、是否喝汤，都可以写下来。
-          </Text>
+          {stage === "photo" && photoControls}
+          {stage === "photo" && (
+            <Link
+              title={descriptionOpen ? "收起补充描述" : "补充文字描述"}
+              onPress={() => setDescriptionOpen(!descriptionOpen)}
+            />
+          )}
+          {(stage === "text" || descriptionOpen) && (
+            <TextInput
+              accessibilityLabel="餐食补充描述"
+              value={description}
+              onChangeText={(v) => {
+                setDescription(v);
+                invalidate();
+              }}
+              placeholder="吃了什么、吃了多少？"
+              multiline
+              maxLength={4000}
+              textAlignVertical="top"
+              placeholderTextColor={c.muted}
+              style={K.description}
+            />
+          )}
           {adapter.kind === "production" && (
-            <Card blue>
-              <Text style={N.heading}>本次 AI 请求</Text>
-              <Text selectable style={N.caption}>
-                服务地址：{ai.endpoint || "尚未配置"}
-              </Text>
-              <Text style={N.caption}>模型：{ai.model || "尚未配置"}</Text>
-              <Text style={N.caption}>
-                {ai.supportsImage
-                  ? "可发送文字；照片需单独勾选，本机处理为 JPEG，最大 4,000,000 字节。"
-                  : "当前配置仅开放文字估算，照片不会发送，也不会声称已识别照片。"}
-              </Text>
+            <>
               {!!photos.meal && ai.supportsImage && (
                 <Check
                   label="同时发送这张餐食照片"
@@ -647,27 +739,19 @@ export function CaptureScreen({
                   }}
                 />
               )}
-              <Text style={N.caption}>
-                将发送：餐食描述
-                {includeImage ? "和当前餐食照片" : "（不含照片）"}
-                。请求可能产生服务商费用；不发送食品库、库存或历史记录。
-              </Text>
-              <Check
-                label="我了解发送内容、服务地址及可能产生的费用"
-                value={ai.consent}
-                onChange={aiService.consent}
+              {!!photos.meal && !ai.supportsImage && (
+                <Text style={N.caption}>
+                  当前模型不支持图片，可改用文字或手动填写。
+                </Text>
+              )}
+              <AiDisclosure
+                scope={includeImage ? "meal-image" : "meal-text"}
+                onSettings={onAiSettings}
               />
-              <Action title="配置 AI 服务" secondary onPress={onAiSettings} />
-            </Card>
+            </>
           )}
           <Action
-            title={
-              loading
-                ? adapter.kind === "demo"
-                  ? "正在生成演示估算…"
-                  : "正在请求 AI 估算…"
-                : "估算这餐营养"
-            }
+            title={loading ? "正在请求 AI 估算…" : "估算这餐营养"}
             disabled={
               loading ||
               choosing ||
@@ -682,98 +766,33 @@ export function CaptureScreen({
               onPress={() => requestAbort.current?.abort()}
             />
           )}
-          <Action
+          <Link
             title="手动记录这一餐"
-            secondary
-            disabled={choosing || loading}
             onPress={() => {
-              const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-              setEstimate({
-                food: {
-                  id,
-                  version: id,
-                  name: description.trim().slice(0, 80) || "手动餐食",
-                  basis: { amount: 1, unit: "份" },
-                  source: "用户手动录入 · 营养未经独立验证",
-                  provenance: { kind: "manual" },
-                  nutrients: {},
-                  ...(photos.meal ? { image: photos.meal } : {}),
-                },
-                ingredients: [],
-                uncertainties: ["未填写的营养保持未知，不会当成零。"],
-              });
+              if (!loading && !choosing) manual();
             }}
           />
-          {estimate && (
-            <>
-              <Card blue>
-                <Text style={N.heading}>
-                  {estimate.ai
-                    ? "餐食估算 · AI 估算"
-                    : estimate.food.provenance?.kind === "manual"
-                      ? "手动记录 · 待确认"
-                      : "餐食估算 · 演示结果"}
-                </Text>
-                <Text style={N.caption}>
-                  {estimate.ai
-                    ? `${estimate.ai.imageSent ? "基于本次描述与照片" : "仅基于文字描述，未识别照片"} · ${estimate.ai.responseModel}。仅在当前页面预览，未保存饮食记录。`
-                    : estimate.food.provenance?.kind === "manual"
-                      ? "手动填写的食物，未识别照片。请核对名称、营养基准与实际食用份量后保存。"
-                      : "照片与描述来自同一次请求；以下为固定演示样例，并非真实识别。"}
-                </Text>
-                <Text style={N.body}>{estimate.ingredients.join(" · ")}</Text>
-                {estimate.uncertainties.map((u) => (
-                  <Text key={u} style={N.caption}>
-                    · {u}
-                  </Text>
-                ))}
-                <Action
-                  title="补充描述后重新估算"
-                  secondary
-                  onPress={() => setEstimate(null)}
-                />
-              </Card>
-              <ImpactPreview
-                key={estimate.food.version}
-                food={estimate.food}
-                snapshot={snapshot}
-                date={date}
-                meal={meal}
-                adapter={adapter}
-              />
-            </>
-          )}
         </>
       ) : (
         <>
-          <Card blue>
-            <Text style={N.heading}>先确认这是哪一件食品</Text>
-            <Text style={N.caption}>
-              正面照片可辅助提取名称候选；扫码命中食品库时优先复用已有资料。
-            </Text>
-            <Text style={N.caption}>
-              现有流程：扫描或输入条码 → 查本机食品库 → 未命中时拍营养表 → 离线
-              OCR → 人工核对。
-            </Text>
-            <Action title="扫描 / 输入条码" onPress={onScan} />
-            <Action
-              title="在食品库手动查找"
-              secondary
-              onPress={() => onLibrary()}
-            />
-            {photos.package && (
-              <Text style={N.tiny}>
-                这张正面照片当前仅供预览。扫码建立身份后，请在原有食品资料流程保存包装原图。
-              </Text>
-            )}
-          </Card>
-          {adapter.kind === "production" && (
-            <PackageAssistant
-              image={processed.package}
-              onSettings={onAiSettings}
-              onCandidate={(c) => onLibrary(c.name)}
-              useLabel="核对后在食品库查找候选"
-            />
+          <Action title="扫描 / 输入条码" onPress={onScan} />
+          <Link title="在食品库手动查找" onPress={() => onLibrary()} />
+          <Link
+            title={packagePhoto ? "收起包装照片" : "拍摄包装正面辅助查找"}
+            onPress={() => setPackagePhoto(!packagePhoto)}
+          />
+          {packagePhoto && (
+            <>
+              {photoControls}
+              {adapter.kind === "production" && processed.package && (
+                <PackageAssistant
+                  image={processed.package}
+                  onSettings={onAiSettings}
+                  onCandidate={(candidate) => onLibrary(candidate.name)}
+                  useLabel="核对后在食品库查找候选"
+                />
+              )}
+            </>
           )}
           {adapter.kind === "demo" && adapter.demoPackage && (
             <Action
@@ -788,10 +807,7 @@ export function CaptureScreen({
           )}
           {pack && (
             <>
-              <Feedback>
-                开发演示：整包 250g，每份 25g。添加糖未知；未执行食品库匹配或
-                OCR。
-              </Feedback>
+              <Feedback>演示数据 · 未执行食品库匹配或 OCR。</Feedback>
               <ImpactPreview
                 key={pack.version}
                 food={pack}
@@ -803,7 +819,6 @@ export function CaptureScreen({
               />
               {stockPreview && (
                 <Card>
-                  <Text style={N.heading}>库存操作演示</Text>
                   <Field
                     label="购入包装数量"
                     numeric
@@ -840,7 +855,6 @@ export function CaptureScreen({
 const K = StyleSheet.create({
   modes: { flexDirection: "row", gap: 10 },
   mode: {
-    flex: 1,
     minHeight: 82,
     padding: 13,
     gap: 5,

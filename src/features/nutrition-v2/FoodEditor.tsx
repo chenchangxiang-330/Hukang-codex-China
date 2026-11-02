@@ -33,13 +33,11 @@ export function FoodEditor({
         {food.serving
           ? `（每份 ${food.serving.amount}${food.serving.unit}）`
           : ""}
-        。实际食用份量在下方调整，只换算一次。
+        。
       </Text>
       {food.provenance?.kind === "ai" && (
         <Text style={N.caption}>
-          此 1
-          份已包含你描述的实际食用量（例如半碗）；已按描述估算时，不要再减半。用户确认保存后仍是
-          AI 估算。
+          AI 估算 · 此 1 份已包含描述中的食用量，已按半碗估算时无需再减半。
         </Text>
       )}
       <Accordion
@@ -47,8 +45,10 @@ export function FoodEditor({
         onToggle={() => setOpen(!open)}
         title="核对或修改营养数值"
         value="按上方基准"
-        hint="留空为未知；输入 0 表示已知零值。修改会移除原区间并标记用户修改。"
       >
+        <Text style={N.caption}>
+          留空为未知；0 表示已知零值。修改后保留“估算”标记。
+        </Text>
         {(Object.keys(nutrientInfo) as Nutrient[])
           .filter(
             (k) =>

@@ -11,7 +11,115 @@ import {
 } from "react-native";
 import { colors as c } from "../../ui/tokens";
 import { Surface } from "../../ui/components";
-import { formatNumber, formatTotal, reliability, type Total } from "./model";
+import {
+  formatNumber,
+  formatTotal,
+  reliability,
+  targetProgress,
+  type Total,
+} from "./model";
+
+export function TargetProgress({
+  title,
+  total,
+  target,
+  onTargets,
+}: {
+  title: string;
+  total: Total;
+  target?: number | undefined;
+  onTargets: () => void;
+}) {
+  const state = targetProgress(total, target);
+  const reduced = useReducedMotion();
+  const fill = useRef(new Animated.Value(state.fraction ?? 0)).current;
+  useEffect(() => {
+    const animation = Animated.timing(fill, {
+      toValue: state.fraction ?? 0,
+      duration: reduced ? 0 : 240,
+      useNativeDriver: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [state.fraction, reduced, fill]);
+  return (
+    <View style={{ gap: 8 }} testID={`target-${title}`}>
+      <View
+        style={[N.row, { flexWrap: "wrap", justifyContent: "space-between" }]}
+      >
+        <Text style={N.body}>{title}</Text>
+        <Text style={N.body}>
+          {total.estimated ? "约 " : ""}
+          {formatTotal(total)} {total.unit}
+          {state.goal
+            ? ` / 目标 ${formatNumber(state.goal)} ${total.unit}`
+            : ""}
+        </Text>
+      </View>
+      {state.goal ? (
+        <>
+          {state.fraction !== null ? (
+            <View
+              style={N.track}
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel={`${title}${total.estimated ? "估算" : ""}进度`}
+              aria-valuemin={state.percent === null ? undefined : 0}
+              aria-valuemax={state.percent === null ? undefined : 100}
+              aria-valuenow={
+                state.percent === null
+                  ? undefined
+                  : Math.min(100, state.percent)
+              }
+              aria-valuetext={
+                state.percent === null
+                  ? `估算 ${formatTotal(total)} ${total.unit}，目标 ${state.goal} ${total.unit}`
+                  : `已达到目标的 ${state.percent}%`
+              }
+              accessibilityValue={
+                state.percent === null
+                  ? {
+                      text: `估算 ${formatTotal(total)} ${total.unit}，目标 ${state.goal} ${total.unit}`,
+                    }
+                  : {
+                      min: 0,
+                      max: 100,
+                      now: Math.min(100, state.percent),
+                      text: `已达到目标的 ${state.percent}%`,
+                    }
+              }
+            >
+              <Animated.View
+                style={[
+                  N.fill,
+                  {
+                    backgroundColor: c.sky,
+                    width: fill.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0%", "100%"],
+                    }),
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
+          <Text style={N.caption}>
+            {state.status}
+            {state.fraction === null ? " · 暂不显示进度" : ""}
+            {state.excess !== null
+              ? ` · ${total.estimated ? "估算" : ""}超出目标 ${formatNumber(state.excess)} ${total.unit}`
+              : ""}
+          </Text>
+        </>
+      ) : (
+        <View style={[N.row, { justifyContent: "space-between" }]}>
+          <Text style={N.caption}>{state.status}</Text>
+          <Link title="设置目标" onPress={onTargets} />
+        </View>
+      )}
+    </View>
+  );
+}
 
 export function useReducedMotion() {
   const [reduced, setReduced] = useState(true);
@@ -455,7 +563,7 @@ export const N = StyleSheet.create({
     gap: 10,
     alignItems: "center",
     padding: 18,
-    minHeight: 88,
+    minHeight: 72,
   },
   accordionBody: {
     borderTopWidth: 1,

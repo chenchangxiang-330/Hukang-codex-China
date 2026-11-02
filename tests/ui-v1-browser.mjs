@@ -224,7 +224,7 @@ try {
 
   await open();
   await page.getByRole("button", { name: "拍一拍", exact: true }).click();
-  await page.getByRole("tab", { name: "包装食品", exact: true }).click();
+  await page.getByRole("button", { name: "包装食品", exact: true }).click();
   await page
     .getByRole("button", { name: "扫描 / 输入条码", exact: true })
     .click();

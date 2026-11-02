@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import Constants from "expo-constants";
 import { Alert, Image, Pressable, Switch, Text, View } from "react-native";
 import { C, S, Button, Field } from "./ui";
 import { H } from "./HomeScreenStyles";
@@ -11,7 +10,6 @@ import {
   EmptyState,
   PageIntro,
   SectionHeading,
-  StatTile,
   StatusPill,
   Surface,
 } from "../../ui/components";
@@ -44,19 +42,20 @@ function MenuRow({
   onPress,
 }: {
   title: string;
-  description: string;
+  description?: string;
   trailing?: ReactNode;
   onPress: () => void;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={title}
       onPress={onPress}
       style={({ pressed }) => [H.menuRow, pressed && H.pressed]}
     >
       <View style={H.grow}>
         <Text style={S.rowTitle}>{title}</Text>
-        <Text style={S.small}>{description}</Text>
+        {description && <Text style={S.small}>{description}</Text>}
       </View>
       {trailing}
       <Text style={H.chevron}>›</Text>
@@ -72,7 +71,8 @@ function recordedDate(value: string): string {
 }
 
 /** Presentation only: existing controller/store still own all food and inventory writes. */
-export function HomeScreens(p: AppController) {
+export function HomeScreens(p: AppController & { onTargets?: () => void }) {
+  const [exportOpen, setExportOpen] = useState(false);
   const {
     tab,
     setTab,
@@ -419,105 +419,66 @@ export function HomeScreens(p: AppController) {
 
       {screen === "home" && tab === "mine" && (
         <>
-          <PageIntro
-            eyebrow="YOUR SPACE"
-            title="我的"
-            description="让记录简单，让数据留在自己手里。"
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="查看本机用户信息"
-            onPress={() => navigate("profile")}
-            style={({ pressed }) => [H.profile, pressed && H.pressed]}
-          >
-            <Image
-              source={require("../../../assets/icon.png")}
-              style={H.profileAvatar}
-            />
-            <View style={H.grow}>
-              <Text style={H.profileName}>本机用户</Text>
-              <Text style={S.small}>无需注册，也能好好记录</Text>
-              <View style={H.pillWrap}>
-                <StatusPill label="资料仅保存在这台设备" tone="brand" />
-              </View>
-            </View>
-            <Text style={H.chevron}>›</Text>
-          </Pressable>
-          <View style={H.statGrid}>
-            <View style={H.statCell}>
-              <StatTile label="食品资料" value={foods.length} unit="份" />
-            </View>
-            <View style={H.statCell}>
-              <StatTile
-                label="库存记录"
-                value={stock.length}
-                unit="笔"
-                tone="neutral"
-              />
-            </View>
-          </View>
+          <Text accessibilityRole="header" style={S.title}>
+            我的
+          </Text>
           <Surface style={H.menuSurface}>
-            <MenuRow
-              title="查看我的食品"
-              description="食品资料与库存分开管理"
-              onPress={showLibrary}
-            />
+            <MenuRow title="个人参考目标" onPress={() => p.onTargets?.()} />
             <View style={H.menuDivider} />
             <MenuRow
               title="AI 服务设置"
-              description="按需连接模型，密钥仅临时使用"
-              trailing={<StatusPill label="可配置" tone="brand" />}
               onPress={() => navigate("ai-settings")}
             />
-          </Surface>
-          <Surface>
-            <SectionHeading
-              title="导出与分享"
-              description="选择需要的资料，再决定分享给谁。"
-            />
-            <View style={H.photoOption}>
-              <View style={H.grow}>
-                <Text style={S.label}>包含食品与饮食照片</Text>
-                <Text style={S.small}>
-                  默认不包含。分享前请检查照片中的私人信息。
-                </Text>
-              </View>
-              <Switch
-                accessibilityLabel="包含食品与饮食照片"
-                value={photos}
-                onValueChange={setPhotos}
-                trackColor={{ true: "#B7D8EB", false: C.line }}
-                thumbColor={photos ? C.teal : "#FFF"}
-              />
-            </View>
-            <Button
-              title="导出食品资料包"
-              onPress={() => exportData("catalogue")}
-            />
-            <Text style={S.small}>
-              仅含已确认食品资料，不含个人库存、购买时间或到期日。
-            </Text>
-            <Button
-              title="导出个人数据（含库存）"
-              secondary
-              onPress={() => exportData("personal")}
-            />
-            <Text style={S.small}>
-              包含饮食、个人目标、食品、库存、OCR
-              和修订。文件在本机生成，不会自动上传；当前尚不支持 App
-              内一键恢复。
-            </Text>
-          </Surface>
-          <Surface style={H.menuSurface}>
+            <View style={H.menuDivider} />
             <MenuRow
-              title="关于 Hukang"
-              description={`${Constants.expoConfig?.version ?? "版本未知"} · 国产 OCR，本地识别`}
-              onPress={() => navigate("about")}
+              title="数据导出"
+              onPress={() => setExportOpen(!exportOpen)}
             />
+            <View style={H.menuDivider} />
+            <MenuRow title="关于 Hukang" onPress={() => navigate("about")} />
           </Surface>
-          <Text style={S.footer}>
-            删除应用可能删除本机资料，请及时导出妥善保管。
-          </Text>
+          {exportOpen && (
+            <>
+              <Surface>
+                <SectionHeading
+                  title="导出与分享"
+                  description="选择需要的资料，再决定分享给谁。"
+                />
+                <View style={H.photoOption}>
+                  <View style={H.grow}>
+                    <Text style={S.label}>包含食品与饮食照片</Text>
+                    <Text style={S.small}>
+                      默认不包含。分享前请检查照片中的私人信息。
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="包含食品与饮食照片"
+                    value={photos}
+                    onValueChange={setPhotos}
+                    trackColor={{ true: "#B7D8EB", false: C.line }}
+                    thumbColor={photos ? C.teal : "#FFF"}
+                  />
+                </View>
+                <Button
+                  title="导出食品资料包"
+                  onPress={() => exportData("catalogue")}
+                />
+                <Text style={S.small}>
+                  仅含已确认食品资料，不含个人库存、购买时间或到期日。
+                </Text>
+                <Button
+                  title="导出个人数据（含库存）"
+                  secondary
+                  onPress={() => exportData("personal")}
+                />
+                <Text style={S.small}>
+                  包含饮食、个人目标、食品、库存、OCR
+                  和修订。文件在本机生成，不会自动上传；当前尚不支持 App
+                  内一键恢复。
+                </Text>
+              </Surface>
+            </>
+          )}
         </>
       )}
     </>

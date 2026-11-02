@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { colors as c } from "../../ui/tokens";
@@ -16,13 +15,13 @@ import {
   Action,
   Accordion,
   Card,
-  EnergyRing,
   Feedback,
   FoodArt,
   Link,
   N,
   NutrientLine,
   Progress,
+  TargetProgress,
 } from "./components";
 import {
   contribution,
@@ -34,6 +33,7 @@ import {
   parsePortion,
   reliability,
   total,
+  targetProgress,
   type Entry,
   type Meal,
   type Nutrient,
@@ -44,21 +44,6 @@ import {
 export function dateLabel(date: string) {
   const [y, m, d] = date.split("-");
   return `${y}年${Number(m)}月${Number(d)}日`;
-}
-function MacroRow({ snapshot, date }: { snapshot: Snapshot; date: string }) {
-  return (
-    <View style={V.macros}>
-      {(["protein", "carbohydrate", "fat"] as const).map((k) => (
-        <View key={k} style={V.macro}>
-          <Text style={V.macroNumber}>
-            {formatTotal(total(snapshot.entries, date, k))}{" "}
-            <Text style={N.tiny}>g</Text>
-          </Text>
-          <Text style={N.caption}>{nutrientInfo[k][0]}</Text>
-        </View>
-      ))}
-    </View>
-  );
 }
 function Energy({
   snapshot: s,
@@ -73,35 +58,20 @@ function Energy({
   return (
     <View style={{ gap: 4 }}>
       <Text style={N.caption}>
-        今日已记录摄入{t.missing ? " · 已知小计" : ""}
+        已记录能量{t.missing ? " · 已知小计" : ""}
+        {t.estimated ? " · 估算" : ""}
       </Text>
-      <View
-        style={[N.row, { flexWrap: "wrap", justifyContent: "space-between" }]}
-      >
-        <Text
-          style={[
-            V.energy,
-            { flexShrink: 0, maxWidth: "100%" },
-            t.range && { fontSize: 32, lineHeight: 44 },
-          ]}
-        >
-          {formatTotal(t)} <Text style={V.energyUnit}>kcal</Text>
-        </Text>
-        <EnergyRing total={t} target={s.targets.energy} />
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="个人参考目标"
+      <Text style={[V.energy, t.range && { fontSize: 32, lineHeight: 44 }]}>
+        {formatTotal(t)} <Text style={V.energyUnit}>kcal</Text>
+      </Text>
+      <Link
+        title={
+          s.targets.energy
+            ? `个人能量参考 ${s.targets.energy} kcal`
+            : "设置个人目标"
+        }
         onPress={onTargets}
-        style={{ minHeight: 44, justifyContent: "center" }}
-      >
-        <Text style={N.caption}>
-          {s.targets.energy
-            ? `个人参考 ${s.targets.energy} kcal`
-            : "个人参考目标未设置"}{" "}
-          ›
-        </Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -112,6 +82,7 @@ export function TodayScreen({
   onCapture,
   onDiary,
   onTargets,
+  onFood,
   resume,
 }: {
   snapshot: Snapshot;
@@ -120,8 +91,18 @@ export function TodayScreen({
   onCapture: () => void;
   onDiary: () => void;
   onTargets: () => void;
+  onFood: (e: Entry) => void;
   resume?: React.ReactNode;
 }) {
+  const entries = s.entries.filter((e) => e.date === date);
+  const recent = [...entries].sort((a, b) =>
+    (b.confirmedAt ?? b.id).localeCompare(a.confirmedAt ?? a.id),
+  )[0];
+  const finding = entries.length
+    ? findings(s.entries, date, s.targets).find((line) =>
+        /接近参考上限|已超参考上限/.test(line),
+      )
+    : undefined;
   return (
     <>
       <View style={V.brandRow}>
@@ -131,76 +112,88 @@ export function TodayScreen({
             style={V.logo}
             accessibilityLabel="护康 Logo"
           />
-          <Text style={V.brand}>护康</Text>
+          <Text style={V.brand}>护康 · 今天</Text>
         </View>
         <Text style={N.caption}>{dateLabel(date).replace(/^\d+年/, "")}</Text>
       </View>
-      <View style={{ gap: 6 }}>
-        <Text accessibilityRole="header" style={N.title}>
-          今天，吃得刚刚好。
-        </Text>
-        <Text style={N.caption}>一餐一食，慢慢照顾好自己。</Text>
-      </View>
-      <Card>
-        <Energy snapshot={s} date={date} onTargets={onTargets} />
-        <MacroRow snapshot={s} date={date} />
-        <View style={V.divider} />
-        <Link title="查看完整营养" onPress={onNutrition} />
-      </Card>
-      {s.status !== "ready" && (
-        <Feedback>
-          {s.status === "loading"
-            ? "正在读取今日记录…"
-            : s.status === "error"
-              ? s.message || "暂时无法读取记录，请稍后重试。"
-              : "尚未记录 · 确认吃过后再保存，食品库存不会计入摄入。"}
-        </Feedback>
-      )}
-      <Card blue>
-        <Text style={N.heading}>今日营养发现 ✦</Text>
-        {findings(s.entries, date, s.targets).map((line, i) => (
+      {entries.length ? (
+        <Card>
+          <Energy snapshot={s} date={date} onTargets={onTargets} />
+          <TargetProgress
+            title="蛋白质"
+            total={total(s.entries, date, "protein")}
+            target={s.targets.protein}
+            onTargets={onTargets}
+          />
           <View
-            style={[N.row, { alignItems: "flex-start", gap: 8 }]}
-            key={line}
+            style={[
+              N.row,
+              { flexWrap: "wrap", justifyContent: "space-between" },
+            ]}
           >
-            <Text style={{ color: c.brand, lineHeight: 23 }}>
-              {i === 0 ? "✧" : "·"}
-            </Text>
-            <Text style={[N.caption, { flex: 1, color: c.ink }]}>{line}</Text>
+            {(["carbohydrate", "fat"] as const).map((k) => (
+              <View key={k}>
+                <Text style={N.body}>
+                  {k === "fat" ? "脂肪" : "碳水"}{" "}
+                  {formatTotal(total(s.entries, date, k))} g
+                </Text>
+                {(total(s.entries, date, k).missing > 0 ||
+                  total(s.entries, date, k).estimated) && (
+                  <Text style={N.caption}>
+                    {targetProgress(total(s.entries, date, k)).status}
+                  </Text>
+                )}
+              </View>
+            ))}
           </View>
-        ))}
-      </Card>
-      <View style={V.sectionRow}>
-        <Text style={N.heading}>餐食速览</Text>
-        <Link title="查看记录" onPress={onDiary} />
-      </View>
-      {s.entries.filter((e) => e.date === date).length ? (
-        s.entries
-          .filter((e) => e.date === date)
-          .slice(0, 3)
-          .map((e) => (
-            <Pressable
-              key={e.id}
-              accessibilityRole="button"
-              accessibilityLabel={`查看${meals[e.meal]}记录`}
-              onPress={onDiary}
-            >
-              <FoodRow entry={e} />
-            </Pressable>
-          ))
+          <Link title="查看完整营养" onPress={onNutrition} />
+        </Card>
       ) : (
-        <Text style={N.caption}>
-          还没有今天的餐食。准备好了，就从这一餐开始。
-        </Text>
+        <Card>
+          <Text accessibilityRole="header" style={N.heading}>
+            {s.status === "loading" ? "正在读取记录…" : "今天还没有记录"}
+          </Text>
+          <Text style={N.caption}>记下一餐，查看摄入与蛋白质进度。</Text>
+          <Link title="个人参考目标" onPress={onTargets} />
+          <Link title="查看完整营养" onPress={onNutrition} />
+        </Card>
       )}
+      <Action title="拍一拍" onPress={onCapture} />
+      {s.status === "error" && (
+        <Feedback>{s.message || "读取失败，请重试。"}</Feedback>
+      )}
+      {finding && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="今日营养发现"
+          onPress={onNutrition}
+          style={{ minHeight: 48, justifyContent: "center" }}
+        >
+          <Text style={N.caption}>✧ {finding} ›</Text>
+        </Pressable>
+      )}
+      {recent && (
+        <>
+          <View style={V.sectionRow}>
+            <Text style={N.heading}>最近一餐</Text>
+            <Link title="查看全部记录" onPress={onDiary} />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`查看食物 ${recent.food.name}`}
+            onPress={() => onFood(recent)}
+          >
+            <FoodRow entry={recent} />
+          </Pressable>
+        </>
+      )}
+      {!recent && <Link title="查看全部记录" onPress={onDiary} />}
       {resume}
-      <Text style={[N.tiny, { textAlign: "center" }]}>
-        认识每份食物，也留意自己的感受。
-      </Text>
     </>
   );
 }
 export function FoodRow({ entry: e }: { entry: Entry }) {
+  const energy = contribution(e, "energy");
   return (
     <View style={V.foodRow}>
       <FoodArt name={e.food.name} image={e.food.image} />
@@ -211,8 +204,9 @@ export function FoodRow({ entry: e }: { entry: Entry }) {
           {e.unit}
         </Text>
       </View>
-      <Text style={[N.caption, { maxWidth: "33%", textAlign: "right" }]}>
-        {formatTotal(contribution(e, "energy"))} kcal ›
+      <Text style={[N.caption, { maxWidth: "38%", textAlign: "right" }]}>
+        {energy.estimated ? "约 " : ""}
+        {formatTotal(energy)} kcal{energy.missing ? " · 未知" : ""} ›
       </Text>
     </View>
   );
@@ -224,7 +218,6 @@ export function DiaryScreenV2({
   onNutrition,
   onCapture,
   onFood,
-  onTargets,
 }: {
   snapshot: Snapshot;
   date: string;
@@ -234,42 +227,22 @@ export function DiaryScreenV2({
   onFood: (e: Entry) => void;
   onTargets: () => void;
 }) {
-  const entries = s.entries.filter((e) => e.date === date);
-  const { width, fontScale } = useWindowDimensions();
-  const separateMonth =
-    (Math.min(width, 680) - 40) / Math.max(1, fontScale) < 270;
-  const month = (
-    <Text style={[N.caption, { textAlign: "center" }]}>{date.slice(0, 7)}</Text>
-  );
+  const entries = s.entries.filter((e) => e.date === date),
+    energy = total(s.entries, date, "energy");
   return (
     <>
       <Text accessibilityRole="header" style={N.title}>
         饮食记录
       </Text>
-      <View style={{ gap: 8 }}>
-        {separateMonth && month}
-        <View style={V.sectionRow}>
-          <View style={separateMonth ? N.grow : undefined}>
-            <Action
-              title="‹ 前一天"
-              secondary
-              onPress={() => onDate(shiftDateKey(date, -1))}
-            />
-          </View>
-          {!separateMonth && month}
-          <View style={separateMonth ? N.grow : undefined}>
-            <Action
-              title="后一天 ›"
-              secondary
-              onPress={() => onDate(shiftDateKey(date, 1))}
-            />
-          </View>
-        </View>
+      <View style={[V.sectionRow, { flexWrap: "wrap" }]}>
+        <Link title="‹ 前一天" onPress={() => onDate(shiftDateKey(date, -1))} />
+        <Text style={N.caption}>{date.slice(0, 7)}</Text>
+        <Link title="后一天 ›" onPress={() => onDate(shiftDateKey(date, 1))} />
       </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 9 }}
+        contentContainerStyle={{ gap: 8 }}
         accessibilityLabel="横向日期选择"
         accessibilityRole="radiogroup"
       >
@@ -291,51 +264,32 @@ export function DiaryScreenV2({
                   ]
                 }
               </Text>
-              <Text style={[N.heading, day === date && { color: c.onSky }]}>
-                {Number(day.slice(-2))}
-              </Text>
-              <View
-                style={[
-                  V.dateDot,
-                  day === date && { backgroundColor: c.brand },
-                ]}
-              />
+              <Text style={N.heading}>{Number(day.slice(-2))}</Text>
             </Pressable>
           ),
         )}
       </ScrollView>
-      <Card>
-        <Text style={N.caption}>{dateLabel(date)}</Text>
-        <Energy snapshot={s} date={date} onTargets={onTargets} />
-        <View style={V.divider} />
-        <Link title="今日营养摘要" onPress={onNutrition} />
-        <Text style={N.caption}>
-          {(["protein", "carbohydrate", "fat"] as const)
-            .map(
-              (k) =>
-                `${nutrientInfo[k][0]} ${formatTotal(total(s.entries, date, k))}g`,
-            )
-            .join(" · ")}
+      <Text style={N.caption}>{dateLabel(date)}</Text>
+      <View style={[V.sectionRow, { flexWrap: "wrap" }]}>
+        <Text style={N.heading}>
+          {energy.estimated ? "约 " : ""}
+          {formatTotal(energy)} kcal{energy.missing ? " · 已知小计" : ""}
         </Text>
-      </Card>
-      {!entries.length && (
-        <Feedback>
-          {s.status === "unavailable"
-            ? "饮食存储尚未接入。这里还没有真实餐食记录。"
-            : "所选日期尚未记录餐食。"}
-        </Feedback>
-      )}
+        <Link title="今日营养摘要" onPress={onNutrition} />
+      </View>
+      <Action title="拍一拍" onPress={() => onCapture()} />
+      {!entries.length && <Text style={N.caption}>所选日期尚未记录餐食。</Text>}
       {(Object.entries(meals) as [Meal, string][]).map(([key, label]) => (
-        <View key={key} style={{ gap: 8 }}>
+        <View key={key} style={{ gap: 4 }}>
           <View style={V.sectionRow}>
             <Text style={N.heading}>{label}</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`添加${label}`}
               onPress={() => onCapture(key)}
-              style={V.add}
+              style={[V.add, { minWidth: 72, width: undefined }]}
             >
-              <Text style={N.chevron}>＋</Text>
+              <Text style={N.linkText}>＋ 添加</Text>
             </Pressable>
           </View>
           {entries
@@ -350,9 +304,6 @@ export function DiaryScreenV2({
                 <FoodRow entry={e} />
               </Pressable>
             ))}
-          {!entries.some((e) => e.meal === key) && (
-            <Text style={N.caption}>还没记下这一餐</Text>
-          )}
         </View>
       ))}
     </>
@@ -416,25 +367,20 @@ export function NutritionScreen({
         <Text accessibilityRole="header" style={N.title}>
           今日营养
         </Text>
-        <Text style={N.caption}>了解今天的每一份营养</Text>
-      </View>
-      <Card blue>
         <Text style={N.caption}>{dateLabel(date)}</Text>
+      </View>
+      <View style={{ gap: 4 }}>
         <Energy snapshot={s} date={date} onTargets={onTargets} />
         <Text style={N.caption}>
           {s.entries.some((e) => e.date === date)
-            ? "部分食品营养信息不完整，以下统计基于已记录的数据。"
-            : "尚未记录 · 没有数据时，不判断是否达标。"}
+            ? "基于已保存记录 · 点开查看来源"
+            : "尚未记录"}
         </Text>
-      </Card>
-      <Text style={N.heading}>核心营养成分</Text>
+      </View>
       <Accordion
-        summary={
-          <Progress total={t("carbohydrate")} range={s.targets.carbohydrate} />
-        }
         title="碳水化合物"
         value={value("carbohydrate")}
-        hint={reliability(t("carbohydrate"))}
+        hint={targetProgress(t("carbohydrate")).status}
         open={opened.includes("carbohydrate")}
         onToggle={() => toggle("carbohydrate")}
       >
@@ -454,18 +400,18 @@ export function NutritionScreen({
         />
       </Accordion>
       <Accordion
-        summary={<Progress total={t("protein")} target={s.targets.protein} />}
         title="蛋白质"
         value={value("protein")}
-        hint={
-          s.targets.protein
-            ? `个人目标 ${s.targets.protein}g`
-            : "个人目标未设置"
-        }
+        hint={targetProgress(t("protein")).status}
         open={opened.includes("protein")}
         onToggle={() => toggle("protein")}
       >
-        <Progress total={t("protein")} target={s.targets.protein} />
+        <TargetProgress
+          title="蛋白质"
+          total={t("protein")}
+          target={s.targets.protein}
+          onTargets={onTargets}
+        />
         <Text style={N.caption}>目标依据体重、活动和个人目标配置。</Text>
         <Text style={N.heading}>主要食物来源</Text>
         {sourceLines("protein")}
@@ -483,14 +429,9 @@ export function NutritionScreen({
         ))}
       </Accordion>
       <Accordion
-        summary={<Progress total={t("fat")} range={s.targets.fat} />}
         title="脂肪"
         value={value("fat")}
-        hint={
-          s.targets.fat
-            ? `参考范围 ${s.targets.fat.join("–")}g`
-            : "个人参考范围未设置"
-        }
+        hint={targetProgress(t("fat")).status}
         open={opened.includes("fat")}
         onToggle={() => toggle("fat")}
       >
@@ -520,16 +461,21 @@ export function NutritionScreen({
       </Accordion>
       <View onLayout={(e) => setFiberY(e.nativeEvent.layout.y)}>
         <Accordion
-          summary={
-            <Progress total={t("fiber")} target={s.targets.fiber ?? 25} />
-          }
           title="膳食纤维"
           value={value("fiber")}
-          hint="成人常用参考 25–30g / 天"
+          hint={targetProgress(t("fiber")).status}
           open={opened.includes("fiber")}
           onToggle={() => toggle("fiber")}
         >
-          <Progress total={t("fiber")} target={s.targets.fiber ?? 25} />
+          <TargetProgress
+            title="膳食纤维"
+            total={t("fiber")}
+            target={s.targets.fiber}
+            onTargets={onTargets}
+          />
+          <Text style={N.caption}>
+            成人常用参考 25–30g / 天，可设置个人目标。
+          </Text>
           <Text style={N.caption}>
             此处与碳水详情引用同一份数据，不重复累计。
           </Text>
@@ -539,7 +485,7 @@ export function NutritionScreen({
       <Accordion
         title="矿物质"
         value={value("sodium")}
-        hint="钠及其他矿物质"
+        hint={`钠 · ${targetProgress(t("sodium")).status}`}
         open={opened.includes("minerals")}
         onToggle={() => toggle("minerals")}
       >
@@ -557,8 +503,12 @@ export function NutritionScreen({
       </Accordion>
       <Accordion
         title="维生素"
-        value="查看"
-        hint="A · B 族 · C · D · E · K"
+        value="展开"
+        hint={
+          vitamins.some((k) => t(k).value !== null || t(k).range)
+            ? "查看已知数据"
+            : "未知 · 数据缺失"
+        }
         open={opened.includes("vitamins")}
         onToggle={() => toggle("vitamins")}
       >
@@ -622,7 +572,7 @@ export function FoodDetail({
         else await adapter.updatePortion(e.id, parsePortion(amount));
         setFeedback(
           adapter.kind === "production"
-            ? "饮食记录已更新，相关日期汇总已同步；食品库和库存没有改变。"
+            ? "饮食记录已更新。"
             : "演示份量已更新，首页、记录与营养详情已同步；未写入真实记录。",
         );
       }
@@ -633,72 +583,18 @@ export function FoodDetail({
       setBusy(false);
     }
   };
+  const [details, setDetails] = useState(false),
+    [editing, setEditing] = useState(false);
   return (
     <>
       <Text accessibilityRole="header" style={N.title}>
         {e.food.name}
       </Text>
-      <Card>
-        <FoodArt name={e.food.name} image={e.food.image} />
-        <Text style={N.caption}>
-          {dateLabel(e.date)} · {meals[e.meal]} · 已确认保存
-        </Text>
-        <Text style={N.body}>
-          实际食用 {e.amount}
-          {e.unit}
-        </Text>
-        <Text style={N.caption}>
-          {e.food.source} · 资料版本 {e.food.version}
-        </Text>
-        <Text style={N.caption}>
-          保存时的营养快照，食品库变化不会自动改写。确认保存不等于营养已经验证。
-        </Text>
-        {e.food.provenance?.uncertainties?.map((u, i) => (
-          <Text key={i} style={N.caption}>
-            · {u}
-          </Text>
-        ))}
-        {(Object.keys(nutrientInfo) as Nutrient[])
-          .filter(
-            (k) =>
-              [
-                "energy",
-                "protein",
-                "carbohydrate",
-                "fat",
-                "sodium",
-                "added_sugars",
-                "fiber",
-                "total_sugars",
-              ].includes(k) ||
-              (e.food.nutrients[k]?.status !== "unknown" &&
-                e.food.nutrients[k]),
-          )
-          .map((k) => (
-            <View key={k}>
-              <NutrientLine
-                title={nutrientInfo[k][0]}
-                total={contribution(e, k)}
-              />
-              <Text style={N.tiny}>
-                {e.food.nutrients[k]?.source ?? "未知"}
-              </Text>
-            </View>
-          ))}
-      </Card>
-      <View pointerEvents={busy ? "none" : "auto"}>
-        <FoodEditor food={food} onChange={setFood} />
-        <Field
-          label="修改记录日期（YYYY-MM-DD）"
-          value={day}
-          onChange={setDay}
-        />
-        <Choices
-          options={Object.entries(meals)}
-          value={meal}
-          onChange={(v) => setMeal(v as Meal)}
-          accessibilityPrefix="修改餐次"
-        />
+      <Text style={N.caption}>
+        {dateLabel(e.date)} · {meals[e.meal]} ·{" "}
+        {e.food.provenance?.kind === "ai" ? "AI 估算" : "已保存"}
+      </Text>
+      <View pointerEvents={busy ? "none" : "auto"} style={{ gap: 14 }}>
         <Field
           label={`修改实际食用份量（${e.unit}）`}
           value={amount}
@@ -720,19 +616,74 @@ export function FoodDetail({
           disabled={busy}
           onPress={() => void run(false)}
         />
-        <Text style={N.tiny}>同时保存上方名称、营养、日期和餐次的修改。</Text>
-        {adapter.deleteEntry && (
-          <Action
-            title="删除这条饮食记录"
-            secondary
-            onPress={() => setDeleting(true)}
+        {feedback && <Feedback>{feedback}</Feedback>}
+        <Accordion
+          title="修改名称、营养与日期"
+          value="编辑"
+          open={editing}
+          onToggle={() => setEditing(!editing)}
+        >
+          <FoodEditor food={food} onChange={setFood} />
+          <Field
+            label="修改记录日期（YYYY-MM-DD）"
+            value={day}
+            onChange={setDay}
           />
+          <Choices
+            options={Object.entries(meals)}
+            value={meal}
+            onChange={(v) => setMeal(v as Meal)}
+            accessibilityPrefix="修改餐次"
+          />
+          <Action
+            title="保存记录修改"
+            disabled={busy}
+            onPress={() => void run(false)}
+          />
+        </Accordion>
+        <Accordion
+          title="营养与来源"
+          value={`${formatTotal(contribution(e, "energy"))} kcal`}
+          open={details}
+          onToggle={() => setDetails(!details)}
+        >
+          <Text style={N.caption}>
+            {e.food.source} · 每 {e.food.basis.amount}
+            {e.food.basis.unit}
+          </Text>
+          <Text style={N.caption}>
+            以下为本次实际食用的快照；确认保存不代表营养已验证。
+          </Text>
+          {e.food.provenance?.uncertainties?.map((u, i) => (
+            <Text key={i} style={N.caption}>
+              {u}
+            </Text>
+          ))}
+          {(Object.keys(nutrientInfo) as Nutrient[])
+            .filter(
+              (k) =>
+                ["energy", "protein", "carbohydrate", "fat"].includes(k) ||
+                e.food.nutrients[k],
+            )
+            .map((k) => (
+              <View key={k}>
+                <NutrientLine
+                  title={nutrientInfo[k][0]}
+                  total={contribution(e, k)}
+                />
+                <Text style={N.caption}>
+                  {e.food.nutrients[k]?.source ?? "未知"}
+                </Text>
+              </View>
+            ))}
+        </Accordion>
+        {adapter.deleteEntry && (
+          <Link title="删除这条饮食记录" onPress={() => setDeleting(true)} />
         )}
         {deleting && (
           <Card>
             <Text style={N.body}>
-              确定删除「{e.food.name}
-              」这一次食用？删除后会更新营养汇总，不会恢复库存或删除食品库商品。
+              删除「{e.food.name}」这一次食用？营养汇总会更新，库存不变。
             </Text>
             <Action title="确定删除这次食用" onPress={() => void run(true)} />
             <Action
@@ -743,12 +694,11 @@ export function FoodDetail({
           </Card>
         )}
       </View>
-      {feedback && <Feedback>{feedback}</Feedback>}
-      <Action
+      <Link
         title="返回饮食记录"
-        disabled={busy}
-        secondary
-        onPress={onClose}
+        onPress={() => {
+          if (!busy) onClose();
+        }}
       />
     </>
   );
@@ -850,6 +800,7 @@ export function TargetsScreen({
 const V = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
@@ -890,8 +841,9 @@ const V = StyleSheet.create({
     borderBottomColor: c.line,
   },
   dateCell: {
-    width: 46,
-    minHeight: 78,
+    minWidth: 48,
+    paddingHorizontal: 10,
+    minHeight: 64,
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",

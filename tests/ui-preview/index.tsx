@@ -158,7 +158,7 @@ function Preview() {
       "nutrition-empty",
       "failure",
       "loading-nutrition",
-    ].includes(scenario)
+    ].includes(scenario) || scenario.startsWith("protein-")
       ? new DemoNutritionAdapter("2026-10-26", scenario)
       : undefined,
   );

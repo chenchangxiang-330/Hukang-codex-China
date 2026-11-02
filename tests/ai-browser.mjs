@@ -102,6 +102,10 @@ const consent = () =>
     name: "我了解发送内容、服务地址及可能产生的费用",
     exact: true,
   });
+async function settings() {
+  if (!(await button("配置 AI 服务").count())) await button("发送详情").click();
+  await button("配置 AI 服务").click();
+}
 async function screenshot(name) {
   await page.screenshot({ path: `${out}/${name}.png` });
   report.screenshots.push(name + ".png");
@@ -132,17 +136,25 @@ try {
   );
   await button("返回").click();
   await button("拍一拍").click();
+  await button("文字描述").click();
   await field("餐食补充描述").fill("一碗鸡蛋面，半份面条");
+  const initialCount = requests.length;
+  await button("估算这餐营养").click();
+  await expect(page.getByText(/请先确认本次发送内容/)).toBeVisible();
+  expect(requests.length).toBe(initialCount);
+  await consent().click();
   await button("估算这餐营养").click();
   await expect(
-    page.getByText("餐食估算 · AI 估算", { exact: true }),
+    page.getByText("AI 估算 · 仅文字", { exact: true }),
   ).toBeVisible();
   expect(requests.at(-1).body.model).toBe("model-a");
   expect(requests.at(-1).body.messages[1].content).toContain("半份面条");
-  await expect(page.getByText(/仅基于文字描述，未识别照片/)).toBeVisible();
+  await expect(
+    page.getByText("AI 估算 · 仅文字", { exact: true }),
+  ).toBeVisible();
   await expect(button("已食用 · 确认记录")).toBeDisabled();
   await page
-    .getByText("餐食估算 · AI 估算", { exact: true })
+    .getByText("AI 估算 · 仅文字", { exact: true })
     .scrollIntoViewIfNeeded();
   await screenshot("browser-meal-mock-preview");
   await button("0.5 × 基准份量").click();
@@ -159,7 +171,7 @@ try {
     .click();
   await button("已食用 · 确认记录").click();
   await expect(
-    page.getByText(/已保存饮食记录，今天、记录与营养详情已同步/),
+    page.getByText("已保存饮食记录。", { exact: true }),
   ).toBeVisible();
   await expect(button("已保存这次食用，请勿重复提交")).toBeDisabled();
   await button("返回").click();
@@ -180,26 +192,38 @@ try {
   await button("确定删除这次食用").click();
   await expect(button("查看食物 浏览器确认餐食")).toHaveCount(0);
   await button("拍一拍").click();
+  await button("文字描述").click();
   report.checks.push(
     "Isolated browser store: explicit confirm, duplicate guard, record editor, shared nutrition summary and confirmed deletion; no user database touched.",
   );
-  await button("配置 AI 服务").click();
+  await field("餐食补充描述").fill("一碗鸡蛋面");
+  await settings();
   await expect(field("API Key")).toHaveValue("");
   await field("模型名称").fill("model-b");
   await consent().click();
   await button("返回").click();
+  await consent().click();
   await button("估算这餐营养").click();
-  await expect(page.getByText(/model-b。仅在当前页面预览/)).toBeVisible();
+  await expect(
+    page.getByText("AI 估算 · 仅文字", { exact: true }),
+  ).toBeVisible();
   expect(requests.at(-1).body.model).toBe("model-b");
+  await button("补充描述后重新估算").click();
+  await button("更换记录方式").click();
+  await button("餐食估算").click();
   await button("从相册选择").click();
-  await expect(page.getByText(/上传副本已在本机准备/)).toBeVisible();
+  await expect(page.getByText(/照片已准备好/)).toBeVisible();
   await button("估算这餐营养").click();
-  await expect(page.getByText(/未识别照片/)).toBeVisible();
+  await expect(
+    page.getByText("AI 估算 · 仅文字", { exact: true }),
+  ).toBeVisible();
   expect(typeof requests.at(-1).body.messages[1].content).toBe("string");
   report.checks.push(
     "Changed model used by next meal; unsupported/custom vision never uploads photo.",
   );
-  await button("配置 AI 服务").click();
+  await button("补充描述后重新估算").click();
+  await button("发送详情").click();
+  await settings();
   for (const [failure, message] of [
     ["auth", /密钥无效/],
     ["rate", /请求过于频繁/],
@@ -232,7 +256,7 @@ try {
   report.checks.push(
     "Authentication/rate/malformed responses fail visibly once; cancel restores controls; clear prevents reuse of old credentials.",
   );
-  await button("配置 AI 服务").click();
+  await settings();
   await page.getByRole("radio", { name: "通义千问", exact: true }).click();
   await field("API Key").fill("non-secret-test-fixture");
   await consent().click();
@@ -240,8 +264,11 @@ try {
   await page
     .getByRole("checkbox", { name: "同时发送这张餐食照片", exact: true })
     .click();
+  await consent().click();
   await button("估算这餐营养").click();
-  await expect(page.getByText(/基于本次描述与照片/)).toBeVisible();
+  await expect(
+    page.getByText("AI 估算 · 文字与照片", { exact: true }),
+  ).toBeVisible();
   expect(requests.at(-1).url).toBe(
     "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
   );
@@ -256,8 +283,12 @@ try {
   report.checks.push(
     "Known official vision model sends image only after opt-in using documented multimodal payload (provider response mocked).",
   );
-  await page.getByRole("tab", { name: "包装食品", exact: true }).click();
+  await button("补充描述后重新估算").click();
+  await button("更换记录方式").click();
+  await button("包装食品").click();
+  await button("拍摄包装正面辅助查找").click();
   await button("从相册选择").click();
+  await consent().click();
   await button("确认发送包装照片").click();
   await expect(
     page.getByText("AI 推测 · 待人工核对", { exact: true }),
@@ -299,6 +330,7 @@ try {
 } finally {
   await writeFile(`${out}/report.json`, JSON.stringify(report, null, 2));
   await browser.close();
+  server.closeAllConnections();
   await new Promise((resolve) => server.close(resolve));
 }
 console.log(JSON.stringify(report, null, 2));

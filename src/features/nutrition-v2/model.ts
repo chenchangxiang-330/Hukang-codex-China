@@ -60,8 +60,8 @@ export type Food = {
 export const meals = {
   breakfast: "早餐",
   lunch: "午餐",
-  snack: "加餐",
   dinner: "晚餐",
+  snack: "加餐",
 } as const;
 export type Meal = keyof typeof meals;
 export type Entry = {
@@ -253,6 +253,30 @@ export function reliability(t: Total): string {
         : t.estimated
           ? "估算值 · 基于已记录食品"
           : "已确认 · 基于已记录食品";
+}
+/** Shared presentation semantics, always derived from saved records via total(). */
+export function targetProgress(t: Total, target?: number) {
+  const goal = target && Number.isFinite(target) && target > 0 ? target : null;
+  const known = t.value !== null || !!t.range;
+  const completePoint =
+    t.count > 0 && !t.missing && t.value !== null && !t.range;
+  const ratio = goal && completePoint ? t.value! / goal : null;
+  const minimum = t.range?.[0] ?? t.value;
+  return {
+    goal,
+    fraction: ratio === null ? null : Math.min(1, Math.max(0, ratio)),
+    percent: ratio === null || t.estimated ? null : Math.round(ratio * 100),
+    excess: goal && minimum !== null && minimum > goal ? minimum - goal : null,
+    status: !t.count
+      ? "尚未记录"
+      : !known
+        ? "未知 · 数据缺失"
+        : t.missing
+          ? `已知小计 · 数据不完整${t.estimated ? " · 含估算" : ""}`
+          : t.estimated || t.range
+            ? "估算"
+            : "已确认",
+  };
 }
 export function findings(
   entries: readonly Entry[],

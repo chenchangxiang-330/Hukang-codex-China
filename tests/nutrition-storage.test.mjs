@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import './register-typescript.mjs';
 const { createNutritionStore, NUTRITION_MIGRATION_V7 } = await import('../src/services/nutrition/store.ts');
 const { createNutritionAdapter } = await import('../src/services/nutrition/adapter.ts');
-const { contribution, total } = await import('../src/features/nutrition-v2/model.ts');
+const { contribution, total, targetProgress } = await import('../src/features/nutrition-v2/model.ts');
 
 function fixture() {
   const db = new DatabaseSync(':memory:'); db.exec(NUTRITION_MIGRATION_V7);
@@ -61,4 +61,15 @@ test('g/mL/serving conversions require known basis; snapshots strip arbitrary re
 });
 test('shared adapter publishes committed state and loading, errors never masquerade as success',async()=>{
  const f=fixture();const a=createNutritionAdapter(async()=>f.store());await a.reload();assert.equal(a.getSnapshot().status,'ready');const updates=[];const stop=a.subscribe(()=>updates.push(a.getSnapshot()));await a.record(entry(),'a');assert.equal(a.getSnapshot().entries.length,1);assert(updates.some(s=>s.saving));assert.equal(a.getSnapshot().saving,false);await a.updateEntry({...a.getSnapshot().entries[0],amount:200});await a.deleteEntry('entry-1');assert.equal(a.getSnapshot().entries.length,0);stop();f.db.close();
+});
+
+test('protein progress observes only commits and updates across portion, date, meal and delete',async()=>{
+ const f=fixture(),a=createNutritionAdapter(async()=>f.store()); await a.reload();await a.configureTargets({protein:100});
+ const progress=(date='2026-11-01')=>targetProgress(total(a.getSnapshot().entries,date,'protein'),a.getSnapshot().targets.protein);
+ const draft=entry('progress',{amount:250}); assert.equal(progress().fraction,null);
+ await a.record(draft,'progress-op'); assert.equal(progress().fraction,.5);
+ await a.updatePortion('progress',500);assert.equal(progress().fraction,1);
+ await a.updateEntry({...a.getSnapshot().entries[0],date:'2026-10-31',meal:'dinner',amount:750});
+ assert.equal(progress().fraction,null);assert.equal(progress('2026-10-31').excess,50);
+ await a.deleteEntry('progress');assert.equal(progress('2026-10-31').fraction,null);f.db.close();
 });

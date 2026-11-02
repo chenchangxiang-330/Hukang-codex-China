@@ -1,3 +1,5 @@
+import { AiDisclosure } from "./AiDisclosure";
+import { aiDisclosure } from "../../services/ai/disclosure";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Image, Text } from "react-native";
 import { aiService } from "../../services/ai/runtime";
@@ -90,6 +92,10 @@ export function PackageAssistant({
         setMessage("上传副本已在本机准备，请检查清晰度，再确认发送。");
         return;
       }
+      if (!aiDisclosure.allows(aiService.getSnapshot(), "package-image")) {
+        setMessage("请先确认本次发送内容与服务地址。");
+        return;
+      }
       const out = await aiService.identifyPackage(
         (image ?? prepared)!.uri,
         controller.signal,
@@ -112,9 +118,7 @@ export function PackageAssistant({
   return (
     <Card blue>
       <Text style={N.heading}>包装正面 · AI 辅助</Text>
-      <Text style={N.caption}>
-        只提取可见名称与品牌候选，不识别唯一商品、不生成条码或营养值。优先扫码查食品库，名称相近仍需你核对。
-      </Text>
+      <Text style={N.caption}>只提供名称和品牌候选，需人工核对。</Text>
       {prepared && (
         <>
           <Image
@@ -129,20 +133,12 @@ export function PackageAssistant({
           </Text>
         </>
       )}
-      <Text selectable style={N.caption}>
-        发送至：{ai.endpoint || "尚未配置"}
-      </Text>
-      <Text style={N.caption}>
-        模型：{ai.model || "尚未配置"}。
-        {ai.supportsImage
-          ? "将只发送当前包装副本与名称提取指令，可能产生服务商费用。"
-          : "当前配置尚不支持图片，请改用扫码、手动录入或离线 OCR。"}
-      </Text>
-      <Check
-        label="我了解发送内容、服务地址及可能产生的费用"
-        value={ai.consent}
-        onChange={aiService.consent}
-      />
+      <AiDisclosure scope="package-image" onSettings={onSettings} />
+      {!ai.supportsImage && (
+        <Text style={N.caption}>
+          当前模型不支持图片，可继续扫码或离线 OCR。
+        </Text>
+      )}
       <Action
         title={
           busy
@@ -165,7 +161,6 @@ export function PackageAssistant({
           onPress={() => active.current?.abort()}
         />
       )}
-      <Action title="配置 AI 服务" secondary onPress={onSettings} />
       {onLookup && (
         <Action title="扫码或手动输入条码" secondary onPress={onLookup} />
       )}

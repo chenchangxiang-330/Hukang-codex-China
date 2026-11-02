@@ -166,3 +166,51 @@ test("existing food-label adapter maps sugar and fiber without inventing added s
   assert.equal(m.contribution(entry(food, 50, "g"), "total_sugars").value, 8);
   assert.equal(JSON.stringify(record), original);
 });
+
+test("protein progress uses personal goals and preserves incomplete, zero, estimated, range and excess states", () => {
+  const confirmed = m.total(
+    [entry(demoFood("p", "P", { protein: 50 }))],
+    date,
+    "protein",
+  );
+  assert.deepEqual(m.targetProgress(confirmed, 100), {
+    goal: 100,
+    fraction: 0.5,
+    percent: 50,
+    excess: null,
+    status: "已确认",
+  });
+  assert.equal(m.targetProgress(confirmed).fraction, null);
+  assert.equal(m.targetProgress(confirmed, 20).fraction, 1);
+  assert.equal(m.targetProgress(confirmed, 20).excess, 30);
+  const zero = m.total(
+    [entry(demoFood("z", "Z", { protein: 0 }))],
+    date,
+    "protein",
+  );
+  assert.equal(m.targetProgress(zero, 100).percent, 0);
+  const unknown = entry(demoFood("u", "U", { protein: null }));
+  const missing = m.total(
+    [entry(demoFood("p", "P", { protein: 50 })), unknown],
+    date,
+    "protein",
+  );
+  assert.equal(m.targetProgress(missing, 100).fraction, null);
+  assert.match(m.targetProgress(missing, 100).status, /已知小计.*数据不完整/);
+  assert.equal(
+    m.targetProgress(m.total([unknown], date, "protein"), 100).fraction,
+    null,
+  );
+  assert.equal(
+    m.targetProgress(m.total([], date, "protein"), 100).fraction,
+    null,
+  );
+  const estimated = { ...confirmed, estimated: true };
+  assert.equal(m.targetProgress(estimated, 100).fraction, 0.5);
+  assert.equal(m.targetProgress(estimated, 100).percent, null);
+  assert.equal(
+    m.targetProgress({ ...estimated, value: null, range: [40, 60] }, 100)
+      .fraction,
+    null,
+  );
+});

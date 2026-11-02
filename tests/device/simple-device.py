@@ -46,7 +46,7 @@ def tap(pattern,scroll=False,clazz=None,nutrient=None):
   if f:
    n,a=f
    if scroll and find('^今日$',root=root) and find('^记录$',root=root):
-    overlays=[find('^拍一拍$',root=root),find('^今日$',root=root)];ceiling=min(x[1][1] for x in overlays if x)
+    overlays=[find('^今日$',root=root)];ceiling=min(x[1][1] for x in overlays if x)
     if a[3]>ceiling-12:swipe();continue
    if scroll and clazz=='android.widget.EditText' and (a[3]>1650 or a[3]-a[1]<70):short_swipe(a[1]<300);continue
    if clazz=='android.widget.EditText':
@@ -287,7 +287,7 @@ try:
  c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^食品库$');tap('^我的库存$')
  tap('^用掉1瓶$',True);tap('^用掉1瓶$',True);shot('inventory-reduced')
  tap('^从已有食品添加$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('整包净含量 / 规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
- tap('^我的$');data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
+ tap('^我的$');tap('^数据导出$',True);data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
  tap('.*',True,'android.widget.Switch');switch=find('.*','android.widget.Switch');assert switch and switch[0].get('checked')=='true'
  data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue-with-photos');assert len(data['products'])==1 and 'inventory' not in data;assert data['photosIncluded'] is True and data['photoMetadataRemoved'] is True;assert len(assets)==2
  data,assets=export_archive('导出个人数据（含库存）','hukang-personal-export','actual-personal-with-photos');assert len(data['products'])==1 and len(data['inventory'])==1 and data['inventory'][0]['quantity']==1

@@ -94,7 +94,7 @@ type Page =
   | "targets"
   | "intake"
   | "ai-settings";
-/** Only development previews inject a demo adapter. The production entry always uses unavailable nutrition storage. */
+/** Development previews inject isolated adapters; production uses the shared SQLite store. */
 export function SimpleAppView({
   controller: p,
   nutritionAdapter = productionNutrition,
@@ -116,6 +116,9 @@ export function SimpleAppView({
     [food, setFood] = useState<Entry | null>(null),
     [captureMeal, setCaptureMeal] = useState<Meal>("lunch"),
     [keyboard, setKeyboard] = useState(false);
+  const captureBack = useRef<(() => boolean) | null>(null);
+  const [captureSession, setCaptureSession] = useState(0);
+  const [dockHeight, setDockHeight] = useState(86);
   const page = pages.at(-1),
     activeTab = p.tab === "stock" ? "library" : p.tab;
   const offset = useRef(0),
@@ -132,6 +135,7 @@ export function SimpleAppView({
   };
   const close = () => {
     if (p.busy || snapshot.saving) return true;
+    if (page === "capture-hub" && captureBack.current?.()) return true;
     if (page) {
       restore.current = returnOffsets.current.pop() ?? 0;
       setPages((a) => a.slice(0, -1));
@@ -140,6 +144,7 @@ export function SimpleAppView({
     return p.back();
   };
   const capture = (meal: Meal = "lunch") => {
+    setCaptureSession((v) => v + 1);
     setCaptureMeal(meal);
     setDetailDate(p.tab === "diary" ? date : today);
     go("capture-hub");
@@ -292,7 +297,10 @@ export function SimpleAppView({
               <Text style={nav.headerTitle}>护康 › {title}</Text>
             </View>
           )}
-          <BlurTargetView ref={target} style={nav.flex}>
+          <BlurTargetView
+            ref={target}
+            style={[nav.flex, showDock && { marginBottom: dockHeight + 24 }]}
+          >
             <View pointerEvents="none" style={StyleSheet.absoluteFill}>
               <Image
                 source={require("../../../assets/paper-grain.png")}
@@ -319,7 +327,7 @@ export function SimpleAppView({
               contentContainerStyle={[
                 S.page,
                 nav.content,
-                { paddingBottom: showDock ? 190 : 32 },
+                { paddingBottom: 24 },
               ]}
               showsVerticalScrollIndicator={false}
             >
@@ -350,7 +358,11 @@ export function SimpleAppView({
               )}
               {!page && (
                 <>
-                  <HomeScreens {...p} startScan={async () => capture()} />
+                  <HomeScreens
+                    {...p}
+                    onTargets={() => go("targets")}
+                    startScan={async () => capture()}
+                  />
                   <ScanScreen {...p} />
                   <CaptureScreens
                     {...p}
@@ -369,7 +381,14 @@ export function SimpleAppView({
                       date={today}
                       onNutrition={openNutrition}
                       onCapture={() => capture()}
-                      onDiary={() => p.setTab("diary")}
+                      onDiary={() => {
+                        setDate(today);
+                        p.setTab("diary");
+                      }}
+                      onFood={(e) => {
+                        setFood(e);
+                        go("food-detail");
+                      }}
                       onTargets={() => go("targets")}
                       resume={resume}
                     />
@@ -395,15 +414,21 @@ export function SimpleAppView({
                 </>
               )}
               {page === "ai-settings" && <AiSettingsScreen />}
-              {page === "nutrition-detail" && (
-                <NutritionScreen
-                  snapshot={snapshot}
-                  date={detailDate}
-                  onTargets={() => go("targets")}
-                  onFiberScroll={(y) =>
-                    p.scroll.current?.scrollTo({ y, animated: !reduced })
-                  }
-                />
+              {pages.includes("nutrition-detail") && (
+                <View
+                  style={{
+                    display: page === "nutrition-detail" ? "flex" : "none",
+                  }}
+                >
+                  <NutritionScreen
+                    snapshot={snapshot}
+                    date={detailDate}
+                    onTargets={() => go("targets")}
+                    onFiberScroll={(y) =>
+                      p.scroll.current?.scrollTo({ y, animated: !reduced })
+                    }
+                  />
+                </View>
               )}
               {page === "food-detail" && currentFood && (
                 <FoodDetail
@@ -427,6 +452,13 @@ export function SimpleAppView({
                 />
               )}
               <CaptureScreen
+                key={captureSession}
+                registerBack={(back) => {
+                  captureBack.current = back;
+                }}
+                onStepChange={() =>
+                  p.scroll.current?.scrollTo({ y: 0, animated: false })
+                }
                 visible={page === "capture-hub"}
                 date={detailDate}
                 meal={captureMeal}
@@ -444,13 +476,12 @@ export function SimpleAppView({
               />
             </ScrollView>
           </BlurTargetView>
-          {showDock && (p.tab === "today" || p.tab === "diary") && (
-            <View style={nav.captureFloat}>
-              <Action title="拍一拍" onPress={() => capture()} />
-            </View>
-          )}
           {showDock && (
-            <View style={nav.dockShadow} accessibilityLabel="主导航">
+            <View
+              style={nav.dockShadow}
+              onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
+              accessibilityLabel="主导航"
+            >
               <BlurView
                 blurTarget={target}
                 blurMethod="dimezisBlurViewSdk31Plus"

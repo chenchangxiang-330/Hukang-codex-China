@@ -119,7 +119,7 @@ def tap(pattern, scroll=False, attribute=None):
             # UIAutomator exposes content even while the floating action is
             # drawn above it. Scroll it into the unobscured viewport first.
             if scroll and find('^今日$', root) is not None and find('^记录$', root) is not None:
-                overlays = [find('^拍一拍$', root), find('^今日$', root)]
+                overlays = [find('^今日$', root)]
                 ceiling = min(bounds(n)[1] for n in overlays if n is not None)
                 if bounds(node)[3] > ceiling - 12:
                     swipe()
@@ -183,8 +183,8 @@ def dock():
 
 def home_and_navigation():
     configure()
-    require('今天，吃得刚刚好')
-    require('还没有今天的餐食', scroll=True)
+    require('护康 · 今天')
+    require('今天还没有记录', scroll=True)
     assert find('1285|1,285|62g|158g') is None, 'Demo values appeared in production'
     # Return to the top before the cover screenshot.
     for _ in range(7): swipe(True)
@@ -193,7 +193,7 @@ def home_and_navigation():
     for label, expected, name in [
         ('记录', '饮食记录', 'diary'),
         ('食品库', '我的食品库', 'library'),
-        ('我的', '食品资料与库存分开管理', 'mine'),
+        ('我的', '个人参考目标', 'mine'),
     ]:
         tap('^' + label + '$')
         require(expected, scroll=True)
@@ -201,7 +201,7 @@ def home_and_navigation():
         shot('android-' + name + '-390-empty')
     tap('^今日$')
     tap('^查看完整营养$', scroll=True)
-    require('了解今天的每一份营养')
+    require('^今日营养$')
     back = require('^返回$')
     b = bounds(back)
     density = 443 / 160
@@ -291,6 +291,7 @@ def keyboard():
     require('^餐食估算$')
     require('^包装食品$')
     shot('android-capture-meal-empty')
+    tap('^文字描述$')
     for iteration in range(3):
         tap('^餐食补充描述$', True, 'content-desc')
         if iteration == 0:
@@ -316,7 +317,7 @@ def keyboard():
         shell('input', 'keyevent', 'KEYCODE_BACK')
         time.sleep(.6)
     tap('^返回$')
-    tap('^拍一拍$')
+    tap('^文字描述$')
     require('Egg noddles half portion', True)
     tap('^估算这餐营养$', True)
     require('请先在 AI 服务设置中填写有效地址', True)
@@ -348,6 +349,7 @@ def gesture_safe_area():
 def camera():
     configure()
     tap('^拍一拍$')
+    tap('^餐食估算$')
     tap('^拍照$', True)
     deny = require(r':id/permission_deny_button$', attribute='resource-id')
     shot('android-camera-permission-request')
@@ -373,8 +375,10 @@ def camera():
     # Explicit AI disclosure adds content; return to the mode tabs before tapping.
     for _ in range(7):
         swipe(True)
+    tap('^更换记录方式$')
     tap('^包装食品$')
     shot('android-capture-package-empty')
+    tap('^拍摄包装正面辅助查找$', True)
     tap('^拍照$', True)
     press(require(r':id/shutter_button$', attribute='resource-id', attempts=20))
     press(require(r':id/done_button$', attribute='resource-id', attempts=15))
@@ -414,6 +418,7 @@ def ai_native_network_feedback():
     tap('^返回$')
     tap('^今日$')
     tap('^拍一拍$')
+    tap('^文字描述$')
     tap('^餐食补充描述$', True, 'content-desc')
     shell('input', 'text', 'Egg%snoddles')
     shell('input', 'keyevent', 'KEYCODE_BACK')
@@ -460,17 +465,18 @@ def diet_closed_loop():
     configure()
     tap('^个人参考目标$', True, 'content-desc')
     enter('每日能量参考（kcal）', '1800')
-    enter('个人蛋白质目标（g）', '75')
+    enter('个人蛋白质目标（g）', '100')
     tap('^保存个人目标$', True)
     require('个人目标已保存在本机', True)
     launch()
-    require('个人参考 1800', True)
+    tap('^查看完整营养$', True); require('个人能量参考 1800', True); tap('^返回$')
     tap('^拍一拍$')
+    tap('^文字描述$')
     enter('餐食补充描述', 'Native meal test')
     tap('^手动记录这一餐$', True)
     tap('^核对或修改营养数值，', True, 'content-desc')
     enter('能量（kcal / 基准）', '600')
-    enter('蛋白质（g / 基准）', '20')
+    enter('蛋白质（g / 基准）', '100')
     enter('脂肪（g / 基准）', '0')
     enter('实际食用份量（份）', '0.5')
     tap('我已确认日期、餐次和实际食用份量', True)
@@ -481,14 +487,17 @@ def diet_closed_loop():
     row, = c.execute('SELECT snapshot_json FROM nutrition_entries').fetchall()
     e = json.loads(row[0]); assert e['amount'] == .5 and e['food']['nutrients']['energy']['value'] == 600
     assert e['food']['nutrients']['fat']['value'] == 0
+    assert e['food']['nutrients']['protein']['value'] == 100 and e['food']['nutrients']['protein']['status'] == 'estimated'
     assert 'sodium' not in e['food']['nutrients'] or e['food']['nutrients']['sodium']['value'] is None
     assert c.execute('SELECT count(*) FROM simple_inventory').fetchone()[0] == 0
     assert json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0])['energy'] == 1800
     c.close()
     from datetime import date as calendar_date, timedelta
     moved_date = (calendar_date.fromisoformat(e['date']) - timedelta(days=1)).isoformat()
+    configure(); require('蛋白质估算进度', True); shot('android-isolated-protein-half-target');
     configure(320, '1.5'); require('300', True); shot('android-isolated-today-diet-320-large-font')
     tap('^记录$'); tap('^查看食物 Native meal test$', True, 'content-desc')
+    tap('^修改名称、营养与日期，', True, 'content-desc')
     enter('食物名称', 'Edited native meal')
     enter('修改实际食用份量（份）', '1')
     tap('^确认调整份量$', True)
@@ -502,9 +511,10 @@ def diet_closed_loop():
     require('600', True)
     shot('android-isolated-nutrition-diet')
     tap('^返回$'); tap('^查看食物 Edited native meal$', True, 'content-desc')
+    tap('^修改名称、营养与日期，', True, 'content-desc')
     enter('修改记录日期（YYYY-MM-DD）', moved_date)
     tap('^修改餐次 早餐$', True, 'content-desc')
-    tap('^确认调整份量$', True); require('饮食记录已更新', True)
+    tap('^保存记录修改$', True); require('饮食记录已更新', True)
     c = diet_db('edited-diet'); e = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); assert (e['date'], e['meal'], e['amount']) == (moved_date, 'breakfast', 1); c.close()
     launch(); tap('^记录$')
     tap('^‹ 前一天$', True)
@@ -575,6 +585,7 @@ def upload_photos():
     transparent.save(fixtures / '03-ai-transparent.png'); transparent.close()
     shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
     tap('^拍一拍$')
+    tap('^餐食估算$')
     results = []
     stems = ['02-ai-large'] if os.environ['HUKANG_DEVICE_SUITE'] == 'image-large' else ['03-ai-transparent']
     for stem in stems:
@@ -584,9 +595,8 @@ def upload_photos():
         before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
         tap('^从相册选择$', True)
         select_isolated_fixture(stem)
-        require('上传副本已在本机准备', True, attempts=18)
+        require('照片已准备好', True, attempts=18)
         for _ in range(7): swipe(True)
-        require(str(original_file.stat().st_size), True)
         paths = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg').splitlines()) - before
         assert len(paths) == 1, paths
         path, = paths
@@ -615,7 +625,7 @@ def upload_photos():
             assert '/nutrition-photos/' in saved_path
             assert hashlib.sha256(adb('exec-out', 'cat', saved_path)).hexdigest() == hashlib.sha256(payload).hexdigest()
             # Export a real retained diet photo with no food-library products.
-            launch(); tap('^我的$')
+            launch(); tap('^我的$'); tap('^数据导出$', True)
             tap('^包含食品与饮食照片$', True, 'content-desc')
             export_root = f'/data/user/0/{PKG}/cache/hukang-exports'
             previous = set(shell('find', export_root, '-name', '*.zip', check=False).splitlines())
@@ -659,7 +669,7 @@ def upload_photos():
 def upload_failures():
     from PIL import Image
     from picker_selectors import next_picker_action
-    configure(); tap('^拍一拍$')
+    configure(); tap('^拍一拍$'); tap('^餐食估算$')
     fixtures = OUT / 'image-inputs'; fixtures.mkdir(exist_ok=True)
     image = Image.new('RGB', (20, 20), (60, 140, 200))
     image.save(fixtures / '04-ai-unsupported.gif')
