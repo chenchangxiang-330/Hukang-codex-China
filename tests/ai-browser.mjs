@@ -186,6 +186,31 @@ try {
   await screenshot("browser-confirmed-meal-nutrition");
   await button("返回").click();
   await button("查看食物 浏览器确认餐食").click();
+  await page.getByRole("button", { name: /^修改名称、营养与日期，/ }).click();
+  await field("修改记录日期（YYYY-MM-DD）").fill("2026-10-25");
+  await page.getByRole("radio", { name: "修改餐次 早餐", exact: true }).click();
+  await button("保存记录修改").click();
+  await expect(
+    page.getByText("饮食记录已更新。", { exact: true }),
+  ).toBeInViewport();
+  await screenshot("browser-edit-date-visible-feedback");
+  await field("食物名称").fill("浏览器确认餐食（核对）");
+  await expect(page.getByText("饮食记录已更新。", { exact: true })).toHaveCount(
+    0,
+  );
+  await field("食物名称").fill("浏览器确认餐食");
+  await button("保存记录修改").click();
+  await button("返回饮食记录").click();
+  await expect(button("查看食物 浏览器确认餐食")).toHaveCount(0);
+  await button("‹ 前一天").click();
+  await button("今日营养摘要").click();
+  await expect(page.getByText("2026年10月25日", { exact: true })).toBeVisible();
+  await expect(page.getByText(/400–600/).first()).toBeVisible();
+  await button("返回").click();
+  await button("查看食物 浏览器确认餐食").click();
+  report.checks.push(
+    "Date/meal edits move intake to the correct date; save feedback stays beside the clicked button and clears on further edits.",
+  );
   await button("删除这条饮食记录").click();
   await button("保留记录").click();
   await button("删除这条饮食记录").click();

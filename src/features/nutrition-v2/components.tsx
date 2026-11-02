@@ -182,9 +182,11 @@ export function Action({
 export function Link({
   title,
   onPress,
+  chevron = true,
 }: {
   title: string;
   onPress: () => void;
+  chevron?: boolean;
 }) {
   return (
     <Pressable
@@ -194,7 +196,7 @@ export function Link({
       style={({ pressed }) => [N.link, pressed && { opacity: 0.6 }]}
     >
       <Text style={N.linkText}>{title}</Text>
-      <Text style={N.chevron}>›</Text>
+      {chevron && <Text style={N.chevron}>›</Text>}
     </Pressable>
   );
 }

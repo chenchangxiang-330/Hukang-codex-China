@@ -1,5 +1,5 @@
 import { FoodEditor } from "./FoodEditor";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Image,
   Pressable,
@@ -235,9 +235,17 @@ export function DiaryScreenV2({
         饮食记录
       </Text>
       <View style={[V.sectionRow, { flexWrap: "wrap" }]}>
-        <Link title="‹ 前一天" onPress={() => onDate(shiftDateKey(date, -1))} />
+        <Link
+          title="‹ 前一天"
+          chevron={false}
+          onPress={() => onDate(shiftDateKey(date, -1))}
+        />
         <Text style={N.caption}>{date.slice(0, 7)}</Text>
-        <Link title="后一天 ›" onPress={() => onDate(shiftDateKey(date, 1))} />
+        <Link
+          title="后一天 ›"
+          chevron={false}
+          onPress={() => onDate(shiftDateKey(date, 1))}
+        />
       </View>
       <ScrollView
         horizontal
@@ -548,12 +556,18 @@ export function FoodDetail({
   const [day, setDay] = useState(e.date);
   const [meal, setMeal] = useState(e.meal);
   const [feedback, setFeedback] = useState("");
+  const [feedbackAt, setFeedbackAt] = useState<
+    "portion" | "details" | "delete"
+  >("portion");
+  useEffect(() => setFeedback(""), [amount, food, day, meal]);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const lock = useRef(false);
-  const run = async (remove: boolean) => {
+  const run = async (remove: boolean, at: typeof feedbackAt = "portion") => {
     if (lock.current) return;
     lock.current = true;
+    setFeedback("");
+    setFeedbackAt(at);
     setBusy(true);
     try {
       if (remove) {
@@ -611,12 +625,14 @@ export function FoodDetail({
             />
           ))}
         </View>
+        {feedback && feedbackAt === "portion" && (
+          <Feedback>{feedback}</Feedback>
+        )}
         <Action
           title={busy ? "正在保存…" : "确认调整份量"}
           disabled={busy}
           onPress={() => void run(false)}
         />
-        {feedback && <Feedback>{feedback}</Feedback>}
         <Accordion
           title="修改名称、营养与日期"
           value="编辑"
@@ -635,10 +651,13 @@ export function FoodDetail({
             onChange={(v) => setMeal(v as Meal)}
             accessibilityPrefix="修改餐次"
           />
+          {feedback && feedbackAt === "details" && (
+            <Feedback>{feedback}</Feedback>
+          )}
           <Action
             title="保存记录修改"
             disabled={busy}
-            onPress={() => void run(false)}
+            onPress={() => void run(false, "details")}
           />
         </Accordion>
         <Accordion
@@ -685,7 +704,13 @@ export function FoodDetail({
             <Text style={N.body}>
               删除「{e.food.name}」这一次食用？营养汇总会更新，库存不变。
             </Text>
-            <Action title="确定删除这次食用" onPress={() => void run(true)} />
+            {feedback && feedbackAt === "delete" && (
+              <Feedback>{feedback}</Feedback>
+            )}
+            <Action
+              title="确定删除这次食用"
+              onPress={() => void run(true, "delete")}
+            />
             <Action
               title="保留记录"
               secondary
