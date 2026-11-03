@@ -153,6 +153,27 @@ test("blank replacement key only reuses credential for identical destination; de
   f.active.consent(true);
   await assert.rejects(f.active.testConnection(), { code: "configuration" });
 });
+test("failed secure deletion still forgets the session key and forbids blank-key reuse", async () => {
+  const f = fixture();
+  await f.manager.save(config, true);
+  f.storage.delete = async () => {
+    throw Error("device storage unavailable");
+  };
+  await assert.rejects(f.manager.delete(), /删除未完成/);
+  assert.equal(f.active.getSnapshot().hasKey, false);
+  assert.equal(f.manager.getSnapshot().saved, false);
+  assert(f.manager.issues({ ...config, apiKey: "" }).apiKey);
+  const calls = f.calls.length;
+  await assert.rejects(
+    f.manager.save({ ...config, apiKey: "" }, true),
+    (e) => e.code === "configuration",
+  );
+  assert.equal(f.calls.length, calls);
+  assert(
+    f.raw(),
+    "The failure remains visible; no successful disk deletion is claimed",
+  );
+});
 test("delete during late secure write cannot resurrect a tested draft", async () => {
   const f = fixture();
   await f.manager.save(config, true);

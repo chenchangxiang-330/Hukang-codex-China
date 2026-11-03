@@ -131,6 +131,10 @@ export class SavedConnection {
   delete = async () => {
     this.cancel();
     this.active.clear();
+    // A failed device deletion must not leave an in-memory credential that
+    // a later blank-key draft can silently reuse. Disk failure is reported.
+    this.#stored = null;
+    this.#publish({ saved: false });
     await this.#serial(async () => {
       try {
         await this.storage.delete();
