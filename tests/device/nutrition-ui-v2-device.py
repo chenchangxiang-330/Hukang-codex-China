@@ -283,7 +283,33 @@ def home_and_navigation():
         tap('^'+label+'$', attribute='content-desc');require(title,True);dock();shot('android-'+{'记录':'diary','食品库':'library','我的':'mine'}[label]+'-empty')
     tap('^今日$',attribute='content-desc');tap('^查看完整营养$',True);require('^营养详情$');b=bounds(require('^返回$',attribute='content-desc'));assert (b[3]-b[1])/(443/160)>=48
     shot('android-nutrition-empty');tap('^矿物质，展开$',True);tap('^钠，',True);shot('android-mineral-detail');tap('^维生素，展开$',True);shot('android-vitamin-detail');tap('^返回$',attribute='content-desc')
-    tap('^拍一拍$',True);require('^餐食估算$',attribute='content-desc');assert find('^文字描述$|^手动填写$') is None;shot('android-two-entries');tap('^餐食估算$',attribute='content-desc');require('^餐食补充描述$',True,'content-desc');shot('android-meal-single-input');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);shot('android-barcode-entry')
+    tap('^拍一拍$',True);require('^餐食估算$',attribute='content-desc');assert find('^文字描述$|^手动填写$') is None;shot('android-two-entries');tap('^餐食估算$',attribute='content-desc');require('^餐食补充描述$',True,'content-desc');shot('android-meal-single-input');tap('^返回$',attribute='content-desc')
+
+def camera_and_recovery():
+    configure();tap('^拍一拍$',True);tap('^餐食估算$',attribute='content-desc');tap('^拍照$',True)
+    shot('android-camera-permission-request');press(require(r':id/permission_deny_button$',attribute='resource-id'))
+    require('相机权限未开启',True);shot('android-camera-permission-denied')
+    for _ in range(7):swipe(True)
+    tap('^拍照$',True);press(require(r':id/permission_allow_foreground_only_button$',attribute='resource-id'))
+    shutter=require(r':id/shutter_button$',attribute='resource-id',attempts=20);shot('android-system-camera-virtual-scene');press(shutter)
+    press(require(r':id/done_button$',attribute='resource-id',attempts=15));require('原图已保存在本机',True,attempts=20)
+    for _ in range(7):swipe(True)
+    require('^餐食原图预览$',True,'content-desc');shot('android-camera-meal-original');tap('^估算这餐营养$',True);require('当前模型不支持餐食照片',True)
+    for _ in range(7):swipe(True)
+    tap('^删除这张照片$',True,'content-desc');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);require('等待条码进入取景框',True);shot('android-barcode-entry')
+    shell('input','keyevent','KEYCODE_BACK');require('^今日$',attribute='content-desc')
+    report['camera']={'permissionDeniedAndGranted':True,'mealPhotoAndDelete':True,'source':'Android emulator virtual scene','physicalCamera':False,'liveBarcodeDecoded':False}
+
+def gesture_safe_area():
+    configure();overlays=shell('cmd','overlay','list');original=re.findall(r'\[x\] (com\.android\.internal\.systemui\.navbar\.[\w.]+)',overlays)
+    report['navigationOverlayBefore']=original
+    try:
+        shell('cmd','overlay','enable-exclusive','--category','--user','0','com.android.internal.systemui.navbar.gestural')
+        launch();dock();shot('android-today-gesture-safe-area');tap('^记录$',attribute='content-desc')
+        for _ in range(3):swipe()
+        require('添加晚餐',True);dock();shot('android-diary-scroll-end-gesture-safe-area')
+    finally:
+        for overlay in original:shell('cmd','overlay','enable-exclusive','--category','--user','0',overlay,check=False)
 
 def profile_and_targets():
     launch();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc')
@@ -301,7 +327,7 @@ def secure_storage():
     def invoke(mode):
         shell('am','force-stop',PKG);result=shell('am','instrument','-w','-e','mode',mode,component);assert 'SECURE_PROBE_PASS:'+mode in result,result
     invoke('write');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('最近验证',True);shot('android-encrypted-connection-restored-MOCK')
-    invoke('verify');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);tap('^连接详情与管理$',True);tap('^删除已保存连接$',True);require('已删除连接',True);shot('android-connection-deleted')
+    invoke('verify');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);tap('^同意本次连接测试$',True);tap('^保存连接$',True);require('网络连接失败',True,attempts=15);shot('android-native-network-failure-old-connection-retained');tap('^连接详情与管理$',True);tap('^删除已保存连接$',True);require('已删除连接',True);shot('android-connection-deleted')
     launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('连接状态.*未连接',True)
     assert not shell('find',f'/data/user/0/{PKG}/no_backup','-name','ai-connection.enc',check=False)
     report['securePersistence']={'primitive':'Android Keystore AES-GCM atomic file','instrumentationFixtureOnly':True,'processRestartVerified':True,'deleteFromActualUiVerified':True,'realProviderVerified':False}
@@ -377,7 +403,7 @@ try:
     assert not shell('pm', 'path', PKG, check=False), 'UI probe expects a fresh disposable emulator, never clears user data'
     report['install'] = adb('install', '-r', str(apk.resolve()), timeout=180).decode()
     assert 'Success' in report['install']
-    cases=[('four-metrics-navigation',home_and_navigation),('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('small-large-keyboard',small_large_keyboard),('deterministic-intake-stock',diet_closed_loop)]
+    cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area),('deterministic-intake-stock',diet_closed_loop)]
     if os.environ.get('HUKANG_DEVICE_SUITE','').startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
         check(name, action)
