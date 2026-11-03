@@ -1,0 +1,73 @@
+{
+  "currentCertificateSha256": "d9691a6376d8c5d1a2b4cadc0b47d2b772ed604f4e1d177c3fcdf0b44f9f749e",
+  "comparisons": [
+    {
+      "name": "delivered-0.5.3-code14",
+      "certificateSha256": [
+        "0474c6effedb050f7be3cbfe98275a39cc7974a31bf605453e3b923ad0597487"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "delivered-0.5.2-code13",
+      "run": 41299810218,
+      "certificateSha256": [
+        "22e093da8f0f0fdc4786febbbf897c60b75a5b8fa265e687461bf1d9703fa7b4"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "initialUiV2",
+      "run": 41186160540,
+      "certificateSha256": [
+        "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "dateFixUiV2",
+      "run": 41189628525,
+      "certificateSha256": [
+        "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "firstKeyboardFixUiV2",
+      "run": 41192004209,
+      "certificateSha256": [
+        "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "previousUiV1",
+      "run": 40323157930,
+      "certificateSha256": [
+        "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "delivered-0.4.0-code9",
+      "run": 41196378766,
+      "certificateSha256": [
+        "faf03098fa58b411d9f678e8b88acdf1fd03be626c9ce510f174cb130300c70a"
+      ],
+      "sameCertificate": false
+    },
+    {
+      "name": "delivered-0.4.1-code10",
+      "run": 41214772131,
+      "certificateSha256": [
+        "dc046c6ff30bb7223175d4f40a4ae23244a103cf621e43ae3f8cadf6a7d9cc9e"
+      ],
+      "sameCertificate": false
+    }
+  ],
+  "phoneCertificateRead": false,
+  "persistentSigningConfigured": false,
+  "inPlaceUpdateFromDelivered053": false,
+  "signatureRotationProof": false,
+  "localApkAndCertificateRechecked": true
+}

@@ -1,0 +1,17 @@
+{
+  "kind": "browser-shared-RN-UI-mock-HTTP",
+  "liveProviderTested": false,
+  "nativeDevice": false,
+  "checks": [
+    "Verified secure-save boundary, all profile inputs, structured draft then confirmation, manual override, required meal photo and consent, explicit portion confirmation, failed drafts retain active config, auth/rate/malformed/cancel/delete states"
+  ],
+  "screenshots": [
+    "browser-saved-connection.png",
+    "browser-target-draft.png",
+    "browser-manual-target.png",
+    "browser-meal-model-preview.png",
+    "browser-deleted-connection.png"
+  ],
+  "errors": [],
+  "status": "passed"
+}
