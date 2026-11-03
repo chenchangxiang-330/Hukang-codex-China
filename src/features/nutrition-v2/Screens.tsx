@@ -265,15 +265,22 @@ export function DiaryScreenV2({
 export function NutritionScreen({
   snapshot: s,
   date,
+  expanded,
+  onToggleMetric,
 }: {
   snapshot: Snapshot;
   date: string;
+  expanded?: string[];
+  onToggleMetric?: (key: string) => void;
   onTargets: () => void;
   onFiberScroll: (y: number) => void;
 }) {
-  const [opened, setOpened] = useState<string[]>([]);
-  const toggle = (k: string) =>
-    setOpened((a) => (a.includes(k) ? a.filter((x) => x !== k) : [...a, k]));
+  const [localOpened, setOpened] = useState<string[]>([]);
+  const opened = expanded ?? localOpened;
+  const toggle =
+    onToggleMetric ??
+    ((k: string) =>
+      setOpened((a) => (a.includes(k) ? a.filter((x) => x !== k) : [...a, k])));
   const metric = (k: Nutrient) => {
     const t = total(s.entries, date, k),
       p = policyFor(s.targets, k);

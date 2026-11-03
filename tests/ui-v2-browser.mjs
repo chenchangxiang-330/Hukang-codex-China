@@ -102,6 +102,15 @@ try {
   await expect(page.getByText(/个人参考待完善/).first()).toBeVisible();
   await shot("browser-nutrition-minerals");
   await button("返回").click();
+  await button("查看完整营养").click();
+  await expect(
+    page.getByRole("button", { name: "矿物质，展开", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: /^钠，/ })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await button("返回").click();
   await button("拍一拍").click();
   await expect(button("餐食估算")).toBeVisible();
   await expect(button("文字描述")).toHaveCount(0);

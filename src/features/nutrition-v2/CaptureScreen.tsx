@@ -127,6 +127,47 @@ export function ImpactPreview({
     validation = (e as Error).message;
     entry = null;
   }
+  // Persist a recoverable draft, never a daily intake. A resumed draft still
+  // requires a new explicit portion choice and confirmation.
+  let recoverable: Entry | null = null;
+  try {
+    recoverable = snapshotEntry(
+      entry ?? {
+        id: operation.current,
+        date: day,
+        meal: selectedMeal,
+        food,
+        amount: food.basis.amount,
+        unit: food.basis.unit,
+        consumedTime: time,
+        timezone: zone,
+      },
+    );
+  } catch {
+    /* Keep the last valid draft while a field is incomplete. */
+  }
+  const draftJson =
+    recoverable && !committed ? JSON.stringify(recoverable) : "";
+  const latestDraft = useRef("");
+  latestDraft.current = draftJson;
+  useEffect(() => {
+    if (!draftJson || saving || adapter.kind !== "production") return;
+    const timer = setTimeout(() => {
+      void adapter
+        .saveIntakeDraft?.(JSON.parse(draftJson))
+        .catch(() => setMessage("草稿暂未保存，请重试；尚未计入摄入。"));
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [draftJson, saving]);
+  useEffect(
+    () => () => {
+      if (latestDraft.current && adapter.kind === "production")
+        void adapter
+          .saveIntakeDraft?.(JSON.parse(latestDraft.current))
+          .catch(() => {});
+    },
+    [],
+  );
   const projected =
     entry && !committed ? [...snapshot.entries, entry] : snapshot.entries;
   const changed = () => {

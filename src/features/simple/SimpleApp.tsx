@@ -124,6 +124,9 @@ export function SimpleAppView({
     [captureMeal, setCaptureMeal] = useState<Meal>("lunch"),
     [keyboard, setKeyboard] = useState(false);
   const startedSetup = useRef(false);
+  const [nutritionExpanded, setNutritionExpanded] = useState<
+    Record<string, string[]>
+  >({});
   useEffect(() => {
     if (
       adapter.kind === "production" &&
@@ -516,6 +519,18 @@ export function SimpleAppView({
                   <NutritionScreen
                     snapshot={snapshot}
                     date={detailDate}
+                    expanded={nutritionExpanded[detailDate] ?? []}
+                    onToggleMetric={(key) =>
+                      setNutritionExpanded((previous) => {
+                        const opened = previous[detailDate] ?? [];
+                        return {
+                          ...previous,
+                          [detailDate]: opened.includes(key)
+                            ? opened.filter((v) => v !== key)
+                            : [...opened, key],
+                        };
+                      })
+                    }
                     onTargets={() => go("targets")}
                     onFiberScroll={(y) =>
                       p.scroll.current?.scrollTo({ y, animated: !reduced })

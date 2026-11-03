@@ -259,6 +259,16 @@ export function createNutritionStore(
     intakeDraft: (input: Entry | null) => {
       const entry = input ? snapshotEntry(input) : null;
       return serialize(async () => {
+        // A late draft flush after confirmation (or deletion) cannot resurrect
+        // the operation. The intake tombstone outlives the visible record.
+        if (
+          entry &&
+          (await driver.get(
+            "SELECT entry_id FROM nutrition_operations WHERE entry_id=?",
+            entry.id,
+          ))
+        )
+          return read();
         await setState("intakeDraft", entry);
         return read();
       });

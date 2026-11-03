@@ -475,3 +475,17 @@ test("v7 migration retains exact intake snapshots and backfills reusable foods a
   );
   db.close();
 });
+
+test("late preview draft flush after save or deletion cannot recreate a pending intake", async () => {
+  const f = fixture(),
+    s = f.store(),
+    e = entry();
+  await s.intakeDraft(e);
+  await s.record(e, e.id);
+  await s.intakeDraft(e);
+  assert.equal((await s.load()).intakeDraft, undefined);
+  await s.remove(e.id);
+  await s.intakeDraft(e);
+  assert.equal((await s.load()).intakeDraft, undefined);
+  assert.equal((await s.load()).entries.length, 0);
+});

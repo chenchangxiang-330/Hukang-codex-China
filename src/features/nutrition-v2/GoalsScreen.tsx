@@ -57,6 +57,7 @@ export function GoalsScreen({
     [health, setHealth] = useState<string | null>(null),
     [healthOpen, setHealthOpen] = useState(false);
   const [manual, setManual] = useState(false),
+    [referenceDetails, setReferenceDetails] = useState(false),
     [nutrient, setNutrient] = useState<Nutrient>("protein"),
     [type, setType] = useState<TargetPolicy["type"]>("target"),
     [value, setValue] = useState(""),
@@ -469,6 +470,36 @@ export function GoalsScreen({
             ))}
           {!Object.keys(s.targets).length && (
             <Text style={N.caption}>尚未设置目标。</Text>
+          )}
+          {!!Object.keys(s.targets).length && (
+            <Accordion
+              title="目标依据与应用时间"
+              value="查看"
+              open={referenceDetails}
+              onToggle={() => setReferenceDetails(!referenceDetails)}
+            >
+              {(Object.keys(nutrientInfo) as Nutrient[])
+                .filter((k) => policyFor(s.targets, k))
+                .map((k) => {
+                  const p = policyFor(s.targets, k)!;
+                  return (
+                    <View key={k} style={{ gap: 4 }}>
+                      <Text style={N.body}>
+                        {nutrientInfo[k][0]} ·{" "}
+                        {p.manual ? "用户修改" : "AI 推荐"}
+                      </Text>
+                      <Text style={N.caption}>
+                        {p.source} · {p.basis} · {p.applicability}
+                      </Text>
+                      <Text style={N.caption}>
+                        {p.appliedAt
+                          ? `应用于 ${new Date(p.appliedAt).toLocaleString()}`
+                          : "既有目标，应用时间未记录"}
+                      </Text>
+                    </View>
+                  );
+                })}
+            </Accordion>
           )}
         </Card>
       )}
