@@ -105,7 +105,7 @@ def unit_for(label,unit):
  raise RuntimeError('Unit control not found for '+label)
 def photo(button,stem):
  def selected():
-  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else r'拍营养|(?:护康\s*›\s*)?商品详情'
+  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else r'(?:再)?拍营养成分表|(?:护康\s*›\s*)?商品详情'
   deadline=time.monotonic()+(300 if button=='从相册选择营养表' else 45);previous=None
   while time.monotonic()<deadline:
    root=tree();nodes=list(root.iter('node'))

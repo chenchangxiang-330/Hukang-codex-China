@@ -143,12 +143,23 @@ def shot(name):
 def launch():
     shell('am', 'force-stop', PKG)
     shell('am', 'start', '-n', PKG + '/.MainActivity')
+    stable = 0
+    # The very first render can show the empty home while SQLite opens, then
+    # navigate to setup. Require two settled reads and handle setup throughout.
     for attempt in range(30):
-        if find('^今日$',attribute='content-desc'):break
-        if find('设置个人参考'):
-            shot('android-first-setup-empty');tap('^保存草稿，稍后继续$',True);break
+        root = tree()
+        if find('设置个人参考', root) is not None:
+            shot('android-first-setup-empty')
+            tap('^保存草稿，稍后继续$', True)
+            stable = 0
+        elif find('^今日$', root, 'content-desc') is not None:
+            stable += 1
+            if stable >= 2:
+                return
+        else:
+            stable = 0
         time.sleep(.6)
-    require('^今日$',attempts=30,attribute='content-desc')
+    raise AssertionError('Initial setup or home did not settle')
 
 
 def configure(width_dp=390, scale='1.0'):
