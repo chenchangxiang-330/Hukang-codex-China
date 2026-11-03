@@ -11,7 +11,7 @@ const { NUTRITION_MIGRATION_V8 } = await import(
 const { createNutritionAdapter } = await import(
   "../src/services/nutrition/adapter.ts"
 );
-const { contribution, total, targetProgress } = await import(
+const { contribution, total, targetProgress, formatTotal } = await import(
   "../src/features/nutrition-v2/model.ts"
 );
 
@@ -349,6 +349,18 @@ test("50 + 8.5 and half-package 54.25 are deterministic previews; confirm once a
   assert.equal(
     total((await s.load()).entries, whole.date, "protein").value,
     50,
+  );
+  assert.equal(
+    formatTotal(
+      total([...(await s.load()).entries, half], whole.date, "protein"),
+    ),
+    "54.25",
+  );
+  assert.equal(
+    formatTotal(
+      total([...(await s.load()).entries, whole], whole.date, "protein"),
+    ),
+    "58.5",
   );
   await s.intakeDraft(half);
   assert.equal((await f.store().load()).intakeDraft.id, "next");

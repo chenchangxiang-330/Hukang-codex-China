@@ -287,11 +287,14 @@ export function formatNumber(n: number, digits = 1) {
   return Number(n.toFixed(digits)).toString();
 }
 export function formatTotal(t: Total): string {
+  // Preserve quarter-gram portions of confirmed label data (50 + 8.5 / 2).
+  // Estimated results retain their coarser display and visible source status.
+  const digits = t.estimated ? 1 : 2;
   return t.range
-    ? `${formatNumber(t.range[0])}–${formatNumber(t.range[1])}`
+    ? `${formatNumber(t.range[0], digits)}–${formatNumber(t.range[1], digits)}`
     : t.value === null
       ? "—"
-      : formatNumber(t.value);
+      : formatNumber(t.value, digits);
 }
 export function reliability(t: Total): string {
   return !t.count

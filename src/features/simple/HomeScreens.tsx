@@ -187,10 +187,10 @@ export function HomeScreens(
             <View style={H.segmented} accessibilityRole="tablist">
               {(
                 [
-                  ["library", "食品资料", foods.length],
-                  ["stock", "我的库存", stock.length],
+                  ["library", "食品资料"],
+                  ["stock", "我的库存"],
                 ] as const
-              ).map(([key, label, count]) => (
+              ).map(([key, label]) => (
                 <Pressable
                   key={key}
                   accessibilityRole="tab"
@@ -212,7 +212,7 @@ export function HomeScreens(
                       tab === key && H.segmentTextSelected,
                     ]}
                   >
-                    {label} <Text style={H.segmentCount}>{count}</Text>
+                    {label}
                   </Text>
                 </Pressable>
               ))}

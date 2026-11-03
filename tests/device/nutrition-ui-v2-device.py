@@ -308,7 +308,7 @@ def camera_and_recovery():
     shutter=require(r':id/shutter_button$',attribute='resource-id',attempts=20);shot('android-system-camera-virtual-scene');press(shutter)
     press(require(r':id/done_button$',attribute='resource-id',attempts=15));require('原图已保存在本机',True,attempts=20)
     for _ in range(7):swipe(True)
-    require('^餐食原图预览$',True,'content-desc');shot('android-camera-meal-original');tap('^估算这餐营养$',True);require('当前模型不支持餐食照片',True)
+    require('^餐食原图预览$',True,'content-desc');shot('android-camera-meal-original');estimate=require('^估算这餐营养$',True,'content-desc');assert estimate.get('enabled')=='false';require('当前模型不支持图片',True);shot('android-camera-no-api-state')
     for _ in range(7):swipe(True)
     tap('^删除这张照片$',True,'content-desc');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);require('等待条码进入取景框',True);shot('android-barcode-entry')
     shell('input','keyevent','KEYCODE_BACK');require('^今日$',attribute='content-desc')
@@ -362,9 +362,14 @@ def seed_food():
     for suffix in ('-wal','-shm'):shell('rm','-f',paths[0]+suffix)
     adb('push',str(OUT/'fixture-source.db'),paths[0]);shell('chmod','666',paths[0]);report['fixtureIsolation']='Only a fresh disposable emulator, explicit TEST labels, never production app data';launch();return today
 
+def preview_amount(value):
+    # Portion buttons follow the totals. Revisit the top of the prediction.
+    for _ in range(8):swipe(True)
+    require(value,True)
+
 def diet_closed_loop():
-    configure();today=seed_food();require('50 g',True);shot('android-timeline-isolated-prior');tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃半份$',True);require('54.25',True);shot('android-half-portion-prediction');c=diet_db('before-confirm');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;c.close()
-    launch();tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃一份$',True);require('58.5',True);shot('android-whole-portion-prediction');tap('^自己填写吃多少$',True);enter('实际食用份量（份）','0.5');tap('我已确认日期、餐次和实际食用份量',True);tap('^确认食用$',True);require('已保存这次食用',True);shot('android-confirmed-intake-isolated')
+    configure();today=seed_food();require('50 g',True);shot('android-timeline-isolated-prior');tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃半份$',True);preview_amount('54.25');shot('android-half-portion-prediction');c=diet_db('before-confirm');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;c.close()
+    launch();tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃一份$',True);preview_amount('58.5');shot('android-whole-portion-prediction');tap('^自己填写吃多少$',True);enter('实际食用份量（份）','0.5');tap('我已确认日期、餐次和实际食用份量',True);tap('^确认食用$',True);require('已保存这次食用',True);shot('android-confirmed-intake-isolated')
     c=diet_db('after-confirm');rows=[json.loads(r[0]) for r in c.execute('SELECT snapshot_json FROM nutrition_entries')];assert len(rows)==2;e=next(e for e in rows if e['id']!='isolated-prior');assert e['amount']==.5;assert c.execute('SELECT COUNT(*) FROM nutrition_catalogue').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM nutrition_stock').fetchone()[0]==0;c.close()
     launch();require('54.25 g',True);shot('android-four-progress-isolated');tap('^记录$',attribute='content-desc');tap('^查看食物 TEST reusable meal$',True);enter('修改实际食用份量（份）','1');tap('^确认调整份量$',True);require('饮食记录已更新',True);tap('^返回饮食记录$',True);tap('^今日营养摘要$',True);tap('^蛋白质，',True);require('58.5',True);shot('android-nutrition-updated-isolated')
     launch();tap('^记录$',attribute='content-desc');tap('^查看食物 TEST reusable meal$',True);tap('^修改名称、营养与日期，',True);from datetime import date,timedelta

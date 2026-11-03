@@ -181,6 +181,8 @@ def wait_image_transform():
   time.sleep(.5)
  raise RuntimeError('Image transform did not finish within 30 seconds')
 def transform_photo(original):
+ # Identity fields now follow the image controls; return above them before rotating.
+ for _ in range(8):swipe(True)
  tap('^调整照片方向或裁剪$',True)
  tap('^右转90°$',True);wait_image_transform();tap('^左转90°$',True);wait_image_transform();tap('^选择裁剪区域$',True)
  def apply_control(enabled):
