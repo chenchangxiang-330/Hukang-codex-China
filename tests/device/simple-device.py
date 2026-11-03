@@ -14,7 +14,15 @@ def run(args,check=True,timeout=90):
  if check and p.returncode: raise RuntimeError(str(args)+': '+p.stderr.decode(errors='replace'))
  return p.stdout
 def shell(*args,check=True):return run(['shell',shlex.join(args)],check).decode(errors='replace').strip()
-def shot(name): (O/(name+'.png')).write_bytes(run(['exec-out','screencap','-p']))
+def shot(name):
+ (O/(name+'.png')).write_bytes(run(['exec-out','screencap','-p']))
+ # Inspect the most recent hierarchy (tree() captures it); preserve screenshot
+ # before failing so orphan native headers cannot pass visual acceptance.
+ f=O/'last-window.xml'
+ if f.exists():
+  root=ET.fromstring(f.read_bytes());headers=[n.get('text') for n in root.iter('node') if n.get('package')==PKG and n.get('text','').startswith('护康 ›')]
+  assert len(headers)<=1,('Stale native headers',headers)
+
 def tree():
  shell('uiautomator','dump','--compressed','/sdcard/simple-window.xml')
  b=run(['exec-out','cat','/sdcard/simple-window.xml']);(O/'last-window.xml').write_bytes(b);root=ET.fromstring(b)

@@ -322,28 +322,31 @@ export function SimpleAppView({
             p.busy || snapshot.saving ? "no-hide-descendants" : "auto"
           }
         >
-          {(p.screen !== "home" || page) && (
-            <View
-              style={[
-                nav.header,
-                detail && { backgroundColor: colors.detailBackground },
-              ]}
+          {/* Keep one concrete native parent. Removing a flattened header during
+              first-setup exit left orphan TextViews/back controls in Fabric. */}
+          <View
+            collapsable={false}
+            accessibilityElementsHidden={p.screen === "home" && !page}
+            importantForAccessibility={
+              p.screen === "home" && !page ? "no-hide-descendants" : "auto"
+            }
+            style={[
+              nav.header,
+              p.screen === "home" && !page && { display: "none" },
+              detail && { backgroundColor: colors.detailBackground },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="返回"
+              onPress={close}
+              disabled={!!p.busy || snapshot.saving === true}
+              style={({ pressed }) => [nav.back, pressed && { opacity: 0.65 }]}
             >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="返回"
-                onPress={close}
-                disabled={!!p.busy || snapshot.saving === true}
-                style={({ pressed }) => [
-                  nav.back,
-                  pressed && { opacity: 0.65 },
-                ]}
-              >
-                <Text style={nav.backText}>‹ 返回</Text>
-              </Pressable>
-              <Text style={nav.headerTitle}>护康 › {title}</Text>
-            </View>
-          )}
+              <Text style={nav.backText}>‹ 返回</Text>
+            </Pressable>
+            <Text style={nav.headerTitle}>护康 › {title}</Text>
+          </View>
           <BlurTargetView
             ref={target}
             style={[nav.flex, showDock && { marginBottom: dockHeight + 24 }]}

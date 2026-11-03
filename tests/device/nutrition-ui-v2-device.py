@@ -135,8 +135,11 @@ def tap(pattern, scroll=False, attribute=None):
 
 def shot(name):
     root = tree()
+    headers = [n.get('text') for n in root.iter('node') if n.get('package') == PKG and n.get('text', '').startswith('护康 ›')]
+    backs = [n for n in root.iter('node') if n.get('package') == PKG and n.get('content-desc') == '返回']
     (OUT / (name + '.xml')).write_bytes(ET.tostring(root, encoding='utf-8'))
     (OUT / (name + '.png')).write_bytes(adb('exec-out', 'screencap', '-p'))
+    assert len(headers) <= 1 and len(backs) <= 1, ('Stale native navigation views', headers, len(backs))
     return root
 
 
@@ -323,7 +326,7 @@ def gesture_safe_area():
         for overlay in original:shell('cmd','overlay','enable-exclusive','--category','--user','0',overlay,check=False)
 
 def profile_and_targets():
-    launch();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc')
+    configure();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc');tap('^个人资料，',True)
     for label,value in [('年龄（岁）','30'),('身高（cm）','170'),('体重（kg）','65'),('运动状况','Walking'),('每周运动频率（次/周）','3')]: enter(label,value)
     tap('^保存资料草稿$',True);require('资料草稿已保存',True);shot('android-profile-saved')
     tap('^手动修改目标，编辑$',True);enter('目标或下限（g）','100');tap('^加入目标草案$',True);shot('android-target-draft')
@@ -414,8 +417,10 @@ try:
     assert not shell('pm', 'path', PKG, check=False), 'UI probe expects a fresh disposable emulator, never clears user data'
     report['install'] = adb('install', '-r', str(apk.resolve()), timeout=180).decode()
     assert 'Success' in report['install']
-    cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area),('deterministic-intake-stock',diet_closed_loop)]
-    if os.environ.get('HUKANG_DEVICE_SUITE','').startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
+    suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
+    cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
+    if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
+    if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'

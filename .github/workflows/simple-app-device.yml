@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: ${{ fromJSON(inputs.suite == 'images' && '["image-large","image-transparent","image-gif","image-oversize"]' || (inputs.suite != '' && inputs.suite != 'all') && format('["{0}"]', inputs.suite) || '["ui","offline","image-large","image-transparent","image-gif","image-oversize"]') }}
+        suite: ${{ fromJSON(inputs.suite == 'images' && '["image-large","image-transparent","image-gif","image-oversize"]' || (inputs.suite != '' && inputs.suite != 'all') && format('["{0}"]', inputs.suite) || '["ui","flows","offline","image-large","image-transparent","image-gif","image-oversize"]') }}
     env:
       HUKANG_DEVICE_SUITE: ${{ matrix.suite }}
     steps:
