@@ -196,12 +196,38 @@ export function ProductScreens(p: AppController & { onIntake?: () => void }) {
             )}
           </Surface>
           {p.onIntake && (
-            <Button
-              title="如果吃完这份 · 摄入预览"
-              secondary
-              onPress={p.onIntake}
-            />
+            <Button title="食用这份食品" secondary onPress={p.onIntake} />
           )}
+          <Button
+            title="营养成分表不正确"
+            secondary
+            onPress={() => {
+              const barcode = product.barcodes?.[0];
+              const draft: CaptureDraft = {
+                id: product.id,
+                barcode: normalizeBarcode({
+                  rawValue: barcode?.rawValue ?? "",
+                  format: barcode?.format ?? "EAN_13",
+                  decodedAt: new Date().toISOString(),
+                }),
+                acquiredBy: barcode?.acquiredBy ?? "manual",
+                step: "nutrition",
+                name: product.review.name,
+                brand: product.review.brand,
+                specification: product.review.specification ?? "",
+                nutrition: product.evidence,
+                review: JSON.parse(
+                  JSON.stringify(product.review),
+                ) as FoodReviewValues,
+              };
+              setEditing(product);
+              draftRef.current = draft;
+              setDraft(draft);
+              setReview(draft.review!);
+              setConfirmed(false);
+              navigate("nutrition");
+            }}
+          />
           <Button
             title="核对或修改商品资料"
             secondary

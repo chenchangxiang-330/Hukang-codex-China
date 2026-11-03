@@ -1,4 +1,10 @@
 import {
+  TARGET_PROMPT,
+  parseTargetDraft,
+  profileIssues,
+  type PersonalProfile,
+} from "../nutrition/profile";
+import {
   chatEndpoint,
   providerDefaults,
   providerLabels,
@@ -40,7 +46,7 @@ export type AiSnapshot = {
   revision: number;
   consent: boolean;
   supportsImage: boolean;
-  operation: "connection" | "meal" | "package" | null;
+  operation: "connection" | "meal" | "package" | "targets" | null;
   connection: ConnectionResult | null;
 };
 type ImageReader = (uri: string) => Promise<MealImage>;
@@ -129,6 +135,10 @@ export class AiService {
       connection: null,
     });
   };
+  activate = (config: AiConfiguration, connection: ConnectionResult) => {
+    this.update(config);
+    this.#publish({ connection });
+  };
   clear = () => {
     this.update({ provider: "custom", baseUrl: "", model: "", apiKey: "" });
   };
@@ -146,7 +156,7 @@ export class AiService {
     this.#publish({ operation: null });
   };
   async #run<T>(
-    operation: "connection" | "meal" | "package",
+    operation: "connection" | "meal" | "package" | "targets",
     signal: AbortSignal | undefined,
     action: (
       config: AiConfiguration,
@@ -196,6 +206,8 @@ export class AiService {
     } catch (error) {
       if (revision !== this.#revision) throw new AiError("changed");
       if (controller.signal.aborted) throw new AiError(active.reason);
+      if (error instanceof AiError && error.code === "authentication")
+        this.#publish({ connection: null });
       throw error instanceof AiError ? error : new AiError("network");
     } finally {
       clearTimeout(timer);
@@ -210,7 +222,7 @@ export class AiService {
   async #completion(
     config: AiConfiguration,
     text: string,
-    meal: boolean | "package",
+    meal: boolean | "package" | "targets",
     signal: AbortSignal,
     timeoutMs: number,
     image?: MealImage,
@@ -312,6 +324,42 @@ export class AiService {
           imageSent: includeImage,
         },
       };
+    });
+  recommendTargets = (
+    profile: PersonalProfile,
+    healthImageUri?: string,
+    signal?: AbortSignal,
+  ) =>
+    this.#run("targets", signal, async (config, abort, ms) => {
+      if (Object.keys(profileIssues(profile)).length)
+        throw new AiError("request");
+      if (healthImageUri && !supportsMealImage(config))
+        throw new AiError("image_unsupported");
+      const image = healthImageUri
+        ? await this.#readImage(healthImageUri)
+        : undefined;
+      if (image) validateImage(image);
+      const text = JSON.stringify({
+        age: Number(profile.age),
+        heightCm: Number(profile.heightCm),
+        weightKg: Number(profile.weightKg),
+        exerciseDescription: profile.exerciseDescription,
+        exerciseFrequencyPerWeek: Number(profile.exerciseFrequencyPerWeek),
+        sex: profile.sex || "未提供",
+      });
+      const response = await this.#completion(
+        config,
+        text,
+        "targets",
+        abort,
+        ms,
+        image,
+      );
+      try {
+        return parseTargetDraft(response.text, profile, response.model);
+      } catch {
+        throw new AiError("format");
+      }
     });
   identifyPackage = (
     imageUri: string,

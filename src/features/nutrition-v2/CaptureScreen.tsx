@@ -1,4 +1,8 @@
 import {
+  keepOriginal,
+  deletePrivatePhoto,
+} from "../../services/nutrition/privatePhotos";
+import {
   prepareUpload,
   removeUpload,
   removePickerCopy,
@@ -6,7 +10,6 @@ import {
 } from "../../services/ai/images";
 import { AiDisclosure } from "./AiDisclosure";
 import { aiDisclosure } from "../../services/ai/disclosure";
-import { PackageAssistant } from "./PackageAssistant";
 import { FoodEditor } from "./FoodEditor";
 import { snapshotEntry } from "../../services/nutrition/validation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -68,23 +71,45 @@ export function ImpactPreview({
   onStock?: () => void;
   onSaved?: () => void;
 }) {
-  const [food, setFood] = useState(initialFood);
-  const [details, setDetails] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [day, setDay] = useState(date),
-    [selectedMeal, setMeal] = useState<Meal>(meal),
-    [amount, setAmount] = useState(String(food.basis.amount || 1)),
-    [unit, setUnit] = useState<PortionUnit>(food.basis.unit),
+  const resumed =
+    snapshot.intakeDraft?.food.id === initialFood.id
+      ? snapshot.intakeDraft
+      : null;
+  const [food, setFood] = useState(resumed?.food ?? initialFood),
+    [day, setDay] = useState(resumed?.date ?? date),
+    [selectedMeal, setMeal] = useState<Meal>(resumed?.meal ?? meal);
+  const [amount, setAmount] = useState(resumed ? String(resumed.amount) : ""),
+    [unit, setUnit] = useState<PortionUnit>(resumed?.unit ?? food.basis.unit);
+  const [selection, setSelection] = useState(""),
     [confirmed, setConfirmed] = useState(false),
-    [message, setMessage] = useState(""),
-    [saved, setSaved] = useState(false);
+    [saving, setSaving] = useState(false),
+    [saved, setSaved] = useState(false),
+    [details, setDetails] = useState(false),
+    [message, setMessage] = useState("");
+  const [time, setTime] = useState(
+    resumed?.consumedTime ??
+      `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
+  );
+  const zone =
+    resumed?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const operation = useRef(
-      `intake-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      resumed?.id ??
+        `intake-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     ),
     submitted = useRef(false);
+  const committed =
+    saved || snapshot.entries.some((e) => e.id === operation.current);
+  const one =
+    food.basis.unit === "份"
+      ? { amount: 1, unit: "份" as const }
+      : food.serving?.unit === food.basis.unit
+        ? food.serving
+        : null;
+  const beverage = food.basis.unit === "mL";
   let entry: Entry | null = null,
     validation = "";
   try {
+    if (!selection) throw Error("请选择实际食用份量。");
     entry = {
       id: operation.current,
       date: day,
@@ -92,35 +117,56 @@ export function ImpactPreview({
       food,
       amount: parsePortion(amount),
       unit,
+      consumedTime: time,
+      timezone: zone,
     };
     if (adapter.kind === "production")
       snapshotEntry({ ...entry, food: { ...entry.food, image: undefined } });
     else validateEntry(entry);
   } catch (e) {
     validation = (e as Error).message;
+    entry = null;
   }
-  const projected = entry
-    ? snapshot.entries.some((e) => e.id === entry.id)
-      ? snapshot.entries
-      : [...snapshot.entries, entry]
-    : snapshot.entries;
-  const units: PortionUnit[] = [
-    food.basis.unit,
-    ...(food.serving
-      ? food.basis.unit === "份"
-        ? [food.serving.unit]
-        : ["份" as const]
-      : []),
-  ];
+  const projected =
+    entry && !committed ? [...snapshot.entries, entry] : snapshot.entries;
+  const changed = () => {
+    setConfirmed(false);
+    setMessage("");
+  };
+  async function confirm() {
+    if (!entry || submitted.current || committed) return;
+    submitted.current = true;
+    setSaving(true);
+    try {
+      await adapter.saveIntakeDraft?.(entry);
+      await adapter.record(entry, operation.current);
+      setSaved(true);
+      setMessage(
+        adapter.kind === "production"
+          ? "已保存这次食用。"
+          : "演示记录已更新，未写入真实数据。",
+      );
+      onSaved?.();
+    } catch (e) {
+      submitted.current = false;
+      setMessage((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
   return (
     <>
-      <View pointerEvents={saving || saved ? "none" : "auto"}>
+      <View
+        pointerEvents={saving || committed ? "none" : "auto"}
+        style={{ gap: 12 }}
+      >
         <Card>
           <FoodEditor
             food={food}
             onChange={(f) => {
               setFood(f);
-              setConfirmed(false);
+              setSelection("");
+              changed();
             }}
           />
           {food.image && (
@@ -128,194 +174,154 @@ export function ImpactPreview({
               source={{ uri: food.image }}
               style={K.resultImage}
               resizeMode="contain"
-              accessibilityLabel="本机照片预览"
+              accessibilityLabel="本机原图预览"
             />
+          )}
+        </Card>
+        <Card>
+          <Text style={N.heading}>{dateLabel(day)} · 食用预测</Text>
+          {(["protein", "energy", "fat", "fiber"] as const).map((k) => {
+            const before = total(snapshot.entries, day, k),
+              after = total(projected, day, k),
+              added = entry ? contribution(entry, k) : null;
+            return (
+              <View key={k} style={{ gap: 3 }}>
+                <Text style={N.body}>{nutrientInfo[k][0]}</Text>
+                <Text style={N.caption}>
+                  {before.count ? formatTotal(before) : "尚未记录"}
+                  {entry
+                    ? ` + ${formatTotal(added!)} → ${formatTotal(after)}`
+                    : ""}{" "}
+                  {nutrientInfo[k][1]}
+                  {after.missing ? " · 已知小计 / 数据缺失" : ""}
+                  {after.estimated ? " · 估算" : ""}
+                </Text>
+              </View>
+            );
+          })}
+          <View style={N.wrap}>
+            {[0.5, 1].map((n) => (
+              <Action
+                key={n}
+                title={`${beverage ? "喝" : "吃"}${n === 0.5 ? "半" : "一"}份`}
+                secondary
+                disabled={!one}
+                onPress={() => {
+                  if (!one) return;
+                  setSelection(String(n));
+                  setAmount(String(one.amount * n));
+                  setUnit(one.unit);
+                  changed();
+                }}
+              />
+            ))}
+            <Action
+              title={`自己填写${beverage ? "喝" : "吃"}多少`}
+              secondary
+              onPress={() => {
+                setSelection("custom");
+                setUnit(food.basis.unit);
+                changed();
+              }}
+            />
+          </View>
+          <Text style={N.caption}>
+            {one
+              ? `一份 = ${one.amount}${one.unit} · 营养基准 ${food.basis.amount}${food.basis.unit}`
+              : "每份重量或容量未知，请填写实际数量；不把每 100g 当作一包。"}
+          </Text>
+          {selection === "custom" && (
+            <Field
+              label={`实际食用份量（${unit}）`}
+              value={amount}
+              onChange={(v) => {
+                setAmount(v);
+                changed();
+              }}
+              numeric
+            />
+          )}
+          {!!selection && selection !== "custom" && (
+            <Text style={N.body}>
+              本次 {amount} {unit}
+            </Text>
           )}
           <Field
             label="拟食用日期"
             value={day}
             onChange={(v) => {
               setDay(v);
-              setConfirmed(false);
+              changed();
             }}
             placeholder="YYYY-MM-DD"
-            editable={!saved}
           />
-          <Text style={N.body}>餐次</Text>
+          <Field
+            label="食用时间"
+            value={time}
+            onChange={(v) => {
+              setTime(v);
+              changed();
+            }}
+            placeholder="HH:mm"
+          />
           <Choices
             value={selectedMeal}
             options={Object.entries(meals)}
-            onChange={(v) => {
-              if (!saved) {
-                setMeal(v as Meal);
-                setConfirmed(false);
-              }
-            }}
             accessibilityPrefix="拟食用餐次"
-          />
-          <Field
-            label={`实际食用份量（${unit}）`}
-            value={amount}
             onChange={(v) => {
-              setAmount(v);
-              setConfirmed(false);
+              setMeal(v as Meal);
+              changed();
             }}
-            numeric
-            editable={!saved}
           />
-          <Choices
-            value={unit}
-            options={units.map((u) => [u, u])}
-            onChange={(v) => {
-              if (!saved) {
-                setUnit(v as PortionUnit);
-                setConfirmed(false);
-              }
-            }}
-            accessibilityPrefix="份量单位"
-          />
-          <View style={N.wrap}>
-            {[0.5, 1, 2].map((n) => (
-              <Action
-                key={n}
-                title={`${n} × 基准份量`}
-                secondary
-                disabled={saved}
-                onPress={() => {
-                  setUnit(food.basis.unit);
-                  setAmount(String(food.basis.amount * n));
-                  setConfirmed(false);
-                }}
-              />
-            ))}
-          </View>
-          {validation ? (
-            <Feedback>{validation}</Feedback>
-          ) : (
-            <>
-              {entry && (
-                <NutrientLine
-                  title="这份能量"
-                  total={contribution(entry, "energy")}
-                />
+          <Accordion
+            title="营养与来源"
+            value="查看"
+            open={details}
+            onToggle={() => setDetails(!details)}
+          >
+            <Text style={N.caption}>{food.source}</Text>
+            <Text style={N.caption}>
+              时区 {zone}。确认前不累计；份量由已知基准计算，不另行请求 AI。
+            </Text>
+            {entry &&
+              (Object.keys(nutrientInfo) as (keyof typeof nutrientInfo)[]).map(
+                (k) => (
+                  <NutrientLine
+                    key={k}
+                    title={nutrientInfo[k][0]}
+                    total={contribution(entry!, k)}
+                  />
+                ),
               )}
-              <Accordion
-                title="营养与来源"
-                value="查看详情"
-                open={details}
-                onToggle={() => setDetails(!details)}
-              >
-                <Text style={N.caption}>{food.source}</Text>
-                {food.packageSize && (
-                  <Text style={N.caption}>
-                    整包净含量 {food.packageSize} · 每份 {food.serving?.amount}
-                    {food.serving?.unit}
-                  </Text>
-                )}
-                {food.rawEnergy && (
-                  <Text style={N.caption}>
-                    标签原值 {food.rawEnergy.value} {food.rawEnergy.unit}
-                  </Text>
-                )}
-                <Text style={N.caption}>
-                  {dateLabel(day)} · 当前记录 → 拟食用后
-                </Text>
-                {(["energy", "protein", "carbohydrate", "fat"] as const).map(
-                  (k) => (
-                    <View key={k} style={N.metricRow}>
-                      <Text style={[N.body, { flex: 1 }]}>
-                        {nutrientInfo[k][0]}
-                      </Text>
-                      <Text style={N.caption}>
-                        {formatTotal(total(snapshot.entries, day, k))} →{" "}
-                        {formatTotal(total(projected, day, k))}{" "}
-                        {nutrientInfo[k][1]}
-                      </Text>
-                    </View>
-                  ),
-                )}
-                <Text style={N.tiny}>
-                  {adapter.kind === "production"
-                    ? "右侧为已记录食物与本次拟食用的已知小计，缺失值不会按 0 计算。确认前不会写入。"
-                    : "演示数据 · 预览不会提前写入记录。"}
-                </Text>
-                {entry &&
-                  (
-                    [
-                      "protein",
-                      "carbohydrate",
-                      "fat",
-                      "added_sugars",
-                      "sodium",
-                    ] as const
-                  ).map((k) => (
-                    <NutrientLine
-                      key={k}
-                      title={`这份${nutrientInfo[k][0]}`}
-                      total={contribution(entry!, k)}
-                    />
-                  ))}
-                {findings(projected, day, snapshot.targets).map((line) => (
-                  <Text key={line} style={N.caption}>
-                    · {line}
-                  </Text>
-                ))}
-              </Accordion>
+          </Accordion>
+          {!!selection && validation && <Feedback>{validation}</Feedback>}
+          {entry && (
+            <>
+              <Check
+                label="我已确认日期、餐次和实际食用份量"
+                value={confirmed}
+                onChange={setConfirmed}
+              />
+              <Action
+                title={
+                  saving
+                    ? "正在保存…"
+                    : committed
+                      ? "已保存这次食用"
+                      : "确认食用"
+                }
+                disabled={
+                  !confirmed ||
+                  saving ||
+                  committed ||
+                  snapshot.status !== "ready"
+                }
+                onPress={() => void confirm()}
+              />
             </>
-          )}
-          <Check
-            label="我已确认日期、餐次和实际食用份量"
-            value={confirmed}
-            onChange={(v) => {
-              if (!saved) setConfirmed(v);
-            }}
-          />
-          <Action
-            title={
-              saving
-                ? "正在保存，请稍候…"
-                : saved
-                  ? "已保存这次食用，请勿重复提交"
-                  : "已食用 · 确认记录"
-            }
-            disabled={
-              !confirmed ||
-              !!validation ||
-              saved ||
-              saving ||
-              snapshot.status !== "ready"
-            }
-            onPress={async () => {
-              if (!entry || submitted.current) return;
-              submitted.current = true;
-              setSaving(true);
-              try {
-                await adapter.record(entry, operation.current);
-                setSaved(true);
-                onSaved?.();
-                setMessage(
-                  adapter.kind === "production"
-                    ? "已保存饮食记录。"
-                    : "已记入本次演示，三处营养汇总已同步；未保存真实饮食。",
-                );
-              } catch (e) {
-                submitted.current = false;
-                setMessage((e as Error).message);
-              } finally {
-                setSaving(false);
-              }
-            }}
-          />
-          {onStock && (
-            <Action title="加入库存 · 不计摄入" secondary onPress={onStock} />
           )}
         </Card>
       </View>
-      {saving && (
-        <Feedback>
-          正在保存到本机，请等待；提交完成后返回不会撤销记录。
-        </Feedback>
-      )}
       {message && <Feedback>{message}</Feedback>}
     </>
   );
@@ -327,7 +333,6 @@ export function CaptureScreen({
   snapshot,
   adapter,
   onScan,
-  onLibrary,
   onAiSettings,
   registerBack,
   onStepChange,
@@ -344,277 +349,236 @@ export function CaptureScreen({
   onAiSettings: () => void;
 }) {
   const ai = useSyncExternalStore(aiService.subscribe, aiService.getSnapshot);
-  const [processed, setProcessed] = useState<
-    Partial<Record<"meal" | "package", UploadImage>>
-  >({});
-  const copies = useRef<Partial<Record<"meal" | "package", UploadImage>>>({});
-  const processing = useRef<AbortController | null>(null);
-  const [stage, setStage] = useState<"choose" | "photo" | "text" | "package">(
-    "choose",
-  );
-  const [packagePhoto, setPackagePhoto] = useState(false);
-  const [descriptionOpen, setDescriptionOpen] = useState(false);
-  const [hasSaved, setHasSaved] = useState(false);
-  const [includeImage, setIncludeImage] = useState(false);
-  const requestAbort = useRef<AbortController | null>(null);
-  const [mode, setMode] = useState<"meal" | "package">("meal"),
-    [photos, setPhotos] = useState({ meal: "", package: "" }),
-    [description, setDescription] = useState(""),
-    [estimate, setEstimate] = useState<MealEstimate | null>(null),
-    [pack, setPack] = useState<Food | null>(null),
+  const [stage, setStage] = useState<"choose" | "photo">("choose"),
+    [original, setOriginal] = useState(snapshot.captureDraft?.original ?? ""),
+    [description, setDescription] = useState(
+      snapshot.captureDraft?.description ?? "",
+    );
+  const [estimate, setEstimate] = useState<MealEstimate | null>(null),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(false),
     [choosing, setChoosing] = useState(false),
-    [stockPreview, setStockPreview] = useState(false),
-    [stockCount, setStockCount] = useState("1");
-  const generation = useRef(0),
-    picking = useRef(false),
+    [hasSaved, setHasSaved] = useState(false);
+  const uploadCopy = useRef<{ original: string; upload: UploadImage } | null>(
+    null,
+  );
+  const request = useRef<AbortController | null>(null),
+    generation = useRef(0),
     live = useRef(true),
-    stockOnce = useRef(false);
-  useEffect(() => {
-    live.current = true;
-    return () => {
-      live.current = false;
-      requestAbort.current?.abort();
-      processing.current?.abort();
-      Object.values(copies.current).forEach((v) => void removeUpload(v.uri));
-      generation.current++;
-    };
-  }, []);
-  useEffect(() => {
-    if (!visible) {
-      processing.current?.abort();
-      requestAbort.current?.abort();
-      generation.current++;
-      setLoading(false);
-    }
-  }, [visible]);
+    picker = useRef(false);
+  const draftId = useRef(
+    snapshot.captureDraft?.id ??
+      `meal-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
+  const persist = async (uri = original, text = description) => {
+    await adapter.saveCaptureDraft?.(
+      uri ? { id: draftId.current, original: uri, description: text } : null,
+    );
+  };
   const invalidate = () => {
-    requestAbort.current?.abort();
-    requestAbort.current = null;
+    request.current?.abort();
     generation.current++;
+    setLoading(false);
     setEstimate(null);
     setMessage("");
-    setLoading(false);
   };
+  useEffect(
+    () => () => {
+      live.current = false;
+      request.current?.abort();
+      generation.current++;
+      if (uploadCopy.current) void removeUpload(uploadCopy.current.upload.uri);
+    },
+    [],
+  );
   useEffect(() => {
-    if (adapter.kind === "production") {
-      invalidate();
-      setIncludeImage(false);
-    }
+    if (!visible) request.current?.abort();
+  }, [visible]);
+  useEffect(() => {
+    invalidate();
   }, [ai.revision]);
-  const choose = async (camera: boolean) => {
-    if (picking.current) return;
-    picking.current = true;
-    invalidate();
-    setChoosing(true);
-    setLoading(false);
-    const ticket = ++generation.current;
-    let pickerCopy = "";
-    try {
-      if (camera) {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) throw Error("未获得相机权限，可以改用相册。");
-      }
-      const result = camera
-        ? await ImagePicker.launchCameraAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: false,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: false,
-          });
-      pickerCopy = result.assets?.[0]?.uri ?? "";
-      if (
-        !live.current ||
-        ticket !== generation.current ||
-        result.canceled ||
-        !result.assets[0]
-      )
-        return;
-      const controller = new AbortController();
-      processing.current = controller;
-      setMessage("正在本机检查方向、缩小尺寸并生成上传副本…");
-      const copy = await prepareUpload(
-        result.assets[0]!.uri,
-        controller.signal,
-      );
-      if (!live.current || ticket !== generation.current) {
-        void removeUpload(copy.uri);
-        return;
-      }
-      if (copies.current[mode]) void removeUpload(copies.current[mode]!.uri);
-      copies.current = { ...copies.current, [mode]: copy };
-      setProcessed(copies.current);
-      setPhotos((p) => ({ ...p, [mode]: copy.uri }));
-      setEstimate(null);
-      setPack(null);
-      setMessage("照片已准备好，请检查后确认发送。");
-    } catch (e) {
-      if (live.current && ticket === generation.current)
-        setMessage((e as Error).message);
-    } finally {
-      if (pickerCopy) void removePickerCopy(pickerCopy);
-      picking.current = false;
-      processing.current = null;
-      if (live.current) setChoosing(false);
-    }
-  };
-  const runEstimate = async () => {
-    if (requestAbort.current || loading) return;
-    if (
-      !description.trim() &&
-      !(includeImage && photos.meal) &&
-      adapter.kind === "production"
-    ) {
-      setMessage("请填写这一餐的文字描述，或在支持图片时勾选发送照片。");
-      return;
-    }
-    if (adapter.kind === "demo" && !photos.meal) {
-      setMessage("请先拍照或从相册选择餐食照片。");
-      return;
-    }
-    if (
-      adapter.kind === "production" &&
-      Object.keys(aiService.issues()).length
-    ) {
-      setMessage("请先在 AI 服务设置中填写有效地址、密钥和模型。");
-      return;
-    }
-    if (
-      adapter.kind === "production" &&
-      !aiDisclosure.allows(
-        aiService.getSnapshot(),
-        includeImage ? "meal-image" : "meal-text",
-      )
-    ) {
-      setMessage("请先确认本次发送内容与服务地址。");
-      return;
-    }
-    const ticket = ++generation.current;
-    const controller = new AbortController();
-    requestAbort.current = controller;
-    setLoading(true);
-    setMessage("");
-    setEstimate(null);
-    const request = Object.freeze({
-      imageUri: photos.meal,
-      description,
-      includeImage,
-    });
-    try {
-      const result =
-        adapter.kind === "demo" && adapter.demoEstimateMeal
-          ? await adapter.demoEstimateMeal(request)
-          : await aiService.estimateMeal(request, controller.signal);
-      if (live.current && ticket === generation.current) setEstimate(result);
-    } catch (error) {
-      if (live.current && ticket === generation.current)
-        setMessage(
-          adapter.kind === "production"
-            ? aiErrorMessage(error)
-            : (error as Error).message,
-        );
-    } finally {
-      if (requestAbort.current === controller) requestAbort.current = null;
-      if (live.current && ticket === generation.current) setLoading(false);
-    }
-  };
-  const manual = () => {
-    invalidate();
-    setMode("meal");
-    setStage("text");
-    const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setEstimate({
-      food: {
-        id,
-        version: id,
-        name: description.trim().slice(0, 80) || "手动餐食",
-        basis: { amount: 1, unit: "份" },
-        source: "用户手动录入 · 营养未经独立验证",
-        provenance: { kind: "manual" },
-        nutrients: {},
-        ...(photos.meal ? { image: photos.meal } : {}),
-      },
-      ingredients: [],
-      uncertainties: ["未填写的营养保持未知。"],
-    });
-  };
   useEffect(() => {
     registerBack(() => {
-      if (loading || choosing) return true;
+      if (loading) {
+        request.current?.abort();
+        return true;
+      }
+      if (choosing) return true;
       if (hasSaved) return false;
       if (estimate) {
         setEstimate(null);
         return true;
       }
-      if (stage !== "choose") {
+      if (stage === "photo") {
+        void persist().catch(() => setMessage("草稿保存失败，请重试。"));
         setStage("choose");
         return true;
       }
       return false;
     });
     return () => registerBack(null);
-  }, [stage, estimate, loading, choosing, hasSaved]);
+  }, [stage, estimate, hasSaved, loading, choosing, original, description]);
   useEffect(() => {
     if (visible) onStepChange();
   }, [stage, !!estimate]);
-  if (!visible) return null;
-  const select = (next: "photo" | "text" | "package") => {
+  async function choose(camera: boolean) {
+    if (picker.current) return;
+    picker.current = true;
+    setChoosing(true);
     invalidate();
-    setHasSaved(false);
-    setMode(next === "package" ? "package" : "meal");
-    setStage(next);
-    setPackagePhoto(false);
-  };
+    let source = "",
+      kept = "";
+    let processed: UploadImage | undefined;
+    const ticket = generation.current;
+    try {
+      if (camera) {
+        const p = await ImagePicker.requestCameraPermissionsAsync();
+        if (!p.granted) throw Error("相机权限未开启，可以改用相册。");
+      }
+      const result = await (
+        camera
+          ? ImagePicker.launchCameraAsync
+          : ImagePicker.launchImageLibraryAsync
+      )({ mediaTypes: ["images"], quality: 1, allowsEditing: false });
+      if (result.canceled || !result.assets[0]) return;
+      source = result.assets[0].uri;
+      if (!live.current || ticket !== generation.current) return;
+      const controller = new AbortController();
+      request.current = controller;
+      processed = await prepareUpload(source, controller.signal);
+      if (uploadCopy.current) await removeUpload(uploadCopy.current.upload.uri);
+      uploadCopy.current = null;
+      const uri =
+        adapter.kind === "demo"
+          ? source
+          : await keepOriginal(
+              source,
+              "meal-drafts",
+              `${draftId.current}-${Date.now()}`,
+            );
+      kept = uri;
+      if (
+        !live.current ||
+        ticket !== generation.current ||
+        controller.signal.aborted
+      )
+        return;
+      await persist(uri);
+      kept = "";
+      if (!live.current) return;
+      uploadCopy.current = { original: uri, upload: processed };
+      processed = undefined;
+      if (original && adapter.kind === "production")
+        deletePrivatePhoto(original);
+      setOriginal(uri);
+      setMessage("原图已保存在本机，尚未发送。");
+    } catch (e) {
+      if (live.current) setMessage((e as Error).message);
+    } finally {
+      if (processed) await removeUpload(processed.uri);
+      if (kept && adapter.kind === "production") deletePrivatePhoto(kept);
+      if (source && adapter.kind === "production")
+        await removePickerCopy(source);
+      picker.current = false;
+      request.current = null;
+      if (live.current) setChoosing(false);
+    }
+  }
+  async function run() {
+    if (request.current || loading) return;
+    if (!original) {
+      setMessage("请先拍照或选择餐食照片。");
+      return;
+    }
+    if (adapter.kind === "production" && !ai.supportsImage) {
+      setMessage("当前模型不支持餐食照片，请在 AI 设置中选择支持图片的模型。");
+      return;
+    }
+    if (
+      adapter.kind === "production" &&
+      !aiDisclosure.allows(aiService.getSnapshot(), "meal-image")
+    ) {
+      setMessage("请先确认本次发送内容与服务地址。");
+      return;
+    }
+    const controller = new AbortController();
+    request.current = controller;
+    const ticket = ++generation.current;
+    setLoading(true);
+    setMessage("");
+    let upload: UploadImage | undefined;
+    try {
+      await persist();
+      upload =
+        uploadCopy.current?.original === original
+          ? uploadCopy.current.upload
+          : await prepareUpload(original, controller.signal);
+      const input = { imageUri: upload.uri, description, includeImage: true };
+      const result =
+        adapter.kind === "demo" && adapter.demoEstimateMeal
+          ? await adapter.demoEstimateMeal(input)
+          : await aiService.estimateMeal(input, controller.signal);
+      if (!live.current || ticket !== generation.current) return;
+      result.food = { ...result.food, kind: "meal", image: original };
+      await adapter.saveIntakeDraft?.({
+        id: `intake-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        date,
+        meal,
+        food: result.food,
+        amount: result.food.basis.amount,
+        unit: result.food.basis.unit,
+        consumedTime: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      setEstimate(result);
+    } catch (e) {
+      if (live.current && ticket === generation.current)
+        setMessage(
+          e instanceof Error && !(e as { code?: string }).code
+            ? e.message
+            : aiErrorMessage(e),
+        );
+    } finally {
+      if (upload) await removeUpload(upload.uri);
+      uploadCopy.current = null;
+      if (request.current === controller) request.current = null;
+      if (live.current && ticket === generation.current) setLoading(false);
+    }
+  }
+  if (!visible) return null;
   if (stage === "choose")
     return (
       <>
         <Text accessibilityRole="header" style={N.title}>
           记录一餐
         </Text>
-        <Text style={N.caption}>选择记录方式</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="餐食估算"
-          onPress={() => select("photo")}
           style={K.mode}
+          onPress={() => setStage("photo")}
         >
           <Text style={N.heading}>餐食</Text>
-          <Text style={N.caption}>拍摄餐食，AI 估算 ›</Text>
+          <Text style={N.caption}>拍照或选图，AI 估算 ›</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="包装食品"
-          onPress={() => select("package")}
           style={K.mode}
+          onPress={onScan}
         >
           <Text style={N.heading}>包装食品</Text>
-          <Text style={N.caption}>扫码或识别营养标签 ›</Text>
+          <Text style={N.caption}>扫描条码 ›</Text>
         </Pressable>
-        <Link title="文字描述" onPress={() => select("text")} />
-        <Link title="手动填写" onPress={manual} />
       </>
     );
   if (estimate)
     return (
       <>
-        <Text accessibilityRole="header" style={N.title}>
-          核对这一餐
-        </Text>
+        <Text style={N.title}>核对这一餐</Text>
         <Text style={N.caption}>
-          {estimate.ai
-            ? `AI 估算 · ${estimate.ai.imageSent ? "文字与照片" : "仅文字"}`
-            : estimate.food.provenance?.kind === "manual"
-              ? "手动填写 · 未填营养为未知"
-              : "演示结果 · 不写入真实记录"}
+          {adapter.kind === "demo" ? "隔离演示数据" : "AI 估算 · 已使用照片"}
         </Text>
-        {estimate.ingredients.length > 0 && (
-          <Text style={N.caption}>{estimate.ingredients.join(" · ")}</Text>
-        )}
         {estimate.uncertainties.map((u, i) => (
           <Text key={i} style={N.caption}>
             {u}
@@ -630,227 +594,120 @@ export function CaptureScreen({
           onSaved={() => setHasSaved(true)}
         />
         {!hasSaved && (
-          <Link title="补充描述后重新估算" onPress={() => setEstimate(null)} />
+          <Link title="返回照片，重新估算" onPress={() => setEstimate(null)} />
         )}
       </>
     );
-  const photoControls = (
-    <>
-      {!!photos[mode] && (
-        <Image
-          source={{ uri: photos[mode] }}
-          style={K.resultImage}
-          resizeMode="contain"
-          accessibilityLabel={
-            mode === "meal" ? "餐食照片预览" : "包装正面照片预览"
-          }
-        />
-      )}
-      <Action
-        title="拍照"
-        secondary={!!photos[mode]}
-        disabled={choosing || loading}
-        onPress={() => void choose(true)}
-      />
-      <Link
-        title="从相册选择"
-        onPress={() => {
-          if (!choosing && !loading) void choose(false);
-        }}
-      />
-      {!!photos[mode] && (
-        <Link
-          title="清除这张照片"
-          onPress={() => {
-            if (choosing || loading) return;
-            invalidate();
-            const copy = copies.current[mode];
-            if (copy) void removeUpload(copy.uri);
-            delete copies.current[mode];
-            setProcessed({ ...copies.current });
-            setPhotos((p) => ({ ...p, [mode]: "" }));
-            setMessage("照片已清除，相册原图保留。");
-          }}
-        />
-      )}
-      {choosing && (
-        <Action
-          title="取消图片处理"
-          secondary
-          onPress={() => processing.current?.abort()}
-        />
-      )}
-      {processed[mode] && (
-        <Text style={N.caption}>已在本机处理 · 尚未上传</Text>
-      )}
-    </>
-  );
   return (
     <>
-      <Text accessibilityRole="header" style={N.title}>
-        {mode === "package"
-          ? "包装食品"
-          : stage === "text"
-            ? "描述这一餐"
-            : "拍摄餐食"}
-      </Text>
-      <Link
-        title="更换记录方式"
-        onPress={() => {
-          if (!loading && !choosing) {
-            invalidate();
-            setStage("choose");
-          }
-        }}
-      />
-      {mode === "meal" ? (
-        <>
-          {stage === "photo" && photoControls}
-          {stage === "photo" && (
-            <Link
-              title={descriptionOpen ? "收起补充描述" : "补充文字描述"}
-              onPress={() => setDescriptionOpen(!descriptionOpen)}
+      <Text style={N.title}>拍摄餐食</Text>
+      <Card>
+        {original ? (
+          <View>
+            <Image
+              source={{ uri: original }}
+              style={K.resultImage}
+              resizeMode="contain"
+              accessibilityLabel="餐食原图预览"
             />
-          )}
-          {(stage === "text" || descriptionOpen) && (
-            <TextInput
-              accessibilityLabel="餐食补充描述"
-              value={description}
-              onChangeText={(v) => {
-                setDescription(v);
-                invalidate();
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="删除这张照片"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 0,
+                width: 48,
+                height: 48,
+                backgroundColor: c.surface,
+                borderRadius: 24,
+                alignItems: "center",
+                justifyContent: "center",
               }}
-              placeholder="吃了什么、吃了多少？"
-              multiline
-              maxLength={4000}
-              textAlignVertical="top"
-              placeholderTextColor={c.muted}
-              style={K.description}
-            />
-          )}
-          {adapter.kind === "production" && (
-            <>
-              {!!photos.meal && ai.supportsImage && (
-                <Check
-                  label="同时发送这张餐食照片"
-                  value={includeImage}
-                  onChange={(value) => {
-                    invalidate();
-                    setIncludeImage(value);
-                  }}
-                />
-              )}
-              {!!photos.meal && !ai.supportsImage && (
-                <Text style={N.caption}>
-                  当前模型不支持图片，可改用文字或手动填写。
-                </Text>
-              )}
-              <AiDisclosure
-                scope={includeImage ? "meal-image" : "meal-text"}
-                onSettings={onAiSettings}
-              />
-            </>
-          )}
-          <Action
-            title={loading ? "正在请求 AI 估算…" : "估算这餐营养"}
-            secondary={stage === "photo" && !photos.meal}
-            disabled={
-              loading ||
-              choosing ||
-              (adapter.kind === "production" && ai.operation !== null)
-            }
-            onPress={() => void runEstimate()}
-          />
-          {loading && (
-            <Action
-              title="取消本次估算"
-              secondary
-              onPress={() => requestAbort.current?.abort()}
-            />
-          )}
-          <Link
-            title="手动记录这一餐"
-            onPress={() => {
-              if (!loading && !choosing) manual();
+              disabled={choosing || loading}
+              onPress={() => {
+                invalidate();
+                if (uploadCopy.current)
+                  void removeUpload(uploadCopy.current.upload.uri);
+                uploadCopy.current = null;
+                void persist("", description)
+                  .then(() => {
+                    if (adapter.kind === "production")
+                      deletePrivatePhoto(original);
+                    setOriginal("");
+                  })
+                  .catch((e) => setMessage(e.message));
+              }}
+            >
+              <Text style={{ color: c.ink, fontSize: 26 }}>×</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Text style={N.caption}>选择一张清楚的餐食照片。</Text>
+        )}
+        <Action
+          title="拍照"
+          secondary={!!original}
+          disabled={choosing || loading}
+          onPress={() => void choose(true)}
+        />
+        <Link
+          title="从相册选择"
+          onPress={() => {
+            if (!choosing && !loading) void choose(false);
+          }}
+        />
+        <TextInput
+          accessibilityLabel="餐食补充描述"
+          value={description}
+          onChangeText={(v) => {
+            setDescription(v);
+            invalidate();
+          }}
+          onBlur={() => void persist().catch((e) => setMessage(e.message))}
+          placeholder="选填：半碗米饭、鸡腿去皮…"
+          multiline
+          maxLength={4000}
+          textAlignVertical="top"
+          placeholderTextColor={c.muted}
+          style={K.description}
+        />
+      </Card>
+      {original && adapter.kind === "production" && (
+        <>
+          <AiDisclosure
+            scope="meal-image"
+            onSettings={() => {
+              void persist()
+                .then(onAiSettings)
+                .catch((e) => setMessage(e.message));
             }}
           />
-        </>
-      ) : (
-        <>
-          <Action title="扫描 / 输入条码" onPress={onScan} />
-          <Link title="在食品库手动查找" onPress={() => onLibrary()} />
-          <Link
-            title={packagePhoto ? "收起包装照片" : "拍摄包装正面辅助查找"}
-            onPress={() => setPackagePhoto(!packagePhoto)}
-          />
-          {packagePhoto && (
-            <>
-              {photoControls}
-              {adapter.kind === "production" && processed.package && (
-                <PackageAssistant
-                  image={processed.package}
-                  onSettings={onAiSettings}
-                  onCandidate={(candidate) => onLibrary(candidate.name)}
-                  useLabel="核对后在食品库查找候选"
-                />
-              )}
-            </>
-          )}
-          {adapter.kind === "demo" && adapter.demoPackage && (
-            <Action
-              title="体验包装结果（演示数据）"
-              secondary
-              onPress={() => {
-                setPack(adapter.demoPackage!());
-                setStockPreview(false);
-                stockOnce.current = false;
-              }}
-            />
-          )}
-          {pack && (
-            <>
-              <Feedback>演示数据 · 未执行食品库匹配或 OCR。</Feedback>
-              <ImpactPreview
-                key={pack.version}
-                food={pack}
-                snapshot={snapshot}
-                date={date}
-                meal={meal}
-                adapter={adapter}
-                onStock={() => setStockPreview(true)}
-              />
-              {stockPreview && (
-                <Card>
-                  <Field
-                    label="购入包装数量"
-                    numeric
-                    value={stockCount}
-                    onChange={setStockCount}
-                  />
-                  <Action
-                    title="确认模拟入库"
-                    onPress={() => {
-                      if (stockOnce.current) {
-                        setMessage("这笔模拟入库已确认，没有重复提交。");
-                        return;
-                      }
-                      if (!/^[1-9]\d{0,3}$/.test(stockCount)) {
-                        setMessage("请输入 1–9999 的整数包装数量。");
-                        return;
-                      }
-                      stockOnce.current = true;
-                      setMessage(
-                        `已演示 ${stockCount} 包的入库反馈，未调用真实库存，也未计入摄入。`,
-                      );
-                    }}
-                  />
-                </Card>
-              )}
-            </>
+          {!ai.supportsImage && (
+            <Feedback>
+              当前模型不支持图片，请配置支持照片的模型。现有本机食品和记录仍可使用。
+            </Feedback>
           )}
         </>
       )}
-      {message && <Feedback>{message}</Feedback>}
+      <Action
+        title={loading ? "正在估算…" : "估算这餐营养"}
+        disabled={
+          !original ||
+          loading ||
+          choosing ||
+          (adapter.kind === "production" && !ai.supportsImage)
+        }
+        onPress={() => void run()}
+      />
+      {choosing && (
+        <Link title="取消图片处理" onPress={() => request.current?.abort()} />
+      )}
+      {original && <Text style={N.caption}>原图保留 · 上传副本在本机处理</Text>}
+      {loading && (
+        <Link title="取消本次估算" onPress={() => request.current?.abort()} />
+      )}
+      {!!message && <Feedback>{message}</Feedback>}
     </>
   );
 }

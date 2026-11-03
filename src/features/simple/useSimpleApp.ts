@@ -41,7 +41,7 @@ export function useSimpleApp() {
   const running = useRef(false), generation = useRef(0), mounted = useRef(true), draftRef = useRef<CaptureDraft | null>(null);
   const refresh = useCallback(async () => {
     const [f, s, d] = await Promise.all([chinaFoodRepository.listFoods(), listStock(), lastDraft()]);
-    const covers = await Promise.all([...new Set(s.map(item => item.food_id))].map(async id => [id, (await getPackage(id))?.uri] as const));
+    const covers = await Promise.all([...new Set([...s.map(item => item.food_id),...f.map(item=>item.id)])].map(async id => [id, (await getPackage(id))?.uri] as const));
     if (mounted.current) { setFoods(f); setStock(s); setResume(d); setStockCovers(Object.fromEntries(covers.filter((entry): entry is readonly [string, string] => !!entry[1]))); }
   }, []);
   useEffect(() => {
@@ -101,8 +101,8 @@ export function useSimpleApp() {
         if (token !== generation.current) return;
         setProduct(found.record); setCover(image?.uri ?? null); navigate('product'); return;
       }
-      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'package', name: '', brand: '', specification: '' };
-      await retainDraft(next); setReview(null); setConfirmed(false); navigate('package');
+      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'nutrition', name: '', brand: '', specification: '' };
+      await retainDraft(next); setReview(null); setConfirmed(false); navigate('nutrition');
     });
   };
   async function startScan() {
@@ -223,7 +223,7 @@ export function useSimpleApp() {
       };
       await retainDraft({ ...current, review: checked });
       const saved = await finishFood(record, current);
-      setProduct(saved); setCover(current.packageImage?.uri ?? saved.evidence.image.uri); setDraft(null); draftRef.current = null; setReview(null); await refresh(); navigate('product'); setNotice('食品资料已保存。下次扫描同一条码会直接找到它。');
+      setProduct(saved); setCover(current.packageImage?.uri ?? null); setDraft(null); draftRef.current = null; setReview(null); await refresh(); navigate('product'); setNotice('食品资料已保存。下次扫描同一条码会直接找到它。');
     });
   }
   function showStock() { setQuantity('1'); setUnit('件'); setExpiry(''); setRequest(newId('stock')); navigate('add-stock'); }

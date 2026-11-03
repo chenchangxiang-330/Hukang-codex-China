@@ -1,3 +1,4 @@
+import type { Food, Snapshot } from "../nutrition-v2/model";
 import { useState, type ReactNode } from "react";
 import { Alert, Image, Pressable, Switch, Text, View } from "react-native";
 import { C, S, Button, Field } from "./ui";
@@ -14,7 +15,7 @@ import {
   Surface,
 } from "../../ui/components";
 
-type FoodFilter = "all" | "confirmed" | "draft";
+type FoodFilter = "meal" | "packaged";
 
 function TextAction({
   title,
@@ -71,7 +72,14 @@ function recordedDate(value: string): string {
 }
 
 /** Presentation only: existing controller/store still own all food and inventory writes. */
-export function HomeScreens(p: AppController & { onTargets?: () => void }) {
+export function HomeScreens(
+  p: AppController & {
+    onTargets?: () => void;
+    onModel?: () => void;
+    onMeal?: (food: Food) => void;
+    nutrition?: Snapshot;
+  },
+) {
   const [exportOpen, setExportOpen] = useState(false);
   const {
     tab,
@@ -97,7 +105,7 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
     setReview,
     setConfirmed,
   } = p;
-  const [filter, setFilter] = useState<FoodFilter>("all");
+  const [filter, setFilter] = useState<FoodFilter>("meal");
   const stockByUnit = stock.reduce<Record<string, number>>((totals, item) => {
     totals[item.unit] = (totals[item.unit] ?? 0) + item.quantity;
     return totals;
@@ -106,10 +114,11 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
     .map(([unit, quantity]) => `${quantity}${unit}`)
     .join(" · ");
   const query = search.trim().toLocaleLowerCase();
-  const filteredFoods = foods.filter(
-    (food) =>
-      `${food.name} ${food.brand}`.toLocaleLowerCase().includes(query) &&
-      (filter === "all" || food.status === filter),
+  const filteredFoods = foods.filter((food) =>
+    `${food.name} ${food.brand}`.toLocaleLowerCase().includes(query),
+  );
+  const mealFoods = (p.nutrition?.catalogue ?? []).filter(
+    (f) => f.kind === "meal" && f.name.toLowerCase().includes(query),
   );
   const filteredStock = stock.filter((item) =>
     `${item.name} ${item.brand}`.toLocaleLowerCase().includes(query),
@@ -120,7 +129,7 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
   const inventoryVisible = screen === "home" && tab === "stock";
   const clearSearch = () => {
     setSearch("");
-    setFilter("all");
+    setFilter("meal");
   };
   const showLibrary = () => {
     clearSearch();
@@ -172,9 +181,7 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
       {libraryVisible && (
         <>
           <PageIntro
-            eyebrow="MY FOOD COLLECTION"
             title={screen === "library" ? "选择一件食品" : "我的食品库"}
-            description="商品资料只存一份，每次购买单独记一笔。"
           />
           {screen === "home" && (
             <View style={H.segmented} accessibilityRole="tablist">
@@ -221,21 +228,6 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
           />
           {inventoryVisible ? (
             <>
-              <View style={H.libraryActions}>
-                <View style={H.flexButton}>
-                  <Button
-                    title="拍一拍，添加食品"
-                    onPress={() => void startScan()}
-                  />
-                </View>
-                <View style={H.flexButton}>
-                  <Button
-                    title="从已有食品添加"
-                    secondary
-                    onPress={showLibrary}
-                  />
-                </View>
-              </View>
               <SectionHeading
                 title="库存清单"
                 description={
@@ -247,7 +239,7 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
               {!stock.length ? (
                 <EmptyState
                   title="给食品留一个位置"
-                  description="先保存商品资料，再选择购入数量。库存与食品档案会分别保存。"
+                  description="从食品详情加入库存。"
                 />
               ) : !filteredStock.length ? (
                 <EmptyState
@@ -263,7 +255,13 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`查看${item.name}`}
-                      onPress={() => void openProduct(item.food_id)}
+                      onPress={() => {
+                        const food = p.nutrition?.catalogue?.find(
+                          (f) => f.id === item.food_id && f.kind === "meal",
+                        );
+                        if (food) p.onMeal?.(food);
+                        else void openProduct(item.food_id);
+                      }}
                       style={({ pressed }) => [
                         H.stockHeading,
                         pressed && H.pressed,
@@ -349,9 +347,8 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
               <View style={H.filters} accessibilityRole="radiogroup">
                 {(
                   [
-                    ["all", "全部"],
-                    ["confirmed", "已核对"],
-                    ["draft", "待确认"],
+                    ["meal", "餐食"],
+                    ["packaged", "包装食品"],
                   ] as const
                 ).map(([value, label]) => (
                   <Pressable
@@ -379,38 +376,58 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
               </View>
               <View style={H.collectionHeading}>
                 <Text style={S.small}>
-                  显示 {filteredFoods.length} / {foods.length} 份食品资料
+                  显示{" "}
+                  {filter === "meal" ? mealFoods.length : filteredFoods.length}{" "}
+                  份食品资料
                 </Text>
                 <TextAction
                   title="拍一拍添加"
                   onPress={() => void startScan()}
                 />
               </View>
-              {!foods.length ? (
-                <EmptyState
-                  title="把喜欢的食品收进来"
-                  description="扫一扫手边的包装。自己的食品库，从一件开始。"
-                  action={
-                    <Button
-                      title="录入第一件食品"
-                      onPress={() => void startScan()}
-                    />
-                  }
-                />
-              ) : !filteredFoods.length ? (
-                <EmptyState
-                  title="暂时没有符合条件的食品"
-                  description="换个关键词，或查看全部确认状态。已保存的资料不会被删除。"
-                  action={
-                    <Button
-                      title="清除筛选与搜索"
-                      secondary
-                      onPress={clearSearch}
-                    />
-                  }
-                />
-              ) : (
+              {filter === "meal" ? (
+                mealFoods.length ? (
+                  mealFoods.map((f) => (
+                    <Pressable
+                      key={f.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`餐食 ${f.name}`}
+                      onPress={() => p.onMeal?.(f)}
+                      style={H.foodRow}
+                    >
+                      {(p.nutrition?.covers?.[f.id]?.cover || f.image) && (
+                        <Image
+                          source={{
+                            uri: p.nutrition?.covers?.[f.id]?.cover || f.image,
+                          }}
+                          resizeMode="contain"
+                          style={{ width: 64, height: 64 }}
+                        />
+                      )}
+                      <View style={H.grow}>
+                        <Text style={S.rowTitle}>{f.name}</Text>
+                        <Text style={S.small}>
+                          {f.provenance?.kind === "ai"
+                            ? "AI 估算 · 已确认保存"
+                            : "本机餐食资料"}
+                        </Text>
+                      </View>
+                      <Text style={H.chevron}>›</Text>
+                    </Pressable>
+                  ))
+                ) : (
+                  <EmptyState
+                    title="还没有餐食资料"
+                    description="餐食确认食用后会保存在这里，方便下次复用。"
+                  />
+                )
+              ) : filteredFoods.length ? (
                 filteredFoods.map(renderFood)
+              ) : (
+                <EmptyState
+                  title="还没有匹配的包装食品"
+                  description="扫描条码后补全营养标签，核对后保存。"
+                />
               )}
             </>
           )}
@@ -434,6 +451,8 @@ export function HomeScreens(p: AppController & { onTargets?: () => void }) {
               title="数据导出"
               onPress={() => setExportOpen(!exportOpen)}
             />
+            <View style={H.menuDivider} />
+            <MenuRow title="本地抠图模型" onPress={() => p.onModel?.()} />
             <View style={H.menuDivider} />
             <MenuRow title="关于 Hukang" onPress={() => navigate("about")} />
           </Surface>

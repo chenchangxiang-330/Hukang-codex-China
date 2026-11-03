@@ -1,4 +1,3 @@
-import { PackageAssistant } from "../nutrition-v2/PackageAssistant";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { C, S, Button, Choices, Check, Field } from "./ui";
 import { type AppController, labels } from "./useSimpleApp";
@@ -144,23 +143,6 @@ export function CaptureScreens(
               title="读取包装文字（可选）"
               secondary
               onPress={() => void readPackage()}
-            />
-          )}
-          {draft.packageImage && (
-            <PackageAssistant
-              sourceUri={draft.packageImage.uri}
-              onSettings={() => p.onAiSettings?.()}
-              blocked={!!draft.name.trim() || !!draft.brand.trim() || !!editing}
-              onCandidate={(candidate) =>
-                patchDraft({
-                  name: candidate.name,
-                  brand: candidate.brand,
-                  packageAi: {
-                    ...candidate,
-                    imageHash: draft.packageImage!.processedImageHash,
-                  },
-                })
-              }
             />
           )}
           {draft.packageOcr && (

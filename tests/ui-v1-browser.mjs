@@ -166,80 +166,53 @@ try {
   );
 
   await open("ai-settings");
-  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
-  await expect(page.getByText(/请填写/).first()).toBeVisible();
+  await page.getByRole("button", { name: "地址与模型", exact: true }).click();
   await page
     .getByLabel("API Base URL", { exact: true })
-    .fill("http://invalid.example/v1");
+    .fill("http://invalid.example");
   await page
     .getByLabel("API Key", { exact: true })
     .fill("ui-preview-not-real-key");
-  await page.getByLabel("模型名称", { exact: true }).fill("preview-model");
-  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "同意本次连接测试", exact: true })
+    .click();
+  await page.getByRole("button", { name: "保存连接", exact: true }).click();
   await expect(page.getByText(/HTTPS/).first()).toBeVisible();
-  await page
-    .getByLabel("API Base URL", { exact: true })
-    .fill("https://example.invalid/v1");
-  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
-  await page
-    .getByLabel("API Key", { exact: true })
-    .fill("ui-preview-not-real-key");
-  await page.getByRole("button", { name: "检查连接配置", exact: true }).click();
-  await expect(page.getByText(/请先确认本次发送/)).toBeVisible();
   expect(
     await page.getByLabel("API Key", { exact: true }).getAttribute("type"),
   ).toBe("password");
   await screen("ai-local-validation");
-  await page.getByRole("button", { name: "返回", exact: true }).click();
-  await page.getByRole("tab", { name: "我的", exact: true }).click();
-  await page.getByRole("button", { name: /^AI 服务设置/ }).click();
-  await expect(page.getByLabel("API Key", { exact: true })).toHaveValue("");
   report.checks.push(
-    "AI settings: invalid/valid local validation, masked key, key never redisplayed after navigation; no request without consent",
+    "Invalid connection blocked; key input masked; consent required",
   );
-
   await open("library");
+  await page
+    .getByRole("radio", { name: "食品筛选：包装食品", exact: true })
+    .click();
   await page
     .getByLabel("搜索食品名称或品牌", { exact: true })
     .fill("不存在的演示食品");
   await expect(
-    page.getByText("暂时没有符合条件的食品", { exact: true }),
+    page.getByText("还没有匹配的包装食品", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "清除筛选与搜索", exact: true })
-    .click();
+  await page.getByLabel("搜索食品名称或品牌", { exact: true }).fill("");
   await expect(
     page.getByRole("button", { name: "演示 · 纯牛奶", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("radio", { name: "食品筛选：待确认", exact: true })
+    .getByRole("radio", { name: "食品筛选：餐食", exact: true })
     .click();
-  await expect(
-    page.getByText("暂时没有符合条件的食品", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("radio", { name: "食品筛选：全部", exact: true })
-    .click();
-  report.checks.push("Library search/filter empty-state and reset");
-
+  await expect(page.getByText("还没有餐食资料", { exact: true })).toBeVisible();
+  report.checks.push(
+    "Meal/package categories, package search and real empty state",
+  );
   await open();
   await page.getByRole("button", { name: "拍一拍", exact: true }).click();
   await page.getByRole("button", { name: "包装食品", exact: true }).click();
   await page
-    .getByRole("button", { name: "扫描 / 输入条码", exact: true })
-    .click();
-  await page
     .getByLabel("条码数字（保留前导零）", { exact: true })
     .fill("6923644266066");
   await page.getByRole("button", { name: "查询本机食品", exact: true }).click();
-  await expect(page.getByText("先记下它的样子", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "从相册选择包装", exact: true })
-    .click();
-  await page.getByLabel("商品名称", { exact: true }).fill("UI 模拟录入牛奶");
-  await page
-    .getByRole("button", { name: "下一步，拍营养表", exact: true })
-    .click();
   await page
     .getByRole("button", { name: "从相册选择营养表", exact: true })
     .click();

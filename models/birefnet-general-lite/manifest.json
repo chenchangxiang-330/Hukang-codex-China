@@ -1,0 +1,24 @@
+{
+  "status": "awaiting-experiment-identity",
+  "selectedDirection": "User's B-column BiRefNet general lite checkpoint",
+  "sourceCheckpoint": {"path": null, "sha256": null, "revision": null, "bytes": null},
+  "androidArtifact": {"path": null, "sha256": null, "bytes": null, "conversion": null},
+  "license": {"code": null, "weights": null, "conversion": null},
+  "preprocessing": null,
+  "postprocessing": null,
+  "runtime": {"candidate": "existing ONNX Runtime Android 1.21.1", "loadTested": false},
+  "upstreamCandidateOnly": {
+    "repository": "danielgatis/rembg",
+    "sourceRevision": "e2c2e3f72701357b9bb3f2be32a4330d74ce8f47",
+    "session": "birefnet-general-lite",
+    "assetId": 188373238,
+    "filename": "BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx",
+    "url": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx",
+    "bytes": 224005088,
+    "upstreamMd5": "4fab47adc4ff364be1713e97b7e66334",
+    "sha256": null,
+    "reasonNotActivated": "No B-column runtime file/log/hash. User screenshots distinguish original ~178 MB weights from converted artifact; size alone neither proves nor disproves identity."
+  },
+  "networkDownloadEnabled": false,
+  "inferenceEnabled": false
+}

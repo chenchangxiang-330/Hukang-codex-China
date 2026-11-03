@@ -1,5 +1,10 @@
 import type { AiSnapshot } from "./service";
-export type AiScope = "meal-text" | "meal-image" | "package-image";
+export type AiScope =
+  | "meal-text"
+  | "meal-image"
+  | "package-image"
+  | "profile"
+  | "health-image";
 type Context = Pick<AiSnapshot, "revision" | "endpoint" | "consent">;
 /** Session-only acknowledgement of the most recent destination + sending scope. No key or payload. */
 export function createDisclosure() {

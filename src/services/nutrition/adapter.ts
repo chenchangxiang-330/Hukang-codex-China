@@ -66,6 +66,15 @@ export function createNutritionAdapter(
   const updateEntry = (entry: Entry) => mutate((s) => s.update(entry));
   return {
     kind: "production",
+    saveCatalogueFood: (f) => mutate((s) => s.catalogueFood(f)),
+    saveProfile: (p) => mutate((s) => s.profile(p)),
+    saveTargetDraft: (d) => mutate((s) => s.targetDraft(d)),
+    applyTargetDraft: (d) => mutate((s) => s.applyDraft(d)),
+    deferOnboarding: () => mutate((s) => s.defer()),
+    saveCaptureDraft: (d) => mutate((s) => s.captureDraft(d)),
+    saveIntakeDraft: (e) => mutate((s) => s.intakeDraft(e)),
+    restoreCover: (id) => mutate((s) => s.restoreCover(id)),
+    retryCover: (id) => mutate((s) => s.retryCover(id)),
     getSnapshot: () => snapshot,
     subscribe: (listener) => {
       listeners.add(listener);

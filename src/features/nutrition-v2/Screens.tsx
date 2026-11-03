@@ -1,3 +1,5 @@
+import { policyFor } from "../../services/nutrition/profile";
+import { NutrientProgress, policyLabel } from "./NutrientProgress";
 import { FoodEditor } from "./FoodEditor";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -45,43 +47,12 @@ export function dateLabel(date: string) {
   const [y, m, d] = date.split("-");
   return `${y}年${Number(m)}月${Number(d)}日`;
 }
-function Energy({
-  snapshot: s,
-  date,
-  onTargets,
-}: {
-  snapshot: Snapshot;
-  date: string;
-  onTargets: () => void;
-}) {
-  const t = total(s.entries, date, "energy");
-  return (
-    <View style={{ gap: 4 }}>
-      <Text style={N.caption}>
-        已记录能量{t.missing ? " · 已知小计" : ""}
-        {t.estimated ? " · 估算" : ""}
-      </Text>
-      <Text style={[V.energy, t.range && { fontSize: 32, lineHeight: 44 }]}>
-        {formatTotal(t)} <Text style={V.energyUnit}>kcal</Text>
-      </Text>
-      <Link
-        title={
-          s.targets.energy
-            ? `个人能量参考 ${s.targets.energy} kcal`
-            : "设置个人目标"
-        }
-        onPress={onTargets}
-      />
-    </View>
-  );
-}
 export function TodayScreen({
   snapshot: s,
   date,
   onNutrition,
   onCapture,
   onDiary,
-  onTargets,
   onFood,
   resume,
 }: {
@@ -94,112 +65,86 @@ export function TodayScreen({
   onFood: (e: Entry) => void;
   resume?: React.ReactNode;
 }) {
-  const entries = s.entries.filter((e) => e.date === date);
-  const recent = [...entries].sort((a, b) =>
-    (b.confirmedAt ?? b.id).localeCompare(a.confirmedAt ?? a.id),
-  )[0];
-  const finding = entries.length
-    ? findings(s.entries, date, s.targets).find((line) =>
-        /接近参考上限|已超参考上限/.test(line),
-      )
-    : undefined;
+  const entries = s.entries
+    .filter((e) => e.date === date)
+    .sort(
+      (a, b) =>
+        (a.consumedTime ?? "").localeCompare(b.consumedTime ?? "") ||
+        (a.confirmedAt ?? a.id).localeCompare(b.confirmedAt ?? b.id),
+    );
+  const groups = [
+    ["上午", entries.filter((e) => e.consumedTime && e.consumedTime < "12:00")],
+    [
+      "下午",
+      entries.filter((e) => e.consumedTime && e.consumedTime >= "12:00"),
+    ],
+    ["时间未记录", entries.filter((e) => !e.consumedTime)],
+  ] as const;
   return (
     <>
       <View style={V.brandRow}>
-        <View style={N.row}>
-          <Image
-            source={require("../../../assets/icon.png")}
-            style={V.logo}
-            accessibilityLabel="护康 Logo"
-          />
-          <Text style={V.brand}>护康 · 今天</Text>
-        </View>
+        <Text style={V.brand}>护康 · 今天</Text>
         <Text style={N.caption}>{dateLabel(date).replace(/^\d+年/, "")}</Text>
       </View>
-      {entries.length ? (
-        <Card>
-          <Energy snapshot={s} date={date} onTargets={onTargets} />
-          <TargetProgress
-            title="蛋白质"
-            total={total(s.entries, date, "protein")}
-            target={s.targets.protein}
-            onTargets={onTargets}
+      <Card>
+        {(["protein", "energy", "fat", "fiber"] as const).map((k) => (
+          <NutrientProgress
+            compact
+            key={k}
+            title={k === "energy" ? "今日卡路里" : nutrientInfo[k][0]}
+            total={total(s.entries, date, k)}
+            policy={policyFor(s.targets, k)}
           />
-          <View
-            style={[
-              N.row,
-              { flexWrap: "wrap", justifyContent: "space-between" },
-            ]}
-          >
-            {(["carbohydrate", "fat"] as const).map((k) => (
-              <View key={k}>
-                <Text style={N.body}>
-                  {k === "fat" ? "脂肪" : "碳水"}{" "}
-                  {formatTotal(total(s.entries, date, k))} g
-                </Text>
-                {(total(s.entries, date, k).missing > 0 ||
-                  total(s.entries, date, k).estimated) && (
-                  <Text style={N.caption}>
-                    {targetProgress(total(s.entries, date, k)).status}
-                  </Text>
-                )}
-              </View>
-            ))}
-          </View>
-          <Link title="查看完整营养" onPress={onNutrition} />
-        </Card>
-      ) : (
-        <Card>
-          <Text accessibilityRole="header" style={N.heading}>
-            {s.status === "loading" ? "正在读取记录…" : "今天还没有记录"}
-          </Text>
-          <Text style={N.caption}>记下一餐，查看摄入与蛋白质进度。</Text>
-          <Link title="个人参考目标" onPress={onTargets} />
-          <Link title="查看完整营养" onPress={onNutrition} />
-        </Card>
-      )}
+        ))}
+        <Link title="查看完整营养" onPress={onNutrition} />
+      </Card>
       <Action title="拍一拍" onPress={onCapture} />
       {s.status === "error" && (
         <Feedback>{s.message || "读取失败，请重试。"}</Feedback>
       )}
-      {finding && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="今日营养发现"
-          onPress={onNutrition}
-          style={{ minHeight: 48, justifyContent: "center" }}
-        >
-          <Text style={N.caption}>✧ {finding} ›</Text>
-        </Pressable>
+      <View style={V.sectionRow}>
+        <Text style={N.heading}>今天时间线</Text>
+        <Link title="查看全部记录" onPress={onDiary} />
+      </View>
+      {!entries.length && (
+        <Text style={N.caption}>今天还没有记录，确认食用后会出现在这里。</Text>
       )}
-      {recent && (
-        <>
-          <View style={V.sectionRow}>
-            <Text style={N.heading}>最近一餐</Text>
-            <Link title="查看全部记录" onPress={onDiary} />
+      {groups
+        .filter(([, items]) => items.length)
+        .map(([label, items]) => (
+          <View key={label} style={{ gap: 8 }}>
+            <Text style={N.caption}>{label}</Text>
+            {items.map((e) => (
+              <Pressable
+                key={e.id}
+                accessibilityRole="button"
+                accessibilityLabel={`查看食物 ${e.food.name}`}
+                onPress={() => onFood(e)}
+              >
+                <FoodRow entry={e} cover={s.covers?.[e.food.id]?.cover} />
+              </Pressable>
+            ))}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`查看食物 ${recent.food.name}`}
-            onPress={() => onFood(recent)}
-          >
-            <FoodRow entry={recent} />
-          </Pressable>
-        </>
-      )}
-      {!recent && <Link title="查看全部记录" onPress={onDiary} />}
+        ))}
       {resume}
     </>
   );
 }
-export function FoodRow({ entry: e }: { entry: Entry }) {
+export function FoodRow({
+  entry: e,
+  cover,
+}: {
+  entry: Entry;
+  cover?: string | undefined;
+}) {
   const energy = contribution(e, "energy");
   return (
     <View style={V.foodRow}>
-      <FoodArt name={e.food.name} image={e.food.image} />
+      <FoodArt name={e.food.name} image={cover || e.food.image} />
       <View style={N.grow}>
         <Text style={N.body}>{e.food.name}</Text>
         <Text style={N.caption}>
+          {e.consumedTime ? `${e.consumedTime} · ` : ""}
           {meals[e.meal]} · {e.amount}
           {e.unit}
         </Text>
@@ -320,225 +265,135 @@ export function DiaryScreenV2({
 export function NutritionScreen({
   snapshot: s,
   date,
-  onTargets,
-  onFiberScroll,
 }: {
   snapshot: Snapshot;
   date: string;
   onTargets: () => void;
   onFiberScroll: (y: number) => void;
 }) {
-  const [opened, setOpened] = useState<string[]>([]),
-    [fiberY, setFiberY] = useState(0);
-  const t = (k: Nutrient) => total(s.entries, date, k),
-    value = (k: Nutrient) => `${formatTotal(t(k))} ${nutrientInfo[k][1]}`;
-  const toggle = (id: string) =>
-    setOpened((a) => (a.includes(id) ? a.filter((k) => k !== id) : [...a, id]));
-  const sources = (k: Nutrient) =>
-    s.entries.filter(
-      (e) => e.date === date && contribution(e, k).missing === 0,
+  const [opened, setOpened] = useState<string[]>([]);
+  const toggle = (k: string) =>
+    setOpened((a) => (a.includes(k) ? a.filter((x) => x !== k) : [...a, k]));
+  const metric = (k: Nutrient) => {
+    const t = total(s.entries, date, k),
+      p = policyFor(s.targets, k);
+    return (
+      <Accordion
+        key={k}
+        title={nutrientInfo[k][0]}
+        value={
+          t.count
+            ? `${t.estimated ? "约 " : ""}${formatTotal(t)} ${t.unit}`
+            : "尚未记录"
+        }
+        hint={`${targetProgress(t).status} · ${policyLabel(p)}`}
+        open={opened.includes(k)}
+        onToggle={() => toggle(k)}
+      >
+        <NutrientProgress title={nutrientInfo[k][0]} total={t} policy={p} />
+        {p && (
+          <Text style={N.caption}>
+            {p.manual ? "用户修改" : p.source} · {p.basis}。{p.applicability}
+            {p.appliedAt
+              ? ` · 应用 ${new Date(p.appliedAt).toLocaleDateString()}`
+              : ""}
+          </Text>
+        )}
+        {!p && (
+          <Text style={N.caption}>个人参考待完善，可在“我的”管理目标。</Text>
+        )}
+        {s.entries
+          .filter((e) => e.date === date)
+          .map((e) => (
+            <NutrientLine
+              key={e.id}
+              title={`${e.food.name} · ${meals[e.meal]}`}
+              total={contribution(e, k)}
+            />
+          ))}
+        {k === "added_sugars" && (
+          <Text style={N.caption}>
+            食品制作时额外加入的糖。总糖不等于添加糖；配料有糖不代表已知克数。
+          </Text>
+        )}
+        {k === "fiber" && (
+          <Text style={N.caption}>
+            与碳水相关成分引用同一份数据，不重复累计。
+          </Text>
+        )}
+        {k === "sodium" && t.value !== null && (
+          <Text style={N.caption}>
+            已知钠约相当于 {formatNumber((t.value * 2.5) / 1000)} g
+            食盐，仅作换算，不再次累加。
+          </Text>
+        )}
+      </Accordion>
     );
-  const mineral: Nutrient[] = [
-      "sodium",
-      "potassium",
-      "calcium",
-      "magnesium",
-      "iron",
-      "zinc",
-    ],
-    vitamins: Nutrient[] = [
-      "vitamin_a",
-      "vitamin_b1",
-      "vitamin_b2",
-      "vitamin_b6",
-      "vitamin_b12",
-      "vitamin_c",
-      "vitamin_d",
-      "vitamin_e",
-      "vitamin_k",
-    ];
-  const sourceLines = (k: Nutrient) =>
-    sources(k).length ? (
-      sources(k).map((e) => (
-        <NutrientLine
-          key={e.id}
-          title={e.food.name}
-          total={contribution(e, k)}
-        />
-      ))
-    ) : (
-      <Text style={N.caption}>暂无可靠来源数据，未录入不代表没有摄入。</Text>
-    );
+  };
+  const minerals: Nutrient[] = [
+    "sodium",
+    "potassium",
+    "calcium",
+    "magnesium",
+    "iron",
+    "zinc",
+  ];
+  const vitamins = (Object.keys(nutrientInfo) as Nutrient[]).filter((k) =>
+    k.startsWith("vitamin_"),
+  );
   return (
     <>
-      <View style={{ gap: 4 }}>
-        <Text accessibilityRole="header" style={N.title}>
-          今日营养
-        </Text>
-        <Text style={N.caption}>{dateLabel(date)}</Text>
-      </View>
-      <View style={{ gap: 4 }}>
-        <Energy snapshot={s} date={date} onTargets={onTargets} />
-        <Text style={N.caption}>
-          {s.entries.some((e) => e.date === date)
-            ? "基于已保存记录 · 点开查看来源"
-            : "尚未记录"}
-        </Text>
-      </View>
+      <Text accessibilityRole="header" style={N.title}>
+        营养详情
+      </Text>
+      <Text style={N.caption}>{dateLabel(date)} · 基于已保存的记录</Text>
+      {(
+        ["energy", "protein", "carbohydrate", "fat", "fiber"] as Nutrient[]
+      ).map(metric)}
       <Accordion
-        title="碳水化合物"
-        value={value("carbohydrate")}
-        hint={targetProgress(t("carbohydrate")).status}
-        open={opened.includes("carbohydrate")}
-        onToggle={() => toggle("carbohydrate")}
+        title="糖与脂肪成分"
+        value="展开"
+        open={opened.includes("components")}
+        onToggle={() => toggle("components")}
       >
-        <Progress total={t("carbohydrate")} range={s.targets.carbohydrate} />
-        <NutrientLine title="总糖" total={t("total_sugars")} />
-        <NutrientLine title="添加糖" total={t("added_sugars")} />
-        <Progress total={t("added_sugars")} limit={50} ideal={25} />
-        <Text style={N.caption}>
-          添加糖是食品生产或制作过程中额外加入的糖，与水果中天然存在的糖不同。总糖不等于添加糖；配料中含糖也不能推断克数。
-        </Text>
-        <Link
-          title="查看膳食纤维"
-          onPress={() => {
-            setOpened((a) => (a.includes("fiber") ? a : [...a, "fiber"]));
-            onFiberScroll(fiberY);
-          }}
-        />
-      </Accordion>
-      <Accordion
-        title="蛋白质"
-        value={value("protein")}
-        hint={targetProgress(t("protein")).status}
-        open={opened.includes("protein")}
-        onToggle={() => toggle("protein")}
-      >
-        <TargetProgress
-          title="蛋白质"
-          total={t("protein")}
-          target={s.targets.protein}
-          onTargets={onTargets}
-        />
-        <Text style={N.caption}>目标依据体重、活动和个人目标配置。</Text>
-        <Text style={N.heading}>主要食物来源</Text>
-        {sourceLines("protein")}
-        <Text style={N.heading}>餐次分布</Text>
-        {(Object.entries(meals) as [Meal, string][]).map(([k, label]) => (
-          <NutrientLine
-            key={k}
-            title={label}
-            total={total(
-              s.entries.filter((e) => e.meal === k),
-              date,
-              "protein",
-            )}
-          />
-        ))}
-      </Accordion>
-      <Accordion
-        title="脂肪"
-        value={value("fat")}
-        hint={targetProgress(t("fat")).status}
-        open={opened.includes("fat")}
-        onToggle={() => toggle("fat")}
-      >
-        <Progress total={t("fat")} range={s.targets.fat} />
         {(
           [
+            "total_sugars",
+            "added_sugars",
             "saturated_fat",
             "trans_fat",
             "monounsaturated_fat",
             "polyunsaturated_fat",
-          ] as const
-        ).map((k) => (
-          <NutrientLine key={k} title={nutrientInfo[k][0]} total={t(k)} />
-        ))}
-        <Text style={N.caption}>
-          饱和脂肪一般参考低于全天能量的 {s.targets.saturatedPercent ?? 10}
-          %，可在个人目标中调整。
-        </Text>
-        {s.targets.energy && (
-          <Progress
-            total={t("saturated_fat")}
-            limit={
-              (s.targets.energy * (s.targets.saturatedPercent ?? 10)) / 100 / 9
-            }
-          />
-        )}
+          ] as Nutrient[]
+        ).map(metric)}
       </Accordion>
-      <View onLayout={(e) => setFiberY(e.nativeEvent.layout.y)}>
-        <Accordion
-          title="膳食纤维"
-          value={value("fiber")}
-          hint={targetProgress(t("fiber")).status}
-          open={opened.includes("fiber")}
-          onToggle={() => toggle("fiber")}
-        >
-          <TargetProgress
-            title="膳食纤维"
-            total={t("fiber")}
-            target={s.targets.fiber}
-            onTargets={onTargets}
-          />
-          <Text style={N.caption}>
-            成人常用参考 25–30g / 天，可设置个人目标。
-          </Text>
-          <Text style={N.caption}>
-            此处与碳水详情引用同一份数据，不重复累计。
-          </Text>
-          {sourceLines("fiber")}
-        </Accordion>
-      </View>
       <Accordion
         title="矿物质"
-        value={value("sodium")}
-        hint={`钠 · ${targetProgress(t("sodium")).status}`}
+        value="展开"
         open={opened.includes("minerals")}
         onToggle={() => toggle("minerals")}
       >
-        {mineral.map((k) => (
-          <NutrientLine key={k} title={nutrientInfo[k][0]} total={t(k)} />
-        ))}
-        <Progress total={t("sodium")} limit={s.targets.sodium ?? 2000} />
-        <Text style={N.caption}>
-          一般成人钠参考上限 {s.targets.sodium ?? 2000}mg / 天。
-          {t("sodium").value !== null
-            ? `当前${t("sodium").missing ? "已知小计" : "记录"}约相当于 ${formatNumber((t("sodium").value! * 2.5) / 1000)}g 食盐。`
-            : "钠数据不全时，食盐当量也未知。"}
-          食盐当量只是换算，不再累加一次。
-        </Text>
+        {minerals.map(metric)}
       </Accordion>
       <Accordion
         title="维生素"
         value="展开"
-        hint={
-          vitamins.some((k) => t(k).value !== null || t(k).range)
-            ? "查看已知数据"
-            : "未知 · 数据缺失"
-        }
         open={opened.includes("vitamins")}
         onToggle={() => toggle("vitamins")}
       >
-        {vitamins.map((k) => (
-          <NutrientLine key={k} title={nutrientInfo[k][0]} total={t(k)} />
-        ))}
-        <Text style={N.caption}>
-          未录入数据不等于没有摄入，也不代表缺乏。适用参考值待个人资料配置。
-        </Text>
+        {vitamins.map(metric)}
       </Accordion>
       <Accordion
-        title="水分"
-        value="未接入"
-        hint="饮水记录"
-        open={opened.includes("water")}
-        onToggle={() => toggle("water")}
+        title="数据说明"
+        value="查看"
+        open={opened.includes("sources")}
+        onToggle={() => toggle("sources")}
       >
         <Text style={N.caption}>
-          饮水记录尚未接入，暂无已记录饮水量、饮料来源或个人补水目标。
+          未知不等于没有摄入。缺失时只展示已知小计，不判断全天达标；确认保存后的
+          AI 估算仍保留估算属性。参考范围和上限不以填满为最好。
         </Text>
       </Accordion>
-      <Text style={N.tiny}>数值仅解释已记录的饮食，不作为营养缺乏诊断。</Text>
     </>
   );
 }
@@ -554,6 +409,7 @@ export function FoodDetail({
   const [amount, setAmount] = useState(String(e.amount));
   const [food, setFood] = useState(e.food);
   const [day, setDay] = useState(e.date);
+  const [time, setTime] = useState(e.consumedTime ?? "");
   const [meal, setMeal] = useState(e.meal);
   const [feedback, setFeedback] = useState("");
   const [feedbackAt, setFeedbackAt] = useState<
@@ -570,6 +426,11 @@ export function FoodDetail({
     setFeedbackAt(at);
     setBusy(true);
     try {
+      const {
+        consumedTime: _oldTime,
+        timezone: _oldTimezone,
+        ...entryWithoutTime
+      } = e;
       if (remove) {
         if (!adapter.deleteEntry) throw Error("当前演示不支持删除。");
         await adapter.deleteEntry(e.id);
@@ -577,9 +438,17 @@ export function FoodDetail({
       } else {
         if (adapter.updateEntry)
           await adapter.updateEntry({
-            ...e,
+            ...entryWithoutTime,
             food,
             date: day,
+            ...(time
+              ? {
+                  consumedTime: time,
+                  timezone:
+                    e.timezone ??
+                    Intl.DateTimeFormat().resolvedOptions().timeZone,
+                }
+              : {}),
             meal,
             amount: parsePortion(amount),
           });
@@ -644,6 +513,11 @@ export function FoodDetail({
             label="修改记录日期（YYYY-MM-DD）"
             value={day}
             onChange={setDay}
+          />
+          <Field
+            label="修改食用时间（HH:mm）"
+            value={time}
+            onChange={setTime}
           />
           <Choices
             options={Object.entries(meals)}

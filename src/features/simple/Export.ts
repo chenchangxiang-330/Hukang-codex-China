@@ -1,3 +1,4 @@
+import type { Food } from "../nutrition-v2/model";
 import { requireNativeModule } from 'expo-modules-core';
 import * as Sharing from 'expo-sharing';
 import { Directory, File, Paths } from 'expo-file-system';
@@ -38,8 +39,10 @@ export async function exportLocal(kind: 'catalogue' | 'personal', includePhotos:
     : [];
   const nutrition = kind === 'personal' ? await (await db()).getAllAsync<{snapshot_json: string}>('SELECT snapshot_json FROM nutrition_entries ORDER BY date,confirmed_at,id').then(rows => rows.map(row => JSON.parse(row.snapshot_json))) : [];
   const targets = kind === 'personal' ? await (await db()).getFirstAsync<{targets_json: string}>('SELECT targets_json FROM nutrition_settings WHERE id=1').then(row => row ? JSON.parse(row.targets_json) : {}) : {};
+  const mealFoods=await (await db()).getAllAsync<{json:string}>("SELECT json FROM nutrition_catalogue WHERE json_extract(json,'$.kind')='meal'").then(rows=>rows.map(r=>JSON.parse(r.json) as Food));
+  const profile=kind==='personal'?await (await db()).getFirstAsync<{json:string}>("SELECT json FROM nutrition_state WHERE key='profile'").then(r=>r?JSON.parse(r.json):null):null;
   const packageHints = kind === 'personal' ? await (await db()).getAllAsync<{food_id:string;json:string}>('SELECT food_id,json FROM simple_package_hints').then(rows => rows.map(row => ({foodId:row.food_id, candidate:JSON.parse(row.json)}))) : [];
-  if (!records.length && !pending.length && !nutrition.length && !Object.keys(targets).length) throw new Error('还没有可导出的食品。食品资料包仅包含已确认且允许分享的记录。');
+  if (!records.length && !pending.length && !nutrition.length && !mealFoods.length && !Object.keys(targets).length) throw new Error('还没有可导出的食品。食品资料包仅包含已确认且允许分享的记录。');
 
   const exportedAt = new Date().toISOString();
   const assets: Asset[] = [];
@@ -169,13 +172,14 @@ export async function exportLocal(kind: 'catalogue' | 'personal', includePhotos:
     }
 
     if (kind === 'personal' && includePhotos) for (const entry of nutrition) add(entry.food.image, `nutrition-photos/${safeId(entry.id, 'entry')}.source`, false);
+    if(includePhotos)for(const food of mealFoods)add(food.image,`nutrition-photos/food-${safeId(food.id,'meal')}.source`,kind==='catalogue');
     const content = kind === 'catalogue' ? {
-      ...sharedCatalogue(records, exportedAt), images, photosIncluded: includePhotos, photoMetadataRemoved: includePhotos,
+      ...sharedCatalogue(records, exportedAt), mealFoods:portable(mealFoods), images, photosIncluded: includePhotos, photoMetadataRemoved: includePhotos,
       mergePolicy: '按规范化条码匹配候选；不同标签值保留为不同版本，人工核验后合并。',
     } : {
       schemaVersion: 2, format: 'hukang-personal-export', exportedAt,
       photosIncluded: includePhotos,
-      nutrition: portable(nutrition), targets, packageHints,
+      nutrition: portable(nutrition), mealFoods:portable(mealFoods), targets, profile, packageHints,
       notice: '包含饮食、个人目标、购买数量和到期日。数据导出供保管或开发者处理；本版本尚不提供 App 内导入还原。',
       products: portable(records), images, packageEvidence: portable(packageEvidence), inventory: await listStock(), pending: portable(pending),
     };

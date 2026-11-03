@@ -1,3 +1,4 @@
+import { validatePolicies } from "./profile";
 import {
   nutrientInfo,
   parsePortion,
@@ -56,7 +57,13 @@ export function snapshotEntry(input: Entry): Entry {
     };
   }
   const food: Food = {
-    id: text(f.id, 160),
+    id: safeId(f.id),
+    kind:
+      f.kind === "meal" || f.kind === "packaged"
+        ? f.kind
+        : f.provenance?.kind === "label"
+          ? "packaged"
+          : "meal",
     version: text(f.version, 160),
     name: text(f.name, 120),
     source: text(f.source),
@@ -105,6 +112,10 @@ export function snapshotEntry(input: Entry): Entry {
   return {
     id: safeId(input.id),
     date: input.date,
+    ...(input.consumedTime
+      ? { consumedTime: validTime(input.consumedTime) }
+      : {}),
+    ...(input.timezone ? { timezone: validZone(input.timezone) } : {}),
     meal: input.meal,
     food,
     amount: parsePortion(String(input.amount)),
@@ -113,6 +124,7 @@ export function snapshotEntry(input: Entry): Entry {
 }
 export function validateTargets(input: Targets): Targets {
   const out: Targets = {};
+  if (input.policies) out.policies = validatePolicies(input.policies);
   for (const key of [
     "energy",
     "protein",
@@ -134,4 +146,18 @@ export function validateTargets(input: Targets): Targets {
     }
   }
   return out;
+}
+
+function validTime(time: string) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
+    throw Error("食用时间请填写 HH:mm。");
+  return time;
+}
+function validZone(zone: string) {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: zone }).format();
+  } catch {
+    throw Error("食用时区无效。");
+  }
+  return text(zone, 80);
 }

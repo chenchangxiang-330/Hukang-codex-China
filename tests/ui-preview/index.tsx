@@ -299,10 +299,10 @@ function Preview() {
       setProduct(found);
       navigate("product");
     } else {
-      const d = makeDraft();
+      const d = makeDraft("nutrition");
       d.barcode = { ...barcode, scan: { ...barcode.scan, rawValue: raw } };
       setDraft(d);
-      navigate("package");
+      navigate("nutrition");
     }
   }
   async function capture(which: string) {

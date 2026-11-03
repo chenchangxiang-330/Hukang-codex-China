@@ -1,3 +1,4 @@
+import { NUTRITION_MIGRATION_V8 } from "../../services/nutrition/migration";
 import type { ChinaFoodRepository } from '../../application/ports/ChinaFoodRepository';
 import type { OcrEvidence } from '../../domain/ocr/types';
 import type { FoodEvidenceRevision, FoodRevision, FoodScanRecord, FoodSummary, ParsedNutritionLabel } from '../../domain/food/scan';
@@ -437,9 +438,10 @@ export function createSQLiteFoodStore(
       });
     } else if (version === 3) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V4); await transaction.exec(MIGRATION_V5); });
     else if (version === 4) await driver.transaction(async (transaction) => { await transaction.exec(MIGRATION_V5); });
-    else if (version !== 5 && version !== 6 && version !== 7) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
+    else if (version !== 5 && version !== 6 && version !== 7 && version !== 8) throw new Error(`食品数据库版本 ${String(version)} 不受当前应用支持，未修改数据库。`);
     if (version !== undefined && version < 6) await driver.transaction(async transaction => { await transaction.exec(MIGRATION_V6); });
     if (version !== undefined && version < 7) await driver.transaction(async transaction => { await transaction.exec(NUTRITION_MIGRATION_V7); });
+    if (version !== undefined && version < 8) await driver.transaction(async transaction => { await transaction.exec(NUTRITION_MIGRATION_V8); });
     await cleanupExpiredIdentities();
     await cleanupFiles();
   }

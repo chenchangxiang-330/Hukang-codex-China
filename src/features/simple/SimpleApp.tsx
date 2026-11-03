@@ -1,3 +1,6 @@
+import { CatalogueDetail } from "../nutrition-v2/CatalogueDetail";
+import { ModelScreen } from "../nutrition-v2/ModelScreen";
+import { GoalsScreen } from "../nutrition-v2/GoalsScreen";
 import { productionNutrition } from "../../services/nutrition/runtime";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -41,6 +44,7 @@ import {
 import { CaptureScreen, ImpactPreview } from "../nutrition-v2/CaptureScreen";
 import {
   foodFromRecord,
+  type Food,
   type Entry,
   type Meal,
   type NutritionAdapter,
@@ -93,7 +97,10 @@ type Page =
   | "food-detail"
   | "targets"
   | "intake"
-  | "ai-settings";
+  | "ai-settings"
+  | "setup"
+  | "catalogue"
+  | "models";
 /** Development previews inject isolated adapters; production uses the shared SQLite store. */
 export function SimpleAppView({
   controller: p,
@@ -116,6 +123,21 @@ export function SimpleAppView({
     [food, setFood] = useState<Entry | null>(null),
     [captureMeal, setCaptureMeal] = useState<Meal>("lunch"),
     [keyboard, setKeyboard] = useState(false);
+  const startedSetup = useRef(false);
+  useEffect(() => {
+    if (
+      adapter.kind === "production" &&
+      snapshot.status === "ready" &&
+      !startedSetup.current
+    ) {
+      startedSetup.current = true;
+      if (!snapshot.onboardingDeferred) setPages(["setup"]);
+    }
+  }, [snapshot.status]);
+  const [catalogueFood, setCatalogueFood] = useState<Food | null>(null);
+  const [intakeFood, setIntakeFood] = useState<Food | null>(null);
+  const goalsSave = useRef<(() => Promise<void>) | null>(null),
+    closingGoals = useRef(false);
   const captureBack = useRef<(() => boolean) | null>(null);
   const [captureSession, setCaptureSession] = useState(0);
   const [dockHeight, setDockHeight] = useState(86);
@@ -136,6 +158,22 @@ export function SimpleAppView({
   const close = () => {
     if (p.busy || snapshot.saving) return true;
     if (page === "capture-hub" && captureBack.current?.()) return true;
+    if ((page === "setup" || page === "targets") && goalsSave.current) {
+      if (closingGoals.current) return true;
+      closingGoals.current = true;
+      void goalsSave
+        .current()
+        .then(async () => {
+          if (page === "setup") await adapter.deferOnboarding?.();
+          restore.current = returnOffsets.current.pop() ?? 0;
+          setPages((a) => a.slice(0, -1));
+        })
+        .catch((e) => p.setError(e.message))
+        .finally(() => {
+          closingGoals.current = false;
+        });
+      return true;
+    }
     if (page) {
       restore.current = returnOffsets.current.pop() ?? 0;
       setPages((a) => a.slice(0, -1));
@@ -221,23 +259,29 @@ export function SimpleAppView({
     return () => animation.stop();
   }, [activeTab, dockWidth, reduced, lens]);
   const title =
-    page === "nutrition-detail"
-      ? "营养详情"
-      : page === "capture-hub"
-        ? "拍一拍"
-        : page === "food-detail"
-          ? "食用份量"
-          : page === "targets"
-            ? "个人目标"
-            : page === "intake"
-              ? "拟食用预览"
-              : p.screen === "ai-settings" || page === "ai-settings"
-                ? "AI 服务设置"
-                : p.screen === "profile"
-                  ? "本机用户"
-                  : p.screen === "about"
-                    ? "关于护康"
-                    : p.stepTitle;
+    page === "setup"
+      ? "首次设置"
+      : page === "catalogue"
+        ? "食品详情"
+        : page === "models"
+          ? "本地抠图"
+          : page === "nutrition-detail"
+            ? "营养详情"
+            : page === "capture-hub"
+              ? "拍一拍"
+              : page === "food-detail"
+                ? "食用份量"
+                : page === "targets"
+                  ? "个人目标"
+                  : page === "intake"
+                    ? "拟食用预览"
+                    : p.screen === "ai-settings" || page === "ai-settings"
+                      ? "AI 服务设置"
+                      : p.screen === "profile"
+                        ? "本机用户"
+                        : p.screen === "about"
+                          ? "关于护康"
+                          : p.stepTitle;
   const detail = page === "nutrition-detail",
     showDock = p.screen === "home" && !page && !keyboard;
   const resume = p.resume ? (
@@ -361,6 +405,12 @@ export function SimpleAppView({
                   <HomeScreens
                     {...p}
                     onTargets={() => go("targets")}
+                    onModel={() => go("models")}
+                    nutrition={snapshot}
+                    onMeal={(f) => {
+                      setCatalogueFood(f);
+                      go("catalogue");
+                    }}
                     startScan={async () => capture()}
                   />
                   <ScanScreen {...p} />
@@ -371,6 +421,7 @@ export function SimpleAppView({
                   <ProductScreens
                     {...p}
                     onIntake={() => {
+                      setIntakeFood(null);
                       setDetailDate(p.tab === "diary" ? date : today);
                       go("intake");
                     }}
@@ -390,7 +441,29 @@ export function SimpleAppView({
                         go("food-detail");
                       }}
                       onTargets={() => go("targets")}
-                      resume={resume}
+                      resume={
+                        <>
+                          {resume}
+                          {snapshot.intakeDraft && (
+                            <Action
+                              title="继续上次食用确认"
+                              secondary
+                              onPress={() => {
+                                setIntakeFood(snapshot.intakeDraft!.food);
+                                setDetailDate(snapshot.intakeDraft!.date);
+                                go("intake");
+                              }}
+                            />
+                          )}
+                          {!snapshot.intakeDraft && snapshot.captureDraft && (
+                            <Action
+                              title="继续餐食照片草稿"
+                              secondary
+                              onPress={() => capture()}
+                            />
+                          )}
+                        </>
+                      }
                     />
                   )}{" "}
                   {p.screen === "home" && p.tab === "diary" && (
@@ -412,6 +485,25 @@ export function SimpleAppView({
                     <SupportScreens screen={p.screen} />
                   )}
                 </>
+              )}
+              {pages.includes("setup") && (
+                <View
+                  style={{
+                    display: page === "setup" ? "flex" : "none",
+                    gap: 12,
+                  }}
+                >
+                  <GoalsScreen
+                    registerSave={(fn) => {
+                      goalsSave.current = fn;
+                    }}
+                    initial
+                    adapter={adapter}
+                    snapshot={snapshot}
+                    onSettings={() => go("ai-settings")}
+                    onDone={() => setPages([])}
+                  />
+                </View>
               )}
               {page === "ai-settings" && <AiSettingsScreen />}
               {pages.includes("nutrition-detail") && (
@@ -438,13 +530,52 @@ export function SimpleAppView({
                   onClose={close}
                 />
               )}{" "}
-              {page === "targets" && (
-                <TargetsScreen adapter={adapter} targets={snapshot.targets} />
+              {pages.includes("targets") && (
+                <View
+                  style={{
+                    display: page === "targets" ? "flex" : "none",
+                    gap: 12,
+                  }}
+                >
+                  <GoalsScreen
+                    registerSave={(fn) => {
+                      goalsSave.current = fn;
+                    }}
+                    adapter={adapter}
+                    snapshot={snapshot}
+                    onSettings={() => go("ai-settings")}
+                    onDone={close}
+                  />
+                </View>
               )}
-              {page === "intake" && p.product && (
+              {page === "models" && <ModelScreen snapshot={snapshot} />}
+              {page === "catalogue" && catalogueFood && (
+                <CatalogueDetail
+                  food={catalogueFood}
+                  snapshot={snapshot}
+                  adapter={adapter}
+                  onIntake={(f) => {
+                    setIntakeFood(f);
+                    setDetailDate(today);
+                    go("intake");
+                  }}
+                  onStock={() => {
+                    void p.refresh();
+                    setPages([]);
+                    p.setTab("stock");
+                    p.navigate("home");
+                  }}
+                />
+              )}
+              {page === "intake" && (intakeFood || p.product) && (
                 <ImpactPreview
-                  key={p.product.id + p.product.updatedAt}
-                  food={foodFromRecord(p.product, p.cover ?? undefined)}
+                  key={
+                    intakeFood?.version ?? p.product!.id + p.product!.updatedAt
+                  }
+                  food={
+                    intakeFood ??
+                    foodFromRecord(p.product!, p.cover ?? undefined)
+                  }
                   snapshot={snapshot}
                   date={detailDate}
                   meal="lunch"

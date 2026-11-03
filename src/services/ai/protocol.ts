@@ -1,3 +1,4 @@
+import { TARGET_PROMPT } from "../nutrition/profile";
 import {
   nutrientInfo,
   type Food,
@@ -22,13 +23,13 @@ export const MEAL_PROMPT = `你是饮食记录助手，只估算用户这一餐�
 export function requestBody(
   config: AiConfiguration,
   text: string,
-  meal: boolean | "package",
+  meal: boolean | "package" | "targets",
   image?: MealImage,
 ) {
   return {
     model: config.model,
     stream: false,
-    max_tokens: meal ? 1800 : 32,
+    max_tokens: meal === "targets" ? 5000 : meal ? 1800 : 32,
     ...(config.provider === "deepseek" &&
     /^(deepseek-flash|deepseek-v4)/.test(config.model)
       ? { thinking: { type: "disabled" } }
@@ -42,7 +43,12 @@ export function requestBody(
         ? [
             {
               role: "system",
-              content: meal === "package" ? PACKAGE_PROMPT : MEAL_PROMPT,
+              content:
+                meal === "targets"
+                  ? TARGET_PROMPT
+                  : meal === "package"
+                    ? PACKAGE_PROMPT
+                    : MEAL_PROMPT,
             },
           ]
         : []),

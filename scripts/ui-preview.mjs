@@ -35,6 +35,15 @@ export async function buildPreview() {
       {
         name: "explicit-test-native-boundary",
         setup(b) {
+          b.onResolve(
+            { filter: /services\/nutrition\/privatePhotos$/ },
+            () => ({
+              path: path.join(root, "tests/ui-preview/private-photos-shim.ts"),
+            }),
+          );
+          b.onResolve({ filter: /^\.\/secureStorage$/ }, () => ({
+            path: path.join(root, "tests/ui-preview/secure-storage-shim.ts"),
+          }));
           b.onResolve({ filter: /services\/nutrition\/runtime$/ }, () => ({
             path: path.join(root, "tests/ui-preview/nutrition-runtime-shim.ts"),
           }));
@@ -73,10 +82,12 @@ export async function buildPreview() {
           b.onResolve({ filter: /useSimpleApp$/ }, () => ({
             path: path.join(root, "tests/ui-preview/controller-shim.ts"),
           }));
-          b.onResolve({ filter: /^\.\/store$/ }, (args) =>
-            args.importer.includes("/src/features/simple/")
-              ? { path: path.join(root, "tests/ui-preview/store-shim.ts") }
-              : undefined,
+          b.onResolve(
+            { filter: /^(\.\/store|\.\.\/simple\/store)$/ },
+            (args) =>
+              args.importer.includes("/src/features/")
+                ? { path: path.join(root, "tests/ui-preview/store-shim.ts") }
+                : undefined,
           );
           b.onLoad({ filter: /assets\/icon\.png$/ }, () => ({
             contents:

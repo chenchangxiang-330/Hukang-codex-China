@@ -79,14 +79,30 @@ await page.route("**/*", async (route) => {
                 : completion(
                     body.messages.length === 1
                       ? "OK · 模拟服务"
-                      : body.messages[0]?.content.includes("包装正面文字助手")
+                      : body.messages[0]?.content.includes(
+                            "饮食记录参考目标助手",
+                          )
                         ? JSON.stringify({
-                            candidates: [
-                              { name: "包装候选", brand: "模拟品牌" },
-                            ],
-                            uncertainties: ["模拟服务结果，待核对"],
+                            policies: {
+                              protein: {
+                                type: "target",
+                                value: 80,
+                                unit: "g",
+                                source: "模拟服务",
+                                basis: "隔离测试资料",
+                                applicability: "仅测试",
+                              },
+                            },
+                            missing: ["微量元素资料不足"],
                           })
-                        : JSON.stringify(meal),
+                        : body.messages[0]?.content.includes("包装正面文字助手")
+                          ? JSON.stringify({
+                              candidates: [
+                                { name: "包装候选", brand: "模拟品牌" },
+                              ],
+                              uncertainties: ["模拟服务结果，待核对"],
+                            })
+                          : JSON.stringify(meal),
                     body.model,
                   ),
             ),
@@ -118,234 +134,117 @@ async function configure(base = "https://mock.example/v1", model = "model-a") {
 }
 try {
   await page.goto("http://127.0.0.1:4177/?scenario=ai-settings");
-  await button("检查连接配置").click();
-  await expect(page.getByText(/请填写/).first()).toBeVisible();
-  expect(requests).toHaveLength(0);
-  await configure();
-  expect(requests).toHaveLength(0);
-  await button("检查连接配置").click();
+  await field("API Key").fill("non-secret-test-fixture");
+  await page
+    .getByRole("checkbox", { name: "同意本次连接测试", exact: true })
+    .click();
+  await button("保存连接").click();
   await expect(
-    page.getByText("连接成功，已收到有效模型响应。", { exact: true }),
+    page.getByText("连接已验证并安全保存。", { exact: true }),
   ).toBeVisible();
   await expect(field("API Key")).toHaveValue("");
-  expect(requests[0].url).toBe("https://mock.example/v1/chat/completions");
-  await page.getByText("连接状态", { exact: true }).scrollIntoViewIfNeeded();
-  await screenshot("browser-settings-mock-success");
-  report.checks.push(
-    "Explicit minimal test succeeds only after valid model content; actual endpoint/model visible; key masked and not reloaded.",
-  );
+  expect(requests[0].url).toBe("https://api.deepseek.com/chat/completions");
+  await screenshot("browser-saved-connection");
   await button("返回").click();
+  await page.getByRole("tab", { name: "我的", exact: true }).click();
+  await button("个人参考目标").click();
+  for (const [label, value] of [
+    ["年龄（岁）", "30"],
+    ["身高（cm）", "170"],
+    ["体重（kg）", "65"],
+    ["运动状况", "无"],
+    ["每周运动频率（次/周）", "0"],
+  ])
+    await field(label).fill(value);
+  await consent().click();
+  await button("生成目标草案").click();
+  await expect(page.getByText("待确认草案", { exact: true })).toBeVisible();
+  expect(JSON.parse(requests.at(-1).body.messages[1].content).heightCm).toBe(
+    170,
+  );
+  await screenshot("browser-target-draft");
+  await button("确认应用目标").click();
+  await expect(
+    page.getByText("已应用核对后的目标。", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "手动修改目标，编辑", exact: true })
+    .click();
+  await field("目标或下限（g）").fill("90");
+  await button("加入目标草案").click();
+  await button("确认应用目标").click();
+  await expect(page.getByText(/目标 90 g · 用户修改/)).toBeVisible();
+  await screenshot("browser-manual-target");
+  await button("返回").click();
+  await page.getByRole("tab", { name: "今日", exact: true }).click();
   await button("拍一拍").click();
-  await button("文字描述").click();
-  await field("餐食补充描述").fill("一碗鸡蛋面，半份面条");
-  const initialCount = requests.length;
+  await button("餐食估算").click();
+  await button("从相册选择").click();
+  await field("餐食补充描述").fill("一碗面，少油");
+  const initial = requests.length;
   await button("估算这餐营养").click();
-  await expect(page.getByText(/请先确认本次发送内容/)).toBeVisible();
-  expect(requests.length).toBe(initialCount);
+  await expect(
+    page.getByText("请先确认本次发送内容与服务地址。", { exact: true }),
+  ).toBeVisible();
+  expect(requests.length).toBe(initial);
   await consent().click();
   await button("估算这餐营养").click();
   await expect(
-    page.getByText("AI 估算 · 仅文字", { exact: true }),
+    page.getByText("AI 估算 · 已使用照片", { exact: true }),
   ).toBeVisible();
-  expect(requests.at(-1).body.model).toBe("model-a");
-  expect(requests.at(-1).body.messages[1].content).toContain("半份面条");
-  await expect(
-    page.getByText("AI 估算 · 仅文字", { exact: true }),
-  ).toBeVisible();
-  await expect(button("已食用 · 确认记录")).toBeDisabled();
-  await page
-    .getByText("AI 估算 · 仅文字", { exact: true })
-    .scrollIntoViewIfNeeded();
-  await screenshot("browser-meal-mock-preview");
-  await button("0.5 × 基准份量").click();
-  await expect(page.getByText(/200–300/).first()).toBeVisible();
-  report.checks.push(
-    "Meal uses settings config; text-only preview, unknown sodium and half-portion recomputation before confirmation.",
-  );
-  await field("食物名称").fill("浏览器确认餐食");
+  expect(requests.at(-1).body.messages[1].content[1].type).toBe("image_url");
+  await screenshot("browser-meal-model-preview");
+  await expect(button("确认食用")).toHaveCount(0);
+  await button("吃一份").click();
   await page
     .getByRole("checkbox", {
       name: "我已确认日期、餐次和实际食用份量",
       exact: true,
     })
     .click();
-  await button("已食用 · 确认记录").click();
+  await button("确认食用").click();
   await expect(
-    page.getByText("已保存饮食记录。", { exact: true }),
+    page.getByText("已保存这次食用。", { exact: true }),
   ).toBeVisible();
-  await expect(button("已保存这次食用，请勿重复提交")).toBeDisabled();
   await button("返回").click();
-  await page.getByRole("tab", { name: "记录", exact: true }).click();
-  await button("查看食物 浏览器确认餐食").click();
-  await field("修改实际食用份量（份）").fill("1");
-  await button("确认调整份量").click();
-  await expect(page.getByText(/饮食记录已更新/)).toBeVisible();
-  await button("返回饮食记录").click();
-  await button("今日营养摘要").click();
-  await expect(page.getByText(/400–600/).first()).toBeVisible();
-  await screenshot("browser-confirmed-meal-nutrition");
-  await button("返回").click();
-  await button("查看食物 浏览器确认餐食").click();
-  await page.getByRole("button", { name: /^修改名称、营养与日期，/ }).click();
-  await field("修改记录日期（YYYY-MM-DD）").fill("2026-10-25");
-  await page.getByRole("radio", { name: "修改餐次 早餐", exact: true }).click();
-  await button("保存记录修改").click();
-  await expect(
-    page.getByText("饮食记录已更新。", { exact: true }),
-  ).toBeInViewport();
-  await screenshot("browser-edit-date-visible-feedback");
-  await field("食物名称").fill("浏览器确认餐食（核对）");
-  await expect(page.getByText("饮食记录已更新。", { exact: true })).toHaveCount(
-    0,
-  );
-  await field("食物名称").fill("浏览器确认餐食");
-  await button("保存记录修改").click();
-  await button("返回饮食记录").click();
-  await expect(button("查看食物 浏览器确认餐食")).toHaveCount(0);
-  await button("‹ 前一天").click();
-  await button("今日营养摘要").click();
-  await expect(page.getByText("2026年10月25日", { exact: true })).toBeVisible();
-  await expect(page.getByText(/400–600/).first()).toBeVisible();
-  await button("返回").click();
-  await button("查看食物 浏览器确认餐食").click();
-  report.checks.push(
-    "Date/meal edits move intake to the correct date; save feedback stays beside the clicked button and clears on further edits.",
-  );
-  await button("删除这条饮食记录").click();
-  await button("保留记录").click();
-  await button("删除这条饮食记录").click();
-  await button("确定删除这次食用").click();
-  await expect(button("查看食物 浏览器确认餐食")).toHaveCount(0);
-  await button("拍一拍").click();
-  await button("文字描述").click();
-  report.checks.push(
-    "Isolated browser store: explicit confirm, duplicate guard, record editor, shared nutrition summary and confirmed deletion; no user database touched.",
-  );
-  await field("餐食补充描述").fill("一碗鸡蛋面");
-  await settings();
-  await expect(field("API Key")).toHaveValue("");
-  await field("模型名称").fill("model-b");
-  await consent().click();
-  await button("返回").click();
-  await consent().click();
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText("AI 估算 · 仅文字", { exact: true }),
-  ).toBeVisible();
-  expect(requests.at(-1).body.model).toBe("model-b");
-  await button("补充描述后重新估算").click();
-  await button("更换记录方式").click();
-  await button("餐食估算").click();
-  await button("从相册选择").click();
-  await expect(page.getByText(/照片已准备好/)).toBeVisible();
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText("AI 估算 · 仅文字", { exact: true }),
-  ).toBeVisible();
-  expect(typeof requests.at(-1).body.messages[1].content).toBe("string");
-  report.checks.push(
-    "Changed model used by next meal; unsupported/custom vision never uploads photo.",
-  );
-  await button("补充描述后重新估算").click();
-  await button("发送详情").click();
-  await settings();
-  for (const [failure, message] of [
-    ["auth", /密钥无效/],
-    ["rate", /请求过于频繁/],
-    ["malformed", /模型响应格式异常/],
-  ]) {
-    mode = failure;
-    const before = requests.length;
-    await button("检查连接配置").click();
-    await expect(page.getByText(message)).toBeVisible();
-    expect(requests).toHaveLength(before + 1);
-    await expect(page.getByText("已连接", { exact: true })).toHaveCount(0);
-  }
-  await screenshot("browser-settings-auth-rate-format");
-  mode = "pending";
-  const before = requests.length;
-  await button("检查连接配置").click();
-  await expect(button("正在连接模型…")).toBeDisabled();
-  await expect.poll(() => requests.length).toBe(before + 1);
-  await button("取消连接测试").click();
-  await expect(page.getByText(/已取消等待/)).toBeVisible();
-  release();
-  mode = "ok";
-  await button("清除临时配置").click();
-  await button("返回").click();
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText(/请先在 AI 服务设置中填写有效地址/),
-  ).toBeVisible();
-  expect(requests).toHaveLength(before + 1);
-  report.checks.push(
-    "Authentication/rate/malformed responses fail visibly once; cancel restores controls; clear prevents reuse of old credentials.",
-  );
-  await settings();
-  await page.getByRole("radio", { name: "通义千问", exact: true }).click();
-  await field("API Key").fill("non-secret-test-fixture");
-  await consent().click();
-  await button("返回").click();
-  await page
-    .getByRole("checkbox", { name: "同时发送这张餐食照片", exact: true })
-    .click();
-  await consent().click();
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText("AI 估算 · 文字与照片", { exact: true }),
-  ).toBeVisible();
-  expect(requests.at(-1).url).toBe(
-    "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-  );
-  expect(
-    requests
-      .at(-1)
-      .body.messages[1].content[1].image_url.url.startsWith(
-        "data:image/jpeg;base64,",
-      ),
-  ).toBe(true);
-  expect(requests.at(-1).body.enable_thinking).toBe(false);
-  report.checks.push(
-    "Known official vision model sends image only after opt-in using documented multimodal payload (provider response mocked).",
-  );
-  await button("补充描述后重新估算").click();
-  await button("更换记录方式").click();
-  await button("包装食品").click();
-  await button("拍摄包装正面辅助查找").click();
-  await button("从相册选择").click();
-  await consent().click();
-  await button("确认发送包装照片").click();
-  await expect(
-    page.getByText("AI 推测 · 待人工核对", { exact: true }),
-  ).toBeVisible();
-  await expect(button("核对后在食品库查找候选")).toBeDisabled();
-  await field("核对候选名称").fill("已核对的候选");
-  await expect(
-    page.getByText("名称或品牌由你修改；原始 AI 候选会另行保留。", {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await page
-    .getByRole("checkbox", { name: "已核对照片中的名称和品牌", exact: true })
-    .click();
-  await screenshot("browser-package-candidate-mock");
-  await button("核对后在食品库查找候选").click();
-  await expect(
-    page.getByLabel("搜索食品名称或品牌", { exact: true }),
-  ).toHaveValue("已核对的候选");
-  report.checks.push(
-    "Package image uses separate prompt/schema; human-confirmed name becomes a library search, never an automatic match or nutrition fact.",
-  );
   await page.getByRole("tab", { name: "我的", exact: true }).click();
-  await page.getByRole("button", { name: /^AI 服务设置/ }).click();
-  await page.setViewportSize({ width: 320, height: 740 });
-  await field("API Base URL").scrollIntoViewIfNeeded();
-  await screenshot("browser-ai-settings-320");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
-    320,
+  await button("AI 服务设置").click();
+  await expect(field("API Key")).toHaveValue("");
+  await button("地址与模型").click();
+  await field("模型名称").fill("deepseek-pro");
+  await page
+    .getByRole("checkbox", { name: "同意本次连接测试", exact: true })
+    .click();
+  mode = "auth";
+  await button("保存连接").click();
+  await expect(page.getByText(/密钥无效或已失效/)).toBeVisible();
+  await expect(page.getByText(/最近验证.*deepseek-flash/)).toBeVisible();
+  mode = "rate";
+  await button("保存连接").click();
+  await expect(page.getByText(/请求过于频繁/)).toBeVisible();
+  mode = "malformed";
+  await button("保存连接").click();
+  await expect(page.getByText(/响应格式异常/)).toBeVisible();
+  mode = "pending";
+  await button("保存连接").click();
+  await expect(button("正在验证与保存…")).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await button("取消").click();
+  release?.();
+  await expect(page.getByText(/已取消等待|配置已改变/)).toBeVisible();
+  await button("连接详情与管理").click();
+  await button("删除已保存连接").click();
+  await expect(page.getByText("已删除连接。", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("连接状态 · 未连接", { exact: true }),
+  ).toBeVisible();
+  await screenshot("browser-deleted-connection");
+  report.checks.push(
+    "Verified secure-save boundary, all profile inputs, structured draft then confirmation, manual override, required meal photo and consent, explicit portion confirmation, failed drafts retain active config, auth/rate/malformed/cancel/delete states",
   );
   expect(report.errors).toEqual([]);
-  report.requestCount = requests.length;
   report.status = "passed";
 } catch (error) {
   report.status = "failed";

@@ -149,7 +149,7 @@ test('synthetic v5 database migrates to v6 without changing food, OCR or revisio
   const before = tables.map(name => database.prepare(`SELECT * FROM ${name}`).all());
   const upgraded = createSQLiteFoodStore(driver, files, () => clock, () => 'after-migration');
   assert.equal((await upgraded.getFood(saved.id)).review.name, '旧版食品及人工修订');
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 7);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 8);
   assert.deepEqual(tables.map(name => database.prepare(`SELECT * FROM ${name}`).all()), before);
   clock = '2026-10-15T00:00:03.000Z';
   const edited = await upgraded.saveFood({ ...(await upgraded.getFood(saved.id)), review: { ...saved.review, name: '迁移后仍可编辑' } });
@@ -173,7 +173,7 @@ test('v6 to v7 migration preserves every food, inventory, photo and evidence row
  await assert.rejects(upgraded.listFoods(),/migration interrupted/);
  assert.equal(database.prepare('PRAGMA user_version').get().user_version,6);
  assert.equal(database.prepare("SELECT count(*) n FROM sqlite_master WHERE name='nutrition_entries'").get().n,0);
- fail=false;await upgraded.listFoods();assert.equal(database.prepare('PRAGMA user_version').get().user_version,7);
+ fail=false;await upgraded.listFoods();assert.equal(database.prepare('PRAGMA user_version').get().user_version,8);
  for(const t of oldTables)assert.deepEqual(database.prepare('SELECT * FROM '+t).all(),before[t]);
  assert.deepEqual((await upgraded.getFood(original.id)).evidence,original.evidence);
  const {createNutritionStore}=await import('../src/services/nutrition/store.ts');

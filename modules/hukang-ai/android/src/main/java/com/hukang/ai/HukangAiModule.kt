@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.HttpsURLConnection
 
 /** Explicit foreground AI calls only. No redirects, cookies, cache, retries or logging.
- * Platform certificate validation is never bypassed. Credentials are never persisted. */
+ * Platform certificate validation is never bypassed. Saved credentials use SecureConnection only. */
 class HukangAiModule : Module() {
   private val queue = Executors.newFixedThreadPool(2)
   private val connections = ConcurrentHashMap<String, HttpsURLConnection>()
@@ -22,9 +22,13 @@ class HukangAiModule : Module() {
 
   private val imageQueue = Executors.newSingleThreadExecutor()
   private val images by lazy { UploadImageProcessor(requireNotNull(appContext.reactContext)) }
+  private val secure by lazy { SecureConnection(requireNotNull(appContext.reactContext)) }
 
   override fun definition() = ModuleDefinition {
     Name("HukangAi")
+    AsyncFunction("readConnection") { secure.read() }
+    AsyncFunction("writeConnection") { value: String -> secure.write(value) }
+    AsyncFunction("deleteConnection") { secure.delete() }
     Function("cancel") { id: String ->
       cancelled.add(id)
       connections.remove(id)?.disconnect()

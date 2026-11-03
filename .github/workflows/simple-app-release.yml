@@ -101,6 +101,11 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew :app:assembleRelease --no-daemon --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs='-Xmx4g -XX:MaxMetaspaceSize=1g' 2>&1 | tee ../artifacts/gradle-release.log
+      - name: Build isolated secure-storage instrumentation probe
+        working-directory: android
+        run: |
+          ./gradlew :app:assembleReleaseAndroidTest --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a
+          cp app/build/outputs/apk/androidTest/release/app-release-androidTest.apk ../artifacts/secure-storage-probe.apk
       - name: Exercise native barcode decoder with synthetic images
         working-directory: android
         run: ./gradlew :hukang-barcode:testReleaseUnitTest --no-daemon --max-workers=2

@@ -143,7 +143,12 @@ def shot(name):
 def launch():
     shell('am', 'force-stop', PKG)
     shell('am', 'start', '-n', PKG + '/.MainActivity')
-    require('^今日$', attempts=30)
+    for attempt in range(30):
+        if find('^今日$',attribute='content-desc'):break
+        if find('设置个人参考'):
+            shot('android-first-setup-empty');tap('^保存草稿，稍后继续$',True);break
+        time.sleep(.6)
+    require('^今日$',attempts=30,attribute='content-desc')
 
 
 def configure(width_dp=390, scale='1.0'):
@@ -179,255 +184,6 @@ def dock():
     assert all(a[2] <= b[0] + 2 for a, b in zip(positions, positions[1:])), positions
     report.setdefault('dockBounds', []).append({'density': shell('wm', 'density'),
         'fontScale': shell('settings', 'get', 'system', 'font_scale'), 'bounds': positions})
-
-
-def home_and_navigation():
-    configure()
-    require('护康 · 今天')
-    require('今天还没有记录', scroll=True)
-    assert find('1285|1,285|62g|158g') is None, 'Demo values appeared in production'
-    # Return to the top before the cover screenshot.
-    for _ in range(7): swipe(True)
-    dock()
-    shot('android-today-390-empty')
-    for label, expected, name in [
-        ('记录', '饮食记录', 'diary'),
-        ('食品库', '我的食品库', 'library'),
-        ('我的', '个人参考目标', 'mine'),
-    ]:
-        tap('^' + label + '$')
-        require(expected, scroll=True)
-        dock()
-        shot('android-' + name + '-390-empty')
-    tap('^今日$')
-    tap('^查看完整营养$', scroll=True)
-    require('^今日营养$')
-    back = require('^返回$')
-    b = bounds(back)
-    density = 443 / 160
-    assert (b[2] - b[0]) / density >= 90 and (b[3] - b[1]) / density >= 48, b
-    assert find('^主导航$') is None
-    shot('android-nutrition-390-empty')
-    tap('^返回$')
-    require('^今日$')
-
-
-def details():
-    configure()
-    tap('^查看完整营养$', True)
-    for label, expected, name in [
-        ('碳水化合物', '总糖', 'carbohydrate'),
-        ('蛋白质', '主要食物来源', 'protein'),
-        ('脂肪', '饱和脂肪', 'fat'),
-        ('膳食纤维', '不重复累计', 'fiber'),
-        ('矿物质', '钾', 'minerals'),
-        ('维生素', '维生素 ?A', 'vitamins'),
-        ('水分', '饮水记录尚未接入', 'water'),
-    ]:
-        tap('^' + label + '，', True, 'content-desc')
-        require(expected, True)
-        shot('android-nutrition-' + name + '-empty')
-        # Close from the actual header; scroll back if its body is long.
-        for _ in range(8):
-            node = find('^' + label + '，', attribute='content-desc')
-            if node is not None:
-                press(node)
-                break
-            swipe(True)
-        else:
-            raise AssertionError('Accordion header not reachable: ' + label)
-    tap('^返回$')
-    tap('^记录$')
-    current = next(n.get('content-desc') for n in tree().iter('node')
-                   if re.fullmatch(r'\d{4}-\d{2}-\d{2}', n.get('content-desc', '')) and n.get('checked') == 'true')
-    tap('前一天')
-    selected = next(n.get('content-desc') for n in tree().iter('node')
-                    if re.fullmatch(r'\d{4}-\d{2}-\d{2}', n.get('content-desc', '')) and n.get('checked') == 'true')
-    assert current != selected
-    tap('^今日营养摘要$', True)
-    require('^今日营养$')
-    y, m, d = selected.split('-')
-    require(f'{y}年{int(m)}月{int(d)}日')
-    shot('android-nutrition-from-selected-diary-date')
-    report['selectedDateNavigation'] = {'before': current, 'after': selected}
-    tap('^返回$')
-    # The app intentionally restores the diary's scroll position. Its page
-    # title/date strip may be above the viewport until scrolled back up.
-    swipe(True)
-    require('饮食记录')
-    assert any(n.get('content-desc') == selected and n.get('checked') == 'true' for n in tree().iter('node'))
-
-
-def small_and_large():
-    for width, scale, name in [(320, '1.0', '320'), (390, '1.5', '390-font150'), (320, '1.5', '320-font150')]:
-        configure(width, scale)
-        dock()
-        shot('android-today-' + name + '-empty')
-        tap('^记录$')
-        controls = [require('^‹ 前一天$'), require('^后一天 ›$')]
-        control_bounds = [bounds(n) for n in controls]
-        assert all(30 <= b[0] < b[2] <= 1050 for b in control_bounds), control_bounds
-        report.setdefault('dateNavigationBounds', []).append({
-            'logicalWidth': width, 'fontScale': scale, 'bounds': control_bounds})
-        original = next(n.get('content-desc') for n in tree().iter('node')
-                        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', n.get('content-desc', '')) and n.get('checked') == 'true')
-        press(controls[1])
-        assert not any(n.get('content-desc') == original and n.get('checked') == 'true' for n in tree().iter('node'))
-        tap('^‹ 前一天$')
-        assert any(n.get('content-desc') == original and n.get('checked') == 'true' for n in tree().iter('node'))
-        shot('android-diary-' + name + '-empty')
-        tap('^今日营养摘要$', True)
-        shot('android-nutrition-' + name + '-empty')
-        tap('^水分，', True, 'content-desc')
-        require('饮水记录尚未接入', True)
-        shot('android-nutrition-scroll-end-' + name)
-        tap('^返回$')
-        dock()
-
-
-def keyboard():
-    configure()
-    tap('^拍一拍$')
-    require('^餐食估算$')
-    require('^包装食品$')
-    shot('android-capture-meal-empty')
-    tap('^文字描述$')
-    for iteration in range(3):
-        tap('^餐食补充描述$', True, 'content-desc')
-        if iteration == 0:
-            shell('input', 'text', 'Egg%snoddles%shalf%sportion')
-        require('Egg noddles half portion')
-        ime = shell('dumpsys', 'input_method')
-        (OUT / 'keyboard-state.txt').write_text(ime)
-        assert 'mInputShown=true' in ime or 'mIsInputViewShown=true' in ime
-        assert find('^主导航$') is None
-        window = shell('dumpsys', 'window')
-        (OUT / 'keyboard-window.txt').write_text(window)
-        ime_top = keyboard_top(window)
-        assert ime_top is not None, 'Visible keyboard frame was not reported'
-        field_bounds = bounds(require('^餐食补充描述$', attribute='content-desc'))
-        # UI XML can report a focused input beneath the IME as present.
-        # Its full box must remain above the IME after repeated show/hide.
-        assert field_bounds[1] >= 270 and field_bounds[3] - field_bounds[1] >= 277, field_bounds
-        assert field_bounds[3] <= ime_top - 20, (field_bounds, ime_top)
-        report['keyboardVisibility'] = {'inputBounds': field_bounds, 'keyboardTop': ime_top,
-                                        'fullyAboveKeyboard': True}
-        report.setdefault('keyboardRepeats', []).append(dict(report['keyboardVisibility']))
-        shot('android-capture-keyboard' + (f'-repeat{iteration}' if iteration else ''))
-        shell('input', 'keyevent', 'KEYCODE_BACK')
-        time.sleep(.6)
-    tap('^返回$')
-    tap('^文字描述$')
-    require('Egg noddles half portion', True)
-    tap('^估算这餐营养$', True)
-    require('请先在 AI 服务设置中填写有效地址', True)
-    shot('android-capture-no-ai-config-feedback')
-
-
-def gesture_safe_area():
-    configure()
-    overlays = shell('cmd', 'overlay', 'list')
-    original = re.findall(r'\[x\] (com\.android\.internal\.systemui\.navbar\.[\w.]+)', overlays)
-    report['navigationOverlayBefore'] = original
-    try:
-        shell('cmd', 'overlay', 'enable-exclusive', '--category', '--user', '0',
-              'com.android.internal.systemui.navbar.gestural')
-        launch()
-        dock()
-        shot('android-today-gesture-safe-area')
-        tap('^记录$')
-        for _ in range(3):
-            swipe()
-        require('添加晚餐')
-        dock()
-        shot('android-diary-scroll-end-gesture-safe-area')
-    finally:
-        for overlay in original:
-            shell('cmd', 'overlay', 'enable-exclusive', '--category', '--user', '0', overlay, check=False)
-
-
-def camera():
-    configure()
-    tap('^拍一拍$')
-    tap('^餐食估算$')
-    tap('^拍照$', True)
-    deny = require(r':id/permission_deny_button$', attribute='resource-id')
-    shot('android-camera-permission-request')
-    press(deny)
-    require('未获得相机权限', True)
-    shot('android-camera-permission-denied')
-    # Return to the top so the same photo control is visible again.
-    for _ in range(7): swipe(True)
-    tap('^拍照$', True)
-    allow = require(r':id/permission_allow_foreground_only_button$', attribute='resource-id')
-    press(allow)
-    shutter = require(r':id/shutter_button$', attribute='resource-id', attempts=20)
-    shot('android-system-camera-virtual-scene')
-    press(shutter)
-    done = require(r':id/done_button$', attribute='resource-id', attempts=15)
-    press(done)
-    for _ in range(7): swipe(True)
-    require('餐食照片预览', True, attempts=15)
-    shot('android-captured-meal-original-photo')
-    tap('^估算这餐营养$', True)
-    require('请填写这一餐的文字描述', True)
-    shot('android-ai-text-required-feedback')
-    # Explicit AI disclosure adds content; return to the mode tabs before tapping.
-    for _ in range(7):
-        swipe(True)
-    tap('^更换记录方式$')
-    tap('^包装食品$')
-    shot('android-capture-package-empty')
-    tap('^拍摄包装正面辅助查找$', True)
-    tap('^拍照$', True)
-    press(require(r':id/shutter_button$', attribute='resource-id', attempts=20))
-    press(require(r':id/done_button$', attribute='resource-id', attempts=15))
-    for _ in range(7): swipe(True)
-    require('包装正面照片预览', True, attempts=15)
-    shot('android-captured-package-original-photo')
-    tap('^扫描 / 输入条码$', True)
-    require('对准包装条形码')
-    require('等待条码进入取景框')
-    shot('android-live-barcode-scanner')
-    shell('input', 'keyevent', 'KEYCODE_BACK')
-    require('^今日$')
-    report['camera'] = {'permissionDeniedAndGranted': True, 'mealAndPackagePhotos': True,
-                        'source': 'Android system camera / emulator virtual scene',
-                        'physicalCamera': False, 'liveBarcodeDecoded': False}
-
-
-def ai_native_network_feedback():
-    # Reserved .invalid domain + non-secret fixture: no real provider/key/fees.
-    # The distinct native-module-unavailable error ensures this checks the bridge.
-    configure()
-    tap('^我的$')
-    tap('^AI 服务设置', True)
-    for label, value in [('API Base URL', 'https://example.invalid/v1'),
-                         ('API Key', 'non-secret-native-test'), ('模型名称', 'mock-model')]:
-        tap('^' + label + '$', True, 'content-desc')
-        shell('input', 'text', value)
-        shell('input', 'keyevent', 'KEYCODE_BACK')
-    tap('我了解发送内容、服务地址及可能产生的费用', True)
-    tap('^检查连接配置$', True)
-    require('网络连接失败', True, attempts=12)
-    root = shot('android-ai-native-network-failure')
-    assert 'non-secret-native-test' not in ET.tostring(root, encoding='unicode')
-    tap('^清除临时配置$', True)
-    require('临时配置已清除', True)
-    shot('android-ai-cleared')
-    tap('^返回$')
-    tap('^今日$')
-    tap('^拍一拍$')
-    tap('^文字描述$')
-    tap('^餐食补充描述$', True, 'content-desc')
-    shell('input', 'text', 'Egg%snoddles')
-    shell('input', 'keyevent', 'KEYCODE_BACK')
-    tap('^估算这餐营养$', True)
-    require('请先在 AI 服务设置中填写有效地址', True)
-    shot('android-ai-clear-prevents-meal-call')
-    report['aiApi'] = {'nativeTransportLoaded': True, 'networkErrorDisplayed': True,
-                       'clearStopsOldCredentials': True, 'liveProviderTested': False,
-                       'credentials': 'non-secret-test-fixture-only', 'productionDietWrites': 0}
 
 
 def enter(label, value):
@@ -475,74 +231,6 @@ def diet_db(name):
     return sqlite3.connect(dest)
 
 
-def diet_closed_loop():
-    configure()
-    tap('^个人参考目标$', True, 'content-desc')
-    enter('每日能量参考（kcal）', '1800')
-    enter('个人蛋白质目标（g）', '100')
-    tap('^保存个人目标$', True)
-    require('个人目标已保存在本机', True)
-    launch()
-    tap('^查看完整营养$', True); require('个人能量参考 1800', True); tap('^返回$')
-    tap('^拍一拍$')
-    tap('^文字描述$')
-    enter('餐食补充描述', 'Native meal test')
-    tap('^手动记录这一餐$', True)
-    tap('^核对或修改营养数值，', True, 'content-desc')
-    enter('能量（kcal / 基准）', '600')
-    enter('蛋白质（g / 基准）', '100')
-    enter('脂肪（g / 基准）', '0')
-    enter('实际食用份量（份）', '0.5')
-    tap('我已确认日期、餐次和实际食用份量', True)
-    tap('^已食用 · 确认记录$', True)
-    require('已保存饮食记录', True)
-    shot('android-isolated-confirmed-diet-save')
-    c = diet_db('confirmed-diet')
-    row, = c.execute('SELECT snapshot_json FROM nutrition_entries').fetchall()
-    e = json.loads(row[0]); assert e['amount'] == .5 and e['food']['nutrients']['energy']['value'] == 600
-    assert e['food']['nutrients']['fat']['value'] == 0
-    assert e['food']['nutrients']['protein']['value'] == 100 and e['food']['nutrients']['protein']['status'] == 'estimated'
-    assert 'sodium' not in e['food']['nutrients'] or e['food']['nutrients']['sodium']['value'] is None
-    assert c.execute('SELECT count(*) FROM simple_inventory').fetchone()[0] == 0
-    assert json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0])['energy'] == 1800
-    c.close()
-    from datetime import date as calendar_date, timedelta
-    moved_date = (calendar_date.fromisoformat(e['date']) - timedelta(days=1)).isoformat()
-    configure(); require('蛋白质估算进度', True); shot('android-isolated-protein-half-target');
-    configure(320, '1.5'); require('300', True); shot('android-isolated-today-diet-320-large-font')
-    tap('^记录$'); tap('^查看食物 Native meal test$', True, 'content-desc')
-    tap('^修改名称、营养与日期，', True, 'content-desc')
-    enter('食物名称', 'Edited native meal')
-    enter('修改实际食用份量（份）', '1')
-    tap('^确认调整份量$', True)
-    require('饮食记录已更新', True)
-    tap('^返回饮食记录$', True)
-    # Returning deliberately restores the tapped food's position; summary is above it.
-    for _ in range(7): swipe(True)
-    tap('^今日营养摘要$', True)
-    shot('android-nutrition-after-portion-open')
-    for _ in range(7): swipe(True)
-    require('600', True)
-    shot('android-isolated-nutrition-diet')
-    tap('^返回$'); tap('^查看食物 Edited native meal$', True, 'content-desc')
-    tap('^修改名称、营养与日期，', True, 'content-desc')
-    enter('修改记录日期（YYYY-MM-DD）', moved_date)
-    tap('^修改餐次 早餐$', True, 'content-desc')
-    tap('^保存记录修改$', True)
-    feedback = require('饮食记录已更新')
-    assert 330 <= bounds(feedback)[1] < bounds(feedback)[3] <= 1855, bounds(feedback)
-    shot('android-isolated-date-save-feedback')
-    c = diet_db('edited-diet'); e = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); assert (e['date'], e['meal'], e['amount']) == (moved_date, 'breakfast', 1); c.close()
-    launch(); tap('^记录$')
-    tap('^‹ 前一天$', True)
-    tap('^查看食物 Edited native meal$', True, 'content-desc')
-    tap('^删除这条饮食记录$', True); tap('^保留记录$', True)
-    tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
-    c = diet_db('deleted-diet'); assert c.execute('SELECT count(*) FROM nutrition_entries').fetchone()[0] == 0; assert c.execute('SELECT count(*) FROM nutrition_operations').fetchone()[0] == 1; c.close()
-    report['nutritionRecordsInserted'] = 1
-    report['dietStorage'] = {'isolatedUserEnteredRecords': 1, 'demoAdapter': False, 'relaunchPersisted': True, 'threePageSync': True, 'dateMealNameAmountEdit': True, 'confirmedDelete': True, 'inventoryUnchanged': True, 'targetsPersisted': True}
-
-
 def identify_fixture(file):
     # Modern Photo Picker doesn't expose filenames. Each image case gets its
     # own fresh emulator, and the exact sole MediaStore row is checked first.
@@ -586,137 +274,93 @@ def select_isolated_fixture(stem):
     raise AssertionError('The verified single image was not selectable: ' + stem)
 
 
-def upload_photos():
-    from PIL import Image, ImageDraw
-    from picker_selectors import next_picker_action, MEDIA, DOCUMENTS
-    from archive_checks import jpeg_has_exif
+def home_and_navigation():
     configure()
-    fixtures = OUT / 'image-inputs'; fixtures.mkdir(exist_ok=True)
+    require('护康 · 今天'); require('今天还没有记录', True)
+    for _ in range(5): swipe(True)
+    dock(); shot('android-today-empty')
+    for label,title in [('记录','饮食记录'),('食品库','我的食品库'),('我的','个人参考目标')]:
+        tap('^'+label+'$', attribute='content-desc');require(title,True);dock();shot('android-'+{'记录':'diary','食品库':'library','我的':'mine'}[label]+'-empty')
+    tap('^今日$',attribute='content-desc');tap('^查看完整营养$',True);require('^营养详情$');b=bounds(require('^返回$',attribute='content-desc'));assert (b[3]-b[1])/(443/160)>=48
+    shot('android-nutrition-empty');tap('^矿物质，展开$',True);tap('^钠，',True);shot('android-mineral-detail');tap('^维生素，展开$',True);shot('android-vitamin-detail');tap('^返回$',attribute='content-desc')
+    tap('^拍一拍$',True);require('^餐食估算$',attribute='content-desc');assert find('^文字描述$|^手动填写$') is None;shot('android-two-entries');tap('^餐食估算$',attribute='content-desc');require('^餐食补充描述$',True,'content-desc');shot('android-meal-single-input');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);shot('android-barcode-entry')
+
+def profile_and_targets():
+    launch();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc')
+    for label,value in [('年龄（岁）','30'),('身高（cm）','170'),('体重（kg）','65'),('运动状况','Walking'),('每周运动频率（次/周）','3')]: enter(label,value)
+    tap('^保存资料草稿$',True);require('资料草稿已保存',True);shot('android-profile-saved')
+    tap('^手动修改目标，编辑$',True);enter('目标或下限（g）','100');tap('^加入目标草案$',True);shot('android-target-draft')
+    for _ in range(8):swipe(True)
+    tap('^确认应用目标$',True);require('已应用核对后的目标',True);shot('android-target-confirmed')
+    c=diet_db('profile-targets');p=json.loads(c.execute("SELECT json FROM nutrition_state WHERE key='profile'").fetchone()[0]);assert [p[k] for k in ['age','heightCm','weightKg','exerciseDescription','exerciseFrequencyPerWeek']]==['30','170','65','Walking','3'];targets=json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0]);assert targets['policies']['protein']['value']==100 and targets['policies']['protein']['manual'];assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0;c.close();launch();require('目标 100',True)
+
+def secure_storage():
+    probe=Path('artifacts/build/secure-storage-probe.apk');assert probe.exists()
+    assert 'Success' in adb('install','-r',str(probe.resolve()),timeout=180).decode()
+    component='com.hukang.china.test/com.hukang.china.ConnectionProbe'
+    def invoke(mode):
+        shell('am','force-stop',PKG);result=shell('am','instrument','-w','-e','mode',mode,component);assert 'SECURE_PROBE_PASS:'+mode in result,result
+    invoke('write');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('最近验证',True);shot('android-encrypted-connection-restored-MOCK')
+    invoke('verify');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);tap('^连接详情与管理$',True);tap('^删除已保存连接$',True);require('已删除连接',True);shot('android-connection-deleted')
+    launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('连接状态.*未连接',True)
+    assert not shell('find',f'/data/user/0/{PKG}/no_backup','-name','ai-connection.enc',check=False)
+    report['securePersistence']={'primitive':'Android Keystore AES-GCM atomic file','instrumentationFixtureOnly':True,'processRestartVerified':True,'deleteFromActualUiVerified':True,'realProviderVerified':False}
+
+def small_large_keyboard():
+    configure(320,'1.5');dock();shot('android-320-font150-empty');tap('^查看完整营养$',True);require('^营养详情$');shot('android-320-font150-nutrition');tap('^返回$',attribute='content-desc');tap('^拍一拍$',True);tap('^餐食估算$',attribute='content-desc');tap('^餐食补充描述$',True,'content-desc');time.sleep(1)
+    node=require('^餐食补充描述$',attribute='content-desc');top=keyboard_top(shell('dumpsys','window'));assert top and bounds(node)[3]<=top;shot('android-320-font150-keyboard');shell('input','text','optional%stext');shell('input','keyevent','KEYCODE_BACK');tap('^返回$',attribute='content-desc');tap('^餐食估算$',attribute='content-desc');assert require('^餐食补充描述$',True,'content-desc').get('text')=='optional text';configure()
+
+def seed_food():
+    # Fixture goes only into this newly created, disposable emulator. No fixture ships in the APK.
+    from datetime import datetime
+    c=diet_db('fixture-source');today=shell('date','+%F');now=now_iso='2026-11-03T00:00:00Z'
+    fact=lambda v,u='g':{'value':v,'unit':u,'status':'confirmed','source':'ISOLATED TEST FIXTURE'}
+    food={'id':'isolated-pack','version':'test-v1','kind':'meal','name':'TEST reusable meal','source':'ISOLATED TEST FIXTURE','basis':{'amount':1,'unit':'份'},'nutrients':{'energy':fact(100,'kcal'),'protein':fact(8.5),'fat':fact(3),'fiber':fact(1)}}
+    prior={'id':'isolated-prior','date':today,'meal':'breakfast','consumedTime':'08:30','timezone':'UTC','amount':1,'unit':'份','confirmedAt':now,'food':{**food,'id':'prior-food','name':'TEST prior meal','nutrients':{'protein':fact(50),'energy':fact(400,'kcal')}}}
+    c.execute('INSERT INTO nutrition_catalogue(food_id,json,asset_id) VALUES(?,?,NULL)',(food['id'],json.dumps(food)));c.execute('INSERT INTO nutrition_entries VALUES(?,?,?,?,?,?)',(prior['id'],today,prior['meal'],json.dumps(prior),now,now));c.execute('INSERT INTO nutrition_operations VALUES(?,?,?)',(prior['id'],prior['id'],now));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
+    paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines();assert len(paths)==1
+    for suffix in ('-wal','-shm'):shell('rm','-f',paths[0]+suffix)
+    adb('push',str(OUT/'fixture-source.db'),paths[0]);shell('chmod','666',paths[0]);report['fixtureIsolation']='Only a fresh disposable emulator, explicit TEST labels, never production app data';launch();return today
+
+def diet_closed_loop():
+    configure();today=seed_food();require('50 g',True);shot('android-timeline-isolated-prior');tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃半份$',True);require('54.25',True);shot('android-half-portion-prediction');c=diet_db('before-confirm');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;c.close()
+    launch();tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^食用这份食品$',True);tap('^吃一份$',True);require('58.5',True);shot('android-whole-portion-prediction');tap('^自己填写吃多少$',True);enter('实际食用份量（份）','0.5');tap('我已确认日期、餐次和实际食用份量',True);tap('^确认食用$',True);require('已保存这次食用',True);shot('android-confirmed-intake-isolated')
+    c=diet_db('after-confirm');rows=[json.loads(r[0]) for r in c.execute('SELECT snapshot_json FROM nutrition_entries')];assert len(rows)==2;e=next(e for e in rows if e['id']!='isolated-prior');assert e['amount']==.5;assert c.execute('SELECT COUNT(*) FROM nutrition_catalogue').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM nutrition_stock').fetchone()[0]==0;c.close()
+    launch();require('54.25 g',True);shot('android-four-progress-isolated');tap('^记录$',attribute='content-desc');tap('^查看食物 TEST reusable meal$',True);enter('修改实际食用份量（份）','1');tap('^确认调整份量$',True);require('饮食记录已更新',True);tap('^返回饮食记录$',True);tap('^今日营养摘要$',True);tap('^蛋白质，',True);require('58.5',True);shot('android-nutrition-updated-isolated')
+    launch();tap('^记录$',attribute='content-desc');tap('^查看食物 TEST reusable meal$',True);tap('^修改名称、营养与日期，',True);from datetime import date,timedelta
+    prior=(date.fromisoformat(today)-timedelta(days=1)).isoformat();enter('修改记录日期（YYYY-MM-DD）',prior);enter('修改食用时间（HH:mm）','10:15');tap('^修改餐次 早餐$',True);tap('^保存记录修改$',True);require('饮食记录已更新',True)
+    c=diet_db('after-move');e=json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries WHERE id=?',(e['id'],)).fetchone()[0]);assert (e['date'],e['meal'],e['consumedTime'])==(prior,'breakfast','10:15');c.close()
+    launch();tap('^记录$',attribute='content-desc');tap('^‹ 前一天$',True);tap('^查看食物 TEST reusable meal$',True);tap('^删除这条饮食记录$',True);tap('^确定删除这次食用$',True);c=diet_db('after-delete');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM nutrition_operations').fetchone()[0]==2;assert c.execute('SELECT COUNT(*) FROM nutrition_catalogue').fetchone()[0]==1;c.close()
+    launch();tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^加入库存，不计摄入$',True);enter('购入数量','2');tap('^确认加入库存$',True);require('已加入库存，未计入摄入',True);shot('android-meal-inventory-isolated');c=diet_db('after-meal-stock');assert c.execute('SELECT SUM(quantity) FROM nutrition_stock').fetchone()[0]==2;assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;c.close();report['nutritionRecordsInserted']=2
+
+def image_case():
+    from PIL import Image,ImageDraw
+    from archive_checks import jpeg_has_exif
     import random
-    large = Image.frombytes('RGB', (4000, 3000), random.Random(42).randbytes(4000 * 3000 * 3))
-    exif = Image.Exif(); exif[274] = 6; exif[270] = 'test-only metadata to remove'
-    large.save(fixtures / '02-ai-large.jpg', quality=98, exif=exif)
-    large.close()
-    transparent = Image.new('RGBA', (1200, 800), (0, 0, 0, 0))
-    ImageDraw.Draw(transparent).rectangle((300, 200, 900, 600), fill=(20, 140, 220, 255))
-    transparent.save(fixtures / '03-ai-transparent.png'); transparent.close()
-    shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
-    tap('^拍一拍$')
-    tap('^餐食估算$')
-    results = []
-    stems = ['02-ai-large'] if os.environ['HUKANG_DEVICE_SUITE'] == 'image-large' else ['03-ai-transparent']
-    for stem in stems:
-        original_file = next(fixtures.glob(stem + '.*'))
-        original_path = identify_fixture(original_file)
-        for _ in range(7): swipe(True)
-        before = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False).splitlines())
-        tap('^从相册选择$', True)
-        select_isolated_fixture(stem)
-        require('照片已准备好', True, attempts=18)
-        for _ in range(7): swipe(True)
-        paths = set(shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg').splitlines()) - before
-        assert len(paths) == 1, paths
-        path, = paths
-        payload = adb('exec-out', 'cat', path)
-        output = OUT / (stem + '-processed.jpg'); output.write_bytes(payload)
-        assert 0 < len(payload) <= 4000000 and not jpeg_has_exif(payload)
-        original_bytes = adb('exec-out', 'cat', original_path)
-        assert hashlib.sha256(original_bytes).digest() == hashlib.sha256(original_file.read_bytes()).digest()
-        with Image.open(output) as image:
-            assert max(image.size) <= 2048
-            if stem == '02-ai-large': assert image.height > image.width and (fixtures / (stem + '.jpg')).stat().st_size > 4000000
-            else: assert min(image.getpixel((0, 0))) >= 250
-            results.append({'source': stem, 'sourceBytes': len(original_bytes), 'originalSha256': hashlib.sha256(original_bytes).hexdigest(), 'originalUnchanged': True, 'size': image.size, 'bytes': len(payload), 'exifRemoved': True, 'sha256': hashlib.sha256(payload).hexdigest()})
-        if stem == '02-ai-large':
-            for _ in range(7): swipe(True)
-            shot('android-' + stem + '-preview')
-            tap('^手动记录这一餐$', True)
-            enter('食物名称', 'Photo snapshot test')
-            tap('我已确认日期、餐次和实际食用份量', True)
-            tap('^已食用 · 确认记录$', True)
-            require('已保存饮食记录', True)
-            c = diet_db('saved-photo-diet')
-            saved = json.loads(c.execute('SELECT snapshot_json FROM nutrition_entries').fetchone()[0]); c.close()
-            from urllib.parse import urlparse, unquote
-            saved_path = unquote(urlparse(saved['food']['image']).path)
-            assert '/nutrition-photos/' in saved_path
-            assert hashlib.sha256(adb('exec-out', 'cat', saved_path)).hexdigest() == hashlib.sha256(payload).hexdigest()
-            # Export a real retained diet photo with no food-library products.
-            launch(); tap('^我的$'); tap('^数据导出$', True)
-            tap('^包含食品与饮食照片$', True, 'content-desc')
-            export_root = f'/data/user/0/{PKG}/cache/hukang-exports'
-            previous = set(shell('find', export_root, '-name', '*.zip', check=False).splitlines())
-            tap('^导出个人数据（含库存）$', True); tap('^生成文件$'); time.sleep(3)
-            shot('android-isolated-diet-export-share-sheet')
-            shell('input', 'keyevent', 'KEYCODE_BACK'); time.sleep(1)
-            archives = set(shell('find', export_root, '-name', '*.zip').splitlines()) - previous
-            assert len(archives) == 1, archives
-            archive_path, = archives
-            archive_bytes = adb('exec-out', 'cat', archive_path)
-            import io, zipfile
-            with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
-                document = json.loads(archive.read('data.json'))
-                assert document['schemaVersion'] == 2 and document['products'] == []
-                exported, = document['nutrition']
-                assert exported['id'] == saved['id'] and exported['food']['name'] == 'Photo snapshot test'
-                assert exported['food']['image'].startswith('nutrition-photos/')
-                assert archive.read(exported['food']['image']) == payload
-                for item in json.loads(archive.read('files.json')):
-                    asset = archive.read(item['path'])
-                    assert len(asset) == item['bytes'] and hashlib.sha256(asset).hexdigest() == item['sha256']
-                assert 'file://' not in archive.read('data.json').decode()
-            report['dietPhotoExport'] = {'realNativeZip':True,'dietOnlyWithoutProducts':True,'retainedImageHashMatches':True,'portablePaths':True,'sha256':hashlib.sha256(archive_bytes).hexdigest()}
-            # Restart, delete the record through UI; this removes only its private retained photo.
-            launch(); tap('^记录$'); tap('^查看食物 Photo snapshot test$', True, 'content-desc')
-            tap('^删除这条饮食记录$', True); tap('^确定删除这次食用$', True)
-            assert saved_path not in shell('find', f'/data/user/0/{PKG}/files', '-name', 'photo.source', check=False)
-            assert hashlib.sha256(adb('exec-out', 'cat', original_path)).digest() == hashlib.sha256(original_file.read_bytes()).digest()
-            report['nutritionRecordsInserted'] += 1
-            report['savedPhotoLifecycle'] = {'separatePersistentCopy':True,'copyHashMatches':True,'recordDeletionRemovesOnlyOwnedPhoto':True}
-            tap('^拍一拍$')
-            # The old upload is a cache preview from the terminated process; remove only via app's next cache lifecycle.
-            continue
-        for _ in range(6): swipe(True)
-        shot('android-' + stem + '-preview')
-        tap('^清除这张照片$', True)
-        assert shell('test', '-f', path, check=False) == ''
-        assert path not in shell('find', f'/data/user/0/{PKG}/cache/ai-upload-v1', '-name', 'upload.jpg', check=False)
-    report['localUploadImages'] = {'nativeAndroidProcessing': True, 'inputs': results, 'originalsUnchanged': True, 'explicitlyClearedCopyRemoved': True, 'networkRequests': 0}
-
-def upload_failures():
-    from PIL import Image
-    from picker_selectors import next_picker_action
-    configure(); tap('^拍一拍$'); tap('^餐食估算$')
-    fixtures = OUT / 'image-inputs'; fixtures.mkdir(exist_ok=True)
-    image = Image.new('RGB', (20, 20), (60, 140, 200))
-    image.save(fixtures / '04-ai-unsupported.gif')
-    image.save(fixtures / '05-ai-oversize.jpg'); image.close()
-    # Readable JPEG with padding isolates the raw-byte cap without a huge bitmap.
-    with (fixtures / '05-ai-oversize.jpg').open('ab') as f:
-        f.truncate(50_000_001)
-    shell('mkdir', '-p', '/sdcard/Pictures/HukangSimple')
-    failures = []
-    cases = [('04-ai-unsupported.gif', '此图片格式无法在当前手机解码')] if os.environ['HUKANG_DEVICE_SUITE'] == 'image-gif' else [('05-ai-oversize.jpg', '原图超过本机 50 MB')]
-    for filename, expected in cases:
-        original = fixtures / filename
-        remote = identify_fixture(original)
-        for _ in range(7): swipe(True)
-        cache = f'/data/user/0/{PKG}/cache/ai-upload-v1'
-        before = set(shell('find', cache, '-type', 'f', check=False).splitlines())
-        tap('^从相册选择$', True)
-        select_isolated_fixture(original.stem)
-        require(expected, True, attempts=18)
-        shot('android-' + original.stem + '-feedback')
-        assert set(shell('find', cache, '-type', 'f', check=False).splitlines()) == before
-        assert hashlib.sha256(adb('exec-out', 'cat', remote)).digest() == hashlib.sha256(original.read_bytes()).digest()
-        for _ in range(7): swipe(True)
-        require('^从相册选择$', True)
-        failures.append({'file':filename,'errorDisplayed':True,'failedWorkRemoved':True,'originalUnchanged':True})
-    for _ in range(7): swipe(True)
-    tap('^从相册选择$', True); shell('input', 'keyevent', 'KEYCODE_BACK')
-    require('^从相册选择$', True)
-    report['localImageFailures'] = {'cases':failures,'pickerCancelRecovered':True,'networkRequests':0}
-
+    configure();kind=os.environ['HUKANG_DEVICE_SUITE'];inputs=OUT/'image-inputs';inputs.mkdir(exist_ok=True)
+    name={'image-large':'02-ai-large.jpg','image-transparent':'03-ai-transparent.png','image-gif':'04-ai-unsupported.gif','image-oversize':'05-ai-oversize.jpg'}[kind];file=inputs/name
+    if kind=='image-large':
+        im=Image.frombytes('RGB',(4000,3000),random.Random(42).randbytes(4000*3000*3));exif=Image.Exif();exif[274]=6;exif[270]='TEST ONLY';im.save(file,quality=98,exif=exif);im.close()
+    elif kind=='image-transparent':
+        im=Image.new('RGBA',(1200,800),(0,0,0,0));ImageDraw.Draw(im).rectangle((300,200,900,600),fill=(20,140,220,255));im.save(file);im.close()
+    else:
+        im=Image.new('RGB',(200,200),(20,140,220));im.save(file);im.close()
+        if kind=='image-oversize':
+            with file.open('ab') as f:f.write(b'0'*(51*1024*1024))
+    original=identify_fixture(file);tap('^拍一拍$',True);tap('^餐食估算$',attribute='content-desc');tap('^从相册选择$',True);select_isolated_fixture(file.stem)
+    if kind in ('image-gif','image-oversize'):
+        require('此图片格式无法|原图超过本机 50 MB',True,attempts=20);shot('android-'+kind+'-error');assert not shell('find',f'/data/user/0/{PKG}/files/meal-drafts','-name','original.source',check=False);report['imageErrorRecovery']=True
+    else:
+        require('原图已保存在本机',True,attempts=20);shot('android-'+kind+'-original-preview');paths=shell('find',f'/data/user/0/{PKG}/cache/ai-upload-v1','-name','upload.jpg').splitlines();assert len(paths)==1
+        payload=adb('exec-out','cat',paths[0]);assert 0<len(payload)<=4000000 and not jpeg_has_exif(payload);processed=OUT/'processed.jpg';processed.write_bytes(payload)
+        with Image.open(processed) as im:
+            assert max(im.size)<=2048
+            if kind=='image-large':assert im.height>im.width
+        originals=shell('find',f'/data/user/0/{PKG}/files/meal-drafts','-name','original.source').splitlines();assert len(originals)==1;raw=adb('exec-out','cat',originals[0]);assert hashlib.sha256(raw).digest()==hashlib.sha256(file.read_bytes()).digest()
+        c=diet_db('image-draft');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0;draft=json.loads(c.execute("SELECT json FROM nutrition_state WHERE key='captureDraft'").fetchone()[0]);assert draft['original'].endswith('/original.source');c.close();launch();tap('^继续餐食照片草稿$',True);tap('^餐食估算$',attribute='content-desc');require('^餐食原图预览$',True,'content-desc');shot('android-'+kind+'-draft-restored');tap('^删除这张照片$',True,'content-desc');assert not shell('find',f'/data/user/0/{PKG}/files/meal-drafts','-name','original.source',check=False);report['imageProcessing']={'sourceSha256':hashlib.sha256(raw).hexdigest(),'uploadBytes':len(payload),'rawBytes':len(raw),'metadataRemovedFromUpload':True,'restartDraft':True,'dietRecords':0}
+    assert hashlib.sha256(adb('exec-out','cat',original)).digest()==hashlib.sha256(file.read_bytes()).digest()
+    for _ in range(8):swipe(True)
+    tap('^从相册选择$',True);shell('input','keyevent','KEYCODE_BACK');require('^从相册选择$',True);shot('android-'+kind+'-picker-cancel')
 
 try:
     apk, = Path('artifacts/build').glob('hukang-*-arm64.apk')
@@ -733,16 +377,8 @@ try:
     assert not shell('pm', 'path', PKG, check=False), 'UI probe expects a fresh disposable emulator, never clears user data'
     report['install'] = adb('install', '-r', str(apk.resolve()), timeout=180).decode()
     assert 'Success' in report['install']
-    cases = [('navigation-empty', home_and_navigation), ('nutrition-accordions-date', details),
-                         ('small-screen-system-font', small_and_large), ('gesture-safe-area', gesture_safe_area),
-                         ('keyboard-state', keyboard), ('camera-permissions', camera),
-                         ('ai-native-network-feedback', ai_native_network_feedback), ('real-diet-local-storage', diet_closed_loop)]
-    if os.environ.get('HUKANG_DEVICE_SUITE') in ('image-large', 'image-transparent'):
-        cases = [('local-upload-images', upload_photos)]
-    elif os.environ.get('HUKANG_DEVICE_SUITE') in ('image-gif', 'image-oversize'):
-        cases = [('image-errors-and-picker-cancel', upload_failures)]
-    elif os.environ.get('HUKANG_DEVICE_SUITE') == 'flows':
-        cases = [('camera-permissions', camera), ('real-diet-local-storage', diet_closed_loop)]
+    cases=[('four-metrics-navigation',home_and_navigation),('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('small-large-keyboard',small_large_keyboard),('deterministic-intake-stock',diet_closed_loop)]
+    if os.environ.get('HUKANG_DEVICE_SUITE','').startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
         check(name, action)
     report['status'] = 'passed' if all(c['status'] == 'passed' for c in report['checks']) else 'failed'

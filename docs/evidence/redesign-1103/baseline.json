@@ -1,0 +1,86 @@
+{
+  "branch": "codex/nutrition-ui-v2",
+  "head": "a764cc5aed7660d0e90053107e1abbe0672ef0d0",
+  "status": "?? .DS_Store\n",
+  "app": {
+    "name": "护康",
+    "slug": "hukang-codex-china",
+    "version": "0.5.3",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "scheme": "hukangchina",
+    "android": {
+      "package": "com.hukang.china",
+      "versionCode": 14,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "permissions": [
+        "android.permission.INTERNET"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "选择餐食或食品包装照片。营养表离线识别；AI 估算仅在明确确认后发送所选照片。",
+          "cameraPermission": "拍摄餐食、包装和条码。扫码与营养表 OCR 离线运行；AI 发送需另行确认。",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#f3faf8"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "useLegacyPackaging": true,
+            "buildArchs": [
+              "arm64-v8a"
+            ]
+          }
+        }
+      ],
+      "expo-status-bar",
+      "expo-sharing",
+      [
+        "expo-sqlite",
+        {
+          "android": {
+            "customBuildFlags": "-DSQLITE_DEFAULT_FOREIGN_KEYS=1"
+          }
+        }
+      ],
+      "./plugins/withOfflineAndroid.cjs"
+    ],
+    "updates": {
+      "enabled": false
+    }
+  },
+  "databaseVersion": 7,
+  "attachments": [
+    {
+      "name": "HUKANG_AI_UI_PLAN_2026-11-03.pdf",
+      "sha256": "4a51693311f0bd85d21887b9fdeb1ea4dcd1ff97cb7a81fedd54a1246c45ede1"
+    },
+    {
+      "name": "已粘贴的文本.txt",
+      "sha256": "91ecc85892d97cb0fe8a197363c9868ed122c3b1d816c3bb3cbb3c4d4c14c952"
+    }
+  ]
+}

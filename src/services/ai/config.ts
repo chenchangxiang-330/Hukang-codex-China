@@ -91,13 +91,13 @@ export function validateAiConfiguration(
     config.apiKey.length > 4096 ||
     /[^\x21-\x7e]/.test(config.apiKey.trim())
   )
-    errors.apiKey = "请填写有效临时密钥，不包含空格、换行或非 ASCII 字符。";
+    errors.apiKey = "请填写有效密钥，不包含空格、换行或非 ASCII 字符。";
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/@+\-]{0,127}$/.test(config.model.trim()))
     errors.model = "请填写服务商提供的模型名称（最多 128 个字符，不含空格）。";
   return errors;
 }
 
-/** Conservative allowlist, verified against provider docs on 2026-10-31.
+/** Conservative allowlist, verified against provider docs on 2026-11-03.
  * Unknown/custom models remain text-only; a text test never proves vision support. */
 export function supportsMealImage(
   config: Pick<AiConfiguration, "provider" | "baseUrl" | "model">,

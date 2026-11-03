@@ -89,51 +89,42 @@ async function unclipped(label) {
 try {
   await open();
   await expect(page.getByText(/2000 kcal|1285/)).toHaveCount(0);
+  for (const k of ["蛋白质", "今日卡路里", "脂肪", "膳食纤维"])
+    await expect(page.getByTestId(`nutrient-${k}`)).toBeVisible();
+  await expect(button("个人参考目标")).toHaveCount(0);
+  await shot("browser-home-empty");
   await button("查看完整营养").click();
   await expect(
-    page.getByRole("heading", { name: "今日营养", exact: true }),
+    page.getByRole("heading", { name: "营养详情", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /^碳水化合物，/ }).click();
-  await expect(
-    page.getByText("理想参考 < 25g　｜　建议上限 50g", { exact: true }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "矿物质，展开", exact: true }).click();
+  await page.getByRole("button", { name: /^钠，/ }).click();
+  await expect(page.getByText(/个人参考待完善/).first()).toBeVisible();
+  await shot("browser-nutrition-minerals");
   await button("返回").click();
   await button("拍一拍").click();
   await expect(button("餐食估算")).toBeVisible();
-  await expect(page.getByLabel("餐食补充描述", { exact: true })).toHaveCount(0);
-  await button("文字描述").click();
-  await button("估算这餐营养").click();
-  await expect(page.getByText(/请填写这一餐的文字描述/)).toBeVisible();
-  await page
-    .getByLabel("餐食补充描述", { exact: true })
-    .fill("牛肉鸡蛋面，面条吃了一半");
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText(/请先在 AI 服务设置中填写有效地址/),
-  ).toBeVisible();
+  await expect(button("文字描述")).toHaveCount(0);
+  await expect(button("手动填写")).toHaveCount(0);
+  await shot("browser-two-entries");
+  await button("餐食估算").click();
+  await expect(page.getByLabel("餐食补充描述", { exact: true })).toHaveCount(1);
+  await expect(button("估算这餐营养")).toHaveAttribute("aria-disabled", "true");
+  await shot("browser-meal-photo-required");
+  await page.getByLabel("餐食补充描述", { exact: true }).fill("半份米饭");
   await button("返回").click();
-  await button("文字描述").click();
+  await button("餐食估算").click();
   await expect(page.getByLabel("餐食补充描述", { exact: true })).toHaveValue(
-    "牛肉鸡蛋面，面条吃了一半",
+    "半份米饭",
   );
-  await button("更换记录方式").click();
+  await button("返回").click();
   await button("包装食品").click();
-  await button("扫描 / 输入条码").click();
   await expect(
     page.getByLabel("条码数字（保留前导零）", { exact: true }),
   ).toBeVisible();
   await button("返回").click();
-  await tab("食品库").click();
-  await expect(
-    page.getByRole("heading", { name: "我的食品库", exact: true }),
-  ).toBeVisible();
-  await tab("我的").click();
-  await expect(button("导出食品资料包")).toHaveCount(0);
-  await button("数据导出").click();
-  await button("导出食品资料包").click();
-  await expect(page.getByText(/浏览器预览不生成真实食品导出/)).toBeVisible();
   report.checks.push(
-    "True empty data, stepped capture, draft retained on step back, no AI fiction, offline scanner/export and four tabs",
+    "Four ordered metrics, true empty data, two entry paths, photo required, one text box and retained draft",
   );
   await open("demo");
   await tab("记录").click();
@@ -144,183 +135,63 @@ try {
   await button("返回饮食记录").click();
   await expect(page.getByText("1205 kcal", { exact: true })).toBeVisible();
   await tab("今日").click();
-  await expect(page.getByText("1205 kcal", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("nutrient-今日卡路里")).toContainText("1205");
+  await shot("browser-home-isolated-data");
   await button("查看完整营养").click();
-  await expect(page.getByText("1205 kcal", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "能量，1205 kcal", exact: true }),
+  ).toBeVisible();
   await button("返回").click();
   await tab("记录").click();
   await button("‹ 前一天").click();
   await button("今日营养摘要").click();
-  await expect(page.getByText("2026年10月25日", { exact: true })).toBeVisible();
+  await expect(page.getByText(/2026年10月25日/)).toBeVisible();
   await button("返回").click();
   await expect(
     page.getByRole("radio", { name: "2026-10-25", exact: true }),
   ).toHaveAttribute("aria-checked", "true");
   report.checks.push(
-    "Portion recalculates today/diary/detail; same-date navigation, return and date isolation",
+    "Shared totals after portion edit, history date propagation and preserved return date",
   );
   await open("demo");
   await button("拍一拍").click();
   await button("餐食估算").click();
   await button("拍照").click();
-  await button("补充文字描述").click();
-  await page
-    .getByLabel("餐食补充描述", { exact: true })
-    .fill("面条一半，没喝汤");
+  await page.getByLabel("餐食补充描述", { exact: true }).fill("半份面条");
   await button("估算这餐营养").click();
-  await expect(
-    page.getByText("演示结果 · 不写入真实记录", { exact: true }),
-  ).toBeVisible();
-  await page.getByLabel("实际食用份量（份）", { exact: true }).fill("0.5");
-  await expect(page.getByText("260–350 kcal", { exact: true })).toBeVisible();
+  await expect(button("确认食用")).toHaveCount(0);
+  await button("吃半份").click();
+  await shot("browser-portion-preview");
   await page
     .getByRole("checkbox", {
       name: "我已确认日期、餐次和实际食用份量",
       exact: true,
     })
     .click();
-  await button("已食用 · 确认记录").click();
-  await expect(button("已保存这次食用，请勿重复提交")).toBeDisabled();
-  await button("返回").click();
-  await expect(page.getByText("1545–1635 kcal", { exact: true })).toBeVisible();
-  report.checks.push(
-    "Meal estimate uses ranges; quantity scales ranges, confirmation synchronizes totals and prevents duplicate submission",
-  );
-  await open("demo");
-  await button("拍一拍").click();
-  await button("包装食品").click();
-  await button("体验包装结果（演示数据）").click();
-  await page.getByRole("button", { name: /^营养与来源，/ }).click();
-  await expect(page.getByText(/整包净含量 250g.*每份 25g/)).toBeVisible();
-  await page.getByRole("radio", { name: "份量单位 g", exact: true }).click();
-  await page.getByLabel("实际食用份量（g）", { exact: true }).fill("25");
-  await expect(page.getByText("147.7 kcal", { exact: true })).toBeVisible();
-  await button("加入库存 · 不计摄入").click();
-  await button("确认模拟入库").click();
-  await button("确认模拟入库").click();
+  await button("确认食用").click();
   await expect(
-    page.getByText("这笔模拟入库已确认，没有重复提交。", { exact: true }),
+    page.getByText("演示记录已更新，未写入真实数据。", { exact: true }),
   ).toBeVisible();
-  await button("返回").click();
-  await button("返回").click();
-  await expect(page.getByText("1285 kcal", { exact: true })).toBeVisible();
+  await shot("browser-isolated-confirmed");
   report.checks.push(
-    "Package size differs from serving; raw kJ converts once; demo stock remains isolated from intake and real stock",
+    "Valid portion required before confirmation; deterministic preview then one successful save",
   );
-  await open("exceeded");
-  await expect(button("今日营养发现")).toHaveCount(1);
-  await button("查看完整营养").click();
-  await page.getByRole("button", { name: /^碳水化合物，/ }).click();
-  await expect(page.getByText(/已知小计超出参考上限 10 g/)).toBeVisible();
-  await shot("added-sugar-exceeded-390");
-  report.checks.push(
-    "Known added-sugar subtotal over limit stays qualified by missing data",
-  );
-  for (const scenario of [
-    "half",
-    "unset",
-    "missing",
-    "unknown",
-    "exceeded",
-    "estimated",
-  ]) {
-    await open("protein-" + scenario);
-    const progress = page.getByTestId("target-蛋白质");
-    const bar = progress.getByRole("progressbar");
-    if (scenario === "half") {
-      await expect(bar).toHaveAttribute("aria-valuenow", "50");
-      await expect(progress).toContainText("50 g / 目标 100 g");
-    }
-    if (scenario === "exceeded") {
-      await expect(bar).toHaveAttribute("aria-valuenow", "100");
-      await expect(progress).toContainText("超出目标 20 g");
-    }
-    if (scenario === "estimated") {
-      await expect(bar).toBeVisible();
-      expect(await bar.getAttribute("aria-valuenow")).toBeNull();
-      await expect(progress).toContainText("估算");
-    }
-    if (["unset", "missing", "unknown"].includes(scenario))
-      await expect(bar).toHaveCount(0);
-    if (scenario === "unset")
-      await expect(
-        progress.getByRole("button", { name: "设置目标", exact: true }),
-      ).toBeVisible();
-    if (scenario === "missing")
-      await expect(progress).toContainText("已知小计 · 数据不完整");
-    if (scenario === "unknown")
-      await expect(progress).toContainText("未知 · 数据缺失");
-    await shot("protein-" + scenario + "-isolated-demo");
-    report.checks.push("Protein displayed state: " + scenario);
-  }
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: width === 390 ? 844 : 760 });
-    await open();
-    await unclipped(`${width}dp empty today`);
-    await shot(`today-empty-${width}`);
-    await button("查看完整营养").click();
-    await unclipped(`${width}dp missing nutrition`);
-    await shot(`nutrition-missing-${width}`);
-    await open("demo");
-    await unclipped(`${width}dp today`);
-    await shot(`today-${width}`);
-    await tab("记录").click();
-    await unclipped(`${width}dp diary`);
-    await shot(`diary-${width}`);
-    await button("今日营养摘要").click();
-    await unclipped(`${width}dp nutrition`);
-    await shot(`nutrition-${width}`);
-    await page.getByRole("button", { name: /^碳水化合物，/ }).click();
-    await page.getByText("添加糖", { exact: true }).scrollIntoViewIfNeeded();
-    await shot(`nutrition-added-sugar-${width}`);
-    await page.getByRole("button", { name: /^碳水化合物，/ }).click();
-    await expect(page.getByText("添加糖", { exact: true })).toHaveCount(0);
-    await button("返回").click();
-    await button("拍一拍").click();
-    await top();
-    await unclipped(`${width}dp meal capture`);
-    await shot(`capture-meal-${width}`);
-    await button("餐食估算").click();
-    await button("从相册选择").click();
-    await button("补充文字描述").click();
-    await page
-      .getByLabel("餐食补充描述", { exact: true })
-      .fill("一份面，鸡蛋一个，没喝汤");
-    await button("估算这餐营养").click();
-    await page
-      .getByText("演示结果 · 不写入真实记录", { exact: true })
-      .scrollIntoViewIfNeeded();
-    await unclipped(`${width}dp meal result`);
-    await shot(`meal-result-${width}`);
-    await button("返回").click();
-    await button("更换记录方式").click();
-    await button("包装食品").click();
-    await top();
-    await unclipped(`${width}dp package capture`);
-    await shot(`capture-package-${width}`);
-    await button("体验包装结果（演示数据）").click();
-    await page.getByLabel("食物名称", { exact: true }).scrollIntoViewIfNeeded();
-    await unclipped(`${width}dp package result`);
-    await shot(`package-result-${width}`);
-  }
   await page.setViewportSize({ width: 320, height: 760 });
-  await open("demo");
-  await page.evaluate(() => {
-    const els = [...document.querySelectorAll("#root *")].filter((e) =>
-      [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()),
-    );
-    const sizes = els.map((el) => ({
-      el,
-      font: parseFloat(getComputedStyle(el).fontSize),
-      line: parseFloat(getComputedStyle(el).lineHeight),
-    }));
-    for (const { el, font, line } of sizes) {
-      el.style.fontSize = font * 1.4 + "px";
-      if (Number.isFinite(line)) el.style.lineHeight = line * 1.4 + "px";
-    }
-  });
-  await unclipped("320dp enlarged text approximation");
-  await shot("today-fontscale-320");
+  for (const scenario of [
+    "empty",
+    "demo",
+    "protein-partial",
+    "protein-unknown",
+    "protein-exceeded",
+  ]) {
+    await open(scenario);
+    await unclipped(`320dp ${scenario} four metrics`);
+    await shot(`browser-320-${scenario}`);
+  }
+  await tab("我的").click();
+  await button("个人参考目标").click();
+  await expect(page.getByText("个人参考目标", { exact: true })).toBeVisible();
+  await shot("browser-goals");
   expect(report.errors).toEqual([]);
   expect(report.externalRequests).toEqual([]);
   report.status = "passed";

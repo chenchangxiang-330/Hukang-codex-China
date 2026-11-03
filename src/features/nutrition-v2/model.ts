@@ -1,3 +1,8 @@
+import type {
+  PersonalProfile,
+  TargetPolicy,
+  TargetDraft,
+} from "../../services/nutrition/profile";
 import type { FoodScanRecord } from "../../domain/food/scan";
 import { validDateKey } from "../ui-v1/contracts";
 
@@ -40,6 +45,7 @@ export type Fact = {
 export type PortionUnit = "g" | "mL" | "份";
 export type Food = {
   id: string;
+  kind?: "meal" | "packaged";
   version: string;
   name: string;
   source: string;
@@ -71,10 +77,13 @@ export type Entry = {
   food: Food;
   amount: number;
   unit: PortionUnit;
+  consumedTime?: string;
+  timezone?: string;
   confirmedAt?: string;
   updatedAt?: string;
 };
 export type Targets = {
+  policies?: Partial<Record<Nutrient, TargetPolicy>>;
   energy?: number;
   carbohydrate?: readonly [number, number];
   fat?: readonly [number, number];
@@ -89,6 +98,15 @@ export type Snapshot = {
   targets: Targets;
   message?: string;
   saving?: boolean;
+  profile?: PersonalProfile | undefined;
+  targetDraft?: TargetDraft | undefined;
+  onboardingDeferred?: boolean;
+  catalogue?: readonly Food[];
+  covers?: Record<string, CoverTask>;
+  intakeDraft?: Entry | undefined;
+  captureDraft?:
+    | { id: string; original: string; description: string }
+    | undefined;
 };
 export type MealRequest = {
   imageUri: string;
@@ -106,6 +124,27 @@ export type MealEstimate = {
     imageSent: boolean;
   };
 };
+export type CoverTask = {
+  foodId: string;
+  original: string;
+  assetId: string;
+  inputVersion: string;
+  selectionVersion: number;
+  state:
+    | "waiting_identity"
+    | "waiting_model"
+    | "queued"
+    | "processing"
+    | "failed"
+    | "ready"
+    | "original";
+  attempts: number;
+  taskId: string;
+  modelSha256?: string;
+  processingVersion: string;
+  cover?: string;
+  error?: string;
+};
 /** One shared store; screens never write inventory or call SQL directly. */
 export interface NutritionAdapter {
   readonly kind: "production" | "demo";
@@ -116,6 +155,17 @@ export interface NutritionAdapter {
   deleteEntry?(id: string): void | Promise<void>;
   record(entry: Entry, operationId: string): void | Promise<void>;
   configureTargets(targets: Targets): void | Promise<void>;
+  saveCatalogueFood?(food: Food): Promise<void>;
+  saveProfile?(profile: PersonalProfile): Promise<void>;
+  saveTargetDraft?(draft: TargetDraft | null): Promise<void>;
+  applyTargetDraft?(draft: TargetDraft): Promise<void>;
+  deferOnboarding?(): Promise<void>;
+  saveCaptureDraft?(
+    draft: { id: string; original: string; description: string } | null,
+  ): Promise<void>;
+  saveIntakeDraft?(entry: Entry | null): Promise<void>;
+  restoreCover?(foodId: string): Promise<void>;
+  retryCover?(foodId: string): Promise<void>;
   reload?(): Promise<void>;
   demoEstimateMeal?(request: MealRequest): Promise<MealEstimate>;
   demoPackage?(): Food;
@@ -366,6 +416,7 @@ export function foodFromRecord(record: FoodScanRecord, image?: string): Food {
     id: record.id,
     version: record.updatedAt,
     name: record.review.name,
+    kind: "packaged",
     source: "本机食品库 · 已保存资料",
     image,
     basis,
