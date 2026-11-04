@@ -4,6 +4,13 @@ import re
 NUTRIENTS = ('能量', '蛋白质', '脂肪', '碳水化合物', '钠')
 
 
+def keyboard_top(window_dump):
+    """Visible IME screen boundary; Android may include a visibleFrame field."""
+    frames = re.findall(r'type=ime frame=\[0,(\d+)\]\[\d+,\d+\][^\n]*\bvisible=true\b', window_dump)
+    tops = [int(y) for y in frames if int(y) > 0]
+    return min(tops) if tops else None
+
+
 def bounds(node):
     values = tuple(map(int, re.findall(r'-?\d+', node.get('bounds', ''))))
     return values if len(values) == 4 else None

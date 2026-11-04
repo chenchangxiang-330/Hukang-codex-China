@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
+  "sourceFilesMatchBrowserReport": true,
+  "typecheck": "passed",
+  "nodeTests": {
+    "passed": 87,
+    "failed": 0
+  },
+  "browserChecks": {
+    "existing": 34,
+    "nutritionV2": 25,
+    "screenshots": 44
+  },
+  "nativeDeviceVerifiedByBrowser": false,
+  "screenSourceSha256": "4848022a163d7e5ab327df7d4cfefbf685b8de11fbd7b07c0407df010174d4fc"
+}

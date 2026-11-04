@@ -1,0 +1,53 @@
+{
+  "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa",
+  "apkSha256": "50b12772c3bf6d4628ed025b000ecb15a9e1c6fb1c0a4fdb0c94dad2ae7fa56a",
+  "version": "0.5.4",
+  "versionCode": 15,
+  "physicalDeviceVerified": false,
+  "liveAiProviderVerified": false,
+  "actualCutoutModelVerified": false,
+  "suites": [
+    {
+      "name": "ui",
+      "run": 41686823162,
+      "artifact": 13256410795,
+      "archiveSha256": "9cf25e320a7b0246c8ccab18b73ad4c3e9cadbbfc8a2d1d1be25b8c64cd7c913"
+    },
+    {
+      "name": "flows",
+      "run": 41686823162,
+      "artifact": 13257690104,
+      "archiveSha256": "062a7c212ad3257fc747e845e3edf9113180905ecb63ff5451dc5354bffb0244"
+    },
+    {
+      "name": "offline",
+      "run": 41686823162,
+      "artifact": 13257341178,
+      "archiveSha256": "7570eeecced16b8d9aaeb2d1204dde19cd4643811f6e477e8f8f4d22e2719b98"
+    },
+    {
+      "name": "image-large",
+      "run": 41686823162,
+      "artifact": 13255074052,
+      "archiveSha256": "418c6f828d86b528c591a9d160baf1e908bd923d07acbc368550e1cdf2595430"
+    },
+    {
+      "name": "image-transparent",
+      "run": 41686823162,
+      "artifact": 13256925345,
+      "archiveSha256": "13fca973c1c08b67c93514f4688e3a464f7e79510c0938d127f49e37b43f3705"
+    },
+    {
+      "name": "image-gif",
+      "run": 41687576897,
+      "artifact": 13256565724,
+      "archiveSha256": "3138820af5f8b3455ade33b23acaead10c543cae5adc0de9503611e14ef7ad4b"
+    },
+    {
+      "name": "image-oversize",
+      "run": 41686823162,
+      "artifact": 13256245291,
+      "archiveSha256": "54f61df8774b5433bb105e4e6b74eeb9af1fb578047cb94cac2eb7e7d783d802"
+    }
+  ]
+}

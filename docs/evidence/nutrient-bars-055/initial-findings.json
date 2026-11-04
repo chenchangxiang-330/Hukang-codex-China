@@ -1,0 +1,18 @@
+{
+  "candidateSource": "43ca507a97f4c9cf637f486bf9f7387d6d737a67",
+  "candidateBuild": 41752357070,
+  "candidateApkSha256": "367ebfd11887755d81505a09bcafa896ff316e057ff32e05c12338862df51056",
+  "uiRun": 41754415169,
+  "uiAutomationConclusion": "success",
+  "flowRun": 41754453354,
+  "flowAutomationConclusion": "success",
+  "visualAcceptanceConclusion": "needs repair",
+  "finding": "Four tracks were visible, but the extra vertical space clipped the primary capture action at the scroll viewport above the Dock.",
+  "clippedCaptureBounds": [55, 1564, 1025, 1583],
+  "dockTabBounds": [74, 1635, 306, 1801],
+  "minimumClickDp": 48,
+  "density": 443,
+  "repairSource": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+  "repair": "Retain type and tap sizes; tighten non-interactive row gaps and fold target path into the first unset caption. Add native and browser primary-action bounds checks and final isolated known-data rendering.",
+  "candidateScreenshotsUsedAsFinal": false
+}

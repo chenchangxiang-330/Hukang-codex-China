@@ -1,0 +1,12 @@
+{
+  "observedApkVersion": "0.5.0 (11)",
+  "observedApkSource": "066e8a639c2d1da8b062f22cfa08f57c64bbb302",
+  "run": 41296160341,
+  "artifact": 13079835923,
+  "artifactSha256": "1bb728dc4f973a9982c4c37266ed36cfb1e37b4ec40670a87eccf72a4a916e88",
+  "observedFeedback": "照片转存不完整，本次未保存。",
+  "cause": "Expo File.copy returns a Promise; old native adapter checked the destination before awaiting it.",
+  "fixedSource": "a7ae6b1aec1751578baa1acafd297e31369fa65d",
+  "regressionTests": "tests/nutrition-photos.test.mjs",
+  "note": "Historical failure screenshot from isolated test data; not the delivered APK."
+}

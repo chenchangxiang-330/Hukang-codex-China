@@ -32,6 +32,16 @@ test('personal export remaps image paths without changing source evidence or OCR
   assert.equal(evidence.ocr.originalImageUri, 'file:///private/original.jpg');
 });
 
+test('diet snapshot photo paths are portable or explicitly omitted without mutating history', () => {
+  const image = 'file:///private/nutrition-photos/entry-1/photo.source';
+  const snapshot = Object.freeze({ id: 'entry-1', food: Object.freeze({ name: 'file:///literal-user-text', image, nutrients: {} }) });
+  const exported = portableExportValue([snapshot], { [image]: 'nutrition-photos/entry-1.source' });
+  assert.equal(exported[0].food.image, 'nutrition-photos/entry-1.source');
+  assert.equal(portableExportValue([snapshot], {})[0].food.image, null);
+  assert.equal(exported[0].food.name, snapshot.food.name);
+  assert.equal(snapshot.food.image, image);
+});
+
 const record = (id, redistribute) => ({
   id, status: 'confirmed', evidence: { recordedAt: '2026-10-15', image: { processedImageHash: 'image-hash' } },
   review: { name: '牛奶', brand: '品牌', specification: '250 mL', ingredients: '生牛乳', columns: [] },

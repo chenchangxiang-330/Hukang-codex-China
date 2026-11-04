@@ -1,0 +1,64 @@
+{
+  "apk": "/home/runner/work/Hukang-codex-China/Hukang-codex-China/artifacts/hukang-0.4.0-arm64.apk",
+  "bytes": 60927017,
+  "sha256": "ce41b32dd8e92f149cb384c718e12d0a087afaa7d2244b989c93964eb7a1f66f",
+  "nativeAbis": [
+    "arm64-v8a"
+  ],
+  "permissions": "package: com.hukang.china\nuses-permission: name='android.permission.READ_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.VIBRATE'\nuses-permission: name='android.permission.WRITE_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.CAMERA'\npermission: com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION\nuses-permission: name='com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'\n",
+  "badging": "package: name='com.hukang.china' versionCode='9' versionName='0.4.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'\nminSdkVersion:'26'\ntargetSdkVersion:'36'\nuses-permission: name='android.permission.READ_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.VIBRATE'\nuses-permission: name='android.permission.WRITE_EXTERNAL_STORAGE' maxSdkVersion='32'\nuses-permission: name='android.permission.CAMERA'\nuses-permission: name='com.hukang.china.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'\napplication-label:'护康'\napplication-label-af:'护康'\napplication-label-am:'护康'\napplication-label-ar:'护康'\napplication-label-as:'护康'\napplication-label-az:'护康'\napplication-label-be:'护康'\napplication-label-bg:'护康'\napplication-label-bn:'护康'\napplication-label-bs:'护康'\napplication-label-ca:'护康'\napplication-label-cs:'护康'\napplication-label-da:'护康'\napplication-label-de:'护康'\napplication-label-el:'护康'\napplication-label-en-AU:'护康'\napplication-label-en-CA:'护康'\napplication-label-en-GB:'护康'\napplication-label-en-IN:'护康'\napplication-label-en-XC:'护康'\napplication-label-es:'护康'\napplication-label-es-419:'护康'\napplication-label-es-ES:'护康'\napplication-label-es-GT:'护康'\napplication-label-es-US:'护康'\napplication-label-et:'护康'\napplication-label-eu:'护康'\napplication-label-fa:'护康'\napplication-label-fi:'护康'\napplication-label-fr:'护康'\napplication-label-fr-CA:'护康'\napplication-label-gl:'护康'\napplication-label-gu:'护康'\napplication-label-hi:'护康'\napplication-label-hr:'护康'\napplication-label-hu:'护康'\napplication-label-hy:'护康'\napplication-label-in:'护康'\napplication-label-is:'护康'\napplication-label-it:'护康'\napplication-label-iw:'护康'\napplication-label-ja:'护康'\napplication-label-ka:'护康'\napplication-label-kk:'护康'\napplication-label-km:'护康'\napplication-label-kn:'护康'\napplication-label-ko:'护康'\napplication-label-ky:'护康'\napplication-label-lo:'护康'\napplication-label-lt:'护康'\napplication-label-lv:'护康'\napplication-label-mk:'护康'\napplication-label-ml:'护康'\napplication-label-mn:'护康'\napplication-label-mr:'护康'\napplication-label-ms:'护康'\napplication-label-my:'护康'\napplication-label-nb:'护康'\napplication-label-ne:'护康'\napplication-label-nl:'护康'\napplication-label-or:'护康'\napplication-label-pa:'护康'\napplication-label-pl:'护康'\napplication-label-pt:'护康'\napplication-label-pt-BR:'护康'\napplication-label-pt-PT:'护康'\napplication-label-ro:'护康'\napplication-label-ru:'护康'\napplication-label-ru-RU:'护康'\napplication-label-si:'护康'\napplication-label-sk:'护康'\napplication-label-sl:'护康'\napplication-label-sq:'护康'\napplication-label-sr:'护康'\napplication-label-sr-Latn:'护康'\napplication-label-sv:'护康'\napplication-label-sw:'护康'\napplication-label-ta:'护康'\napplication-label-te:'护康'\napplication-label-th:'护康'\napplication-label-tl:'护康'\napplication-label-tr:'护康'\napplication-label-uk:'护康'\napplication-label-ur:'护康'\napplication-label-uz:'护康'\napplication-label-vi:'护康'\napplication-label-zh:'护康'\napplication-label-zh-CN:'护康'\napplication-label-zh-HK:'护康'\napplication-label-zh-TW:'护康'\napplication-label-zu:'护康'\napplication-icon-160:'res/d2.webp'\napplication-icon-240:'res/MO.webp'\napplication-icon-320:'res/qs.webp'\napplication-icon-480:'res/Sn.webp'\napplication-icon-640:'res/sK.webp'\napplication-icon-65535:'res/sK.webp'\napplication: label='护康' icon='res/d2.webp'\nlaunchable-activity: name='com.hukang.china.MainActivity'  label='' icon=''\nuses-library-not-required:'androidx.window.extensions'\nuses-library-not-required:'androidx.window.sidecar'\nfeature-group: label=''\n  uses-feature: name='android.hardware.camera'\n  uses-implied-feature: name='android.hardware.camera' reason='requested android.permission.CAMERA permission'\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nmain\nother-activities\nother-receivers\nother-services\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--' 'af' 'am' 'ar' 'as' 'az' 'be' 'bg' 'bn' 'bs' 'ca' 'cs' 'da' 'de' 'el' 'en-AU' 'en-CA' 'en-GB' 'en-IN' 'en-XC' 'es' 'es-419' 'es-ES' 'es-GT' 'es-US' 'et' 'eu' 'fa' 'fi' 'fr' 'fr-CA' 'gl' 'gu' 'hi' 'hr' 'hu' 'hy' 'in' 'is' 'it' 'iw' 'ja' 'ka' 'kk' 'km' 'kn' 'ko' 'ky' 'lo' 'lt' 'lv' 'mk' 'ml' 'mn' 'mr' 'ms' 'my' 'nb' 'ne' 'nl' 'or' 'pa' 'pl' 'pt' 'pt-BR' 'pt-PT' 'ro' 'ru' 'ru-RU' 'si' 'sk' 'sl' 'sq' 'sr' 'sr-Latn' 'sv' 'sw' 'ta' 'te' 'th' 'tl' 'tr' 'uk' 'ur' 'uz' 'vi' 'zh' 'zh-CN' 'zh-HK' 'zh-TW' 'zu'\ndensities: '160' '240' '320' '480' '640' '65535'\nnative-code: 'arm64-v8a'\n",
+  "applicationId": "com.hukang.china",
+  "versionCode": 9,
+  "versionName": "0.4.0",
+  "extractNativeLibs": true,
+  "nativeLibraries": {
+    "libreactnative.so": {
+      "bytes": 6985168,
+      "compression": 8,
+      "sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+    },
+    "libopencv_java4.so": {
+      "bytes": 17189512,
+      "compression": 8,
+      "sha256": "82ac6774835e26fbaba896bf2f6f61e81200dfdb5fe55a53e43b54241de41a0a"
+    },
+    "libonnxruntime.so": {
+      "bytes": 17908496,
+      "compression": 8,
+      "sha256": "67465b2bcf0ad501d389cc2c0f7f04278fb26fcf32e50c16a74deb4472c99706"
+    },
+    "libonnxruntime4j_jni.so": {
+      "bytes": 75720,
+      "compression": 8,
+      "sha256": "bf631163d6350e904e59503eaa8c5a351f4655e7fa582a1878841c312dfea78b"
+    }
+  },
+  "bundledModels": {
+    "assets/models/paddleocr/v5-mobile/detector.onnx": {
+      "bytes": 4826518,
+      "sha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d"
+    },
+    "assets/models/paddleocr/v5-mobile/recognizer.onnx": {
+      "bytes": 16534782,
+      "sha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092"
+    },
+    "assets/models/paddleocr/v5-mobile/detector.yml": {
+      "bytes": 903,
+      "sha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
+    },
+    "assets/models/paddleocr/v5-mobile/inference.yml": {
+      "bytes": 148345,
+      "sha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+    }
+  },
+  "signatureVerification": "Verifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): false\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN\nSigner #1 certificate SHA-256 digest: f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62\nSigner #1 certificate SHA-1 digest: dea4166844e48517e61d863dce3ebe1a77824d47\nSigner #1 certificate MD5 digest: 76f17aada7e1d3645e21f35e46c5fe9e\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 2048\nSigner #1 public key SHA-256 digest: ec9efb928f2ba4013623d1c5ee9c8437972c2f610858daf75206ae4e2d3c521f\nSigner #1 public key SHA-1 digest: ced85782bde6ecf16b369cce4cf51191b267fbac\nSigner #1 public key MD5 digest: 294ef11b27326158637cb686a3225f48\n",
+  "certificateSha256Digests": [
+    {
+      "signer": 1,
+      "dn": "CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN",
+      "sha256": "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62"
+    }
+  ],
+  "errors": [],
+  "deviceExecutionVerified": false
+}

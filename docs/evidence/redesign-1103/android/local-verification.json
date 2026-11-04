@@ -1,0 +1,10 @@
+{
+  "apkSha256": "50b12772c3bf6d4628ed025b000ecb15a9e1c6fb1c0a4fdb0c94dad2ae7fa56a",
+  "apkBytes": 61087801,
+  "certificateSha256": "d9691a6376d8c5d1a2b4cadc0b47d2b772ed604f4e1d177c3fcdf0b44f9f749e",
+  "v2Block": true,
+  "v3Block": false,
+  "v31Block": false,
+  "fullArtifactArchiveDownloaded": false,
+  "apkEntireFileDownloaded": true
+}

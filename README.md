@@ -1,14 +1,18 @@
 # Hukang China
 
-Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应用。普通用户从首页「拍一拍」开始：实时扫描食品条码，命中本机食品库后查看商品并选择入库；未命中时依次保存包装正面、营养成分表，使用手机内置的 PP-OCRv5 国产模型识别，人工核对后保存食品资料。
+当前 `codex/nutrition-ui-v2` 开发版为 **0.5.5 / versionCode 16**，在 0.5.4 上修正营养条：无记录、未设目标或营养数据不完整时也保留四条底槽，状态明确，有足够数据时显示实际填充。保留奶白天空蓝、玻璃 Dock 和四项导航。见 [营养条修复](docs/NutrientBars055.md)；此前个人资料、目标草案、双拍摄入口和食品/食用流程见 [0.5.4 交付](docs/Redesign1103.md)。Android 截图、安装包和签名以对应版本的实际证据为准。
 
-当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，UI V1 包含「今日 / 记录 / 食品库 / 我的」四个入口，库存位于食品库内。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
+餐食照片和选填描述使用用户主动配置的 API，人工确认后保存到本机 SQLite；扫码、离线 OCR、食品资料、库存和导出可离线使用。未完成 AI 设置可以保存草稿、稍后继续。未知不当零，AI 结果保留估算属性。BiRefNet B 列实际检查点尚待核实，当前保存原图与封面任务，不执行或宣称自动抠图。
 
-UI V1 在独立分支 `codex/ui-v1` 开发，基于现有 React Native + Expo 项目，未创建 Flutter 项目。设计规范见 [UI V1 Design](docs/UIV1Design.md)，本轮检查、截图和安装包见 [UI V1 验收记录](docs/UIV1Acceptance.md)。
+Hukang China 是面向中国大陆用户的本地优先 Android 食品记录应用。包装食品从扫码进入，命中本机食品库后可食用或入库；未命中时进入营养表拍摄/相册、PP-OCRv5 离线识别与人工核对流程。食用与库存分别确认。
 
-本分支 UI 测试包为 **0.4.0 / versionCode 9**：[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930/artifacts/12651485154)（解压获取完整 APK，约 60.84 MB；保留至 2026-11-09）。构建与检查通过，尚未进行本轮 Android 安装执行。测试证书与归档 0.3.3 不同，不能覆盖该旧签名包，有本地数据时请保留原安装。
+当前产品入口是 `src/app/index.tsx` → `src/features/simple/SimpleApp.tsx`，包含「今日 / 记录 / 食品库 / 我的」四个入口，库存位于食品库内。食品资料和库存分开保存，同一条码不会重复建立商品；库存按购买批次记录数量、单位和可选到期日。
 
-每日记录目前提供主动开启的临时演示；AI 设置只做本地配置格式检查。二者均未连接存储或真实服务，不把演示数据写入食品库。
+UI V1 是独立分支 `codex/ui-v1` 上的历史基线，基于现有 React Native + Expo + TypeScript。设计规范见 [UI V1 Design](docs/UIV1Design.md)，历史检查、截图和安装包见 [UI V1 验收记录](docs/UIV1Acceptance.md)。
+
+历史 UI V1 测试包为 **0.4.0 / versionCode 9**：[下载完整构建 ZIP](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/40323157930/artifacts/12651485154)（解压获取完整 APK，约 60.84 MB；保留至 2026-11-09）。构建与检查通过，尚未进行本轮 Android 安装执行。测试证书与归档 0.3.3 不同，不能覆盖该旧签名包，有本地数据时请保留原安装。
+
+营养演示只在独立开发预览中运行，正式页面没有记录时为空。AI 设置发送最小文字请求并验证模型响应，餐食调用同一份配置；本轮自动化用模拟服务验证，没有真实服务商密钥，不声称真实模型效果已经验收。
 
 以下 0.3.3 是历史基线，设备结果不能直接作为 UI V1 的验收；历史构建身份和证据见 [简易版验收记录](docs/SimpleAppAcceptance.md)。
 
@@ -22,10 +26,10 @@ UI V1 在独立分支 `codex/ui-v1` 开发，基于现有 React Native + Expo �
 - 相册条码识别和手动输入作为辅助入口。
 - PP-OCRv5 mobile detector/recognizer 随 APK 打包，Android 本地离线推理，不下载模型。
 - 营养照片可旋转、矩形裁剪、失败后重试；原始 OCR、坐标、图片证据、解析候选和人工修订分开保留。
-- SQLite 增量迁移到 `user_version=6`，保留食品、证据、草稿和库存。
+- SQLite `user_version=8`，在 v7 上增量加入个人资料/目标草案、可复用餐食资料、封面任务及餐食库存；保留原有食品、证据、草稿、库存和独立饮食快照，不重置数据库。
 - 「我的」可导出食品资料包或个人数据 ZIP；食品资料包默认不含照片和私人库存。文件只在本机生成，通过系统分享选择接收方，不自动上传；尚无 App 内一键恢复。
 
-Release APK 不需要 `INTERNET` 或 `ACCESS_NETWORK_STATE`。本版生产运行链路不依赖 Google ML Kit、Google Play Services、云 OCR、Open Food Facts、Wikidata 或在线 AI，也没有自动模型下载。仓库归档测试图片保留其来源与许可声明，不作为生产食品库或联网查询来源。
+Release APK 声明 `INTERNET`，不声明 `ACCESS_NETWORK_STATE`；只有用户主动测试或调用 AI 才发送确认范围内的数据。首次发送说明服务地址、资料与可能费用，配置或范围变化需重新确认，验证成功的连接通过 Android Keystore 加密原子保存，密钥不进入普通数据库/日志/导出；删除会停用旧请求，重启恢复不自动测试。扫码与 OCR 不依赖 Google ML Kit、Google Play Services、云 OCR、Open Food Facts 或 Wikidata，不自动下载模型。仓库归档测试图片保留来源与许可声明，不作为生产食品库或联网查询来源。
 
 ## 开发与验证
 
@@ -52,6 +56,9 @@ d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2
 
 ## 文档
 
+- [11 月 3 日原生改版与验收](docs/Redesign1103.md)
+- [0.5.3 界面精简、营养进度与交付](docs/UISimplification053.md)
+- [真实饮食闭环与数据模型](docs/NutritionLoopV2.md)
 - [简易版使用说明](docs/SimpleApp.md)
 - [Architecture and phase boundaries](docs/Architecture.md)
 - [Mainland dependency audit](docs/MainlandDependencyAudit.md)

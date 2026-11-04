@@ -1,0 +1,320 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 1,
+  "checks": [
+    {
+      "name": "four-metrics-navigation",
+      "status": "passed"
+    },
+    {
+      "name": "camera-permission-and-recovery",
+      "status": "passed"
+    },
+    {
+      "name": "small-large-keyboard",
+      "status": "passed"
+    },
+    {
+      "name": "gesture-safe-area",
+      "status": "passed"
+    },
+    {
+      "name": "four-known-progress-isolated",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+  "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "primaryActionBounds": {
+    "bounds": [
+      55,
+      1377,
+      1025,
+      1516
+    ],
+    "dockTop": 1635,
+    "unobscured": true
+  },
+  "dockBounds": [
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          92,
+          1567,
+          317,
+          1775
+        ],
+        [
+          316,
+          1567,
+          540,
+          1775
+        ],
+        [
+          541,
+          1567,
+          765,
+          1775
+        ],
+        [
+          765,
+          1567,
+          990,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    }
+  ],
+  "emptyNutrientTracks": [
+    {
+      "title": "蛋白质",
+      "bounds": [
+        113,
+        471,
+        965,
+        487
+      ],
+      "state": "unset; no fabricated percentage"
+    },
+    {
+      "title": "今日卡路里",
+      "bounds": [
+        113,
+        669,
+        965,
+        685
+      ],
+      "state": "unset; no fabricated percentage"
+    },
+    {
+      "title": "脂肪",
+      "bounds": [
+        113,
+        867,
+        965,
+        883
+      ],
+      "state": "unset; no fabricated percentage"
+    },
+    {
+      "title": "膳食纤维",
+      "bounds": [
+        113,
+        1065,
+        965,
+        1081
+      ],
+      "state": "unset; no fabricated percentage"
+    }
+  ],
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealPhotoAndDelete": true,
+    "source": "Android emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  },
+  "navigationOverlayBefore": [
+    "com.android.internal.systemui.navbar.gestural"
+  ],
+  "fixtureIsolation": "Only a fresh disposable emulator, explicit TEST labels, never production app data",
+  "visualFixtureAfterEmptyEvidence": true
+}

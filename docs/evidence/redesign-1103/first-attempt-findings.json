@@ -1,0 +1,20 @@
+[
+  {
+    "run": 41670643048,
+    "apkSource": "0a15da4485527eff0d7246abd410a2cd52364483",
+    "artifact": 13251525021,
+    "archiveSha256": "ce07e717b8b78ab9e8dd4bb45e804fb0262f8c66cb1709f03b8d9a283f9708a9",
+    "suite": "ui",
+    "result": "failed before first setup completed",
+    "fix": "f24716b waits for stable initial setup/home; 753f3e9 opens collapsed profile explicitly and splits suites"
+  },
+  {
+    "run": 41670643048,
+    "apkSource": "0a15da4485527eff0d7246abd410a2cd52364483",
+    "artifact": 13248886351,
+    "archiveSha256": "b94c50850c9341e5ab1910b0cdc212565bb047b6c417fc812e9aeba79b5da466",
+    "suite": "offline",
+    "result": "native duplicate header observed after setup plus obsolete expected barcode fallback text",
+    "fix": "753f3e9 keeps one concrete native header parent; f24716b updates exact fallback selector"
+  }
+]

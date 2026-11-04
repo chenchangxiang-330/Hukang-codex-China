@@ -1,0 +1,74 @@
+{
+  "version": "0.5.5",
+  "certificateSha256": "ae5c1982ee6f8d7df5e6ea80bf18aa8e9823e05d85abda05808426076313816e",
+  "compared": [
+    {
+      "version": "0.5.4",
+      "certificateSha256": "d9691a6376d8c5d1a2b4cadc0b47d2b772ed604f4e1d177c3fcdf0b44f9f749e",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/local-verification.json"
+    },
+    {
+      "version": "0.5.3",
+      "certificateSha256": "0474c6effedb050f7be3cbfe98275a39cc7974a31bf605453e3b923ad0597487",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/ui-simplification-053/android/local-verification.json"
+    },
+    {
+      "version": "delivered-0.5.3-code14",
+      "certificateSha256": "0474c6effedb050f7be3cbfe98275a39cc7974a31bf605453e3b923ad0597487",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "delivered-0.5.2-code13",
+      "certificateSha256": "22e093da8f0f0fdc4786febbbf897c60b75a5b8fa265e687461bf1d9703fa7b4",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "initialUiV2",
+      "certificateSha256": "74ccdd3963aef944eaf3abeb537b92a03631b2cf576d4a58a9f69f3b68b8d793",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "dateFixUiV2",
+      "certificateSha256": "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "firstKeyboardFixUiV2",
+      "certificateSha256": "f06b1be00adf386ebb872b892bc34be91637ec2ce42966ac392300d7f2c5ae62",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "previousUiV1",
+      "certificateSha256": "4a168283c32a524592c95e16bd6907c31c986c0605941760a71689db8ca317f5",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "delivered-0.4.0-code9",
+      "certificateSha256": "faf03098fa58b411d9f678e8b88acdf1fd03be626c9ce510f174cb130300c70a",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "delivered-0.4.1-code10",
+      "certificateSha256": "dc046c6ff30bb7223175d4f40a4ae23244a103cf621e43ae3f8cadf6a7d9cc9e",
+      "signatureMatches": false,
+      "evidence": "docs/evidence/redesign-1103/android/signing-comparison.json"
+    },
+    {
+      "version": "0.5.5-candidate-43ca507",
+      "certificateSha256": "7a38468df8e760ddace87a8bdbb2cd3c6b4a3db4ef81c0d3ed99943fa5b0477f",
+      "signatureMatches": false,
+      "evidence": "initial-findings.json and locally verified candidate APK"
+    }
+  ],
+  "physicalPhoneCertificateRead": false,
+  "uninstallOrDataResetUsed": false
+}

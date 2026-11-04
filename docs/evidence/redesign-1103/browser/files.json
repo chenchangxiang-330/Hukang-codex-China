@@ -1,0 +1,83 @@
+[
+  {
+    "file": "browser-home-empty.png",
+    "sha256": "40f5b1b2fdab68168c695a97f2867b38dcaeeb72e8706fda975225763463b5af",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-nutrition-minerals.png",
+    "sha256": "b7fe270f1948b17151579f1db5f8c3b6c037bb615219e979691bac3a04b8b825",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-two-entries.png",
+    "sha256": "b3df8ca58f967bb6d530f63d0ed7c24a40a2fbc7f0d7481e63d4cf1ea7daf83b",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-meal-photo-required.png",
+    "sha256": "5744f3c8f83294856663ff50abaabe019acc52d022a322fefedd08579255af2a",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-portion-preview.png",
+    "sha256": "095562c155ed67024f34db8a9325b39dc7a32dbc13edfe2e0a02c58d6fe43fe0",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-320-protein-partial.png",
+    "sha256": "e12bf91ff02b042f4c97337904c62e206cd35c1ce1fa9f88671ddfb04027b3c4",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-target-draft.png",
+    "sha256": "72a926db5153c13b7288698a594557a7d6ffcf815df9c1b1b9b8df7a8cf8c87b",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "browser-saved-connection.png",
+    "sha256": "b3d9ce0a77e07412c2bc2cc3215acd81d0ce2bc64e4374e7a3ad7f13bb8f937a",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  },
+  {
+    "file": "review.png",
+    "sha256": "a784565186bfff6c92b3c0e851f672086bbeb8051862db3754b9dd7cdd38f97b",
+    "kind": "browser shared React Native components",
+    "mockedNativeDevice": true,
+    "productionRecords": false,
+    "checkRun": 41684237283,
+    "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa"
+  }
+]

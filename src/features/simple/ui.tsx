@@ -101,6 +101,8 @@ export function Field({
         }
         autoCorrect={!secureTextEntry}
         secureTextEntry={secureTextEntry}
+        autoComplete={secureTextEntry ? "off" : undefined}
+        importantForAutofill={secureTextEntry ? "no" : "auto"}
         editable={editable}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -147,6 +149,7 @@ export function Choices({
           accessibilityLabel={
             accessibilityPrefix ? `${accessibilityPrefix} ${label}` : label
           }
+          aria-checked={value === key}
           onPress={() => onChange(key)}
           style={({ pressed }) => [
             S.chip,
@@ -177,6 +180,7 @@ export function Check({
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked: value }}
+      aria-checked={value}
       onPress={() => onChange(!value)}
       style={({ pressed }) => [S.checkRow, pressed && S.controlPressed]}
     >
@@ -230,7 +234,7 @@ export const S = StyleSheet.create({
     height: 34,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#DCEBDF",
+    borderColor: "#DCEBF5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -239,11 +243,11 @@ export const S = StyleSheet.create({
     height: 15,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#DCEBDF",
+    borderColor: "#DCEBF5",
   },
   heroArrow: { color: C.white, fontSize: 26 },
   heroTitle: { ...tokens.type.display, color: C.white },
-  heroNote: { ...tokens.type.body, color: "#EDF5EE" },
+  heroNote: { ...tokens.type.body, color: "#EDF5FA" },
   heroBottom: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -252,7 +256,7 @@ export const S = StyleSheet.create({
     paddingTop: tokens.space.lg,
     marginTop: tokens.space.xs,
     borderTopWidth: 1,
-    borderTopColor: "#72917E",
+    borderTopColor: "#7291AB",
   },
   stats: {
     flexDirection: "row",
@@ -392,8 +396,8 @@ export const S = StyleSheet.create({
     borderColor: "transparent",
   },
   buttonPressed: { backgroundColor: C.brandPressed },
-  secondary: { backgroundColor: C.pale, borderColor: "#D8E5D9" },
-  secondaryPressed: { backgroundColor: "#D4E5D7" },
+  secondary: { backgroundColor: C.pale, borderColor: "#D8E5EF" },
+  secondaryPressed: { backgroundColor: "#D4E5F2" },
   buttonText: {
     fontSize: 16,
     lineHeight: 24,
@@ -418,7 +422,7 @@ export const S = StyleSheet.create({
     color: C.ink,
     backgroundColor: C.white,
   },
-  inputFocused: { borderColor: C.teal, backgroundColor: "#FCFEFC" },
+  inputFocused: { borderColor: C.teal, backgroundColor: "#FCFEFF" },
   inputError: { borderColor: C.red },
   fieldError: { ...tokens.type.caption, color: C.red },
   wrap: {
@@ -487,7 +491,7 @@ export const S = StyleSheet.create({
   },
   scanner: {
     height: 330,
-    backgroundColor: "#172C23",
+    backgroundColor: "#213C50",
     borderRadius: tokens.radius.lg,
     overflow: "hidden",
     alignItems: "stretch",
@@ -500,7 +504,7 @@ export const S = StyleSheet.create({
     top: 105,
     height: 115,
     borderWidth: 2,
-    borderColor: "#E2F1E1",
+    borderColor: "#E2F1FA",
     borderRadius: tokens.radius.sm,
   },
   photo: {

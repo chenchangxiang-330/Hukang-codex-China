@@ -1,0 +1,43 @@
+{
+  "run": 41197435291,
+  "job": 124526341108,
+  "artifact": 13041631417,
+  "zipSha256": "1878a59a6208a60dce520a5a52b0680e73662cfff1cb32235168171dafc2959f",
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
+  "status": "failed",
+  "cause": "Initial UIAutomator hierarchy read was not valid XML; five later groups including all three keyboard repetitions passed. Bounded fresh-dump retry added; same APK replay.",
+  "runtimeChangeRequired": false,
+  "keyboardRepeats": [
+    {
+      "inputBounds": [
+        55,
+        671,
+        1025,
+        982
+      ],
+      "keyboardTop": 1092,
+      "fullyAboveKeyboard": true
+    },
+    {
+      "inputBounds": [
+        55,
+        671,
+        1025,
+        982
+      ],
+      "keyboardTop": 1092,
+      "fullyAboveKeyboard": true
+    },
+    {
+      "inputBounds": [
+        55,
+        671,
+        1025,
+        982
+      ],
+      "keyboardTop": 1092,
+      "fullyAboveKeyboard": true
+    }
+  ]
+}

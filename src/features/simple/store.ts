@@ -7,6 +7,7 @@ import { parseQuantity, validateExpiry } from '../../domain/inventory/rules';
 import { persistCapturedFood } from './captureRecovery';
 export interface CaptureDraft {
   id: string; barcode: ValidatedBarcode; acquiredBy: BarcodeAcquisitionMethod;
+  packageAi?: { name: string; brand: string; model: string; uncertainties: readonly string[]; originalCandidates: readonly {name: string; brand: string}[]; editedByUser: boolean; imageHash?: string };
   step: 'package' | 'nutrition' | 'review'; name: string; brand: string; specification?: string;
   packageImage?: ImageAsset; packageOcr?: OcrEvidence; nutritionImage?: ImageAsset; nutrition?: OcrEvidence; review?: FoodReviewValues;
 }
@@ -56,6 +57,7 @@ export async function finishFood(record: FoodScanRecord, draft: CaptureDraft): P
   await draftWrites;
   await (await db()).withExclusiveTransactionAsync(async transaction => {
     if (draft.packageImage) await transaction.runAsync('INSERT INTO simple_product_photos(food_id,json,ocr_json) VALUES(?,?,?) ON CONFLICT(food_id) DO UPDATE SET json=excluded.json,ocr_json=excluded.ocr_json', saved.id, JSON.stringify(draft.packageImage), draft.packageOcr ? JSON.stringify(draft.packageOcr) : null);
+    if (draft.packageAi) await transaction.runAsync('INSERT INTO simple_package_hints(food_id,json) VALUES(?,?) ON CONFLICT(food_id) DO UPDATE SET json=excluded.json', saved.id, JSON.stringify(draft.packageAi));
     await transaction.runAsync('DELETE FROM simple_capture_drafts WHERE id=?', draft.id);
     if (draft.barcode.lookupKey) await transaction.runAsync('DELETE FROM food_identity_pending WHERE lookup_key=?', draft.barcode.lookupKey);
   });
@@ -63,7 +65,8 @@ export async function finishFood(record: FoodScanRecord, draft: CaptureDraft): P
   return saved;
 }
 export async function listStock(): Promise<StockEntry[]> {
-  return (await db()).getAllAsync<StockEntry>('SELECT i.*,f.name,f.brand FROM simple_inventory i JOIN foods f ON f.id=i.food_id ORDER BY i.created_at DESC,i.id');
+  return (await db()).getAllAsync<StockEntry>(`SELECT i.*,f.name,f.brand FROM simple_inventory i JOIN foods f ON f.id=i.food_id
+  UNION ALL SELECT i.*,json_extract(c.json,'$.name') AS name,'' AS brand FROM nutrition_stock i JOIN nutrition_catalogue c ON c.food_id=i.food_id ORDER BY created_at DESC,id`);
 }
 export async function addStock(foodId: string, quantityText: string, unit: string, expiry: string, requestId: string): Promise<void> {
   const quantity = parseQuantity(quantityText), expires = validateExpiry(expiry);
@@ -75,10 +78,11 @@ export async function addStock(foodId: string, quantityText: string, unit: strin
 export async function reduceStock(id: string): Promise<void> {
   await (await db()).withExclusiveTransactionAsync(async transaction => {
     await transaction.runAsync('UPDATE simple_inventory SET quantity=quantity-1 WHERE id=? AND quantity>1', id);
+    await transaction.runAsync('UPDATE nutrition_stock SET quantity=quantity-1 WHERE id=? AND quantity>1', id);
   });
 }
 export async function removeStock(id: string): Promise<void> {
-  await (await db()).runAsync('DELETE FROM simple_inventory WHERE id=?', id);
+  await (await db()).withExclusiveTransactionAsync(async tx=>{await tx.runAsync('DELETE FROM simple_inventory WHERE id=?',id);await tx.runAsync('DELETE FROM nutrition_stock WHERE id=?',id);});
 }
 export async function deleteProduct(id: string): Promise<void> {
   const exists = await (await db()).getFirstAsync('SELECT id FROM simple_inventory WHERE food_id=? LIMIT 1', id);
@@ -88,4 +92,11 @@ export async function deleteProduct(id: string): Promise<void> {
 export async function draftForBarcode(key: string): Promise<CaptureDraft | null> {
   const rows = await (await db()).getAllAsync<{ json: string }>('SELECT json FROM simple_capture_drafts ORDER BY updated_at DESC');
   return rows.map(r => JSON.parse(r.json) as CaptureDraft).find(d => d.barcode.lookupKey === key) ?? null;
+}
+
+export async function addCatalogueStock(foodId:string,quantityText:string,unit:string,expiry:string,requestId:string){
+  const quantity=parseQuantity(quantityText),expires=validateExpiry(expiry);
+  if(!['份','件','瓶','盒','袋','罐','包','个'].includes(unit))throw Error('请选择库存单位。');
+  const database=await db();if(!await database.getFirstAsync('SELECT food_id FROM nutrition_catalogue WHERE food_id=?',foodId))throw Error('请先保存食品资料。');
+  await database.runAsync('INSERT INTO nutrition_stock(id,food_id,quantity,unit,expires_on,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING',requestId,foodId,quantity,unit,expires,new Date().toISOString());
 }

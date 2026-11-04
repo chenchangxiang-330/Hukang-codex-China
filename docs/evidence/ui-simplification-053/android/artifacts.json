@@ -1,0 +1,76 @@
+{
+  "apkRuntimeCommit": "328a2dca96d3df104ec484522ea686e63b88e39c",
+  "apkSha256": "2fb4689cd26d404f59294176c6fa5840ff83368f84a847b50c1d9bcd1888872e",
+  "artifacts": [
+    {
+      "id": 13132665038,
+      "name": "simple-device-41424250653-offline-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 19089141,
+      "sha256": "f06009566cfbb96991c4b98ba7b79bc9375d870e782b2f63d4d574b7f6d4cd45",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T10:06:33Z"
+    },
+    {
+      "id": 13132043603,
+      "name": "simple-device-41424250653-ui-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 17451683,
+      "sha256": "b9539cc854362482ad5670d2fabe06e4ba2bb46f8c7a6f91f74b63295fa76d3c",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T10:10:49Z"
+    },
+    {
+      "id": 13131756446,
+      "name": "simple-device-41424250653-image-large-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 22529975,
+      "sha256": "6b291e88081ce8e17bfee0892a7cc63336bfd8cadd4097a9a3b183503d74aee8",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T09:57:56Z"
+    },
+    {
+      "id": 13131641578,
+      "name": "simple-device-41424250653-image-transparent-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 19806403,
+      "sha256": "b849e9c9b267c25138a62fdf7aa56c204cca0a9fafb881b3a398992d888c5624",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T09:55:57Z"
+    },
+    {
+      "id": 13131481428,
+      "name": "simple-device-41424250653-image-oversize-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 1565784,
+      "sha256": "a8fb54bffebbfbc9c970fcfe607b82a1e355625bd92a8293c21e9700d03b0bf4",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T09:56:24Z"
+    },
+    {
+      "id": 13131301674,
+      "name": "simple-device-41424250653-image-gif-attempt-1",
+      "runId": 41424250653,
+      "testCommit": "ccde792be991cf134954c1000471b1c4a41905ef",
+      "bytes": 1572746,
+      "sha256": "deaabfe108f31cfa5e23d914e6a86ffbd349eafb762a16b784903c61ab16fb3e",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T09:56:08Z"
+    },
+    {
+      "id": 13133296400,
+      "name": "simple-device-41427435706-flows-attempt-1",
+      "runId": 41427435706,
+      "testCommit": "d6c65398db241ae1592c4bc94af96665d140a634",
+      "bytes": 8087242,
+      "sha256": "d3e0eb28c1029bb7c48ab7de27d1703440740a8959772f0c0d39e724539670fb",
+      "entireArchiveVerified": true,
+      "expiresAt": "2026-11-16T10:25:52Z"
+    }
+  ]
+}

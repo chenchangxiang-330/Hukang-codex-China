@@ -1,0 +1,20 @@
+{
+  "artifactId": 13048116010,
+  "buildRun": 41214772131,
+  "method": "HTTPS byte ranges of exact APK ZIP entry",
+  "zipCrcVerified": true,
+  "apkSha256": "d232217607b5a27342d489fe3180a7ec1233980cb8e6858938c8a591ca5fae7e",
+  "apkBytes": 60959617,
+  "matchesCiInspection": true,
+  "fullArchiveShaVerified": false,
+  "sourceCommit": "58e8070c7e38b4893f8d346eb70d768000798a8d",
+  "actualV2CertificateSha256": [
+    "dc046c6ff30bb7223175d4f40a4ae23244a103cf621e43ae3f8cadf6a7d9cc9e"
+  ],
+  "certificateReadFromDownloadedApk": true,
+  "matchesCiApksigner": true,
+  "privateSigningMaterialAccessed": false,
+  "v3BlockPresent": false,
+  "v31BlockPresent": false,
+  "signingMode": "ephemeral-test; cannot promise an in-place update of previous installs"
+}

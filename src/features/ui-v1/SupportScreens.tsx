@@ -47,7 +47,7 @@ export function SupportScreens({ screen }: { screen: "profile" | "about" }) {
         <Text style={styles.title}>护康 Hukang</Text>
         <Text style={S.note}>把每一份安心，留在身边。</Text>
         <StatusPill
-          label={`版本 ${Constants.expoConfig?.version ?? "开发版"} · UI V1`}
+          label={`版本 ${Constants.expoConfig?.version ?? "开发版"} · UI V2`}
           tone="neutral"
         />
       </View>
@@ -68,8 +68,8 @@ export function SupportScreens({ screen }: { screen: "profile" | "about" }) {
           模型在设备上运行。原始识别结果与人工修改分开保留；导出文件由你选择接收方。
         </Text>
         <Text style={S.small}>
-          饮食记录暂为明确标识的交互演示。AI
-          服务未连接，不提供自动分析结果或医疗建议。
+          饮食记录与个人目标保存在本机。配置服务后可主动进行 AI
+          餐食估算或包装辅助识别，可能产生服务商费用；结果需人工核对，确认后才保存饮食，不提供医疗诊断。
         </Text>
       </Surface>
     </>

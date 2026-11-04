@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { SimpleAppView } from "../../src/features/simple/SimpleApp";
+import { DemoNutritionAdapter } from "./nutrition-demo";
 import { setPreviewStore } from "./store-shim";
 import { normalizeBarcode } from "../../src/domain/barcode/normalize";
 
@@ -150,6 +151,17 @@ function makeDraft(step = "package") {
   };
 }
 function Preview() {
+  const [nutritionAdapter] = useState(() =>
+    [
+      "demo",
+      "exceeded",
+      "nutrition-empty",
+      "failure",
+      "loading-nutrition",
+    ].includes(scenario) || scenario.startsWith("protein-")
+      ? new DemoNutritionAdapter("2026-10-26", scenario)
+      : undefined,
+  );
   const initialScreen = [
     "scan",
     "denied",
@@ -287,10 +299,10 @@ function Preview() {
       setProduct(found);
       navigate("product");
     } else {
-      const d = makeDraft();
+      const d = makeDraft("nutrition");
       d.barcode = { ...barcode, scan: { ...barcode.scan, rawValue: raw } };
       setDraft(d);
-      navigate("package");
+      navigate("nutrition");
     }
   }
   async function capture(which: string) {
@@ -502,6 +514,11 @@ function Preview() {
       nativeCalls: 0,
     };
   }, [screen, tab, records, stock]);
-  return <SimpleAppView controller={p} />;
+  return (
+    <SimpleAppView
+      controller={p}
+      {...(nutritionAdapter ? { nutritionAdapter } : {})}
+    />
+  );
 }
 createRoot(document.getElementById("root")!).render(<Preview />);

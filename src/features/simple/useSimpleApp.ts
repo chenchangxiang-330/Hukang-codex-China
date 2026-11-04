@@ -41,7 +41,7 @@ export function useSimpleApp() {
   const running = useRef(false), generation = useRef(0), mounted = useRef(true), draftRef = useRef<CaptureDraft | null>(null);
   const refresh = useCallback(async () => {
     const [f, s, d] = await Promise.all([chinaFoodRepository.listFoods(), listStock(), lastDraft()]);
-    const covers = await Promise.all([...new Set(s.map(item => item.food_id))].map(async id => [id, (await getPackage(id))?.uri] as const));
+    const covers = await Promise.all([...new Set([...s.map(item => item.food_id),...f.map(item=>item.id)])].map(async id => [id, (await getPackage(id))?.uri] as const));
     if (mounted.current) { setFoods(f); setStock(s); setResume(d); setStockCovers(Object.fromEntries(covers.filter((entry): entry is readonly [string, string] => !!entry[1]))); }
   }, []);
   useEffect(() => {
@@ -101,8 +101,8 @@ export function useSimpleApp() {
         if (token !== generation.current) return;
         setProduct(found.record); setCover(image?.uri ?? null); navigate('product'); return;
       }
-      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'package', name: '', brand: '', specification: '' };
-      await retainDraft(next); setReview(null); setConfirmed(false); navigate('package');
+      const next: CaptureDraft = { id: newId('food'), barcode: validated, acquiredBy: source, step: 'nutrition', name: '', brand: '', specification: '' };
+      await retainDraft(next); setReview(null); setConfirmed(false); navigate('nutrition');
     });
   };
   async function startScan() {
@@ -223,12 +223,12 @@ export function useSimpleApp() {
       };
       await retainDraft({ ...current, review: checked });
       const saved = await finishFood(record, current);
-      setProduct(saved); setCover(current.packageImage?.uri ?? saved.evidence.image.uri); setDraft(null); draftRef.current = null; setReview(null); await refresh(); navigate('product'); setNotice('食品资料已保存。下次扫描同一条码会直接找到它。');
+      setProduct(saved); setCover(current.packageImage?.uri ?? null); setDraft(null); draftRef.current = null; setReview(null); await refresh(); navigate('product'); setNotice('食品资料已保存。下次扫描同一条码会直接找到它。');
     });
   }
   function showStock() { setQuantity('1'); setUnit('件'); setExpiry(''); setRequest(newId('stock')); navigate('add-stock'); }
   function exportData(kind: 'catalogue' | 'personal') {
-    Alert.alert(kind === 'catalogue' ? '导出食品资料包' : '导出个人数据', kind === 'catalogue' ? `仅导出已确认商品的名称、条码和营养资料，不含个人库存和购买时间。${photos ? '包含包装和营养表照片；分享前请确认照片没有人物或私人信息。' : '本次不包含照片。'}` : `包含食品、库存数量、到期日、草稿、OCR 原文、初始解析和修订记录。${photos ? '附带原始照片，可能包含定位等私人信息。' : '本次不包含照片。'}仅分享给你信任的人。当前可导出，尚不支持 App 内一键恢复。`, [
+    Alert.alert(kind === 'catalogue' ? '导出食品资料包' : '导出个人数据', kind === 'catalogue' ? `仅导出已确认商品的名称、条码和营养资料，不含个人库存和购买时间。${photos ? '包含包装和营养表照片；分享前请确认照片没有人物或私人信息。' : '本次不包含照片。'}` : `包含饮食记录、个人目标、食品、库存数量、到期日、草稿、OCR 原文、初始解析和修订记录。${photos ? '附带原始照片，可能包含定位等私人信息。' : '本次不包含照片。'}仅分享给你信任的人。当前可导出，尚不支持 App 内一键恢复。`, [
       { text: '取消', style: 'cancel' }, { text: '生成文件', onPress: () => void task('正在生成本地导出文件', async () => { const file = await exportLocal(kind, photos); setNotice(`已生成 ZIP（${(file.bytes / 1048576).toFixed(1)} MB），可通过系统分享保存或发送。`); }) }
     ]);
   }

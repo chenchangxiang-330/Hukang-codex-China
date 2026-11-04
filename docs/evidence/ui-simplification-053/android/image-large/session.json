@@ -1,0 +1,73 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 1,
+  "checks": [
+    {
+      "name": "local-upload-images",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "2fb4689cd26d404f59294176c6fa5840ff83368f84a847b50c1d9bcd1888872e",
+  "sourceCommit": "328a2dca96d3df104ec484522ea686e63b88e39c",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "fixtureMediaRows": [
+    "Row: 0 _id=1000000020, _display_name=02-ai-large.jpg, _size=18621507, bucket_display_name=HukangAi02"
+  ],
+  "ownedMediaFixtures": [
+    {
+      "id": "1000000020",
+      "path": "/sdcard/Pictures/HukangAi02/02-ai-large.jpg",
+      "file": "02-ai-large.jpg",
+      "bytes": 18621507,
+      "onlyMediaStoreImage": true
+    }
+  ],
+  "dietPhotoExport": {
+    "realNativeZip": true,
+    "dietOnlyWithoutProducts": true,
+    "retainedImageHashMatches": true,
+    "portablePaths": true,
+    "sha256": "e9f09d685ddaee53eedd44bc965107c00e97bb6aa3e34717eb4fb886503cdc60"
+  },
+  "savedPhotoLifecycle": {
+    "separatePersistentCopy": true,
+    "copyHashMatches": true,
+    "recordDeletionRemovesOnlyOwnedPhoto": true
+  },
+  "localUploadImages": {
+    "nativeAndroidProcessing": true,
+    "inputs": [
+      {
+        "source": "02-ai-large",
+        "sourceBytes": 18621507,
+        "originalSha256": "bc4c6bd0aef20c6a7d45af6650addbcfa363e4e61b47aa79df74e0bbedc77d9b",
+        "originalUnchanged": true,
+        "size": [
+          1500,
+          2000
+        ],
+        "bytes": 1774859,
+        "exifRemoved": true,
+        "sha256": "e5b482a196952d6e71565fa20dce66d78cba9d4c4c1c202dcfa6af72d46c621b"
+      }
+    ],
+    "originalsUnchanged": true,
+    "explicitlyClearedCopyRemoved": true,
+    "networkRequests": 0
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "base": "0f72fa36d50d22819ca34f23ec010f3a47cefcc9",
+  "branch": "codex/nutrition-ui-v2",
+  "protectedPaths": [
+    "src/domain",
+    "src/application",
+    "src/infrastructure",
+    "modules",
+    "android",
+    "app.json",
+    "src/features/simple/useSimpleApp.ts",
+    "src/features/simple/store.ts",
+    "src/features/simple/Export.ts",
+    "models",
+    "assets/icon.png"
+  ],
+  "modifiedProtectedPaths": [],
+  "iconSha256": "d02fb58e0b5cf4617cf84f61a26e9d7dc5419a224e5ab12b173d096bea5ff4c2",
+  "referenceHtmlSha256": "a8b32dd12c05c9d8c07d7f1df7036007d2b61dc8c2a2e9633a626b843dcb6453",
+  "nativeDeviceExecuted": false
+}

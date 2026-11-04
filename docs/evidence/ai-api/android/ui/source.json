@@ -1,0 +1,116 @@
+{
+  "run": 41215968187,
+  "job": 124580441391,
+  "artifact": 13048278422,
+  "artifactSha256": "c2fc8b4d06a5419c6a58d6e2264b4982067dc07f275f356c784c7c43e82a4d45",
+  "platform": "Android 15 API 35 emulator with ARM64 translation",
+  "nativeScreenshots": true,
+  "edited": false,
+  "fullScreenshotCount": 43,
+  "selectedFiles": [
+    {
+      "file": "android-ai-native-network-failure.png",
+      "sha256": "130075d573ead1af9309adfadd87b999f8a3dfbfe099f2ef8f1dbadf1fb4bfb1"
+    },
+    {
+      "file": "android-ai-native-network-failure.xml",
+      "sha256": "99ed9bf290faab4089a29dcc98a082f7e8f52f8d15393c3880fee989134e8460"
+    },
+    {
+      "file": "android-ai-cleared.png",
+      "sha256": "8b764d377dfc1549ee5dc32216d07a230d138ebe0a01adb3be2632e54cc55eb8"
+    },
+    {
+      "file": "android-ai-cleared.xml",
+      "sha256": "d2bbf7cedffa126ea7e236647d0863665a8ff5825f8b6c1744cd36f77c2c092b"
+    },
+    {
+      "file": "android-ai-clear-prevents-meal-call.png",
+      "sha256": "f5b2f3ff2ac200b7833c5eb47fd3b4389df56b9e011dd2b3e0d54ffa9d5b1eee"
+    },
+    {
+      "file": "android-ai-clear-prevents-meal-call.xml",
+      "sha256": "6684284835c3709b7cc4717c61f882492f62d540ee9e074dfc11c1ed2592eed0"
+    },
+    {
+      "file": "android-today-390-empty.png",
+      "sha256": "bc852663d701eb8a295b1e2061a8cc2512c43d131e411d9577ecad350229c4e7"
+    },
+    {
+      "file": "android-today-390-empty.xml",
+      "sha256": "9bb61fcc4311ba44cd97927a8146d6bb72704d7d9dba2752ac7fc097bf70839b"
+    },
+    {
+      "file": "android-diary-390-empty.png",
+      "sha256": "07abe69daf6b2cb1e7532b8c789ac58557fed995b771c7abf13f796eab6aea70"
+    },
+    {
+      "file": "android-diary-390-empty.xml",
+      "sha256": "83ac753dbd87aa0f64a80fdeabd9a25cf343331ea086804ddd1adffb63fa6b9c"
+    },
+    {
+      "file": "android-nutrition-390-empty.png",
+      "sha256": "0a999fc2a8a42c28e1c34db9595c84b49f5d97b0e240491512a55d552a0f20a0"
+    },
+    {
+      "file": "android-nutrition-390-empty.xml",
+      "sha256": "e4178ab7ce4916edba2f83faa45c3a5814b14ed4d63a2516bedf34425ff96d34"
+    },
+    {
+      "file": "android-today-320-font150-empty.png",
+      "sha256": "82dab40f1d7ebf2470c84e1dcebac4718357051517909fd4825da8cf6e6c9e43"
+    },
+    {
+      "file": "android-today-320-font150-empty.xml",
+      "sha256": "d599141114c2616c5a57d07f14058745fceeba244ea94467dd9b588bfe5a0cb5"
+    },
+    {
+      "file": "android-diary-320-font150-empty.png",
+      "sha256": "f07686d47e6eb66665ffebe2470cd5cb70a348d621cbf99d5a2e0ce13d9cdec6"
+    },
+    {
+      "file": "android-diary-320-font150-empty.xml",
+      "sha256": "9b301fcdf78eab6defb4cc2b864912eddb6d35dfb7f1c13f844ae1a65c4baed1"
+    },
+    {
+      "file": "android-nutrition-320-font150-empty.png",
+      "sha256": "d6365915d10fe815f2db6f997e57a2f3466c2ece87b8bf1cc9a071184ea833d4"
+    },
+    {
+      "file": "android-nutrition-320-font150-empty.xml",
+      "sha256": "c9f9db0409a305e5877875b6385662608ea9fff5c89edee99cc4b76fa0701992"
+    },
+    {
+      "file": "android-capture-keyboard.png",
+      "sha256": "e2ea13ad8a06a967d5e04360033610eee2beb256f1225d7d67ceb6b9fdc90568"
+    },
+    {
+      "file": "android-capture-keyboard.xml",
+      "sha256": "1e62d83b03300a3f26521e7d2a49bb9e8e019a80fe41531672b36957eb45b919"
+    },
+    {
+      "file": "android-captured-meal-original-photo.png",
+      "sha256": "664dd346152592552ce6378d2d810154bcf59b156d6a09e2f1615df7bd1ed5ed"
+    },
+    {
+      "file": "android-captured-meal-original-photo.xml",
+      "sha256": "b43c926b19c3337ba4cf1ae39b0c7acb5f5c201b9364997413a7d7f083e39b63"
+    },
+    {
+      "file": "android-captured-package-original-photo.png",
+      "sha256": "55f7582dc94e32e2404142576bef34112072dff7363066a4ddacce75ea299a2d"
+    },
+    {
+      "file": "android-captured-package-original-photo.xml",
+      "sha256": "7559cd1e550a1880527e5c637cdfe9e8b1fba3ed79e77502eb45583d3d72936a"
+    },
+    {
+      "file": "android-camera-permission-denied.png",
+      "sha256": "3e77a1af6aeacd8c66e2fbe107219077f7ca7342882989a4300e31796dad8800"
+    },
+    {
+      "file": "android-camera-permission-denied.xml",
+      "sha256": "c635823aff7dac0d81b203a55429542458f3bc43bdc9546f790eeefa6822fa0a"
+    }
+  ]
+}

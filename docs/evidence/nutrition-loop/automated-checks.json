@@ -1,0 +1,55 @@
+{
+  "runtimeSource": "3940c6daa284951511d1c8074c044aa5d58c2114",
+  "testSource": "3940c6daa284951511d1c8074c044aa5d58c2114",
+  "checkRun": 41299814392,
+  "node": {
+    "passed": 124,
+    "failed": 0
+  },
+  "python": {
+    "passed": 29,
+    "failed": 0
+  },
+  "browser": {
+    "legacyUi": 34,
+    "nutritionUi": 25,
+    "aiGroups": 7,
+    "mockRequests": 10,
+    "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+    "checkRun": 41299814392,
+    "artifact": 13079989696,
+    "archiveSha256": "1323e2f5e0c397da04856c2a9da15ae4966914df6af3d6941aeb98d6b7199946"
+  },
+  "liveProviderTested": false,
+  "nativeImageDecodingMockedInBrowser": true,
+  "apkBuildNodeTests": 124,
+  "nativeUnitTests": {
+    "task": ":hukang-barcode:testReleaseUnitTest",
+    "status": "passed",
+    "buildRun": 41299810218,
+    "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+    "regressions": [
+      "barcode decoder",
+      "retained diet photo export path",
+      "ZIP traversal rejection"
+    ]
+  },
+  "nativeAcceptance": {
+    "run": 41300861910,
+    "apkBuildRun": 41299810218,
+    "sourceCommit": "3940c6daa284951511d1c8074c044aa5d58c2114",
+    "apkSha256": "90c0a148842a76861b65941401d5a9e3dc2a40b6e9fd2e7b95b8270c851f15ca",
+    "platform": "Android API 35 emulator, x86_64 with ARM64 translation",
+    "physicalDevice": false,
+    "suites": {
+      "ui": "passed",
+      "offline": "passed",
+      "image-large": "passed",
+      "image-transparent": "passed",
+      "image-gif": "passed",
+      "image-oversize": "passed"
+    },
+    "uiChecks": 8,
+    "offlineFlows": 14
+  }
+}

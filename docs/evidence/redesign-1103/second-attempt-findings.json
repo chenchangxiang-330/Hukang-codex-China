@@ -1,0 +1,34 @@
+{
+  "run": 41678244698,
+  "apkSource": "753f3e911a5a1094be07bf632ca6def530fe8664",
+  "apkSha256": "3eb442c923affb6671fa12b5fe73c3d5de065adb13f5287b6410a347da74c194",
+  "status": "partial; not overall acceptance",
+  "passed": [
+    "four-metrics-navigation",
+    "profile-goal-confirmation",
+    "secure-connection-storage",
+    "small-large-keyboard",
+    "gesture-safe-area",
+    "image-large",
+    "image-transparent",
+    "image-gif",
+    "image-oversize"
+  ],
+  "findings": [
+    {
+      "case": "camera-permission-and-recovery",
+      "reason": "Test attempted to click intentionally disabled estimate button with no API configured. Actual permission denial/grant and virtual-scene capture completed.",
+      "fix": "329dc94 asserts disabled state and its visible explanation, then completes delete/barcode/back."
+    },
+    {
+      "case": "deterministic-intake-stock",
+      "reason": "Confirmed 54.25 g display rounded to 54.3 g; totals lie above portion buttons so test also needed to return to them. No intake had been confirmed.",
+      "fix": "329dc94 preserves two decimals for confirmed totals and repositions test before checking preview."
+    },
+    {
+      "case": "offline",
+      "reason": "After filling newly required identity fields, image adjustment control was above the current viewport. Barcode and actual offline OCR reached the review page. Later save/stock/export not yet exercised.",
+      "fix": "329dc94 returns to image controls before rotation and crop."
+    }
+  ]
+}

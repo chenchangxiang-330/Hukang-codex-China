@@ -117,7 +117,7 @@ const evidenceFiles: FoodEvidenceFiles = {
   },
 };
 
-function sqlDriver(database: SQLiteDatabase): FoodSqlDriver {
+export function sqlDriver(database: SQLiteDatabase): FoodSqlDriver {
   return {
     async exec(sql) { await database.execAsync(sql); },
     async run(sql, ...values: SqlValue[]) { await database.runAsync(sql, ...values); },

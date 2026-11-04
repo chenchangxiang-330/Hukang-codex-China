@@ -1,0 +1,472 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "navigation-empty",
+      "status": "passed"
+    },
+    {
+      "name": "nutrition-accordions-date",
+      "status": "passed"
+    },
+    {
+      "name": "small-screen-system-font",
+      "status": "passed"
+    },
+    {
+      "name": "gesture-safe-area",
+      "status": "passed"
+    },
+    {
+      "name": "keyboard-state",
+      "status": "passed"
+    },
+    {
+      "name": "camera-permissions",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
+  "sourceCommit": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "dockBounds": [
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          92,
+          1573,
+          317,
+          1776
+        ],
+        [
+          316,
+          1573,
+          540,
+          1776
+        ],
+        [
+          541,
+          1573,
+          765,
+          1776
+        ],
+        [
+          765,
+          1573,
+          990,
+          1776
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          92,
+          1573,
+          317,
+          1776
+        ],
+        [
+          316,
+          1573,
+          540,
+          1776
+        ],
+        [
+          541,
+          1573,
+          765,
+          1776
+        ],
+        [
+          765,
+          1573,
+          990,
+          1776
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          74,
+          1630,
+          306,
+          1801
+        ],
+        [
+          307,
+          1630,
+          540,
+          1801
+        ],
+        [
+          540,
+          1630,
+          773,
+          1801
+        ],
+        [
+          772,
+          1630,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          74,
+          1630,
+          306,
+          1801
+        ],
+        [
+          307,
+          1630,
+          540,
+          1801
+        ],
+        [
+          540,
+          1630,
+          773,
+          1801
+        ],
+        [
+          772,
+          1630,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          92,
+          1567,
+          317,
+          1775
+        ],
+        [
+          316,
+          1567,
+          540,
+          1775
+        ],
+        [
+          541,
+          1567,
+          765,
+          1775
+        ],
+        [
+          765,
+          1567,
+          990,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          92,
+          1567,
+          317,
+          1775
+        ],
+        [
+          316,
+          1567,
+          540,
+          1775
+        ],
+        [
+          541,
+          1567,
+          765,
+          1775
+        ],
+        [
+          765,
+          1567,
+          990,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          74,
+          1635,
+          306,
+          1801
+        ],
+        [
+          307,
+          1635,
+          540,
+          1801
+        ],
+        [
+          540,
+          1635,
+          773,
+          1801
+        ],
+        [
+          772,
+          1635,
+          1004,
+          1801
+        ]
+      ]
+    }
+  ],
+  "selectedDateNavigation": {
+    "before": "2026-10-31",
+    "after": "2026-10-30"
+  },
+  "dateNavigationBounds": [
+    {
+      "logicalWidth": 320,
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          68,
+          359,
+          378,
+          527
+        ],
+        [
+          703,
+          359,
+          1014,
+          527
+        ]
+      ]
+    },
+    {
+      "logicalWidth": 390,
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          55,
+          390,
+          529,
+          539
+        ],
+        [
+          551,
+          390,
+          1025,
+          539
+        ]
+      ]
+    },
+    {
+      "logicalWidth": 320,
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          68,
+          476,
+          527,
+          656
+        ],
+        [
+          554,
+          476,
+          1013,
+          656
+        ]
+      ]
+    }
+  ],
+  "navigationOverlayBefore": [
+    "com.android.internal.systemui.navbar.gestural"
+  ],
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealAndPackagePhotos": true,
+    "source": "Android system camera / emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  }
+}

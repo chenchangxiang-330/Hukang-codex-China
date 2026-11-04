@@ -1,7 +1,7 @@
 name: Hukang simple app APK
 on:
   push:
-    branches: [main, codex/ui-v1]
+    branches: [main, codex/ui-v1, codex/nutrition-ui-v2]
     paths: ['src/**', 'modules/**', 'android/**', 'plugins/**', 'scripts/**', 'package*.json', 'app.json', '.delivery/**', '.github/workflows/simple-app-release.yml']
   workflow_dispatch:
 concurrency:
@@ -27,6 +27,9 @@ jobs:
           test -z "$(git status --porcelain)"
           mkdir -p artifacts
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          app_version="$(node -p 'require("./app.json").expo.version')"
+          [[ "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "version=$app_version" >> "$GITHUB_OUTPUT"
           git rev-parse HEAD > artifacts/source-commit.txt
           git archive --format=tar.gz HEAD > artifacts/source.tar.gz
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -90,7 +93,7 @@ jobs:
             echo 'Signing configuration is incomplete; refusing to substitute a new signature.' >&2
             exit 1
           else
-            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang 0.4.0 Test, OU=Local App, O=Hukang, C=CN'
+            keytool -genkeypair -noprompt -storetype JKS -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 90 -dname 'CN=Hukang Test, OU=Local App, O=Hukang, C=CN'
             echo 'ephemeral-test; cannot promise an in-place update of previous installs' > artifacts/signing-mode.txt
           fi
       - name: Build actual ARM64 release
@@ -98,6 +101,11 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew :app:assembleRelease --no-daemon --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs='-Xmx4g -XX:MaxMetaspaceSize=1g' 2>&1 | tee ../artifacts/gradle-release.log
+      - name: Build isolated secure-storage instrumentation probe
+        working-directory: android
+        run: |
+          ./gradlew :app:assembleReleaseAndroidTest --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a
+          cp app/build/outputs/apk/androidTest/release/app-release-androidTest.apk ../artifacts/secure-storage-probe.apk
       - name: Exercise native barcode decoder with synthetic images
         working-directory: android
         run: ./gradlew :hukang-barcode:testReleaseUnitTest --no-daemon --max-workers=2
@@ -110,12 +118,15 @@ jobs:
             echo 'Forbidden production recognition or Google service dependency' >&2
             exit 1
           fi
-      - name: Verify APK identity, offline permissions, model hashes and signature
+      - name: Verify APK identity, explicit AI network policy, model hashes and signature
+        env:
+          APK_VERSION: ${{ steps.source.outputs.version }}
         run: |
           set -euo pipefail
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/hukang-0.4.0-arm64.apk
-          python scripts/verify-apk.py artifacts/hukang-0.4.0-arm64.apk --output artifacts/apk-inspection.json
-          sha256sum artifacts/hukang-0.4.0-arm64.apk > artifacts/apk-sha256.txt
+          apk_path="artifacts/hukang-$APK_VERSION-arm64.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk_path"
+          python scripts/verify-apk.py "$apk_path" --output artifacts/apk-inspection.json
+          sha256sum "$apk_path" > artifacts/apk-sha256.txt
       - name: Publish small build inspection evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -136,7 +147,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: hukang-0.4.0-${{ steps.source.outputs.sha }}
+          name: hukang-${{ steps.source.outputs.version }}-${{ steps.source.outputs.sha }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 14

@@ -1,0 +1,32 @@
+{
+  "typecheck": "passed",
+  "nodeTests": {
+    "passed": 87,
+    "failed": 0
+  },
+  "pythonTests": {
+    "passed": 28,
+    "failed": 0
+  },
+  "browserChecks": {
+    "existing": 34,
+    "nutritionV2": 25,
+    "screenshots": 44
+  },
+  "sourceFilesMatchBrowserReport": true,
+  "appSourceSha256": "9c1741bb07eebcfb153fd36ecc200af3bf97373371297b747106937ede631237",
+  "nativeVerification": {
+    "runUrls": {
+      "ui": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41198423881/job/124529197841",
+      "offline": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41197876666/job/124527620082"
+    },
+    "uiChecks": 6,
+    "status": "passed",
+    "screenshots": 55,
+    "descriptionKeyboardRepeats": 3,
+    "formInputVisibilityChecks": 17,
+    "sameApkReinstallAllTablesPreserved": true
+  },
+  "browserIsNotNativeAcceptance": true,
+  "sourceCommit": "aae421f0dc80635450b98206c9575dffaf7a82f7"
+}
