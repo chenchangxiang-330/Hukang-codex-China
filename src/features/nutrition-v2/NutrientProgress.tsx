@@ -14,11 +14,13 @@ export function NutrientProgress({
   total: t,
   policy: p,
   compact = false,
+  showTargetHint = false,
 }: {
   title: string;
   total: Total;
   policy?: TargetPolicy | undefined;
   compact?: boolean;
+  showTargetHint?: boolean;
 }) {
   const s = nutrientProgress(t, p),
     reduced = useReducedMotion();
@@ -43,7 +45,7 @@ export function NutrientProgress({
   }, [fraction, reduced, fill]);
   return (
     <View
-      style={{ gap: 5, paddingVertical: compact ? 2 : 8 }}
+      style={{ gap: compact ? 3 : 5, paddingVertical: compact ? 0 : 8 }}
       testID={`nutrient-${title}`}
     >
       <View
@@ -61,6 +63,7 @@ export function NutrientProgress({
       </View>
       <Text style={N.caption}>
         {reference}
+        {!p && showTargetHint ? " · 我的 → 个人参考目标" : ""}
         {t.count && (t.missing || t.estimated || t.value === null)
           ? ` · ${s.status}`
           : ""}

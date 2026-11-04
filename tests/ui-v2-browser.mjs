@@ -95,7 +95,19 @@ try {
     await expect(page.getByTestId(`nutrient-fill-${k}`)).toHaveCount(0);
   }
   await expect(page.getByRole("progressbar")).toHaveCount(0);
-  await expect(page.getByText("目标设置：我的 → 个人参考目标")).toBeVisible();
+  await expect(
+    page.getByText("未设置目标 · 我的 → 个人参考目标"),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 693 });
+  const mainAction = await button("拍一拍").boundingBox(),
+    dockTab = await tab("今日").boundingBox();
+  expect(mainAction.height).toBeGreaterThanOrEqual(48);
+  expect(mainAction.y + mainAction.height).toBeLessThan(dockTab.y - 8);
+  await shot("browser-390-short-primary-visible");
+  report.checks.push(
+    "390dp short viewport: main action remains above Dock without smaller text or controls",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
   await expect(button("个人参考目标")).toHaveCount(0);
   await shot("browser-home-empty");
   await button("查看完整营养").click();

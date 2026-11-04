@@ -290,6 +290,9 @@ def select_isolated_fixture(stem):
 
 def home_and_navigation():
     configure()
+    action=bounds(require('^拍一拍$',attribute='content-desc'));dock_top=bounds(require('^今日$',attribute='content-desc'))[1]
+    assert action[3] < dock_top and action[3]-action[1] >= 48*(443/160), ('Primary action covered by Dock',action,dock_top)
+    report['primaryActionBounds']={'bounds':action,'dockTop':dock_top,'unobscured':True}
     require('护康 · 今天'); require('今天还没有记录', True)
     for _ in range(5): swipe(True)
     dock(); shot('android-today-empty')
@@ -357,17 +360,32 @@ def small_large_keyboard():
     configure(320,'1.5');dock();shot('android-320-font150-empty');tap('^查看完整营养$',True);require('^营养详情$');shot('android-320-font150-nutrition');tap('^返回$',attribute='content-desc');tap('^拍一拍$',True);tap('^餐食估算$',attribute='content-desc');tap('^餐食补充描述$',True,'content-desc');time.sleep(1)
     node=require('^餐食补充描述$',attribute='content-desc');top=keyboard_top(shell('dumpsys','window'));assert top and bounds(node)[3]<=top;shot('android-320-font150-keyboard');shell('input','text','optional%stext');shell('input','keyevent','KEYCODE_BACK');tap('^返回$',attribute='content-desc');tap('^餐食估算$',attribute='content-desc');assert require('^餐食补充描述$',True,'content-desc').get('text')=='optional text';configure()
 
-def seed_food():
+def seed_food(visual=False):
     # Fixture goes only into this newly created, disposable emulator. No fixture ships in the APK.
     from datetime import datetime
     c=diet_db('fixture-source');today=shell('date','+%F');now=now_iso='2026-11-03T00:00:00Z'
     fact=lambda v,u='g':{'value':v,'unit':u,'status':'confirmed','source':'ISOLATED TEST FIXTURE'}
     food={'id':'isolated-pack','version':'test-v1','kind':'meal','name':'TEST reusable meal','source':'ISOLATED TEST FIXTURE','basis':{'amount':1,'unit':'份'},'nutrients':{'energy':fact(100,'kcal'),'protein':fact(8.5),'fat':fact(3),'fiber':fact(1)}}
     prior={'id':'isolated-prior','date':today,'meal':'breakfast','consumedTime':'08:30','timezone':'UTC','amount':1,'unit':'份','confirmedAt':now,'food':{**food,'id':'prior-food','name':'TEST prior meal','nutrients':{'protein':fact(50),'energy':fact(400,'kcal')}}}
+    if visual:
+        assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0, 'Only append visual fixture after empty UI evidence'
+        prior['food']['nutrients'].update(fat=fact(20),fiber=fact(12.5))
+        common={'source':'ISOLATED TEST FIXTURE','basis':'UI rendering only','applicability':'Disposable emulator only','profileRevision':0,'manual':True}
+        policies={k:{**common,'unit':u,**p} for k,u,p in [('protein','g',{'type':'target','value':100}),('energy','kcal',{'type':'range','range':[1600,2000]}),('fat','g',{'type':'range','range':[40,70]}),('fiber','g',{'type':'target','value':25})]}
+        c.execute('INSERT INTO nutrition_settings(id,targets_json) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET targets_json=excluded.targets_json',(json.dumps({'policies':policies}),))
     c.execute('INSERT INTO nutrition_catalogue(food_id,json,asset_id) VALUES(?,?,NULL)',(food['id'],json.dumps(food)));c.execute('INSERT INTO nutrition_entries VALUES(?,?,?,?,?,?)',(prior['id'],today,prior['meal'],json.dumps(prior),now,now));c.execute('INSERT INTO nutrition_operations VALUES(?,?,?)',(prior['id'],prior['id'],now));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
     paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines();assert len(paths)==1
     for suffix in ('-wal','-shm'):shell('rm','-f',paths[0]+suffix)
     adb('push',str(OUT/'fixture-source.db'),paths[0]);shell('chmod','666',paths[0]);report['fixtureIsolation']='Only a fresh disposable emulator, explicit TEST labels, never production app data';launch();return today
+
+def known_progress():
+    configure();seed_food(visual=True)
+    for title in ['蛋白质','今日卡路里','脂肪','膳食纤维']:
+        node=require('^'+title+'营养条，已确认记录，',attribute='content-desc')
+        assert '暂不计算进度' not in node.get('content-desc','')
+    require('50 g');require('目标 100 g');require('12.5 g')
+    action=bounds(require('^拍一拍$',attribute='content-desc'));assert action[3] < bounds(require('^今日$',attribute='content-desc'))[1]
+    shot('android-four-progress-isolated');report['nutritionRecordsInserted']=1;report['visualFixtureAfterEmptyEvidence']=True
 
 def preview_amount(value):
     # Portion buttons follow the totals. Revisit the top of the prediction.
@@ -431,6 +449,7 @@ try:
     assert 'Success' in report['install']
     suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
     cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
+    if suite=='ui':cases.append(('four-known-progress-isolated',known_progress))
     if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
     if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:

@@ -80,6 +80,8 @@ export function TodayScreen({
     ],
     ["时间未记录", entries.filter((e) => !e.consumedTime)],
   ] as const;
+  const metrics = ["protein", "energy", "fat", "fiber"] as const;
+  const firstUnset = metrics.find((k) => !policyFor(s.targets, k));
   return (
     <>
       <View style={V.brandRow}>
@@ -87,18 +89,16 @@ export function TodayScreen({
         <Text style={N.caption}>{dateLabel(date).replace(/^\d+年/, "")}</Text>
       </View>
       <Card>
-        {(["protein", "energy", "fat", "fiber"] as const).map((k) => (
+        {metrics.map((k) => (
           <NutrientProgress
             compact
             key={k}
             title={k === "energy" ? "今日卡路里" : nutrientInfo[k][0]}
             total={total(s.entries, date, k)}
             policy={policyFor(s.targets, k)}
+            showTargetHint={k === firstUnset}
           />
         ))}
-        {(["protein", "energy", "fat", "fiber"] as const).some(
-          (k) => !policyFor(s.targets, k),
-        ) && <Text style={N.caption}>目标设置：我的 → 个人参考目标</Text>}
         <Link title="查看完整营养" onPress={onNutrition} />
       </Card>
       <Action title="拍一拍" onPress={onCapture} />
