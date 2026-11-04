@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+  "version": "0.5.5",
+  "versionCode": 16,
+  "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+  "buildRun": 41756668066,
+  "buildArtifact": 13289605890,
+  "browser": {
+    "run": 41756674170,
+    "artifact": 13288507871,
+    "archiveSha256": "5313785bdc48c619d309c25d7f9b93898832ab94516a8ef3d5635ca9ed7f2417"
+  },
+  "nativeSuites": [
+    {
+      "name": "ui",
+      "run": 41758887353,
+      "artifact": 13290226858,
+      "archiveSha256": "a7f92f4398670739f0de78ccf594cae7ac2b324b1de9cba1812fec723b4c3e08"
+    }
+  ],
+  "nativeScreenshots": 9,
+  "browserScreenshots": 8,
+  "realProviderTested": false,
+  "physicalDeviceTested": false,
+  "modelInferenceTested": false
+}

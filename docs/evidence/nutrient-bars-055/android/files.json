@@ -1,0 +1,92 @@
+[
+  {
+    "file": "ui-android-today-empty.png",
+    "sha256": "7a37994f5570f10e7a83ce664a675d3885ba85ed50e7483c98f014272cc19db9",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-nutrition-empty.png",
+    "sha256": "abed57bdedeb098b47c097cb029cf5e439c91bced9d996c79cdc046a308f1a4c",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-mineral-detail.png",
+    "sha256": "b0a52048fdd8733059601dae26c34f1ed328f088214fe8afb30ac1d4db0c3e95",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-320-font150-empty.png",
+    "sha256": "f2d5a2ac83b9363e173f22e06afcba7cd10f0c2b6524fa2e3395e1236f51efff",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-320-font150-keyboard.png",
+    "sha256": "bd0c4f580b8ae05a50c909d198db18f414015ea27c0f38018a814e432729c3c0",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-today-gesture-safe-area.png",
+    "sha256": "7dc7511d518ec0d1c1e1adb6384821797794b7e25a250104b5cb305baa1fe3d8",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-four-progress-isolated.png",
+    "sha256": "236284ac14ed8b126a0fb4561eec67c3192068716ad1e4df7985e0f893cc6508",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": true,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-diary-empty.png",
+    "sha256": "d3ef9c80899545b4837690f546c27b73173af62fb3a332f8636f9b039718e7a3",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  },
+  {
+    "file": "ui-android-two-entries.png",
+    "sha256": "01b3a4fb5f782bd2e386d9a129a8f8b5280852820e080fdba7746f65267d8d0d",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "apkSha256": "5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36",
+    "platform": "Android API 35 emulator; not physical device",
+    "rawScreencap": true,
+    "isolatedFixture": false,
+    "productionRecords": false
+  }
+]

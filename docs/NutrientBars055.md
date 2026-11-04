@@ -27,4 +27,18 @@
 
 本机 TypeScript、格式、OCR 资产哈希、143 项 Node、29 项 Python 通过。浏览器共享 RN 渲染检查 18 项通过，新增覆盖空记录、未设目标、部分缺失、全部未知、估算范围、50/100、一项确认 0、超出目标与估算单值，以及 390dp 短屏主按钮边界；检查了底槽存在、正确填充宽度及未知状态无百分比。浏览器截图仅为预览，不能替代 Android。
 
-Android 同版安装、真实渲染与新包指纹将在实际构建和隔离模拟器验收后补充。现有 0.5.4 的截图和 APK 不作为 0.5.5 验收结果。保持草稿 PR，不合并、不正式发布。
+最终源码 `5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5` 的 [Android 构建 41756668066](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41756668066) 成功，同一 APK 在 [41758887353](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41758887353) 完成五项原生检查：四槽/导航、相机权限与恢复、小屏大字体/键盘、手势安全区、隔离数据下四条实际填充。首次空页不写记录；最后一项明确使用新建模拟器的 TEST 食品和目标。原生主按钮完整显示，高度约 50dp，底边在 Dock 上方；字体和点击面积未缩小。
+
+[9 张同版 Android 原始截图、8 张浏览器预览及验收报告](evidence/nutrient-bars-055/README.md)。现有 0.5.4 截图不作为最终包结果。初次候选的自动化通过但视觉缺陷仍保留在说明中，最终截图全部对应 `5da1f5f`。
+
+## 安装包
+
+[下载构建材料，解压获取 hukang-0.5.5-arm64.apk](https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/41756668066/artifacts/13289605890)。需要 GitHub 登录，保留至北京时间 2026-11-18 10:04:49。测试探针 `secure-storage-probe.apk` 不供用户安装。
+
+- 0.5.5 / versionCode 16，`com.hukang.china`，ARM64，Android API 26+；源码 `5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5`。
+- APK 61,088,169 字节，SHA-256：`5e0926951647d2224d04183860c0872c7f06e7eca9f32125e2fc4273f8828a36`。
+- 证书 SHA-256：`ae5c1982ee6f8d7df5e6ea80bf18aa8e9823e05d85abda05808426076313816e`。CI apksigner 与本机独立下载的完整 APK/证书校验一致。
+
+**不能覆盖已交付旧包，签名与 0.5.4、0.5.3、0.5.2 及前一候选不同。** 保留现有 App 和数据，使用未安装护康的独立测试设备。解压选择 App APK，允许该文件来源安装；系统拒绝覆盖时停止，不卸载、不清库、不改包名绕过。详见 [证书比对与安装说明](evidence/nutrient-bars-055/README.md)。没有实测用户手机证书或跨签名升级。
+
+保持草稿 PR，不合并、不正式发布。
