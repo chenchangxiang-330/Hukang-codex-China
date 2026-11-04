@@ -96,6 +96,9 @@ export function TodayScreen({
             policy={policyFor(s.targets, k)}
           />
         ))}
+        {(["protein", "energy", "fat", "fiber"] as const).some(
+          (k) => !policyFor(s.targets, k),
+        ) && <Text style={N.caption}>目标设置：我的 → 个人参考目标</Text>}
         <Link title="查看完整营养" onPress={onNutrition} />
       </Card>
       <Action title="拍一拍" onPress={onCapture} />

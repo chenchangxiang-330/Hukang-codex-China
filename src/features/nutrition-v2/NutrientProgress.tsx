@@ -21,19 +21,26 @@ export function NutrientProgress({
   compact?: boolean;
 }) {
   const s = nutrientProgress(t, p),
-    reduced = useReducedMotion(),
-    fill = useRef(new Animated.Value(s.fraction ?? 0)).current;
+    reduced = useReducedMotion();
   const rangeMax = p?.type === "range" ? p.range![1] * 1.25 : null;
+  const fraction =
+    s.fraction === null
+      ? null
+      : rangeMax
+        ? Math.min(1, t.value! / rangeMax)
+        : s.fraction;
+  const fill = useRef(new Animated.Value(fraction ?? 0)).current;
+  const reference = p ? policyLabel(p) : "未设置目标";
+  const progressText = `${title}营养条，${s.status}，${reference}${fraction === null ? "，暂不计算进度" : `，${formatTotal(t)} ${t.unit}`}`;
   useEffect(() => {
     const a = Animated.timing(fill, {
-      toValue:
-        s.fraction === null ? 0 : rangeMax ? t.value! / rangeMax : s.fraction,
+      toValue: fraction ?? 0,
       duration: reduced ? 0 : 240,
       useNativeDriver: false,
     });
     a.start();
     return () => a.stop();
-  }, [s.fraction, t.value, rangeMax, reduced]);
+  }, [fraction, reduced, fill]);
   return (
     <View
       style={{ gap: 5, paddingVertical: compact ? 2 : 8 }}
@@ -53,24 +60,28 @@ export function NutrientProgress({
         </Text>
       </View>
       <Text style={N.caption}>
-        {policyLabel(p)}
+        {reference}
         {t.count && (t.missing || t.estimated || t.value === null)
           ? ` · ${s.status}`
           : ""}
       </Text>
-      {s.fraction !== null && (
-        <View
-          style={[N.track, { height: 6 }]}
-          accessible
-          accessibilityRole="progressbar"
-          accessibilityValue={{
-            text: `${title}，${s.status}，${formatTotal(t)} ${t.unit}，${policyLabel(p)}`,
-          }}
-        >
+      <View
+        testID={`nutrient-track-${title}`}
+        style={[N.track, { height: 6 }]}
+        accessible
+        accessibilityRole={fraction === null ? "text" : "progressbar"}
+        accessibilityLabel={progressText}
+        accessibilityValue={
+          fraction === null ? undefined : { text: progressText }
+        }
+      >
+        {fraction !== null && (
           <Animated.View
+            testID={`nutrient-fill-${title}`}
             style={[
               N.fill,
               {
+                height: 6,
                 backgroundColor: colors.sky,
                 width: fill.interpolate({
                   inputRange: [0, 1],
@@ -80,22 +91,22 @@ export function NutrientProgress({
               },
             ]}
           />
-          {p?.type === "range" && (
-            <View
-              style={{
-                position: "absolute",
-                left: `${(p.range![0] / rangeMax!) * 100}%`,
-                width: `${((p.range![1] - p.range![0]) / rangeMax!) * 100}%`,
-                top: -3,
-                height: 12,
-                borderWidth: 1,
-                borderColor: colors.brand,
-                borderRadius: 3,
-              }}
-            />
-          )}
-        </View>
-      )}
+        )}
+        {fraction !== null && p?.type === "range" && (
+          <View
+            style={{
+              position: "absolute",
+              left: `${(p.range![0] / rangeMax!) * 100}%`,
+              width: `${((p.range![1] - p.range![0]) / rangeMax!) * 100}%`,
+              top: -3,
+              height: 12,
+              borderWidth: 1,
+              borderColor: colors.brand,
+              borderRadius: 3,
+            }}
+          />
+        )}
+      </View>
       {(s.excess !== null || (!compact && s.percent !== null)) && (
         <Text style={N.caption}>
           {s.excess !== null

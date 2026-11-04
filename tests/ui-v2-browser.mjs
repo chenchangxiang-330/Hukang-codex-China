@@ -89,8 +89,13 @@ async function unclipped(label) {
 try {
   await open();
   await expect(page.getByText(/2000 kcal|1285/)).toHaveCount(0);
-  for (const k of ["蛋白质", "今日卡路里", "脂肪", "膳食纤维"])
+  for (const k of ["蛋白质", "今日卡路里", "脂肪", "膳食纤维"]) {
     await expect(page.getByTestId(`nutrient-${k}`)).toBeVisible();
+    await expect(page.getByTestId(`nutrient-track-${k}`)).toBeVisible();
+    await expect(page.getByTestId(`nutrient-fill-${k}`)).toHaveCount(0);
+  }
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
+  await expect(page.getByText("目标设置：我的 → 个人参考目标")).toBeVisible();
   await expect(button("个人参考目标")).toHaveCount(0);
   await shot("browser-home-empty");
   await button("查看完整营养").click();
@@ -135,6 +140,44 @@ try {
   report.checks.push(
     "Four ordered metrics, true empty data, two entry paths, photo required, one text box and retained draft",
   );
+  for (const [scenario, expectedFill, label] of [
+    ["nutrition-empty", null, "尚未记录"],
+    ["protein-unset", null, "未设置目标"],
+    ["protein-partial", null, "已知小计 · 数据不完整"],
+    ["protein-unknown", null, "未知"],
+    ["protein-range", null, "40–60"],
+    ["protein-confirmed", 0.5, "50"],
+    ["protein-zero", 0, "0"],
+    ["protein-exceeded", 1, "超出目标 20 g"],
+    ["protein-estimated", 0.5, "约 50"],
+  ]) {
+    await open(scenario);
+    const row = page.getByTestId("nutrient-蛋白质"),
+      track = page.getByTestId("nutrient-track-蛋白质"),
+      fill = page.getByTestId("nutrient-fill-蛋白质");
+    await expect(track).toBeVisible();
+    await expect(row).toContainText(label);
+    if (expectedFill === null) {
+      await expect(fill).toHaveCount(0);
+      await expect(track).not.toHaveAttribute("role", "progressbar");
+      await expect(track).toHaveAttribute("aria-label", /暂不计算进度/);
+      await expect(row).not.toContainText(/\d+%/);
+    } else {
+      await expect(track).toHaveAttribute("role", "progressbar");
+      await expect(fill).toHaveCount(1);
+      await expect
+        .poll(async () =>
+          fill.evaluate(
+            (el) =>
+              el.getBoundingClientRect().width /
+              el.parentElement.getBoundingClientRect().width,
+          ),
+        )
+        .toBeCloseTo(expectedFill, 2);
+    }
+    await shot(`browser-progress-${scenario}`);
+    report.checks.push(`Nutrition tracks remain visible: ${scenario}`);
+  }
   await open("demo");
   await tab("记录").click();
   await button("查看食物 纯牛奶").click();

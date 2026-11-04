@@ -163,10 +163,20 @@ export class DemoNutritionAdapter implements NutritionAdapter {
             ? null
             : scenario === "protein-exceeded"
               ? 120
-              : 50,
+              : scenario === "protein-zero"
+                ? 0
+                : 50,
       });
       if (scenario === "protein-estimated")
         food.nutrients.protein!.status = "estimated";
+      if (scenario === "protein-range")
+        food.nutrients.protein = {
+          value: null,
+          range: [40, 60],
+          unit: "g",
+          status: "estimated",
+          source: "隔离测试范围估算",
+        };
       this.snapshot = {
         status: "ready",
         targets: scenario === "protein-unset" ? {} : { protein: 100 },
@@ -181,7 +191,7 @@ export class DemoNutritionAdapter implements NutritionAdapter {
           },
         ],
       };
-      if (scenario === "protein-missing")
+      if (["protein-missing", "protein-partial"].includes(scenario))
         this.snapshot.entries.push({
           id: "unknown",
           date,
