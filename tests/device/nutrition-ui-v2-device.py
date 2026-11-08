@@ -296,12 +296,19 @@ def home_and_navigation():
     require('护康 · 今天'); require('今天还没有记录', True)
     for _ in range(5): swipe(True)
     dock(); shot('android-today-empty')
+    from PIL import Image
+    empty_pixels=Image.open(OUT/'android-today-empty.png').convert('RGB')
     tracks = []
     for title in ['蛋白质', '今日卡路里', '脂肪', '膳食纤维']:
-        n = require('^' + title + '营养条，—，未设目标，暂不计算进度$', attribute='content-desc')
+        # Android combines the accessible label and value text. Locate the
+        # stable native testID, then verify state and actual empty-track pixels.
+        n = require('^nutrient-track-' + title + '$', attribute='resource-id')
+        assert n.get('content-desc','').startswith(title+'营养条，—，未设目标，暂不计算进度')
         b = bounds(n)
         assert b[2] - b[0] > 300 and b[3] > b[1], b
-        tracks.append({'title': title, 'bounds': b, 'state': 'unset; no fabricated percentage'})
+        colors=[empty_pixels.getpixel((round(b[0]+(b[2]-b[0])*f),(b[1]+b[3])//2)) for f in (.2,.5,.8)]
+        assert colors[0]==colors[1]==colors[2], ('Empty track must not claim filled intake',title,colors)
+        tracks.append({'title': title, 'bounds': b, 'state': 'unset; no fabricated percentage','pixels':colors})
     report['emptyNutrientTracks'] = tracks
     for label,title in [('记录','饮食记录'),('食品库','我的食品库'),('我的','个人参考目标')]:
         tap('^'+label+'$', attribute='content-desc');require(title,True);dock();shot('android-'+{'记录':'diary','食品库':'library','我的':'mine'}[label]+'-empty')
