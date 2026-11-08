@@ -23,6 +23,7 @@ function LabelCapture(p: AppController & { onAiSettings?: () => void }) {
   const draft = p.draft!,
     review = p.review;
   const image = draft.nutritionImage ?? draft.nutrition?.image;
+  const resultImage = draft.nutrition?.image;
   const settings = p.onAiSettings ?? (() => p.navigate("ai-settings"));
   if (p.screen === "package")
     return (
@@ -271,9 +272,9 @@ function LabelCapture(p: AppController & { onAiSettings?: () => void }) {
         secondary
         onPress={() => setPhoto(!photo)}
       />
-      {photo && image && (
+      {photo && resultImage && (
         <Image
-          source={{ uri: image.uri }}
+          source={{ uri: resultImage.uri }}
           style={S.photo}
           resizeMode="contain"
           accessibilityLabel="营养成分表原图"

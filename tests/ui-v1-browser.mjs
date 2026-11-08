@@ -151,6 +151,14 @@ try {
     );
     await screen(scenario);
   }
+  await open("review");
+  await page.getByRole("button", { name: "查看原表", exact: true }).click();
+  await expect(
+    page.getByRole("img", { name: "营养成分表原图" }),
+  ).toHaveAttribute("src", /\/assets\/archived-milk\.jpg$/);
+  report.checks.push(
+    "Review keeps the result's source photo after an unrecognized retake",
+  );
   await open();
   await page.getByRole("tab", { name: "记录", exact: true }).click();
   await expect(

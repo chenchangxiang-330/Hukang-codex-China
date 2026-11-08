@@ -146,7 +146,11 @@ function makeDraft(step = "package") {
     specification: reviewValue.specification,
     ...(step === "package" ? {} : { packageImage: image }),
     ...(step === "review"
-      ? { nutrition: evidence, review: clone(reviewValue) }
+      ? {
+          nutrition: evidence,
+          nutritionImage: { ...image, uri: image.uri + "?unrecognized-retake" },
+          review: clone(reviewValue),
+        }
       : {}),
   };
 }
