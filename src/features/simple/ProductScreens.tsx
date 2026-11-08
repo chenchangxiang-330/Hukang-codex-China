@@ -85,7 +85,13 @@ export function ProductScreens(p: AppController & { onIntake?: () => void }) {
             />
             <View style={S.wrap}>
               <StatusPill
-                label={product.status === "confirmed" ? "已人工核对" : "待确认"}
+                label={
+                  product.status === "confirmed"
+                    ? "已人工核对"
+                    : product.review.inputMethod === "api_label"
+                      ? "—"
+                      : "待确认"
+                }
                 tone={product.status === "confirmed" ? "brand" : "warning"}
               />
               <Text style={S.small}>资料保存在这台设备</Text>
@@ -150,7 +156,10 @@ export function ProductScreens(p: AppController & { onIntake?: () => void }) {
                     <Text style={[S.small, productStyle.nrvCell]}>NRV%</Text>
                   </View>
                   {column.rows.map((row) => (
-                    <View style={productStyle.tableRow} key={row.nutrient}>
+                    <View
+                      style={productStyle.tableRow}
+                      key={`${row.nutrient}:${row.label}`}
+                    >
                       <Text style={[S.label, productStyle.labelCell]}>
                         {row.label}
                       </Text>
@@ -163,7 +172,9 @@ export function ProductScreens(p: AppController & { onIntake?: () => void }) {
                           ? `${row.nrvPercent}%`
                           : row.nrvNotDeclared
                             ? "未标注"
-                            : "待确认"}
+                            : product.review.inputMethod === "api_label"
+                              ? "—"
+                              : "待确认"}
                       </Text>
                     </View>
                   ))}

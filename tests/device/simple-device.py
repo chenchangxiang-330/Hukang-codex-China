@@ -113,7 +113,7 @@ def unit_for(label,unit):
  raise RuntimeError('Unit control not found for '+label)
 def photo(button,stem):
  def selected():
-  expected='重新拍包装' if button=='从相册选择包装' else '最后，核对一下' if button=='从相册选择营养表' else r'(?:再)?拍营养成分表|(?:护康\s*›\s*)?商品详情'
+  expected='重新拍包装' if button=='从相册选择包装' else '前往 AI 设置' if button=='从相册选择营养表' else r'(?:再)?拍营养成分表|(?:护康\s*›\s*)?商品详情'
   deadline=time.monotonic()+(300 if button=='从相册选择营养表' else 45);previous=None
   while time.monotonic()<deadline:
    root=tree();nodes=list(root.iter('node'))
@@ -274,37 +274,32 @@ try:
  # Unknown barcode continues directly to nutrition label, not a front-photo lookup.
 
  c=database('pending-draft');pending=json.loads(c.execute('SELECT json FROM simple_capture_drafts').fetchone()[0]);assert not pending['name'] and not pending['specification'];assert pending['step']=='nutrition';assert pending['barcode']['scan']['rawValue']=='6923644266066';assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==0;c.close()
- report['pendingDraftId']=pending['id'];launch();tap('^继续上次未完成的录入$',True);shot('draft-resumed')
- before=native_runs();photo('从相册选择营养表','01-milk');wait_native(before);field('商品名称','Test Milk');field('品牌（选填）','Test Brand');field('整包净含量 / 规格（选填）','250 mL')
- original_native=native_snapshot('native-before-image-adjustment')[-1];shot('ocr-review-before-corrections');transform_photo(original_native)
- native_snapshot('native-before-manual-review');tap('^每100mL$',True)
- expected=[('能量','309','kJ','4'),('蛋白质','3.6','g','6'),('脂肪','4.4','g','7'),('碳水化合物','5.0','g','2'),('钠','58','mg','3')]
- report['manualReviewExpected']=expected
- for label,amount,unit,nrv in expected:
-  field(label+'含量',amount);field(label+' NRV%',nrv)
-  if label=='钠':unit_for(label,'g');report['manualUnitCorrection']={'nutrient':'钠','from':'g','to':'mg','reason':'deliberately selected wrong unit in UI, then corrected; not claimed as an OCR error'}
-  unit_for(label,unit)
- tap('我已对照照片',True);shot('review');tap('^确认并保存食品$',True);tap('^加入我的库存$',True);field('本次购入数量','2');tap('^瓶$',True);tap('^确认加入库存$',True);shot('inventory')
+ report['pendingDraftId']=pending['id']
+ # Reopening starts fresh, while staying in this capture permits selecting a photo.
+ launch();open_scanner();photo('从相册识别条码','00-barcode');photo('从相册选择营养表','01-milk');tap('^前往 AI 设置$',True);shot('label-no-api-settings');tap('^返回$',True)
+ c=database('api-fixture-source');pending=json.loads(c.execute('SELECT json FROM simple_capture_drafts ORDER BY updated_at DESC LIMIT 1').fetchone()[0]);assert pending['nutritionImage'];assert c.execute('SELECT count(*) FROM foods').fetchone()[0]==0
+ from label_fixture import seed_saved_label
+ paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines();assert len(paths)==1
+ seed_saved_label(c,pending,O,shell,run,paths[0]);report['labelApiBoundary']='API result fixture seeded only in disposable emulator; real HTTPS image transport tested separately; provider not tested'
+ launch();tap('^食品库$');tap('^食品筛选：包装食品$',True);tap('^TEST API Milk$',True);tap('^核对或修改商品资料$',True)
+ shot('android-api-label-table-MOCK');tap('^修改蛋白质 ',True);field('蛋白质数值','3.60');shot('android-api-label-edit-MOCK');tap('已核对营养表与计量基准',True);tap('^保存修改$',True);tap('^加入我的库存$',True);field('本次购入数量','2');tap('^瓶$',True);tap('^确认加入库存$',True);shot('inventory')
  c=database('after-stock');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT SUM(quantity) FROM simple_inventory').fetchone()[0]==2
- report['savedProduct']=dict(zip([x[0] for x in c.execute('SELECT * FROM foods').description],c.execute('SELECT * FROM foods').fetchone()))
- saved_review=json.loads(report['savedProduct']['review_json']);assert report['savedProduct']['id']==pending['id'];assert saved_review['specification']=='250 mL';assert len(saved_review['columns'])==1
- saved_column=saved_review['columns'][0];assert saved_column['basisKind']=='per_100ml';assert [(r['label'],r['amount'],r['unit'],r['nrvPercent']) for r in saved_column['rows']]==expected
- evidence_before=c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone();persisted=json.loads(evidence_before[1]);assert persisted['ocr']['rawText'];assert c.execute('SELECT COUNT(*) FROM simple_capture_drafts').fetchone()[0]==0
- assert persisted['image']['sourceImageHash']==original_native['sourceImageHash']
+ saved_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert saved_review['columns'][0]['rows'][1]['amount']=='3.60';assert saved_review['columns'][0]['rows'][-1]['amount']==''
+ evidence_before=c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone();persisted=json.loads(evidence_before[1]);assert persisted['ocr']['api']['model']=='ISOLATED MOCK RESULT';assert c.execute('SELECT COUNT(*) FROM simple_capture_drafts').fetchone()[0]==0
  for uri_key,hash_key,file_name in [('originalUri','sourceImageHash','saved-original.source'),('uri','processedImageHash','saved-processed.png')]:
   payload=run(['exec-out','cat',unquote(urlparse(persisted['image'][uri_key]).path)]);assert hashlib.sha256(payload).hexdigest()==persisted['image'][hash_key];(O/file_name).write_bytes(payload)
  assert c.execute('SELECT raw_value,acquired_by FROM food_barcodes').fetchone()==('6923644266066','image');c.close()
  launch();before=native_runs();open_scanner();photo('从相册识别条码','00-barcode');tap('^加入我的库存$',True);assert before==native_runs();field('本次购入数量','1');tap('^瓶$',True);tap('^确认加入库存$',True)
  c=database('two-purchases');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*),SUM(quantity) FROM simple_inventory').fetchone()==(2,3);c.close();report['twoPurchases']={'foodCount':1,'purchaseRows':2,'totalPackages':3};launch();tap('^食品库$');tap('^我的库存$')
  tap('^用掉1瓶$',True);tap('^用掉1瓶$',True);shot('inventory-reduced')
- tap('^食品资料$',True);tap('^食品筛选：包装食品$',True);tap('^Test Milk$',True);tap('^核对或修改商品资料$',True);field('整包净含量 / 规格（选填）','250 mL checked');field('蛋白质含量','3.60');tap('我已对照照片',True);tap('^确认并保存食品$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
+ tap('^食品资料$',True);tap('^食品筛选：包装食品$',True);tap('^TEST API Milk$',True);tap('^核对或修改商品资料$',True);tap('^修改蛋白质 ',True);field('蛋白质数值','3.80');tap('已核对营养表与计量基准',True);tap('^保存修改$',True);shot('edited-product');tap('^暂不入库，返回首页$',True)
  tap('^我的$');tap('^数据导出$',True);data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue');assert len(data['products'])==1 and 'inventory' not in data;assert not assets
  tap('.*',True,'android.widget.Switch');switch=find('.*','android.widget.Switch');assert switch and switch[0].get('checked')=='true'
  data,assets=export_archive('导出食品资料包','hukang-food-catalogue','actual-catalogue-with-photos');assert len(data['products'])==1 and 'inventory' not in data;assert data['photosIncluded'] is True and data['photoMetadataRemoved'] is True;assert len(assets)==1 and assets[0]['path'].endswith('-nutrition.jpg')
  data,assets=export_archive('导出个人数据（含库存）','hukang-personal-export','actual-personal-with-photos');assert len(data['products'])==1 and len(data['inventory'])==1 and data['inventory'][0]['quantity']==1
  assert any(a['path'].startswith('photos/') for a in assets);assert any(a['path'].endswith('/current-ocr.json') for a in assets);assert any(a['path'].endswith('/revisions.json') for a in assets)
  c=database('final');assert c.execute('SELECT COUNT(*) FROM foods').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM simple_inventory').fetchone()[0]==1;assert c.execute('SELECT SUM(quantity) FROM simple_inventory').fetchone()[0]==1
- final_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert final_review['specification']=='250 mL checked';assert next(r for r in final_review['columns'][0]['rows'] if r['nutrient']=='protein')['amount']=='3.60';assert c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone()==evidence_before
+ final_review=json.loads(c.execute('SELECT review_json FROM foods').fetchone()[0]);assert final_review['specification']=='250 mL';assert next(r for r in final_review['columns'][0]['rows'] if r['nutrient']=='protein')['amount']=='3.80';assert c.execute('SELECT source_evidence_json,persisted_evidence_json,parsed_json FROM food_evidence').fetchone()==evidence_before
  assert c.execute('SELECT COUNT(*) FROM food_revisions').fetchone()[0]>=2;assert c.execute('SELECT COUNT(*) FROM food_barcodes').fetchone()[0]==1
  before_reinstall='\n'.join(c.iterdump());c.close()
  # A same-binary update checks install -r data retention in this emulator. It
@@ -329,10 +324,8 @@ try:
  c=database('migration-v7-result');assert c.execute('PRAGMA user_version').fetchone()[0]==8
  for t in original_tables:assert c.execute('SELECT * FROM '+t).fetchall()==originals[t],t
  c.close();report['v6Migration']={'disposableEmulatorOnly':True,'allExistingTablesPreserved':True,'versionAfter':8,'oldSignatureUpgrade':False}
- report['verifiedFlow']=['imageBarcodeDecode','draftResumeAfterForceStop','realPackagingPhotoLocalOcr','rotateAndCropThenLocalOcr','allFiveManualValuesUnitsNrvAndBasisPersisted','wrongUnitSelectedThenCorrected','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','editDecimalPreservesOcrAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']
- for filename,measurement in report['nativeOcrMeasurements'].items():
-  payload=run(['exec-out','cat',f'/data/user/0/{PKG}/files/ocr-lab/runs/{filename}']);assert hashlib.sha256(payload).hexdigest()==measurement['sha256'],'Native OCR evidence changed after review'
- run(['pull',f'/data/user/0/{PKG}/files/ocr-lab/runs',str(O/'native-ocr')]);report['status']='passed';report['deviceExecutionVerified']=True
+ report['verifiedFlow']=['imageBarcodeDecode','freshCaptureDiscardsOldDraft','photoPreparedWithoutApiDoesNotSaveFood','isolatedApiTableEditAndSave','unknownSodiumNotZero','imageRescanHitsWithoutOcr','separateInventoryPurchases','consumeAndRemoveInventory','manualEditPreservesApiEvidenceAndRevisions','catalogueExportExcludesInventory','cataloguePhotoExportHasNoExif','personalExportContainsPhotosAndHashedEvidence','exportsPreserveOriginalImageBytes']
+ report['status']='passed';report['deviceExecutionVerified']=True
 except Exception as e:
  report['status']='failed';report['error']=repr(e)
  try:shot('failure')

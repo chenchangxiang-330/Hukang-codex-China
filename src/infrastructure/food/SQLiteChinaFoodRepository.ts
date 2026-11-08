@@ -25,7 +25,7 @@ function evidenceDirectory(id: string, expectedUri?: string): Directory {
   if (expectedUri === undefined || expectedUri === root.uri) return root;
   // Versioned evidence is stored below this record-owned directory. Never
   // accept an arbitrary path from SQLite or a caller.
-  if (!expectedUri.startsWith(`${root.uri}/`)) {
+  if (!expectedUri.startsWith(`${root.uri.replace(/\/$/, '')}/`)) {
     throw new Error('证据目录不属于此食品记录，拒绝读取或删除其他文件。');
   }
   return new Directory(expectedUri);
