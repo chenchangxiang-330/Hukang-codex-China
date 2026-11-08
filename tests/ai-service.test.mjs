@@ -427,13 +427,13 @@ test("4,000,000-byte input and UTF-8 request limits are exact, ranges carry no c
     "../src/services/ai/protocol.ts"
   );
   validateImage({
-    base64: Buffer.alloc(4_000_000).toString("base64"),
+    base64: Buffer.alloc(3_999_999).toString("base64"),
     mime: "image/jpeg",
   });
   assert.throws(
     () =>
       validateImage({
-        base64: Buffer.alloc(4_000_001).toString("base64"),
+        base64: Buffer.alloc(4_000_000).toString("base64"),
         mime: "image/jpeg",
       }),
     code("image_invalid"),

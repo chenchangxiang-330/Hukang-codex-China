@@ -12,7 +12,7 @@ test("unset, unknown, incomplete, estimated, exceeded and range progress have di
   assert.equal(nutrientProgress(total).fraction, null);
   assert.equal(nutrientProgress(total, goal).fraction, 0.5);
   assert.equal(nutrientProgress(total, goal).percent, 50);
-  for (const patch of [{ missing: 1 }, { count: 0 }, { value: null }])
+  for (const patch of [{ count: 0 }, { value: null }])
     assert.equal(nutrientProgress({ ...total, ...patch }, goal).fraction, null);
   assert.equal(
     nutrientProgress({ ...total, estimated: true }, goal).percent,
@@ -39,4 +39,13 @@ test("stale image completion is rejected after retry or restore; identity is nev
   assert(!acceptsResult(restoreOriginal(running), running));
   assert(!acceptsResult(retryTask(running), running));
   assert(!acceptsResult({ ...running, inputVersion: "v2" }, running));
+});
+
+test("AI bounds and known subtotal draw independently without fabricated precision", () => {
+  const range = nutrientProgress({...total,value:null,range:[29,52],estimated:true}, { ...goal, value:90 });
+  assert.equal(range.fraction,29/90);assert.equal(range.upperFraction,52/90);assert.equal(range.percent,null);
+  const partial = nutrientProgress({...total,missing:1},goal);
+  assert.equal(partial.fraction,.5);assert.equal(partial.percent,null);assert.match(partial.status,/数据不完整/);
+  assert.equal(nutrientProgress(total,{...goal,unit:'mg'}).fraction,null);
+  assert.equal(nutrientProgress({...total,value:null,range:[-1,50]},goal).fraction,null);
 });

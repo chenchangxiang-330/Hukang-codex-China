@@ -20,15 +20,17 @@ export function AiDisclosure({
   }, [scope, ai.revision, ai.endpoint]);
   const accepted = aiDisclosure.allows(ai, scope);
   const content =
-    scope === "profile"
-      ? "年龄、身高、体重、运动及选填性别，用于推荐目标"
-      : scope === "health-image"
-        ? "个人资料与当前体检照片，用于推荐目标"
-        : scope === "meal-text"
-          ? "餐食文字"
-          : scope === "meal-image"
-            ? "餐食文字与当前照片"
-            : "当前包装照片与名称提取指令";
+    scope === "label-image"
+      ? "当前营养表照片，用于读取表格"
+      : scope === "profile"
+        ? "年龄、身高、体重、运动及选填性别，用于推荐目标"
+        : scope === "health-image"
+          ? "个人资料与当前体检照片，用于推荐目标"
+          : scope === "meal-text"
+            ? "餐食文字"
+            : scope === "meal-image"
+              ? "餐食文字与当前照片"
+              : "当前包装照片与名称提取指令";
   return (
     <View style={{ gap: 8 }}>
       <Text style={N.caption}>{content} · 可能产生服务商费用</Text>

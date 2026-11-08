@@ -184,3 +184,27 @@ test('v6 to v7 migration preserves every food, inventory, photo and evidence row
  database.exec("DELETE FROM simple_inventory WHERE food_id='food-test'");
  await upgraded.deleteFood(original.id);assert.equal((await diet.load()).entries[0].food.name,'historical name');database.close();
 });
+
+
+test('API label saves without barcode; blank sodium remains unknown and edits do not rewrite evidence', async()=>{
+ const {parseLabel,labelEvidence}=await import('../src/services/ai/label.ts');
+ const {foodFromRecord,contribution}=await import('../src/features/nutrition-v2/model.ts');
+ const database=new DatabaseSync(':memory:');const driver=driverFor(database);
+ const files={async materialize(input){return {sourceEvidence:input.evidence,evidence:input.evidence,parsed:input.parsed,folderUri:`food://${input.id}`};},async validateStored(){},async writeRevision(){},async removeRevision(){},async removeFood(){}};
+ let revision=0;const store=createSQLiteFoodStore(driver,files,()=>new Date().toISOString(),()=>String(++revision));
+ const raw=JSON.stringify({name:'TEST API milk',columns:[{basis:'per_100ml',rows:[{nutrient:'energy',label:'能量',amount:'418.4',unit:'kJ'},{nutrient:'protein',label:'蛋白质',amount:'3.6',unit:'g'},{nutrient:'sodium',label:'钠',amount:null,unit:'mg'}]}]});
+ const review=parseLabel(raw);review.columns.forEach(c=>{c.reviewed=true;c.rows.forEach(r=>r.reviewed=true)});
+ const base=record();const bundle=labelEvidence(base.evidence.image,{review,rawResponse:raw,model:'fixture',endpoint:'https://mock.example/v1/chat/completions'});
+ const saved=await store.saveFood({...base,...bundle,review,status:'confirmed',barcodes:[]});
+ assert.equal((await store.listFoods()).length,1);assert.equal(database.prepare('SELECT count(*) n FROM food_barcodes').get().n,0);
+ const food=foodFromRecord(saved);assert.equal(contribution({food,amount:250,unit:'mL'},'protein').value,9);assert.equal(contribution({food,amount:250,unit:'mL'},'sodium').value,null);
+ const changed={...saved,review:structuredClone(saved.review)};changed.review.columns[0].rows[1].amount='3.8';const updated=await store.saveFood(changed);
+ assert.equal(updated.evidence.ocr.api.rawResponse,raw);assert.equal(updated.review.columns[0].rows[1].amount,'3.8');database.close();
+});
+test('fresh capture removes only unfinished new-food rows and protects saved foods, inventory and history',async()=>{
+ const {discardNewFoodDraftRows}=await import('../src/features/simple/draftFiles.ts');
+ const database=new DatabaseSync(':memory:');const driver=driverFor(database);const store=createSQLiteFoodStore(driver,{});await store.listFoods();
+ database.exec("INSERT INTO foods VALUES('saved','a','a','confirmed','TEST','','{}');INSERT INTO simple_inventory VALUES('stock','saved',2,'瓶',NULL,'a');INSERT INTO simple_capture_drafts VALUES('old','{}','a');INSERT INTO simple_capture_drafts VALUES('saved','{}','a');");
+ const rows=await driver.transaction(tx=>discardNewFoodDraftRows({getAllAsync:tx.all,runAsync:tx.run}));
+ assert.deepEqual(rows.map(r=>r.id),['old']);assert.equal(database.prepare('SELECT id FROM simple_capture_drafts').get().id,'saved');assert.equal(database.prepare('SELECT quantity FROM simple_inventory').get().quantity,2);assert.equal(database.prepare('SELECT count(*) n FROM foods').get().n,1);database.close();
+});

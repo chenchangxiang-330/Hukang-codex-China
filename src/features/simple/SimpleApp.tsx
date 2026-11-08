@@ -287,19 +287,6 @@ export function SimpleAppView({
                           : p.stepTitle;
   const detail = page === "nutrition-detail",
     showDock = p.screen === "home" && !page && !keyboard;
-  const resume = p.resume ? (
-    <Button
-      title="继续上次未完成的录入"
-      secondary
-      onPress={() => {
-        p.draftRef.current = p.resume;
-        p.setDraft(p.resume);
-        p.setReview(p.resume!.review ?? null);
-        p.setConfirmed(false);
-        p.navigate(p.resume!.step);
-      }}
-    />
-  ) : undefined;
   const currentFood = food
     ? (snapshot.entries.find((e) => e.id === food.id) ?? food)
     : null;
@@ -449,7 +436,6 @@ export function SimpleAppView({
                       onTargets={() => go("targets")}
                       resume={
                         <>
-                          {resume}
                           {snapshot.intakeDraft && (
                             <Action
                               title="继续上次食用确认"
@@ -488,7 +474,10 @@ export function SimpleAppView({
                   )}{" "}
                   {p.screen === "ai-settings" && <AiSettingsScreen />}
                   {(p.screen === "profile" || p.screen === "about") && (
-                    <SupportScreens screen={p.screen} />
+                    <SupportScreens
+                      screen={p.screen}
+                      targets={snapshot.targets}
+                    />
                   )}
                 </>
               )}
@@ -696,7 +685,9 @@ export function SimpleAppView({
             <Text accessibilityRole="header" style={S.rowTitle}>
               {p.busy || "正在保存饮食资料"}
             </Text>
-            <Text style={S.note}>正在本机处理，请稍候</Text>
+            {p.canCancel && (
+              <Button title="取消识别" secondary onPress={p.cancelLabel} />
+            )}
           </View>
         )}
       </KeyboardAvoidingView>

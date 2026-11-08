@@ -141,6 +141,8 @@ export function AiSettingsScreen() {
       )}
       <Text selectable style={N.caption}>
         发送一句连接测试文字至 {endpoint}，可能产生服务商费用。
+        营养表和餐食照片会先在本机压缩，上传副本小于 4
+        MB，再发送至这里配置的服务；营养表仅读取包装实际标注。
       </Text>
       <Check label="同意本次连接测试" value={consent} onChange={setConsent} />
       <Button

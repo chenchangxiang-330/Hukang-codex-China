@@ -292,26 +292,22 @@ export function NutritionScreen({
         key={k}
         title={nutrientInfo[k][0]}
         value={
-          t.count
-            ? `${t.estimated ? "约 " : ""}${formatTotal(t)} ${t.unit}`
-            : "尚未记录"
+          t.count && (t.value !== null || t.range)
+            ? `${t.estimated ? "约 " : ""}${formatTotal(t)} ${t.unit}${t.missing ? " · 小计" : ""}`
+            : "—"
         }
-        hint={`${targetProgress(t).status} · ${policyLabel(p)}`}
         open={opened.includes(k)}
         onToggle={() => toggle(k)}
+        summary={
+          <NutrientProgress
+            title={nutrientInfo[k][0]}
+            total={t}
+            policy={p}
+            compact
+            barOnly
+          />
+        }
       >
-        <NutrientProgress title={nutrientInfo[k][0]} total={t} policy={p} />
-        {p && (
-          <Text style={N.caption}>
-            {p.manual ? "用户修改" : p.source} · {p.basis}。{p.applicability}
-            {p.appliedAt
-              ? ` · 应用 ${new Date(p.appliedAt).toLocaleDateString()}`
-              : ""}
-          </Text>
-        )}
-        {!p && (
-          <Text style={N.caption}>个人参考待完善，可在“我的”管理目标。</Text>
-        )}
         {s.entries
           .filter((e) => e.date === date)
           .map((e) => (
@@ -321,22 +317,6 @@ export function NutritionScreen({
               total={contribution(e, k)}
             />
           ))}
-        {k === "added_sugars" && (
-          <Text style={N.caption}>
-            食品制作时额外加入的糖。总糖不等于添加糖；配料有糖不代表已知克数。
-          </Text>
-        )}
-        {k === "fiber" && (
-          <Text style={N.caption}>
-            与碳水相关成分引用同一份数据，不重复累计。
-          </Text>
-        )}
-        {k === "sodium" && t.value !== null && (
-          <Text style={N.caption}>
-            已知钠约相当于 {formatNumber((t.value * 2.5) / 1000)} g
-            食盐，仅作换算，不再次累加。
-          </Text>
-        )}
       </Accordion>
     );
   };
@@ -356,7 +336,7 @@ export function NutritionScreen({
       <Text accessibilityRole="header" style={N.title}>
         营养详情
       </Text>
-      <Text style={N.caption}>{dateLabel(date)} · 基于已保存的记录</Text>
+      <Text style={N.caption}>{dateLabel(date)}</Text>
       {(
         ["energy", "protein", "carbohydrate", "fat", "fiber"] as Nutrient[]
       ).map(metric)}
@@ -392,17 +372,6 @@ export function NutritionScreen({
         onToggle={() => toggle("vitamins")}
       >
         {vitamins.map(metric)}
-      </Accordion>
-      <Accordion
-        title="数据说明"
-        value="查看"
-        open={opened.includes("sources")}
-        onToggle={() => toggle("sources")}
-      >
-        <Text style={N.caption}>
-          未知不等于没有摄入。缺失时只展示已知小计，不判断全天达标；确认保存后的
-          AI 估算仍保留估算属性。参考范围和上限不以填满为最好。
-        </Text>
       </Accordion>
     </>
   );

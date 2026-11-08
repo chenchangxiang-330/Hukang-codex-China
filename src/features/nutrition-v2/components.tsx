@@ -415,7 +415,7 @@ export function Accordion({
         <Text style={N.coreValue}>{value}</Text>
         <Text style={N.chevron}>{open ? "−" : "+"}</Text>
       </Pressable>
-      {!open && summary && (
+      {summary && (
         <View style={{ paddingHorizontal: 18, paddingBottom: 16 }}>
           {summary}
         </View>
@@ -439,10 +439,15 @@ export function NutrientLine({
     <View style={N.metricRow}>
       <View style={N.grow}>
         <Text style={N.body}>{title}</Text>
-        <Text style={N.tiny}>{reliability(total)}</Text>
       </View>
       <Text style={N.metric}>
-        {formatTotal(total)} {total.unit}
+        {total.estimated ? "约 " : ""}
+        {total.value === null && !total.range
+          ? "—"
+          : `${formatTotal(total)} ${total.unit}`}
+        {total.missing && (total.value !== null || total.range)
+          ? " · 小计"
+          : ""}
       </Text>
     </View>
   );

@@ -209,19 +209,21 @@ try {
   await open();
   await page.getByRole("button", { name: "拍一拍", exact: true }).click();
   await page.getByRole("button", { name: "包装食品", exact: true }).click();
+  await expect(page.getByLabel("条码数字（保留前导零）")).toHaveCount(0);
   await page
-    .getByLabel("条码数字（保留前导零）", { exact: true })
-    .fill("6923644266066");
-  await page.getByRole("button", { name: "查询本机食品", exact: true }).click();
+    .getByRole("button", { name: "直接识别营养成分表", exact: true })
+    .click();
+  await expect(page.getByText(/国产 PaddleOCR/)).toHaveCount(0);
   await page
     .getByRole("button", { name: "从相册选择营养表", exact: true })
     .click();
-  await page.getByLabel("商品名称", { exact: true }).fill("UI 模拟录入牛奶");
-  await page.getByLabel("蛋白质含量", { exact: true }).fill("3.60");
-  await page.getByRole("checkbox", { name: /我已对照照片/ }).click();
+  await page.getByLabel("食品名称", { exact: true }).fill("UI 模拟录入牛奶");
+  await page.getByRole("button", { name: /^修改蛋白质/ }).click();
+  await page.getByLabel("蛋白质数值", { exact: true }).fill("3.60");
   await page
-    .getByRole("button", { name: "确认并保存食品", exact: true })
+    .getByRole("checkbox", { name: "已核对营养表与计量基准", exact: true })
     .click();
+  await page.getByRole("button", { name: "确认保存食品", exact: true }).click();
   await page.getByRole("button", { name: "加入我的库存", exact: true }).click();
   await page.getByLabel("本次购入数量", { exact: true }).fill("2");
   await page.getByRole("radio", { name: "瓶", exact: true }).click();
@@ -233,7 +235,7 @@ try {
     .toBe(2);
   await screen("mock-flow-stock");
   report.checks.push(
-    "Production presentation callbacks exercised with mock controller: manual input/capture/review/confirm/stock (NOT native barcode/OCR/SQLite proof)",
+    "Production presentation callbacks exercised with mock controller: photo entry/editable table/confirm/stock (NOT native API/SQLite proof)",
   );
 
   await page.setViewportSize({ width: 320, height: 760 });

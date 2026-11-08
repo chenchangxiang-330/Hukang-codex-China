@@ -20,6 +20,9 @@ export type NutrientId =
   | 'sugars'
   | 'sodium'
   | 'dietary_fiber'
+  | 'added_sugars' | 'potassium' | 'calcium' | 'magnesium' | 'iron' | 'zinc'
+  | 'monounsaturated_fat' | 'polyunsaturated_fat'
+  | 'vitamin_a' | 'vitamin_b1' | 'vitamin_b2' | 'vitamin_b3' | 'vitamin_b6' | 'vitamin_b9' | 'vitamin_b12' | 'vitamin_c' | 'vitamin_d' | 'vitamin_e' | 'vitamin_k'
   | 'other';
 
 export type NutritionBasis =

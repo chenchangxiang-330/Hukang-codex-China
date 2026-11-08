@@ -65,6 +65,7 @@ export interface NutritionReviewColumn {
   rows: NutritionReviewRow[];
 }
 export interface FoodReviewValues {
+  inputMethod?: "api_label";
   name: string;
   brand: string;
   /** Optional package specification (for example 250 mL or 1 kg). */

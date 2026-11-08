@@ -14,95 +14,111 @@ export function NutrientProgress({
   total: t,
   policy: p,
   compact = false,
-  showTargetHint = false,
+  barOnly = false,
 }: {
   title: string;
   total: Total;
   policy?: TargetPolicy | undefined;
   compact?: boolean;
+  barOnly?: boolean;
   showTargetHint?: boolean;
 }) {
   const s = nutrientProgress(t, p),
     reduced = useReducedMotion();
-  const rangeMax = p?.type === "range" ? p.range![1] * 1.25 : null;
-  const fraction =
-    s.fraction === null
-      ? null
-      : rangeMax
-        ? Math.min(1, t.value! / rangeMax)
-        : s.fraction;
-  const fill = useRef(new Animated.Value(fraction ?? 0)).current;
-  const reference = p ? policyLabel(p) : "未设置目标";
-  const progressText = `${title}营养条，${s.status}，${reference}${fraction === null ? "，暂不计算进度" : `，${formatTotal(t)} ${t.unit}`}`;
+  const scale = p?.type === "range" ? 1.25 : 1;
+  const lower =
+    s.fraction === null ? null : Math.min(1, s.low! / (s.max! * scale));
+  const upper =
+    s.upperFraction === null ? null : Math.min(1, s.high! / (s.max! * scale));
+  const fill = useRef(new Animated.Value(0)).current,
+    band = useRef(new Animated.Value(0)).current;
+  const hasValue = t.count > 0 && (t.value !== null || !!t.range);
+  const value = hasValue
+    ? `${t.estimated ? "约 " : ""}${formatTotal(t)} ${t.unit}${t.missing ? " · 小计" : ""}`
+    : "—";
+  const reference = p ? policyLabel(p) : "未设目标";
+  const progressText = `${title}营养条，${value}，${reference}${t.missing ? "，数据不完整" : ""}${lower === null ? "，暂不计算进度" : ""}`;
   useEffect(() => {
-    const a = Animated.timing(fill, {
-      toValue: fraction ?? 0,
-      duration: reduced ? 0 : 240,
-      useNativeDriver: false,
-    });
+    const a = Animated.parallel([
+      Animated.timing(fill, {
+        toValue: lower ?? 0,
+        duration: reduced ? 0 : 240,
+        useNativeDriver: false,
+      }),
+      Animated.timing(band, {
+        toValue: upper ?? 0,
+        duration: reduced ? 0 : 240,
+        useNativeDriver: false,
+      }),
+    ]);
     a.start();
     return () => a.stop();
-  }, [fraction, reduced, fill]);
+  }, [lower, upper, reduced, fill, band]);
+  const width = (v: Animated.Value) =>
+    v.interpolate({
+      inputRange: [0, 1],
+      outputRange: ["0%", "100%"],
+      extrapolate: "clamp",
+    });
   return (
     <View
-      style={{ gap: compact ? 3 : 5, paddingVertical: compact ? 0 : 8 }}
+      style={{ gap: compact ? 4 : 7, paddingVertical: compact ? 0 : 8 }}
       testID={`nutrient-${title}`}
     >
-      <View
-        style={[
-          N.row,
-          { justifyContent: "space-between", flexWrap: "wrap", gap: 5 },
-        ]}
-      >
-        <Text style={N.body}>{title}</Text>
-        <Text style={N.body}>
-          {t.count
-            ? `${t.estimated ? "约 " : ""}${formatTotal(t)} ${t.unit}`
-            : "尚未记录"}
-        </Text>
-      </View>
-      <Text style={N.caption}>
-        {reference}
-        {!p && showTargetHint ? " · 我的 → 个人参考目标" : ""}
-        {t.count && (t.missing || t.estimated || t.value === null)
-          ? ` · ${s.status}`
-          : ""}
-      </Text>
+      {!barOnly && (
+        <View
+          style={[
+            N.row,
+            { justifyContent: "space-between", flexWrap: "wrap", gap: 5 },
+          ]}
+        >
+          <Text style={N.body}>{title}</Text>
+          <Text style={N.body}>{value}</Text>
+        </View>
+      )}
+      <Text style={N.caption}>{reference}</Text>
       <View
         testID={`nutrient-track-${title}`}
-        style={[N.track, { height: 6 }]}
+        style={[N.track, { height: 7 }]}
         accessible
-        accessibilityRole={fraction === null ? "text" : "progressbar"}
+        accessibilityRole={lower === null ? "text" : "progressbar"}
         accessibilityLabel={progressText}
-        accessibilityValue={
-          fraction === null ? undefined : { text: progressText }
-        }
+        accessibilityValue={{ text: progressText }}
       >
-        {fraction !== null && (
+        {upper !== null && t.range && (
           <Animated.View
-            testID={`nutrient-fill-${title}`}
+            testID={`nutrient-range-${title}`}
             style={[
               N.fill,
               {
-                height: 6,
-                backgroundColor: colors.sky,
-                width: fill.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0%", "100%"],
-                  extrapolate: "clamp",
-                }),
+                position: "absolute",
+                height: 7,
+                width: width(band),
+                backgroundColor: "#C0DFF1",
+                borderRightWidth: 2,
+                borderColor: colors.brand,
               },
             ]}
           />
         )}
-        {fraction !== null && p?.type === "range" && (
+        {lower !== null && (
+          <Animated.View
+            testID={`nutrient-fill-${title}`}
+            style={[
+              N.fill,
+              { height: 7, width: width(fill), backgroundColor: colors.sky },
+            ]}
+          />
+        )}
+        {p?.type === "range" && s.max && (
           <View
+            pointerEvents="none"
             style={{
               position: "absolute",
-              left: `${(p.range![0] / rangeMax!) * 100}%`,
-              width: `${((p.range![1] - p.range![0]) / rangeMax!) * 100}%`,
-              top: -3,
-              height: 12,
+              left: `${(p.range![0] / (s.max * scale)) * 100}%`,
+              width: `${((p.range![1] - p.range![0]) / (s.max * scale)) * 100}%`,
+              top: -2,
+              height: 11,
               borderWidth: 1,
               borderColor: colors.brand,
               borderRadius: 3,
@@ -110,11 +126,15 @@ export function NutrientProgress({
           />
         )}
       </View>
-      {(s.excess !== null || (!compact && s.percent !== null)) && (
+      {s.excess !== null && (
         <Text style={N.caption}>
-          {s.excess !== null
-            ? `超出${p?.type === "range" ? "参考范围" : p?.type === "upper_limit" ? "参考上限" : "目标"} ${formatNumber(s.excess)} ${t.unit}${t.estimated ? "（估算）" : ""}`
-            : `已${p?.type === "upper_limit" ? "占参考上限" : "达到目标"}的 ${s.percent}%`}
+          {t.missing ? "已知小计" : t.range ? "至少" : ""}超出
+          {p?.type === "range"
+            ? "参考范围"
+            : p?.type === "upper_limit"
+              ? "上限"
+              : "目标"}{" "}
+          {formatNumber(s.excess)} {t.unit}
         </Text>
       )}
     </View>

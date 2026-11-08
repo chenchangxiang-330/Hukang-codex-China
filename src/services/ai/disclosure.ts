@@ -1,5 +1,6 @@
 import type { AiSnapshot } from "./service";
 export type AiScope =
+  | "label-image"
   | "meal-text"
   | "meal-image"
   | "package-image"

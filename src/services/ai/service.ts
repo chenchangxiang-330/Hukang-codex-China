@@ -1,3 +1,4 @@
+import { parseLabel, type LabelResult } from "./label";
 import {
   TARGET_PROMPT,
   parseTargetDraft,
@@ -46,7 +47,7 @@ export type AiSnapshot = {
   revision: number;
   consent: boolean;
   supportsImage: boolean;
-  operation: "connection" | "meal" | "package" | "targets" | null;
+  operation: "connection" | "meal" | "package" | "targets" | "label" | null;
   connection: ConnectionResult | null;
 };
 type ImageReader = (uri: string) => Promise<MealImage>;
@@ -156,7 +157,7 @@ export class AiService {
     this.#publish({ operation: null });
   };
   async #run<T>(
-    operation: "connection" | "meal" | "package" | "targets",
+    operation: "connection" | "meal" | "package" | "targets" | "label",
     signal: AbortSignal | undefined,
     action: (
       config: AiConfiguration,
@@ -222,7 +223,7 @@ export class AiService {
   async #completion(
     config: AiConfiguration,
     text: string,
-    meal: boolean | "package" | "targets",
+    meal: boolean | "package" | "targets" | "label",
     signal: AbortSignal,
     timeoutMs: number,
     image?: MealImage,
@@ -360,6 +361,29 @@ export class AiService {
       } catch {
         throw new AiError("format");
       }
+    });
+  readNutritionLabel = (
+    imageUri: string,
+    signal?: AbortSignal,
+  ): Promise<LabelResult> =>
+    this.#run("label", signal, async (config, abort, ms) => {
+      if (!supportsMealImage(config)) throw new AiError("image_unsupported");
+      const image = await this.#readImage(imageUri);
+      validateImage(image);
+      const response = await this.#completion(
+        config,
+        "读取这张营养成分表，保留原单位和计量基准。",
+        "label",
+        abort,
+        ms,
+        image,
+      );
+      return {
+        review: parseLabel(response.text),
+        rawResponse: response.text,
+        model: response.model,
+        endpoint: response.endpoint,
+      };
     });
   identifyPackage = (
     imageUri: string,

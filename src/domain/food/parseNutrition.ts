@@ -6,7 +6,7 @@ import type { NutritionUnit, ParsedNutritionCell, ParsedNutritionColumn, ParsedN
 export const NUTRITION_PARSER_VERSION = 'china-label-geometry/1.0.0';
 export const NUTRIENT_LABELS: Readonly<Record<NutrientId, string>> = {
   energy: '能量', protein: '蛋白质', fat: '脂肪', carbohydrate: '碳水化合物', sodium: '钠',
-  saturated_fat: '饱和脂肪', trans_fat: '反式脂肪', sugars: '糖', dietary_fiber: '膳食纤维', other: '其他',
+  saturated_fat: '饱和脂肪', trans_fat: '反式脂肪', sugars: '糖', dietary_fiber: '膳食纤维', other: '其他', added_sugars: '添加糖', potassium: '钾', calcium: '钙', magnesium: '镁', iron: '铁', zinc: '锌', monounsaturated_fat: '单不饱和脂肪', polyunsaturated_fat: '多不饱和脂肪', vitamin_a: '维生素 A', vitamin_b1: '维生素 B1', vitamin_b2: '维生素 B2', vitamin_b3: '维生素 B3', vitamin_b6: '维生素 B6', vitamin_b9: '维生素 B9', vitamin_b12: '维生素 B12', vitamin_c: '维生素 C', vitamin_d: '维生素 D', vitamin_e: '维生素 E', vitamin_k: '维生素 K',
 };
 const aliases: Readonly<Record<string, NutrientId>> = {
   能量: 'energy', 蛋白质: 'protein', 脂肪: 'fat', 碳水化合物: 'carbohydrate', 钠: 'sodium',

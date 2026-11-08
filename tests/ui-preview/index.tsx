@@ -445,6 +445,14 @@ function Preview() {
       navigate("product");
     },
     lookup,
+    async startLabel() {
+      const d = makeDraft("nutrition");
+      delete d.barcode;
+      draftRef.current = d;
+      setDraft(d);
+      setReview(null);
+      navigate("nutrition");
+    },
     async startScan() {
       navigate("scan");
     },

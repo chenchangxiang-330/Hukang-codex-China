@@ -95,9 +95,7 @@ try {
     await expect(page.getByTestId(`nutrient-fill-${k}`)).toHaveCount(0);
   }
   await expect(page.getByRole("progressbar")).toHaveCount(0);
-  await expect(
-    page.getByText("未设置目标 · 我的 → 个人参考目标"),
-  ).toBeVisible();
+  await expect(page.getByText("未设目标").first()).toBeVisible();
   await page.setViewportSize({ width: 390, height: 693 });
   const mainAction = await button("拍一拍").boundingBox(),
     dockTab = await tab("今日").boundingBox();
@@ -116,7 +114,7 @@ try {
   ).toBeVisible();
   await page.getByRole("button", { name: "矿物质，展开", exact: true }).click();
   await page.getByRole("button", { name: /^钠，/ }).click();
-  await expect(page.getByText(/个人参考待完善/).first()).toBeVisible();
+  await expect(page.getByText("未设目标").first()).toBeVisible();
   await shot("browser-nutrition-minerals");
   await button("返回").click();
   await button("查看完整营养").click();
@@ -145,19 +143,17 @@ try {
   );
   await button("返回").click();
   await button("包装食品").click();
-  await expect(
-    page.getByLabel("条码数字（保留前导零）", { exact: true }),
-  ).toBeVisible();
+  await expect(button("直接识别营养成分表")).toBeVisible();
   await button("返回").click();
   report.checks.push(
     "Four ordered metrics, true empty data, two entry paths, photo required, one text box and retained draft",
   );
   for (const [scenario, expectedFill, label] of [
-    ["nutrition-empty", null, "尚未记录"],
-    ["protein-unset", null, "未设置目标"],
-    ["protein-partial", null, "已知小计 · 数据不完整"],
-    ["protein-unknown", null, "未知"],
-    ["protein-range", null, "40–60"],
+    ["nutrition-empty", null, "—"],
+    ["protein-unset", null, "未设目标"],
+    ["protein-partial", 0.5, "小计"],
+    ["protein-unknown", null, "—"],
+    ["protein-range", 0.4, "40–60"],
     ["protein-confirmed", 0.5, "50"],
     ["protein-zero", 0, "0"],
     ["protein-exceeded", 1, "超出目标 20 g"],
@@ -186,6 +182,18 @@ try {
           ),
         )
         .toBeCloseTo(expectedFill, 2);
+    }
+    if (scenario === "protein-range") {
+      const range = page.getByTestId("nutrient-range-蛋白质");
+      await expect
+        .poll(() =>
+          range.evaluate(
+            (el) =>
+              el.getBoundingClientRect().width /
+              el.parentElement.getBoundingClientRect().width,
+          ),
+        )
+        .toBeCloseTo(0.6, 2);
     }
     await shot(`browser-progress-${scenario}`);
     report.checks.push(`Nutrition tracks remain visible: ${scenario}`);

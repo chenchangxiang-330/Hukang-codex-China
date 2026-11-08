@@ -1,3 +1,4 @@
+import { LABEL_PROMPT } from "./label";
 import { TARGET_PROMPT } from "../nutrition/profile";
 import {
   nutrientInfo,
@@ -23,13 +24,14 @@ export const MEAL_PROMPT = `你是饮食记录助手，只估算用户这一餐�
 export function requestBody(
   config: AiConfiguration,
   text: string,
-  meal: boolean | "package" | "targets",
+  meal: boolean | "package" | "targets" | "label",
   image?: MealImage,
 ) {
   return {
     model: config.model,
     stream: false,
-    max_tokens: meal === "targets" ? 5000 : meal ? 1800 : 32,
+    max_tokens:
+      meal === "targets" || meal === "label" ? 5000 : meal ? 1800 : 32,
     ...(config.provider === "deepseek" &&
     /^(deepseek-flash|deepseek-v4)/.test(config.model)
       ? { thinking: { type: "disabled" } }
@@ -44,11 +46,13 @@ export function requestBody(
             {
               role: "system",
               content:
-                meal === "targets"
-                  ? TARGET_PROMPT
-                  : meal === "package"
-                    ? PACKAGE_PROMPT
-                    : MEAL_PROMPT,
+                meal === "label"
+                  ? LABEL_PROMPT
+                  : meal === "targets"
+                    ? TARGET_PROMPT
+                    : meal === "package"
+                      ? PACKAGE_PROMPT
+                      : MEAL_PROMPT,
             },
           ]
         : []),
@@ -282,7 +286,7 @@ export function validateImage(image: MealImage) {
   const bytes =
     (value.length / 4) * 3 -
     (value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0);
-  if (bytes > UPLOAD_LIMIT_BYTES) throw new AiError("image_invalid");
+  if (bytes >= UPLOAD_LIMIT_BYTES) throw new AiError("image_invalid");
 }
 export function requestByteLength(body: string) {
   let count = body.length;

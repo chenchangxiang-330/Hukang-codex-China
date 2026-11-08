@@ -46,5 +46,5 @@ test('production entry is the simple app, not OCR Lab or the network identity sc
  assert.match(manifest,/android.permission.INTERNET"\//);
  const ui=['SimpleApp.tsx','HomeScreens.tsx','ProductScreens.tsx','CaptureScreens.tsx'].map(f=>readFileSync(new URL('../src/features/simple/'+f,import.meta.url),'utf8')).join('\n');
  assert.doesNotMatch(ui,/ConfiguredChinaFoodProvider|fetch\(/);
- for(const text of ['拍一拍','加入我的库存','导出食品资料包','确认并保存食品'])assert.ok(ui.includes(text));
+ for(const text of ['拍一拍','加入我的库存','导出食品资料包','确认保存食品'])assert.ok(ui.includes(text));
 });

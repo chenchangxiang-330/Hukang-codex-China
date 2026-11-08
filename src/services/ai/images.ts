@@ -47,7 +47,7 @@ export async function prepareUpload(
       throw Error(messages.IMAGE_CANCELLED);
     }
     if (
-      image.bytes > 4_000_000 ||
+      image.bytes >= 4_000_000 ||
       image.width > 2048 ||
       image.height > 2048 ||
       image.bytes <= 0 ||

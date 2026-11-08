@@ -32,10 +32,8 @@ const messages: Record<AiErrorCode, string> = {
   permission: "服务商拒绝访问，请检查模型权限、地域和账户开通状态。",
   rate_limit: "请求过于频繁，已停止；请稍后手动重试。",
   model: "模型不存在或当前账户无权使用，请核对模型名称。",
-  image_unsupported:
-    "本次配置不支持已验证的图片请求，请使用文字描述；照片未按识别结果处理。",
-  image_invalid:
-    "图片无法读取或不符合要求。请重新处理照片，上传副本上限为 4,000,000 字节，或仅使用文字。",
+  image_unsupported: "当前模型不支持图片，请前往 AI 设置更换模型。",
+  image_invalid: "图片无法读取或达到 4 MB 限制，请重新选择照片。",
   format: "模型响应格式异常或内容不完整，没有生成有效结果，也没有自动重试。",
   request:
     "服务商不接受本次请求。请核对 Chat Completions 协议、地址及模型能力。",

@@ -298,7 +298,7 @@ def home_and_navigation():
     dock(); shot('android-today-empty')
     tracks = []
     for title in ['蛋白质', '今日卡路里', '脂肪', '膳食纤维']:
-        n = require('^' + title + '营养条，尚未记录，未设置目标，暂不计算进度$', attribute='content-desc')
+        n = require('^' + title + '营养条，—，未设目标，暂不计算进度$', attribute='content-desc')
         b = bounds(n)
         assert b[2] - b[0] > 300 and b[3] > b[1], b
         tracks.append({'title': title, 'bounds': b, 'state': 'unset; no fabricated percentage'})
@@ -323,6 +323,25 @@ def camera_and_recovery():
     tap('^删除这张照片$',True,'content-desc');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);require('等待条码进入取景框',True);shot('android-barcode-entry')
     shell('input','keyevent','KEYCODE_BACK');require('^今日$',attribute='content-desc')
     report['camera']={'permissionDeniedAndGranted':True,'mealPhotoAndDelete':True,'source':'Android emulator virtual scene','physicalCamera':False,'liveBarcodeDecoded':False}
+
+def fresh_label_entry():
+    configure()
+    c=diet_db('abandon-source');before={t:c.execute('SELECT count(*) FROM '+t).fetchone()[0] for t in ['foods','nutrition_entries','simple_inventory','nutrition_stock']}
+    owned=f'/data/user/0/{PKG}/files/ocr-lab/images/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.png'
+    old={'id':'isolated-abandoned-draft','acquiredBy':'image','step':'nutrition','name':'TEST unsaved','brand':'','temporaryUris':['file://'+owned]}
+    c.execute('INSERT INTO simple_capture_drafts VALUES(?,?,?)',(old['id'],json.dumps(old),'2026-11-08'));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
+    path=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').strip()
+    for suffix in ('-wal','-shm'):shell('rm','-f',path+suffix)
+    adb('push',str(OUT/'abandon-source.db'),path);shell('chmod','666',path);shell('mkdir','-p',str(Path(owned).parent));shell('touch',owned)
+    launch();tap('^拍一拍$',True);tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True)
+    assert find('有一条尚未完成的食品|继续补录|条码数字|查询本机食品') is None
+    tap('^直接识别营养成分表$',True);require('请先配置 AI 服务',True);shot('android-label-direct-no-api')
+    c=diet_db('abandon-verified');assert c.execute("SELECT count(*) FROM simple_capture_drafts WHERE id=?",(old['id'],)).fetchone()[0]==0
+    assert {t:c.execute('SELECT count(*) FROM '+t).fetchone()[0] for t in before}==before
+    new=json.loads(c.execute('SELECT json FROM simple_capture_drafts ORDER BY updated_at DESC LIMIT 1').fetchone()[0]);assert 'barcode' not in new and new['step']=='nutrition';c.close()
+    assert not shell('ls',owned,check=False)
+    report['freshLabelEntry']={'withoutBarcode':True,'noResumeDialog':True,'oldDraftRemoved':True,'unreferencedTemporaryFileRemoved':True,'savedCountsUnchanged':before,'realProviderVerified':False}
+
 
 def gesture_safe_area():
     configure();overlays=shell('cmd','overlay','list');original=re.findall(r'\[x\] (com\.android\.internal\.systemui\.navbar\.[\w.]+)',overlays)
@@ -381,11 +400,27 @@ def seed_food(visual=False):
 def known_progress():
     configure();seed_food(visual=True)
     for title in ['蛋白质','今日卡路里','脂肪','膳食纤维']:
-        node=require('^'+title+'营养条，已确认记录，',attribute='content-desc')
+        node=require('^'+title+'营养条，',attribute='content-desc')
         assert '暂不计算进度' not in node.get('content-desc','')
     require('50 g');require('目标 100 g');require('12.5 g')
     action=bounds(require('^拍一拍$',attribute='content-desc'));assert action[3] < bounds(require('^今日$',attribute='content-desc'))[1]
     shot('android-four-progress-isolated');report['nutritionRecordsInserted']=1;report['visualFixtureAfterEmptyEvidence']=True
+    # Range and partial records only in this disposable emulator; never embedded in the App.
+    c=diet_db('range-source');row=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-prior'").fetchone()[0])
+    for key,ends,unit in [('protein',[29,52],'g'),('energy',[1250,2200],'kcal'),('fat',[49,115],'g'),('fiber',[2,7],'g')]: row['food']['nutrients'][key]={'value':None,'range':ends,'unit':unit,'status':'estimated','source':'ISOLATED RANGE FIXTURE'}
+    c.execute("UPDATE nutrition_entries SET snapshot_json=? WHERE id='isolated-prior'",(json.dumps(row),));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
+    path=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').strip()
+    for suffix in ('-wal','-shm'):shell('rm','-f',path+suffix)
+    adb('push',str(OUT/'range-source.db'),path);shell('chmod','666',path);launch()
+    require('29–52',True);node=require('^蛋白质营养条，约 29–52 g',attribute='content-desc');box=bounds(node)
+    shot('android-range-progress-isolated')
+    from PIL import Image
+    pixels=Image.open(OUT/'android-range-progress-isolated.png').convert('RGB');y=(box[1]+box[3])//2
+    actual=[pixels.getpixel((round(box[0]+(box[2]-box[0])*ratio),y)) for ratio in (.2,.4,.8)]
+    assert actual[0] != actual[1] and actual[1] != actual[2], ('Range fill must have lower/upper/track pixels',actual)
+    report['rangeFillPixels']={'lowerUpperTrack':actual,'midpointNotUsed':True}
+    tap('^查看完整营养$',True);tap('^蛋白质，',True);shot('android-range-detail-expanded-isolated')
+
 
 def preview_amount(value):
     # Portion buttons follow the totals. Revisit the top of the prediction.
@@ -449,7 +484,7 @@ try:
     assert 'Success' in report['install']
     suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
     cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
-    if suite=='ui':cases.append(('four-known-progress-isolated',known_progress))
+    if suite=='ui':cases += [('fresh-label-entry-discard',fresh_label_entry),('four-known-progress-isolated',known_progress)]
     if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
     if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
