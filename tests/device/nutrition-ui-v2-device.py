@@ -385,14 +385,18 @@ def choose_health_photos(count):
 
 
 def profile_and_targets():
-    from PIL import Image,ImageDraw
+    from PIL import Image,ImageDraw,ImageFont
     configure();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc');tap('^个人资料与目标推荐$',True)
     for label,value in [('年龄（岁）','30'),('身高（cm）','170'),('体重（kg）','65'),('运动状况','Walking'),('每周运动频率（次/周）','3')]: enter(label,value)
     assert find('保存草稿，稍后继续|保存资料草稿|手动修改目标|当前参考|拍摄体检照片|跳过体检照片') is None
     shot('android-profile-autosaved')
     # Synthetic pages, not medical documents; isolated disposable emulator only.
     for index in (1,2):
-        file=OUT/f'health-test-{index}.jpg';im=Image.new('RGB',(800,1100),(235,245,255));draw=ImageDraw.Draw(im);draw.text((40,60),f'ISOLATED TEST REPORT {index}',fill=(25,50,90));im.save(file);im.close()
+        file=OUT/f'health-test-{index}.jpg';im=Image.new('RGB',(800,1100),(235,245,255));draw=ImageDraw.Draw(im)
+        # Clearly synthetic and legible even in the real thumbnail crop.
+        font=ImageFont.load_default(size=64)
+        draw.rounded_rectangle((50,280,750,780),radius=30,outline=(90,150,190),width=8)
+        draw.text((90,390),'ISOLATED TEST',font=font,fill=(25,50,90));draw.text((190,530),f'REPORT {index}',font=font,fill=(25,50,90));im.save(file);im.close()
         remote=f'/sdcard/Pictures/HukangHealth/{file.name}';shell('mkdir','-p','/sdcard/Pictures/HukangHealth');adb('push',str(file),remote);shell('am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote)
     time.sleep(3)
     rows=shell('content','query','--uri','content://media/external/images/media','--projection','_id:_display_name:_data');assert rows.count('Row:')==2 and 'health-test-1.jpg' in rows and 'health-test-2.jpg' in rows
