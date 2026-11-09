@@ -554,7 +554,8 @@ try:
     suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
     cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
     if suite=='ui':cases += [('fresh-label-entry-discard',fresh_label_entry),('four-known-progress-isolated',known_progress)]
-    if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop),('direct-meal-result-save',simplified_meal_save)]
+    if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
+    if suite=='meal':cases=[('direct-meal-result-save',simplified_meal_save)]
     if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
         check(name, action)

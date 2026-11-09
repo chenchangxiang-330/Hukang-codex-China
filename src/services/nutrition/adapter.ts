@@ -11,6 +11,7 @@ export function createNutritionAdapter(
   let snapshot: Snapshot = { status: "loading", entries: [], targets: {} };
   let initialized: Promise<NutritionStore> | undefined;
   let running = false;
+  let blocking = false;
   let queue: Promise<unknown> = Promise.resolve();
   const listeners = new Set<() => void>();
   const publish = (next: Snapshot) => {
@@ -27,7 +28,7 @@ export function createNutritionAdapter(
       publish({
         ...(await (await store()).load()),
         status: "ready",
-        saving: running,
+        saving: blocking,
       });
     } catch {
       publish({
@@ -44,12 +45,13 @@ export function createNutritionAdapter(
   ) => {
     if (running) throw Error("正在保存，请等待完成。");
     running = true;
-    publish({ ...snapshot, saving: !background });
+    blocking = !background;
+    publish({ ...snapshot, saving: blocking });
     try {
       publish({
         ...(await action(await store())),
         status: "ready",
-        saving: !background,
+        saving: blocking,
       });
     } catch (error) {
       // Reload resolves the rare commit-success/read-failure case without claiming rollback.
@@ -62,6 +64,7 @@ export function createNutritionAdapter(
       );
     } finally {
       running = false;
+      blocking = false;
       publish({ ...snapshot, saving: false });
     }
   };
@@ -86,8 +89,8 @@ export function createNutritionAdapter(
     saveTargetDraft: (d) => mutate((s) => s.targetDraft(d)),
     applyTargetDraft: (d) => mutate((s) => s.applyDraft(d)),
     deferOnboarding: () => mutate((s) => s.defer()),
-    saveCaptureDraft: (d) => mutate((s) => s.captureDraft(d)),
-    saveIntakeDraft: (e) => mutate((s) => s.intakeDraft(e)),
+    saveCaptureDraft: (d) => mutate((s) => s.captureDraft(d), true),
+    saveIntakeDraft: (e) => mutate((s) => s.intakeDraft(e), true),
     restoreCover: (id) => mutate((s) => s.restoreCover(id)),
     retryCover: (id) => mutate((s) => s.retryCover(id)),
     getSnapshot: () => snapshot,

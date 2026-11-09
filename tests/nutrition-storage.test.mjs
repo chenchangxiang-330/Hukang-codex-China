@@ -590,3 +590,42 @@ test("rapid autosaves queue without losing the last input", async () => {
   );
   f.db.close();
 });
+
+test("draft autosaves preserve editable UI; only confirmed writes lock it", async () => {
+  const f = fixture();
+  const s = f.store();
+  let failDraft = false;
+  const a = createNutritionAdapter(async () => ({
+    ...s,
+    intakeDraft: async (e) => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      if (failDraft) throw Error("test draft failure");
+      return s.intakeDraft(e);
+    },
+  }));
+  await a.reload();
+  const updates = [];
+  const stop = a.subscribe(() => updates.push(a.getSnapshot().saving));
+  await Promise.all([
+    a.saveIntakeDraft({ ...entry(), consumedTime: "12:30" }),
+    a.saveIntakeDraft({ ...entry(), consumedTime: "12:34" }),
+  ]);
+  assert.equal(a.getSnapshot().intakeDraft.consumedTime, "12:34");
+  assert.equal(a.getSnapshot().entries.length, 0);
+  assert(
+    !updates.includes(true),
+    "autosave must not hide inputs or steal keyboard focus",
+  );
+  failDraft = true;
+  await assert.rejects(a.saveIntakeDraft(entry()), /test draft failure/);
+  assert(
+    !updates.includes(true),
+    "failed autosave reload must not lock the form",
+  );
+  assert.equal(a.getSnapshot().intakeDraft.consumedTime, "12:34");
+  await a.record(entry(), "confirmed-only");
+  assert(updates.includes(true));
+  assert.equal(a.getSnapshot().entries.length, 1);
+  stop();
+  f.db.close();
+});
