@@ -261,7 +261,10 @@ try:
  shell('iptables','-I','OUTPUT','1','-j','DROP');shell('ip6tables','-I','OUTPUT','1','-j','DROP')
  report['offlineRules']=[shell('iptables','-S','OUTPUT'),shell('ip6tables','-S','OUTPUT')]
  report['disabledEmulatorPackages']={}
- for p in ['com.google.android.apps.wellbeing','com.google.android.googlequicksearchbox','com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:report['disabledEmulatorPackages'][p]=shell('pm','disable-user','--user','0',p,check=False)
+ # With Play services disabled for this offline suite, the unrelated system
+ # Messages app repeatedly displays a heads-up warning over our Back control.
+ # Disable only that emulator app; never dismiss a Hukang error or clear data.
+ for p in ['com.google.android.apps.wellbeing','com.google.android.googlequicksearchbox','com.google.android.apps.messaging','com.google.android.gms','com.google.android.gsf','com.google.android.apps.photos']:report['disabledEmulatorPackages'][p]=shell('pm','disable-user','--user','0',p,check=False)
  run(['install','-r',str(apk.resolve())],timeout=180);shell('pm','grant',PKG,'android.permission.CAMERA')
  report['device']=shell('getprop','ro.build.fingerprint');report['abis']=shell('getprop','ro.product.cpu.abilist')
  fixture=Path('tests/fixtures/china-food/6923644266066.jpg');barcode=png_barcode()
