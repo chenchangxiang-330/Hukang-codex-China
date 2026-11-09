@@ -418,7 +418,7 @@ def secure_storage():
     component='com.hukang.china.test/com.hukang.china.ConnectionProbe'
     def invoke(mode):
         shell('am','force-stop',PKG);result=shell('am','instrument','-w','-e','mode',mode,component);assert 'SECURE_PROBE_PASS:'+mode in result,result
-    invoke('write');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('最近验证',True);shot('android-encrypted-connection-restored-MOCK')
+    invoke('write');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('最近验证',True);assert require('^个人资料：推荐营养目标$',True).get('checked')=='true';assert require('^体检照片（可选）：辅助目标推荐$',True).get('checked')=='true';shot('android-encrypted-connection-restored-MOCK')
     invoke('verify');launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);tap('^同意本次连接测试$',True);tap('^保存连接$',True);require('网络连接失败',True,attempts=15);shot('android-native-network-failure-old-connection-retained');tap('^连接详情与管理$',True);tap('^删除已保存连接$',True);require('已删除连接',True);shot('android-connection-deleted')
     launch();tap('^我的$',attribute='content-desc');tap('^AI 服务设置$',True);require('连接状态.*未连接',True)
     assert not shell('find',f'/data/user/0/{PKG}/no_backup','-name','ai-connection.enc',check=False)

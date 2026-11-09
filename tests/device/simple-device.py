@@ -269,7 +269,7 @@ try:
  for p,name in [(barcode,'00-barcode.png'),(fixture,'01-milk.jpg')]:
   run(['push',str(p),remote+'/'+name]);shell('am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote+'/'+name)
  report['fixtures']={'syntheticBarcode':hashlib.sha256(barcode.read_bytes()).hexdigest(),'packagingPhoto':hashlib.sha256(fixture.read_bytes()).hexdigest(),'source':json.loads(fixture.with_suffix('.source.json').read_text())['source'],'limitation':'Archived nutrition-label photo, not a physical camera capture. Synthetic barcode and manual identity are test-only.'}
- time.sleep(2);launch();tap('^保存草稿，稍后继续$',True);tap('^我的$');shot('mine');tap('^今日$');shot('home')
+ time.sleep(2);launch();tap('^返回$',True);tap('^我的$');shot('mine');tap('^今日$');shot('home')
  open_scanner();shot('scanner');photo('从相册识别条码','00-barcode')
  # Unknown barcode continues directly to nutrition label, not a front-photo lookup.
 
