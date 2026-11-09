@@ -1,3 +1,5 @@
+import { validScopes, type AiScope } from "./disclosure";
+import { chatEndpoint } from "./config";
 import { AiService, type ConnectionResult } from "./service";
 import { validateAiConfiguration, type AiConfiguration } from "./config";
 import { AiError } from "./errors";
@@ -7,7 +9,11 @@ export interface ConnectionStorage {
   delete(): Promise<void>;
 }
 type State = { ready: boolean; saving: boolean; saved: boolean; error: string };
-type Stored = { config: AiConfiguration; result: ConnectionResult };
+type Stored = {
+  config: AiConfiguration;
+  result: ConnectionResult;
+  authorization?: { endpoint: string; scopes: AiScope[] };
+};
 /** Draft tests use their own service: no draft endpoint can inherit the active key. */
 export class SavedConnection {
   #stored: Stored | null = null;
@@ -58,7 +64,13 @@ export class SavedConnection {
           )
             throw Error();
           this.#stored = saved;
-          this.active.activate(saved.config, saved.result);
+          this.active.activate(
+            saved.config,
+            saved.result,
+            saved.authorization?.endpoint === chatEndpoint(saved.config)
+              ? validScopes(saved.authorization.scopes)
+              : [],
+          );
         }
         this.#publish({ ready: true, saved: !!saved, error: "" });
       } catch {
@@ -83,7 +95,11 @@ export class SavedConnection {
   }
   issues = (draft: AiConfiguration) =>
     validateAiConfiguration(this.#resolve(draft));
-  save = async (draft: AiConfiguration, consent: boolean) => {
+  save = async (
+    draft: AiConfiguration,
+    consent: boolean,
+    scopes: readonly AiScope[] = [],
+  ) => {
     await this.restore();
     if (this.#state.saving) throw new AiError("busy");
     draft = this.#resolve(draft);
@@ -100,7 +116,14 @@ export class SavedConnection {
       const result = await tester.testConnection();
       await this.#serial(async () => {
         if (revision !== this.#revision) throw new AiError("changed");
-        const next = { config: { ...draft }, result };
+        const next = {
+          config: { ...draft },
+          result,
+          authorization: {
+            endpoint: chatEndpoint(draft),
+            scopes: validScopes(scopes),
+          },
+        };
         try {
           await this.storage.write(JSON.stringify(next));
         } catch {
@@ -115,7 +138,7 @@ export class SavedConnection {
           throw new AiError("changed");
         }
         this.#stored = next;
-        this.active.activate(next.config, result);
+        this.active.activate(next.config, result, next.authorization.scopes);
         this.#publish({ saved: true });
       });
       return result;

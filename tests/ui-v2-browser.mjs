@@ -231,22 +231,16 @@ try {
   await button("拍照").click();
   await page.getByLabel("餐食补充描述", { exact: true }).fill("半份面条");
   await button("估算这餐营养").click();
-  await expect(button("确认食用")).toHaveCount(0);
-  await button("吃半份").click();
-  await shot("browser-portion-preview");
-  await page
-    .getByRole("checkbox", {
-      name: "我已确认日期、餐次和实际食用份量",
-      exact: true,
-    })
-    .click();
-  await button("确认食用").click();
+  await expect(button("吃半份")).toHaveCount(0);
+  await expect(button("自己填写吃多少")).toHaveCount(0);
+  await shot("browser-meal-result-preview");
+  await button("确认保存").click();
   await expect(
     page.getByText("演示记录已更新，未写入真实数据。", { exact: true }),
   ).toBeVisible();
   await shot("browser-isolated-confirmed");
   report.checks.push(
-    "Valid portion required before confirmation; deterministic preview then one successful save",
+    "Whole recognized meal defaults to one serving; direct nutrient preview then one successful save",
   );
   await page.setViewportSize({ width: 320, height: 760 });
   for (const scenario of [

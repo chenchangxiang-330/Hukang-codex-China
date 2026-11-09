@@ -11,6 +11,7 @@ export function createNutritionAdapter(
   let snapshot: Snapshot = { status: "loading", entries: [], targets: {} };
   let initialized: Promise<NutritionStore> | undefined;
   let running = false;
+  let queue: Promise<unknown> = Promise.resolve();
   const listeners = new Set<() => void>();
   const publish = (next: Snapshot) => {
     snapshot = next;
@@ -37,17 +38,18 @@ export function createNutritionAdapter(
       });
     }
   };
-  const mutate = async (
+  const perform = async (
     action: (s: NutritionStore) => ReturnType<NutritionStore["load"]>,
+    background = false,
   ) => {
     if (running) throw Error("正在保存，请等待完成。");
     running = true;
-    publish({ ...snapshot, saving: true });
+    publish({ ...snapshot, saving: !background });
     try {
       publish({
         ...(await action(await store())),
         status: "ready",
-        saving: true,
+        saving: !background,
       });
     } catch (error) {
       // Reload resolves the rare commit-success/read-failure case without claiming rollback.
@@ -63,11 +65,24 @@ export function createNutritionAdapter(
       publish({ ...snapshot, saving: false });
     }
   };
+  // Autosaved inputs are ordered with other writes; no keystrokes are dropped.
+  const mutate = (
+    action: (s: NutritionStore) => ReturnType<NutritionStore["load"]>,
+    background = false,
+  ) => {
+    const next = queue.then(
+      () => perform(action, background),
+      () => perform(action, background),
+    );
+    queue = next.catch(() => {});
+    return next;
+  };
   const updateEntry = (entry: Entry) => mutate((s) => s.update(entry));
   return {
     kind: "production",
     saveCatalogueFood: (f) => mutate((s) => s.catalogueFood(f)),
-    saveProfile: (p) => mutate((s) => s.profile(p)),
+    saveHealthPhotos: (uris) => mutate((s) => s.healthPhotos(uris)),
+    saveProfile: (p) => mutate((s) => s.profile(p), true),
     saveTargetDraft: (d) => mutate((s) => s.targetDraft(d)),
     applyTargetDraft: (d) => mutate((s) => s.applyDraft(d)),
     deferOnboarding: () => mutate((s) => s.defer()),

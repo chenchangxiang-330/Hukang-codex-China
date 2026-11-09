@@ -97,7 +97,14 @@ test("secure save activates only verified config; restart restores without HTTP"
   assert.equal(f.calls.length, 1);
   assert.equal(restored.getSnapshot().model, "mock");
   assert(restored.getSnapshot().hasKey);
-  restored.consent(true);
+  restored.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   f.setResponse(
     JSON.stringify({
       name: "test",
@@ -150,7 +157,14 @@ test("blank replacement key only reuses credential for identical destination; de
   await f.manager.delete();
   assert.equal(f.raw(), null);
   assert.equal(f.active.getSnapshot().hasKey, false);
-  f.active.consent(true);
+  f.active.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await assert.rejects(f.active.testConnection(), { code: "configuration" });
 });
 test("failed secure deletion still forgets the session key and forbids blank-key reuse", async () => {
@@ -198,7 +212,14 @@ test("delete during late secure write cannot resurrect a tested draft", async ()
 test("targets use all required persisted fields; absent optional sex and health photo allowed", async () => {
   const f = fixture();
   await f.manager.save(config, true);
-  f.active.consent(true);
+  f.active.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   f.setResponse(
     JSON.stringify({
       policies: { protein: policy },
@@ -265,4 +286,127 @@ test("profile mandatory fields and structured target units/types never invent va
     "mock",
   );
   assert.deepEqual(unknown.policies, {});
+});
+
+test("saved grants survive restart/model update; test-only and new address cannot inherit them", async () => {
+  const f = fixture();
+  await f.manager.save(config, true, ["meal-image", "profile", "health-image"]);
+  const restarted = new AiService(f.transport);
+  const restored = new SavedConnection(
+    restarted,
+    f.storage,
+    () => new AiService(f.transport),
+  );
+  await restored.restore();
+  assert.equal(f.calls.length, 1, "restore is not a paid request");
+  assert.deepEqual(restarted.getSnapshot().authorizedScopes, [
+    "meal-image",
+    "profile",
+    "health-image",
+  ]);
+  await restored.save(
+    { ...config, model: "model-b", apiKey: "" },
+    true,
+    restarted.getSnapshot().authorizedScopes,
+  );
+  assert(restarted.getSnapshot().authorizedScopes.includes("health-image"));
+  await restored.save(
+    { ...config, baseUrl: "https://two.example/v1", apiKey: "new-test-key" },
+    true,
+  );
+  assert.deepEqual(restarted.getSnapshot().authorizedScopes, []);
+  const count = f.calls.length;
+  await assert.rejects(restarted.recommendTargets(profile), {
+    code: "consent",
+  });
+  assert.equal(f.calls.length, count);
+  await restored.delete();
+  assert.deepEqual(restarted.getSnapshot().authorizedScopes, []);
+  assert.equal(await f.storage.read(), null);
+});
+
+test("all selected health photos are sent once in order; deleted photo absent; limits fail before transport", async () => {
+  const calls = [],
+    read = [];
+  const s = new AiService(
+    async (r) => {
+      calls.push(JSON.parse(r.body));
+      return {
+        url: r.endpoint,
+        status: 200,
+        body: body(
+          JSON.stringify({ policies: { protein: policy }, missing: [] }),
+        ),
+      };
+    },
+    async (uri) => {
+      read.push(uri);
+      return {
+        mime: "image/jpeg",
+        base64: Buffer.from(uri).toString("base64"),
+      };
+    },
+  );
+  s.update({
+    provider: "deepseek",
+    baseUrl: "https://api.deepseek.com",
+    model: "deepseek-flash",
+    apiKey: "test-only",
+  });
+  s.consent(true, ["profile", "health-image"]);
+  const photos = ["photo-A", "photo-C", "photo-D"];
+  await s.recommendTargets(profile, photos);
+  assert.deepEqual(read, photos);
+  const content = calls[0].messages[1].content;
+  assert.deepEqual(
+    content
+      .slice(1)
+      .map((p) =>
+        Buffer.from(p.image_url.url.split(",")[1], "base64").toString(),
+      ),
+    photos,
+  );
+  assert.equal(content.length, 4);
+  assert.equal(JSON.parse(content[0].text).heightCm, 170);
+  await assert.rejects(s.recommendTargets(profile, Array(7).fill("x")), {
+    code: "image_count",
+  });
+  assert.equal(calls.length, 1);
+  // A preexisting single-photo caller still works.
+  await s.recommendTargets(profile, "legacy-single");
+  assert.equal(calls[1].messages[1].content.length, 2);
+  s.update({ model: "unknown-model" });
+  s.consent(true, ["profile", "health-image"]);
+  await assert.rejects(s.recommendTargets(profile, photos), {
+    code: "image_unsupported",
+  });
+  assert.equal(calls.length, 2);
+});
+
+test("combined image bytes and single-image limits reject entire request without partial upload", async () => {
+  let sent = 0;
+  const s = new AiService(
+    async () => {
+      sent++;
+      throw Error("must not send");
+    },
+    async () => ({
+      mime: "image/jpeg",
+      base64: Buffer.alloc(2_400_000).toString("base64"),
+    }),
+  );
+  s.update({
+    provider: "qwen",
+    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    model: "qwen3-vl-plus",
+    apiKey: "test",
+  });
+  s.consent(true, ["profile", "health-image"]);
+  await assert.rejects(s.recommendTargets(profile, ["a", "b"]), {
+    code: "image_total_size",
+  });
+  assert.equal(sent, 0);
+  s.consent(true, ["profile"]);
+  await assert.rejects(s.recommendTargets(profile, ["a"]), { code: "consent" });
+  assert.equal(sent, 0);
 });

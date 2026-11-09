@@ -6,45 +6,51 @@ import { nutrientInfo, type Food, type Nutrient } from "./model";
 export function FoodEditor({
   food,
   onChange,
+  compact = false,
 }: {
   food: Food;
+  compact?: boolean;
   onChange: (food: Food) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Field
-        label="食物名称"
-        value={food.name}
-        onChange={(name) =>
-          onChange({
-            ...food,
-            name,
-            provenance: {
-              ...(food.provenance ?? { kind: "manual" }),
-              nameEdited: true,
-            },
-          })
-        }
-      />
-      <Text style={N.caption}>
-        营养基准：每 {food.basis.amount}
-        {food.basis.unit}
-        {food.serving
-          ? `（每份 ${food.serving.amount}${food.serving.unit}）`
-          : ""}
-        。
-      </Text>
-      {food.provenance?.kind === "ai" && (
-        <Text style={N.caption}>
-          AI 估算 · 此 1 份已包含描述中的食用量，已按半碗估算时无需再减半。
-        </Text>
+      {!compact && (
+        <>
+          <Field
+            label="食物名称"
+            value={food.name}
+            onChange={(name) =>
+              onChange({
+                ...food,
+                name,
+                provenance: {
+                  ...(food.provenance ?? { kind: "manual" }),
+                  nameEdited: true,
+                },
+              })
+            }
+          />
+          <Text style={N.caption}>
+            营养基准：每 {food.basis.amount}
+            {food.basis.unit}
+            {food.serving
+              ? `（每份 ${food.serving.amount}${food.serving.unit}）`
+              : ""}
+            。
+          </Text>
+          {food.provenance?.kind === "ai" && (
+            <Text style={N.caption}>
+              AI 估算 · 此 1 份已包含描述中的食用量，已按半碗估算时无需再减半。
+            </Text>
+          )}
+        </>
       )}
       <Accordion
         open={open}
         onToggle={() => setOpen(!open)}
         title="核对或修改营养数值"
-        value="按上方基准"
+        value={compact ? "编辑" : "按上方基准"}
       >
         <Text style={N.caption}>
           留空为未知；0 表示已知零值。修改后保留“估算”标记。
@@ -70,6 +76,7 @@ export function FoodEditor({
               <NutrientInput
                 key={k}
                 nutrient={k}
+                compact={compact}
                 food={food}
                 onChange={onChange}
               />
@@ -82,10 +89,12 @@ export function FoodEditor({
 import { useState } from "react";
 function NutrientInput({
   nutrient: k,
+  compact = false,
   food,
   onChange,
 }: {
   nutrient: Nutrient;
+  compact?: boolean;
   food: Food;
   onChange: (f: Food) => void;
 }) {
@@ -125,9 +134,9 @@ function NutrientInput({
       />
       {error ? (
         <Text style={N.caption}>{error}</Text>
-      ) : (
+      ) : !compact ? (
         <Text style={N.tiny}>{f?.source ?? "暂无数据"}</Text>
-      )}
+      ) : null}
     </>
   );
 }

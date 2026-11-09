@@ -1,6 +1,6 @@
 /** TEST ONLY: chosen preview image; never requests any external image URL. */
 export async function readMealImage(uri: string) {
-  if (uri !== "/assets/archived-milk.jpg")
+  if (!uri.startsWith("/assets/archived-milk.jpg"))
     throw new Error("Preview image only");
   const bytes = new Uint8Array(await (await fetch(uri)).arrayBuffer());
   let binary = "";

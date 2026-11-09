@@ -52,6 +52,10 @@ import {
 } from "./model";
 import { dateLabel } from "./Screens";
 import { aiService } from "../../services/ai/runtime";
+const localDay = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 import { aiErrorMessage } from "../../services/ai/errors";
 
 export function ImpactPreview({
@@ -62,6 +66,7 @@ export function ImpactPreview({
   adapter,
   onStock,
   onSaved,
+  mealResult = false,
 }: {
   food: Food;
   snapshot: Snapshot;
@@ -70,6 +75,7 @@ export function ImpactPreview({
   adapter: NutritionAdapter;
   onStock?: () => void;
   onSaved?: () => void;
+  mealResult?: boolean;
 }) {
   const resumed =
     snapshot.intakeDraft?.food.id === initialFood.id
@@ -78,9 +84,13 @@ export function ImpactPreview({
   const [food, setFood] = useState(resumed?.food ?? initialFood),
     [day, setDay] = useState(resumed?.date ?? date),
     [selectedMeal, setMeal] = useState<Meal>(resumed?.meal ?? meal);
-  const [amount, setAmount] = useState(resumed ? String(resumed.amount) : ""),
-    [unit, setUnit] = useState<PortionUnit>(resumed?.unit ?? food.basis.unit);
-  const [selection, setSelection] = useState(""),
+  const [amount, setAmount] = useState(
+      mealResult ? "1" : resumed ? String(resumed.amount) : "",
+    ),
+    [unit, setUnit] = useState<PortionUnit>(
+      mealResult ? "份" : (resumed?.unit ?? food.basis.unit),
+    );
+  const [selection, setSelection] = useState(mealResult ? "1" : ""),
     [confirmed, setConfirmed] = useState(false),
     [saving, setSaving] = useState(false),
     [saved, setSaved] = useState(false),
@@ -109,6 +119,8 @@ export function ImpactPreview({
   let entry: Entry | null = null,
     validation = "";
   try {
+    if (mealResult && (food.basis.unit !== "份" || food.basis.amount !== 1))
+      throw Error("整餐营养基准无效，请重新估算。");
     if (!selection) throw Error("请选择实际食用份量。");
     entry = {
       id: operation.current,
@@ -181,6 +193,7 @@ export function ImpactPreview({
     try {
       await adapter.saveIntakeDraft?.(entry);
       await adapter.record(entry, operation.current);
+      latestDraft.current = "";
       setSaved(true);
       setMessage(
         adapter.kind === "production"
@@ -195,6 +208,107 @@ export function ImpactPreview({
       setSaving(false);
     }
   }
+  if (mealResult)
+    return (
+      <>
+        <View
+          pointerEvents={saving || committed ? "none" : "auto"}
+          style={{ gap: 12 }}
+        >
+          <Card>
+            <Field
+              label="餐食名称"
+              value={food.name}
+              onChange={(name) =>
+                setFood({
+                  ...food,
+                  name,
+                  provenance: {
+                    ...(food.provenance ?? { kind: "ai" }),
+                    nameEdited: true,
+                  },
+                })
+              }
+            />
+            <Text style={N.caption}>AI 估算 · 1 份</Text>
+            {(
+              [
+                "energy",
+                "protein",
+                "carbohydrate",
+                "fat",
+                "fiber",
+                "total_sugars",
+                "added_sugars",
+                "sodium",
+                ...Object.keys(nutrientInfo).filter(
+                  (k) =>
+                    ![
+                      "energy",
+                      "protein",
+                      "carbohydrate",
+                      "fat",
+                      "fiber",
+                      "total_sugars",
+                      "added_sugars",
+                      "sodium",
+                    ].includes(k) &&
+                    food.nutrients[k as keyof typeof nutrientInfo]?.status !==
+                      "unknown" &&
+                    food.nutrients[k as keyof typeof nutrientInfo],
+                ),
+              ] as (keyof typeof nutrientInfo)[]
+            ).map((k) => (
+              <NutrientLine
+                key={k}
+                title={nutrientInfo[k][0]}
+                total={contribution(
+                  {
+                    id: operation.current,
+                    date: day,
+                    meal: selectedMeal,
+                    food,
+                    amount: 1,
+                    unit: "份",
+                  },
+                  k,
+                )}
+              />
+            ))}
+            <FoodEditor compact food={food} onChange={setFood} />
+          </Card>
+          <Card>
+            <Field
+              label="食用日期"
+              value={day}
+              onChange={setDay}
+              placeholder="YYYY-MM-DD"
+            />
+            <Field
+              label="食用时间"
+              value={time}
+              onChange={setTime}
+              placeholder="HH:mm"
+            />
+            <Choices
+              value={selectedMeal}
+              options={Object.entries(meals)}
+              accessibilityPrefix="食用餐次"
+              onChange={(v) => setMeal(v as Meal)}
+            />
+          </Card>
+          {!!validation && <Feedback>{validation}</Feedback>}
+          <Action
+            title={saving ? "正在保存…" : committed ? "已保存" : "确认保存"}
+            disabled={
+              !entry || saving || committed || snapshot.status !== "ready"
+            }
+            onPress={() => void confirm()}
+          />
+        </View>
+        {!!message && <Feedback>{message}</Feedback>}
+      </>
+    );
   return (
     <>
       <View
@@ -512,7 +626,7 @@ export function CaptureScreen({
       if (original && adapter.kind === "production")
         deletePrivatePhoto(original);
       setOriginal(uri);
-      setMessage("原图已保存在本机，尚未发送。");
+      setMessage("");
     } catch (e) {
       if (live.current) setMessage((e as Error).message);
     } finally {
@@ -539,7 +653,7 @@ export function CaptureScreen({
       adapter.kind === "production" &&
       !aiDisclosure.allows(aiService.getSnapshot(), "meal-image")
     ) {
-      setMessage("请先确认本次发送内容与服务地址。");
+      setMessage("请前往 AI 设置授权发送餐食照片。");
       return;
     }
     const controller = new AbortController();
@@ -559,11 +673,16 @@ export function CaptureScreen({
         adapter.kind === "demo" && adapter.demoEstimateMeal
           ? await adapter.demoEstimateMeal(input)
           : await aiService.estimateMeal(input, controller.signal);
-      if (!live.current || ticket !== generation.current) return;
+      if (
+        !live.current ||
+        ticket !== generation.current ||
+        controller.signal.aborted
+      )
+        return;
       result.food = { ...result.food, kind: "meal", image: original };
       await adapter.saveIntakeDraft?.({
         id: `intake-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        date,
+        date: localDay(),
         meal,
         food: result.food,
         amount: result.food.basis.amount,
@@ -617,19 +736,13 @@ export function CaptureScreen({
     return (
       <>
         <Text style={N.title}>核对这一餐</Text>
-        <Text style={N.caption}>
-          {adapter.kind === "demo" ? "隔离演示数据" : "AI 估算 · 已使用照片"}
-        </Text>
-        {estimate.uncertainties.map((u, i) => (
-          <Text key={i} style={N.caption}>
-            {u}
-          </Text>
-        ))}
+        {adapter.kind === "demo" && <Text style={N.caption}>隔离演示数据</Text>}
         <ImpactPreview
           key={estimate.food.version}
+          mealResult
           food={estimate.food}
           snapshot={snapshot}
-          date={date}
+          date={localDay()}
           meal={meal}
           adapter={adapter}
           onSaved={() => setHasSaved(true)}
@@ -724,11 +837,6 @@ export function CaptureScreen({
                 .catch((e) => setMessage(e.message));
             }}
           />
-          {!ai.supportsImage && (
-            <Feedback>
-              当前模型不支持图片，请配置支持照片的模型。现有本机食品和记录仍可使用。
-            </Feedback>
-          )}
         </>
       )}
       <Action
@@ -744,7 +852,7 @@ export function CaptureScreen({
       {choosing && (
         <Link title="取消图片处理" onPress={() => request.current?.abort()} />
       )}
-      {original && <Text style={N.caption}>原图保留 · 上传副本在本机处理</Text>}
+
       {loading && (
         <Link title="取消本次估算" onPress={() => request.current?.abort()} />
       )}

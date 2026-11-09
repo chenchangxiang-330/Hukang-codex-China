@@ -26,6 +26,7 @@ export type TargetPolicy = {
   appliedAt?: string;
 };
 export type TargetDraft = {
+  healthPhotos?: readonly string[];
   policies: Partial<Record<Nutrient, TargetPolicy>>;
   missing: string[];
   profileRevision: number;

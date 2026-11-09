@@ -99,6 +99,7 @@ export type Snapshot = {
   message?: string;
   saving?: boolean;
   profile?: PersonalProfile | undefined;
+  healthPhotos?: readonly string[];
   targetDraft?: TargetDraft | undefined;
   onboardingDeferred?: boolean;
   catalogue?: readonly Food[];
@@ -157,6 +158,7 @@ export interface NutritionAdapter {
   configureTargets(targets: Targets): void | Promise<void>;
   saveCatalogueFood?(food: Food): Promise<void>;
   saveProfile?(profile: PersonalProfile): Promise<void>;
+  saveHealthPhotos?(uris: readonly string[]): Promise<void>;
   saveTargetDraft?(draft: TargetDraft | null): Promise<void>;
   applyTargetDraft?(draft: TargetDraft): Promise<void>;
   deferOnboarding?(): Promise<void>;

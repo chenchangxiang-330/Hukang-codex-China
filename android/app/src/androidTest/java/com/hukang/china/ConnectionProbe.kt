@@ -20,7 +20,7 @@ class ConnectionProbe : Instrumentation() {
       val read = type.getMethod("read")
       val write = type.getMethod("write", String::class.java)
       val delete = type.getMethod("delete")
-      val fixture = """{"config":{"provider":"custom","baseUrl":"https://example.invalid/v1","apiKey":"INSTRUMENTATION-NON-SECRET","model":"native-fixture"},"result":{"endpoint":"https://example.invalid/v1/chat/completions","requestedModel":"native-fixture","responseModel":"native-fixture","response":"isolated fixture, not a provider test","testedAt":"2026-11-03T00:00:00.000Z"}}"""
+      val fixture = """{"config":{"provider":"custom","baseUrl":"https://example.invalid/v1","apiKey":"INSTRUMENTATION-NON-SECRET","model":"native-fixture"},"authorization":{"endpoint":"https://example.invalid/v1/chat/completions","scopes":["profile","health-image","meal-image"]},"result":{"endpoint":"https://example.invalid/v1/chat/completions","requestedModel":"native-fixture","responseModel":"native-fixture","response":"isolated fixture, not a provider test","testedAt":"2026-11-03T00:00:00.000Z"}}"""
       when(action) {
         "write" -> {
           write.invoke(secure, fixture)

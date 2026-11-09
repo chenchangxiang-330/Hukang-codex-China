@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Image, Text, View } from "react-native";
+import { Image, Modal, Pressable, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Field, Choices } from "../simple/ui";
 import { Action, Accordion, Card, Feedback, Link, N } from "./components";
@@ -17,11 +17,11 @@ import {
   policyFor,
   validatePolicies,
   type PersonalProfile,
-  type TargetDraft,
   type TargetPolicy,
 } from "../../services/nutrition/profile";
 import { aiService } from "../../services/ai/runtime";
 import { aiDisclosure } from "../../services/ai/disclosure";
+import { imageLimits } from "../../services/ai/config";
 import { AiError, aiErrorMessage } from "../../services/ai/errors";
 import {
   keepOriginal,
@@ -32,221 +32,213 @@ import {
   removeUpload,
   removePickerCopy,
 } from "../../services/ai/images";
+
 export function GoalsScreen({
   adapter,
   snapshot: s,
   onSettings,
-  onDone,
+  onDraft,
   registerSave,
-  initial = false,
 }: {
   adapter: NutritionAdapter;
   snapshot: Snapshot;
   onSettings: () => void;
-  onDone: () => void;
-  initial?: boolean;
+  onDraft: () => void;
   registerSave?: (save: (() => Promise<void>) | null) => void;
 }) {
   const ai = useSyncExternalStore(aiService.subscribe, aiService.getSnapshot);
-  useSyncExternalStore(aiDisclosure.subscribe, aiDisclosure.getSnapshot);
-  const [profile, setProfile] = useState(s.profile ?? emptyProfile()),
-    [open, setOpen] = useState(initial || !s.profile);
-  const [draft, setDraft] = useState<TargetDraft | null>(s.targetDraft ?? null);
+  const [profile, setProfile] = useState(s.profile ?? emptyProfile());
+  const [photos, setPhotos] = useState<readonly string[]>(s.healthPhotos ?? []);
+  const [preview, setPreview] = useState<string | null>(null);
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
-    [health, setHealth] = useState<string | null>(null),
-    [healthOpen, setHealthOpen] = useState(false);
-  const [manual, setManual] = useState(false),
-    [referenceDetails, setReferenceDetails] = useState(false),
-    [nutrient, setNutrient] = useState<Nutrient>("protein"),
-    [type, setType] = useState<TargetPolicy["type"]>("target"),
-    [value, setValue] = useState(""),
-    [high, setHigh] = useState("");
+    [choosing, setChoosing] = useState(false);
   const pending = useRef<AbortController | null>(null),
-    revision = useRef(0);
-  const healthRef = useRef<string | null>(null);
-  healthRef.current = health;
-  useEffect(
-    () => () => {
-      pending.current?.abort();
-      if (healthRef.current) deletePrivatePhoto(healthRef.current);
-    },
-    [],
-  );
-  const scope = health ? "health-image" : "profile";
-  const change = (k: keyof PersonalProfile, v: string) => {
-    revision.current++;
-    pending.current?.abort();
-    setProfile((p) => ({ ...p, [k]: v }));
-    setMessage("");
+    revision = useRef(0),
+    live = useRef(true),
+    picking = useRef(false);
+  const latest = useRef(profile),
+    saves = useRef<Promise<void>>(Promise.resolve());
+  latest.current = profile;
+  const save = (p: PersonalProfile) => {
+    const next = saves.current
+      .catch(() => {})
+      .then(async () => {
+        await adapter.saveProfile?.(p);
+      });
+    saves.current = next;
+    return next;
   };
-  async function saveProfile() {
-    await adapter.saveProfile?.(profile);
-    const p = adapter.getSnapshot().profile ?? profile;
-    setProfile(p);
-    return p;
-  }
   useEffect(() => {
     registerSave?.(async () => {
-      await saveProfile();
+      pending.current?.abort();
+      await save(latest.current);
     });
-    return () => registerSave?.(null);
-  }, [profile]);
-  async function saveLater() {
+    return () => {
+      registerSave?.(null);
+      live.current = false;
+      pending.current?.abort();
+    };
+  }, []);
+  const change = (k: keyof PersonalProfile, value: string) => {
+    revision.current++;
+    pending.current?.abort();
+    const p = { ...latest.current, [k]: value };
+    latest.current = p;
+    setProfile(p);
+    setMessage("");
+    void save(p).catch(() => {
+      if (live.current) setMessage("资料暂未保存，请重试。");
+    });
+  };
+  async function choose() {
+    if (picking.current || pending.current) return;
+    picking.current = true;
+    setChoosing(true);
+    setMessage("");
+    const added: string[] = [];
     try {
-      await saveProfile();
-      await adapter.deferOnboarding?.();
-      onDone();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 1,
+        exif: false,
+        allowsMultipleSelection: true,
+        selectionLimit: Math.max(1, 6 - photos.length),
+        orderedSelection: true,
+      });
+      if (result.canceled) return;
+      if (photos.length + result.assets.length > 6)
+        throw new AiError("image_count");
+      for (const asset of result.assets) {
+        const uri = await keepOriginal(
+          asset.uri,
+          "health-private",
+          `health-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        );
+        added.push(uri);
+        await removePickerCopy(asset.uri);
+      }
+      if (!live.current) return;
+      const next = [...photos, ...added];
+      await saves.current;
+      await adapter.saveHealthPhotos?.(next);
+      revision.current++;
+      setPhotos(next);
+      added.length = 0;
     } catch (e) {
-      setMessage((e as Error).message);
+      if (live.current)
+        setMessage(
+          e instanceof AiError ? aiErrorMessage(e) : "照片未添加，请重试。",
+        );
+    } finally {
+      for (const uri of added) {
+        try {
+          deletePrivatePhoto(uri);
+        } catch {}
+      }
+      picking.current = false;
+      if (live.current) setChoosing(false);
+    }
+  }
+  async function remove(uri: string) {
+    if (picking.current || busy) return;
+    picking.current = true;
+    setChoosing(true);
+    revision.current++;
+    pending.current?.abort();
+    try {
+      const next = photos.filter((p) => p !== uri);
+      await saves.current;
+      await adapter.saveHealthPhotos?.(next);
+      setPhotos(next);
+      setPreview(null);
+      deletePrivatePhoto(uri);
+      setMessage("");
+    } catch {
+      setMessage("删除未完成，请重试。");
+    } finally {
+      picking.current = false;
+      setChoosing(false);
     }
   }
   async function recommend() {
-    if (busy) return;
-    const issues = profileIssues(profile);
-    if (Object.keys(issues).length) {
-      setMessage(Object.values(issues).join(" "));
-      setOpen(true);
+    if (pending.current || picking.current) return;
+    const issues = Object.values(profileIssues(latest.current));
+    if (issues.length) {
+      setMessage(issues[0]!);
       return;
     }
-    if (!aiDisclosure.allows(aiService.getSnapshot(), scope)) {
-      setMessage("请确认本次发送内容。");
+    const context = aiService.getSnapshot();
+    if (!context.connection) {
+      setMessage("请先保存 AI 连接。");
+      return;
+    }
+    if (
+      !aiDisclosure.allows(context, photos.length ? "health-image" : "profile")
+    ) {
+      setMessage("请前往 AI 设置授权发送这类资料。");
+      return;
+    }
+    if (photos.length && !imageLimits(context)) {
+      setMessage("当前模型不支持图片。");
       return;
     }
     const controller = new AbortController();
     pending.current = controller;
     const ticket = ++revision.current;
+    const uploads: string[] = [];
     setBusy(true);
     setMessage("");
-    let upload: string | undefined;
     try {
-      const p = await saveProfile();
-      if (health) {
-        upload = (await prepareUpload(health, controller.signal)).uri;
-      }
-      const d = await aiService.recommendTargets(p, upload, controller.signal);
-      if (ticket !== revision.current) throw Error("资料已修改，请重新估算。");
-      await adapter.saveTargetDraft?.(d);
-      setDraft(d);
-      setMessage("草案已生成，核对后再应用。");
-    } catch (e) {
-      setMessage(
-        e instanceof AiError ? aiErrorMessage(e) : (e as Error).message,
-      );
-    } finally {
-      if (upload) await removeUpload(upload);
-      setBusy(false);
-      pending.current = null;
-    }
-  }
-  async function photo(camera: boolean) {
-    revision.current++;
-    pending.current?.abort();
-    try {
-      if (camera) {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) {
-          setMessage("相机权限未开启，可以从相册选择或跳过。");
-          return;
+      await save(latest.current);
+      const p = adapter.getSnapshot().profile ?? latest.current;
+      for (const uri of photos) {
+        const upload = await prepareUpload(uri, controller.signal);
+        if (
+          context.provider === "qwen" &&
+          (Math.min(upload.width, upload.height) <= 10 ||
+            Math.max(upload.width, upload.height) /
+              Math.min(upload.width, upload.height) >
+              200)
+        ) {
+          await removeUpload(upload.uri);
+          throw new AiError("image_invalid");
         }
+        uploads.push(upload.uri);
       }
-      const result = await (
-        camera
-          ? ImagePicker.launchCameraAsync
-          : ImagePicker.launchImageLibraryAsync
-      )({ mediaTypes: ["images"], quality: 1, exif: false });
-      if (result.canceled) return;
-      const asset = result.assets[0];
-      if (!asset) return;
-      const uri = await keepOriginal(
-        asset.uri,
-        "health-private",
-        `health-${Date.now()}`,
+      if (
+        controller.signal.aborted ||
+        context.revision !== aiService.getSnapshot().revision
+      )
+        throw new AiError("changed");
+      const result = await aiService.recommendTargets(
+        p,
+        uploads,
+        controller.signal,
       );
-      await removePickerCopy(asset.uri);
-      if (health) deletePrivatePhoto(health);
-      setHealth(uri);
-      setMessage("照片仅保存在本机，推荐时需另行确认发送。");
-    } catch {
-      setMessage("照片选择失败，可重试或跳过。");
-    }
-  }
-  async function manualDraft() {
-    try {
-      const p = await saveProfile();
-      const forced = ["protein", "fiber"].includes(nutrient)
-        ? "target"
-        : ["sodium", "added_sugars", "saturated_fat", "trans_fat"].includes(
-              nutrient,
-            )
-          ? "upper_limit"
-          : type;
-      const policy: TargetPolicy = {
-        type: forced,
-        unit: nutrientInfo[nutrient][1],
-        ...(forced === "range"
-          ? { range: [Number(value), Number(high)] as [number, number] }
-          : { value: Number(value) }),
-        source: "用户手动设置",
-        basis: "用户核对后的个人参考",
-        applicability: "个人饮食记录参考",
-        manual: true,
-        profileRevision: p.revision,
-      };
-      const policies = validatePolicies({
-        ...(draft?.profileRevision === p.revision ? draft.policies : {}),
-        [nutrient]: policy,
-      });
-      const d = {
-        policies,
-        missing: draft?.missing ?? [],
-        profileRevision: p.revision,
-        generatedAt: new Date().toISOString(),
-        model: draft?.model ?? "用户设置",
-      };
-      setDraft(d);
-      await adapter.saveTargetDraft?.(d);
-      setManual(false);
-      setMessage("手改目标已加入草案，尚未替换现有目标。");
+      if (
+        !live.current ||
+        ticket !== revision.current ||
+        controller.signal.aborted
+      )
+        return;
+      await adapter.saveTargetDraft?.({ ...result, healthPhotos: [...photos] });
+      onDraft();
     } catch (e) {
-      setMessage((e as Error).message);
-    }
-  }
-  async function apply() {
-    if (!draft || busy) return;
-    try {
-      setBusy(true);
-      await saveProfile();
-      await adapter.applyTargetDraft?.(draft);
-      setDraft(null);
-      if (health) {
-        deletePrivatePhoto(health);
-        setHealth(null);
-      }
-      setMessage("已应用核对后的目标。");
-      if (initial) onDone();
-    } catch (e) {
-      setMessage((e as Error).message);
+      if (live.current)
+        setMessage(
+          e instanceof AiError ? aiErrorMessage(e) : (e as Error).message,
+        );
     } finally {
-      setBusy(false);
+      for (const uri of uploads) await removeUpload(uri);
+      pending.current = null;
+      if (live.current) setBusy(false);
     }
   }
   return (
     <>
-      <Text style={N.heading}>{initial ? "设置个人参考" : "个人参考目标"}</Text>
-      {initial && (
-        <Text style={N.caption}>可以先保存草稿，继续使用本机食品和记录。</Text>
-      )}
-      <Link
-        title={ai.connection ? "AI 连接已保存" : "配置 AI 连接"}
-        onPress={onSettings}
-      />
-      <Accordion
-        title="个人资料"
-        value={Object.keys(profileIssues(profile)).length ? "待完善" : "查看"}
-        open={open}
-        onToggle={() => setOpen(!open)}
-      >
+      <Text style={N.title}>个人资料</Text>
+      <Card>
         <Field
           label="年龄（岁）"
           value={profile.age}
@@ -269,129 +261,244 @@ export function GoalsScreen({
           label="运动状况"
           value={profile.exerciseDescription}
           onChange={(v) => change("exerciseDescription", v)}
-          placeholder="平时做什么运动？例如羽毛球、跑步；没有的话填无"
+          placeholder="例如跑步；没有运动填无"
         />
         <Field
           label="每周运动频率（次/周）"
           value={profile.exerciseFrequencyPerWeek}
           onChange={(v) => change("exerciseFrequencyPerWeek", v)}
           numeric
-          placeholder="一周几次？无运动填 0"
+          placeholder="无运动填 0"
         />
         <Field
           label="性别（选填）"
           value={profile.sex ?? ""}
           onChange={(v) => change("sex", v)}
         />
-        <Action
-          title="保存资料草稿"
-          secondary
-          disabled={busy}
-          onPress={() =>
-            void saveProfile()
-              .then(() => setMessage("资料草稿已保存。"))
-              .catch((e) => setMessage(e.message))
-          }
-        />
-      </Accordion>
-      <Accordion
-        title="体检照片（可跳过）"
-        value={health ? "已选择" : "未选择"}
-        open={healthOpen}
-        onToggle={() => setHealthOpen(!healthOpen)}
-      >
-        <Text style={N.caption}>
-          照片只用于本次推荐，独立于食品图片和普通导出。可随时删除。
-        </Text>
-        {health ? (
-          <>
-            <Image
-              source={{ uri: health }}
-              style={{ height: 160, width: "100%" }}
-              resizeMode="contain"
-            />
-            <Link
-              title="删除体检照片"
-              onPress={() => {
-                revision.current++;
-                pending.current?.abort();
-                deletePrivatePhoto(health);
-                setHealth(null);
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <Action
-              title="拍摄体检照片"
-              secondary
-              onPress={() => void photo(true)}
-            />
-            <Action
-              title="从相册选择体检照片"
-              secondary
-              onPress={() => void photo(false)}
-            />
-          </>
-        )}
+      </Card>
+      <View style={{ gap: 8 }}>
+        <Text style={N.heading}>体检照片</Text>
         <Link
-          title="跳过体检照片"
-          onPress={() => {
-            revision.current++;
-            pending.current?.abort();
-            if (health) deletePrivatePhoto(health);
-            setHealth(null);
-            setHealthOpen(false);
-          }}
+          title={choosing ? "正在处理照片…" : "从相册选择"}
+          onPress={() => void choose()}
         />
-      </Accordion>
-      <AiDisclosure scope={scope} onSettings={onSettings} />
+        {!!photos.length && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+            {photos.map((uri, i) => (
+              <View key={uri} style={{ width: 96 }}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`预览体检照片 ${i + 1}`}
+                  onPress={() => setPreview(uri)}
+                  style={{ minHeight: 96 }}
+                >
+                  <Image
+                    source={{ uri }}
+                    style={{ width: 96, height: 96, borderRadius: 14 }}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+                <Link
+                  title={`删除照片 ${i + 1}`}
+                  onPress={() => void remove(uri)}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+      <AiDisclosure
+        scope={photos.length ? "health-image" : "profile"}
+        onSettings={onSettings}
+      />
       <Action
-        title={
-          busy
-            ? "正在处理…"
-            : Object.keys(s.targets).length
-              ? "AI 重新估算"
-              : "生成目标草案"
-        }
-        disabled={busy || !ai.connection}
+        title={busy ? "正在生成…" : "生成目标草案"}
+        disabled={busy || choosing}
         onPress={() => void recommend()}
       />
       {busy && (
         <Link title="取消推荐" onPress={() => pending.current?.abort()} />
       )}
-      {draft && (
-        <Card>
-          <Text style={N.heading}>待确认草案</Text>
-          {(Object.entries(draft.policies) as [Nutrient, TargetPolicy][]).map(
-            ([k, p]) => (
-              <View key={k} style={{ gap: 5 }}>
-                <Text style={N.body}>
-                  {nutrientInfo[k][0]}　{policyLabel(p)}
-                  {p.manual ? " · 用户修改" : " · AI 推荐"}
-                </Text>
-                <Text style={N.caption}>
-                  现有：{policyLabel(policyFor(s.targets, k))}
-                  {policyFor(s.targets, k)?.manual ? " · 已手改" : ""}
-                </Text>
-                <Text style={N.caption}>
-                  {p.basis} · {p.applicability}
-                </Text>
-              </View>
-            ),
+      {!!message && <Feedback>{message}</Feedback>}
+      <Modal
+        visible={!!preview}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreview(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "#172F43EE",
+            padding: 24,
+            paddingTop: 60,
+            paddingBottom: 50,
+          }}
+        >
+          <Action title="关闭照片预览" onPress={() => setPreview(null)} />
+          {preview && (
+            <Image
+              source={{ uri: preview }}
+              resizeMode="contain"
+              style={{ flex: 1, width: "100%" }}
+            />
           )}
-          {draft.missing.map((m, i) => (
-            <Text key={i} style={N.caption}>
-              待完善：{m}
-            </Text>
-          ))}
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+export function TargetDraftScreen({
+  adapter,
+  snapshot,
+  onDone,
+}: {
+  adapter: NutritionAdapter;
+  snapshot: Snapshot;
+  onDone: () => void;
+}) {
+  const [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false);
+  const lock = useRef(false),
+    draft = snapshot.targetDraft;
+  const valid = draft && draft.profileRevision === snapshot.profile?.revision;
+  async function apply() {
+    if (!draft || !valid || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try {
+      await adapter.applyTargetDraft?.(draft);
+      onDone();
+    } catch (e) {
+      setMessage((e as Error).message);
+      lock.current = false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <Text style={N.title}>目标草案</Text>
+      {valid ? (
+        <>
+          <Card>
+            {(Object.entries(draft.policies) as [Nutrient, TargetPolicy][]).map(
+              ([key, policy]) => (
+                <View
+                  key={key}
+                  style={[
+                    N.row,
+                    { flexWrap: "wrap", justifyContent: "space-between" },
+                  ]}
+                >
+                  <Text style={N.body}>{nutrientInfo[key][0]}</Text>
+                  <Text style={N.body}>{policyLabel(policy)}</Text>
+                </View>
+              ),
+            )}
+          </Card>
+          {!!draft.missing.length && (
+            <Text style={N.caption}>{draft.missing[0]}</Text>
+          )}
           <Action
-            title="确认应用目标"
+            title={busy ? "正在应用…" : "确认应用目标"}
             disabled={busy || !Object.keys(draft.policies).length}
             onPress={() => void apply()}
           />
-        </Card>
+        </>
+      ) : (
+        <Text style={N.body}>资料已变化，请返回重新生成草案。</Text>
       )}
+      {!!message && <Feedback>{message}</Feedback>}
+    </>
+  );
+}
+
+/** Existing-target management stays separate from the two recommendation steps. */
+export function TargetManagementScreen({
+  adapter,
+  snapshot: s,
+  onProfile,
+  onDraft,
+}: {
+  adapter: NutritionAdapter;
+  snapshot: Snapshot;
+  onProfile: () => void;
+  onDraft: () => void;
+}) {
+  const [manual, setManual] = useState(false),
+    [nutrient, setNutrient] = useState<Nutrient>("protein"),
+    [type, setType] = useState<TargetPolicy["type"]>("target"),
+    [value, setValue] = useState(""),
+    [high, setHigh] = useState(""),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  const effectiveType = ["protein", "fiber"].includes(nutrient)
+    ? "target"
+    : ["sodium", "added_sugars", "saturated_fat", "trans_fat"].includes(
+          nutrient,
+        )
+      ? "upper_limit"
+      : type;
+  async function apply() {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try {
+      const policy = validatePolicies({
+        [nutrient]: {
+          type: effectiveType,
+          unit: nutrientInfo[nutrient][1],
+          ...(effectiveType === "range"
+            ? { range: [Number(value), Number(high)] }
+            : { value: Number(value) }),
+          source: "用户手动设置",
+          basis: "用户核对后的个人参考",
+          applicability: "个人饮食记录参考",
+          manual: true,
+          profileRevision: s.profile?.revision ?? 0,
+          appliedAt: new Date().toISOString(),
+        },
+      });
+      await adapter.configureTargets({
+        ...s.targets,
+        policies: { ...s.targets.policies, ...policy },
+      });
+      setManual(false);
+      setMessage("目标已更新。");
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <Text style={N.title}>个人参考目标</Text>
+      <Link title="个人资料与目标推荐" onPress={onProfile} />
+      {s.targetDraft && <Link title="查看目标草案" onPress={onDraft} />}
+      <Card>
+        {(Object.keys(nutrientInfo) as Nutrient[])
+          .filter((k) => policyFor(s.targets, k))
+          .map((k) => (
+            <View
+              key={k}
+              style={[
+                N.row,
+                { flexWrap: "wrap", justifyContent: "space-between" },
+              ]}
+            >
+              <Text style={N.body}>{nutrientInfo[k][0]}</Text>
+              <Text style={N.body}>{policyLabel(policyFor(s.targets, k))}</Text>
+            </View>
+          ))}
+        {!Object.keys(s.targets).length && (
+          <Text style={N.caption}>尚未设置目标</Text>
+        )}
+      </Card>
       <Accordion
         title="手动修改目标"
         value="编辑"
@@ -421,7 +528,7 @@ export function GoalsScreen({
           <Choices
             value={type}
             options={[
-              ["target", "点目标"],
+              ["target", "目标"],
               ["range", "参考区间"],
               ["upper_limit", "参考上限"],
             ]}
@@ -434,84 +541,21 @@ export function GoalsScreen({
           onChange={setValue}
           numeric
         />
-        {type === "range" &&
-          ![
-            "protein",
-            "fiber",
-            "sodium",
-            "added_sugars",
-            "saturated_fat",
-            "trans_fat",
-          ].includes(nutrient) && (
-            <Field
-              label={`上限（${nutrientInfo[nutrient][1]}）`}
-              value={high}
-              onChange={setHigh}
-              numeric
-            />
-          )}
+        {effectiveType === "range" && (
+          <Field
+            label={`上限（${nutrientInfo[nutrient][1]}）`}
+            value={high}
+            onChange={setHigh}
+            numeric
+          />
+        )}
         <Action
-          title="加入目标草案"
-          secondary
+          title="保存目标修改"
           disabled={busy}
-          onPress={() => void manualDraft()}
+          onPress={() => void apply()}
         />
       </Accordion>
-      {!draft && (
-        <Card>
-          <Text style={N.heading}>当前参考</Text>
-          {(Object.keys(nutrientInfo) as Nutrient[])
-            .filter((k) => policyFor(s.targets, k))
-            .map((k) => (
-              <Text key={k} style={N.body}>
-                {nutrientInfo[k][0]}　{policyLabel(policyFor(s.targets, k))}
-                {policyFor(s.targets, k)?.manual ? " · 用户修改" : ""}
-              </Text>
-            ))}
-          {!Object.keys(s.targets).length && (
-            <Text style={N.caption}>尚未设置目标。</Text>
-          )}
-          {!!Object.keys(s.targets).length && (
-            <Accordion
-              title="目标依据与应用时间"
-              value="查看"
-              open={referenceDetails}
-              onToggle={() => setReferenceDetails(!referenceDetails)}
-            >
-              {(Object.keys(nutrientInfo) as Nutrient[])
-                .filter((k) => policyFor(s.targets, k))
-                .map((k) => {
-                  const p = policyFor(s.targets, k)!;
-                  return (
-                    <View key={k} style={{ gap: 4 }}>
-                      <Text style={N.body}>
-                        {nutrientInfo[k][0]} ·{" "}
-                        {p.manual ? "用户修改" : "AI 推荐"}
-                      </Text>
-                      <Text style={N.caption}>
-                        {p.source} · {p.basis} · {p.applicability}
-                      </Text>
-                      <Text style={N.caption}>
-                        {p.appliedAt
-                          ? `应用于 ${new Date(p.appliedAt).toLocaleString()}`
-                          : "既有目标，应用时间未记录"}
-                      </Text>
-                    </View>
-                  );
-                })}
-            </Accordion>
-          )}
-        </Card>
-      )}
       {!!message && <Feedback>{message}</Feedback>}
-      {initial && (
-        <Action
-          title="保存草稿，稍后继续"
-          secondary
-          disabled={busy}
-          onPress={() => void saveLater()}
-        />
-      )}
     </>
   );
 }

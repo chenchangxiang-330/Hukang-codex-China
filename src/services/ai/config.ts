@@ -113,3 +113,14 @@ export function supportsMealImage(
     (config.provider === "qwen" && config.model.trim() === "qwen3-vl-plus")
   );
 }
+
+/** App limits deliberately below provider limits and the native 6 MB request cap.
+ * Official vision docs checked 2026-11-09: DeepSeek 600 / Qwen base64 250 images.
+ * Both supported models accept multi-image content; unknown models stay unsupported. */
+export function imageLimits(
+  config: Pick<AiConfiguration, "provider" | "baseUrl" | "model">,
+) {
+  return supportsMealImage(config)
+    ? { count: 6, perImageBytes: 4_000_000, requestBytes: 6_000_000 }
+    : null;
+}

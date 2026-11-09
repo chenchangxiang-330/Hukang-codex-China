@@ -25,8 +25,13 @@ export function requestBody(
   config: AiConfiguration,
   text: string,
   meal: boolean | "package" | "targets" | "label",
-  image?: MealImage,
+  image?: MealImage | readonly MealImage[],
 ) {
+  const images: readonly MealImage[] = image
+    ? Array.isArray(image)
+      ? image
+      : [image as MealImage]
+    : [];
   return {
     model: config.model,
     stream: false,
@@ -58,13 +63,13 @@ export function requestBody(
         : []),
       {
         role: "user",
-        content: image
+        content: images.length
           ? [
               { type: "text", text },
-              {
+              ...images.map((item) => ({
                 type: "image_url",
-                image_url: { url: `data:${image.mime};base64,${image.base64}` },
-              },
+                image_url: { url: `data:${item.mime};base64,${item.base64}` },
+              })),
             ]
           : text,
       },

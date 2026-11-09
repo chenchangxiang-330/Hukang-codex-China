@@ -1,3 +1,4 @@
+import { healthPhotos, samePhotos } from "./healthPhotos";
 import {
   sanitizeProfile,
   validatePolicies,
@@ -97,6 +98,7 @@ export function createNutritionStore(
     );
     return {
       profile: state.profile as PersonalProfile | undefined,
+      healthPhotos: healthPhotos(state.healthPhotos ?? state.healthPhoto),
       targetDraft: state.targetDraft as TargetDraft | undefined,
       onboardingDeferred: state.onboardingDeferred === true,
       intakeDraft: state.intakeDraft as Entry | undefined,
@@ -185,18 +187,55 @@ export function createNutritionStore(
           return read();
         p.revision = (previous?.revision ?? 0) + 1;
         p.updatedAt = now();
-        await setState("profile", p);
+        await driver.transaction(async (tx) => {
+          await tx.run(
+            "INSERT INTO nutrition_state(key,json) VALUES('profile',?) ON CONFLICT(key) DO UPDATE SET json=excluded.json",
+            JSON.stringify(p),
+          );
+          await tx.run("DELETE FROM nutrition_state WHERE key='targetDraft'");
+        });
         return read();
       });
     },
+    healthPhotos: (input: readonly string[]) =>
+      serialize(async () => {
+        const uris = healthPhotos(input);
+        const current = await read();
+        if (samePhotos(uris, current.healthPhotos)) return current;
+        await driver.transaction(async (tx) => {
+          await tx.run(
+            "INSERT INTO nutrition_state(key,json) VALUES('healthPhotos',?) ON CONFLICT(key) DO UPDATE SET json=excluded.json",
+            JSON.stringify(uris),
+          );
+          await tx.run(
+            "DELETE FROM nutrition_state WHERE key IN ('targetDraft','healthPhoto')",
+          );
+        });
+        return read();
+      }),
     targetDraft: (draft: TargetDraft | null) =>
       serialize(async () => {
-        if (draft) validatePolicies(draft.policies);
+        if (draft) {
+          validatePolicies(draft.policies);
+          const current = await read();
+          if (
+            draft.profileRevision !== current.profile?.revision ||
+            !samePhotos(draft.healthPhotos, current.healthPhotos)
+          )
+            throw Error("资料或照片已修改，请重新生成草案。");
+        }
         await setState("targetDraft", draft);
         return read();
       }),
     applyDraft: (draft: TargetDraft) =>
       serialize(async () => {
+        const current = await read();
+        if (
+          !current.targetDraft ||
+          JSON.stringify(current.targetDraft) !== JSON.stringify(draft) ||
+          !samePhotos(draft.healthPhotos, current.healthPhotos)
+        )
+          throw Error("草案已失效，请重新生成。");
         const policies = validatePolicies(draft.policies);
         if (!Object.keys(policies).length)
           throw Error("尚无可应用目标，请补充资料。");

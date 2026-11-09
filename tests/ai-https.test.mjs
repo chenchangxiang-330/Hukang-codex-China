@@ -57,38 +57,43 @@ test("real HTTPS mock service: shared fetch transport exchanges text/meal/label-
         const text =
           received.length === 1
             ? "OK from TLS mock"
-            : received.length === 3
+            : received.length === 4
               ? JSON.stringify({
-                  name: "TEST label",
-                  columns: [
-                    {
-                      basis: "per_100ml",
-                      rows: [
-                        {
-                          nutrient: "protein",
-                          label: "蛋白质",
-                          amount: "3.6",
-                          unit: "g",
-                        },
-                        {
-                          nutrient: "sodium",
-                          label: "钠",
-                          amount: null,
-                          unit: "mg",
-                        },
-                      ],
-                    },
-                  ],
+                  policies: {},
+                  missing: ["mock health photos"],
                 })
-              : JSON.stringify({
-                  name: "面条",
-                  ingredients: ["面条"],
-                  uncertainties: ["份量为估算"],
-                  nutrients: {
-                    energy: { range: [300, 500] },
-                    sodium: { value: null },
-                  },
-                });
+              : received.length === 3
+                ? JSON.stringify({
+                    name: "TEST label",
+                    columns: [
+                      {
+                        basis: "per_100ml",
+                        rows: [
+                          {
+                            nutrient: "protein",
+                            label: "蛋白质",
+                            amount: "3.6",
+                            unit: "g",
+                          },
+                          {
+                            nutrient: "sodium",
+                            label: "钠",
+                            amount: null,
+                            unit: "mg",
+                          },
+                        ],
+                      },
+                    ],
+                  })
+                : JSON.stringify({
+                    name: "面条",
+                    ingredients: ["面条"],
+                    uncertainties: ["份量为估算"],
+                    nutrients: {
+                      energy: { range: [300, 500] },
+                      sodium: { value: null },
+                    },
+                  });
         res.end(
           JSON.stringify({
             model: "local-mock",
@@ -115,15 +120,16 @@ test("real HTTPS mock service: shared fetch transport exchanges text/meal/label-
       const {AiService}=await import("./src/services/ai/service.ts");
       const {fetchChatTransport}=await import("./src/services/ai/protocol.ts");
       const s=new AiService(fetchChatTransport);
-      s.update({provider:"custom",baseUrl:${JSON.stringify(endpoint)},model:"local-mock",apiKey:"local-non-secret-fixture"});s.consent(true);
+      s.update({provider:"custom",baseUrl:${JSON.stringify(endpoint)},model:"local-mock",apiKey:"local-non-secret-fixture"});s.consent(true, ["meal-text", "meal-image", "package-image", "label-image", "profile", "health-image"]);
       assert.equal((await s.testConnection()).response,"OK from TLS mock");
       const meal=await s.estimateMeal({imageUri:"",description:"一碗面条"});
       assert.deepEqual(meal.food.nutrients.energy.range,[300,500]);assert.equal(meal.food.nutrients.sodium.value,null);
       // Test-only destination mapping exercises real TLS without sending fixtures to a provider.
       const label=new AiService(async r=>{const response=await fetchChatTransport({...r,endpoint:${JSON.stringify(endpoint)}+"/chat/completions"});return {...response,url:r.endpoint};},async()=>({base64:"iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",mime:"image/png",bytes:24}));
-      label.update({provider:"qwen",baseUrl:"https://dashscope.aliyuncs.com/compatible-mode/v1",model:"qwen3-vl-plus",apiKey:"local-non-secret-fixture"});label.consent(true);
+      label.update({provider:"qwen",baseUrl:"https://dashscope.aliyuncs.com/compatible-mode/v1",model:"qwen3-vl-plus",apiKey:"local-non-secret-fixture"});label.consent(true, ["meal-text", "meal-image", "package-image", "label-image", "profile", "health-image"]);
       const table=await label.readNutritionLabel("file:///test-only.png");assert.equal(table.review.columns[0].basisKind,"per_100ml");assert.equal(table.review.columns[0].rows[1].amount,"");
-      s.update({apiKey:"invalid-non-secret-fixture"});s.consent(true);
+      await label.recommendTargets({age:"30",heightCm:"170",weightKg:"65",exerciseDescription:"无",exerciseFrequencyPerWeek:"0",revision:1,updatedAt:""},["file:///health-a.png","file:///health-b.png"]);
+      s.update({apiKey:"invalid-non-secret-fixture"});s.consent(true, ["meal-text", "meal-image", "package-image", "label-image", "profile", "health-image"]);
       await assert.rejects(s.testConnection(),e=>e.code==="authentication");
       assert.equal(s.getSnapshot().connection,null);
     `,
@@ -139,7 +145,12 @@ test("real HTTPS mock service: shared fetch transport exchanges text/meal/label-
     child.stderr.on("data", (x) => (output += x));
     const exit = await new Promise((resolve) => child.once("exit", resolve));
     assert.equal(exit, 0, output);
-    assert.equal(received.length, 4);
+    assert.equal(received.length, 5);
+    assert.equal(
+      received[3].body.messages[1].content.filter((p) => p.type === "image_url")
+        .length,
+      2,
+    );
     assert.match(
       received[2].body.messages[1].content[1].image_url.url,
       /^data:image\/png;base64,/,

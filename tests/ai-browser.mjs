@@ -14,6 +14,7 @@ const page = await browser.newPage({
   viewport: { width: 390, height: 844 },
   locale: "zh-CN",
 });
+page.setDefaultTimeout(30_000);
 const report = {
   kind: "browser-shared-RN-UI-mock-HTTP",
   liveProviderTested: false,
@@ -113,24 +114,9 @@ await page.route("**/*", async (route) => {
 });
 const button = (name) => page.getByRole("button", { name, exact: true });
 const field = (name) => page.getByLabel(name, { exact: true });
-const consent = () =>
-  page.getByRole("checkbox", {
-    name: "我了解发送内容、服务地址及可能产生的费用",
-    exact: true,
-  });
-async function settings() {
-  if (!(await button("配置 AI 服务").count())) await button("发送详情").click();
-  await button("配置 AI 服务").click();
-}
 async function screenshot(name) {
   await page.screenshot({ path: `${out}/${name}.png` });
   report.screenshots.push(name + ".png");
-}
-async function configure(base = "https://mock.example/v1", model = "model-a") {
-  await field("API Base URL").fill(base);
-  await field("API Key").fill("non-secret-test-fixture");
-  await field("模型名称").fill(model);
-  await consent().click();
 }
 try {
   await page.goto("http://127.0.0.1:4177/?scenario=ai-settings");
@@ -138,6 +124,13 @@ try {
   await page
     .getByRole("checkbox", { name: "同意本次连接测试", exact: true })
     .click();
+  for (const name of [
+    "餐食照片与描述：估算营养",
+    "个人资料：推荐营养目标",
+    "体检照片（可选）：辅助目标推荐",
+    "包装与营养表照片：读取包装信息",
+  ])
+    await page.getByRole("checkbox", { name, exact: true }).check();
   await button("保存连接").click();
   await expect(
     page.getByText("连接已验证并安全保存。", { exact: true }),
@@ -148,6 +141,7 @@ try {
   await button("返回").click();
   await page.getByRole("tab", { name: "我的", exact: true }).click();
   await button("个人参考目标").click();
+  await button("个人资料与目标推荐").click();
   for (const [label, value] of [
     ["年龄（岁）", "30"],
     ["身高（cm）", "170"],
@@ -156,24 +150,45 @@ try {
     ["每周运动频率（次/周）", "0"],
   ])
     await field(label).fill(value);
-  await consent().click();
+  const beforePhotos = requests.length;
+  await button("从相册选择").click();
+  await expect(button("预览体检照片 2")).toBeVisible();
+  await button("从相册选择").click();
+  await expect(button("预览体检照片 4")).toBeVisible();
+  await button("删除照片 2").click();
+  await expect(button("预览体检照片 4")).toHaveCount(0);
+  await button("预览体检照片 1").click();
+  await button("关闭照片预览").click();
+  expect(requests.length).toBe(beforePhotos);
+  await screenshot("browser-profile-multiple-photos");
   await button("生成目标草案").click();
-  await expect(page.getByText("待确认草案", { exact: true })).toBeVisible();
-  expect(JSON.parse(requests.at(-1).body.messages[1].content).heightCm).toBe(
-    170,
-  );
+  await expect(page.getByText("目标草案", { exact: true })).toBeVisible();
+  await expect(field("年龄（岁）")).not.toBeVisible();
+  const request = requests.at(-1).body.messages[1].content;
+  expect(JSON.parse(request[0].text).heightCm).toBe(170);
+  expect(request.filter((p) => p.type === "image_url")).toHaveLength(3);
   await screenshot("browser-target-draft");
+  const generatedCount = requests.length;
+  await button("返回").click();
+  await expect(field("身高（cm）")).toHaveValue("170");
+  await expect(button("预览体检照片 3")).toBeVisible();
+  await field("体重（kg）").fill("66");
+  await button("返回").click();
+  await expect(button("查看目标草案")).toHaveCount(0);
+  expect(requests.length).toBe(generatedCount);
+  await expect(page.getByText("尚未设置目标", { exact: true })).toBeVisible();
+  await button("个人资料与目标推荐").click();
+  await expect(field("体重（kg）")).toHaveValue("66");
+  await button("生成目标草案").click();
+  await expect(page.getByText("目标草案", { exact: true })).toBeVisible();
   await button("确认应用目标").click();
-  await expect(
-    page.getByText("已应用核对后的目标。", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText(/目标 80 g/)).toBeVisible();
   await page
     .getByRole("button", { name: "手动修改目标，编辑", exact: true })
     .click();
   await field("目标或下限（g）").fill("90");
-  await button("加入目标草案").click();
-  await button("确认应用目标").click();
-  await expect(page.getByText(/目标 90 g · 用户修改/)).toBeVisible();
+  await button("保存目标修改").click();
+  await expect(page.getByText(/目标 90 g/)).toBeVisible();
   await screenshot("browser-manual-target");
   await button("返回").click();
   await page.getByRole("tab", { name: "今日", exact: true }).click();
@@ -182,30 +197,30 @@ try {
   await button("从相册选择").click();
   await field("餐食补充描述").fill("一碗面，少油");
   const initial = requests.length;
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(button("前往 AI 设置")).toHaveCount(0);
   await button("估算这餐营养").click();
-  await expect(
-    page.getByText("请先确认本次发送内容与服务地址。", { exact: true }),
-  ).toBeVisible();
-  expect(requests.length).toBe(initial);
-  await consent().click();
-  await button("估算这餐营养").click();
-  await expect(
-    page.getByText("AI 估算 · 已使用照片", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("AI 估算 · 1 份", { exact: true })).toBeVisible();
+  expect(requests.length).toBe(initial + 1);
   expect(requests.at(-1).body.messages[1].content[1].type).toBe("image_url");
+  await expect(page.getByText("碳水化合物", { exact: true })).toBeVisible();
+  await expect(button("吃半份")).toHaveCount(0);
+  await expect(button("自己填写吃多少")).toHaveCount(0);
+  await expect(button("吃一份")).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await field("食用时间").fill("12:34");
+  await field("食用日期").fill("2026-11-09");
   await screenshot("browser-meal-model-preview");
-  await expect(button("确认食用")).toHaveCount(0);
-  await button("吃一份").click();
   await page
-    .getByRole("checkbox", {
-      name: "我已确认日期、餐次和实际食用份量",
-      exact: true,
-    })
+    .getByRole("button", { name: "核对或修改营养数值，编辑", exact: true })
     .click();
-  await button("确认食用").click();
+  await field("蛋白质（g / 基准）").fill("21");
+  await button("核对或修改营养数值，编辑").click();
+  await button("确认保存").click();
   await expect(
     page.getByText("已保存这次食用。", { exact: true }),
   ).toBeVisible();
+  await expect(button("已保存")).toHaveAttribute("aria-disabled", "true");
   await button("返回").click();
   await page.getByRole("tab", { name: "我的", exact: true }).click();
   await button("AI 服务设置").click();
@@ -242,7 +257,7 @@ try {
   ).toBeVisible();
   await screenshot("browser-deleted-connection");
   report.checks.push(
-    "Verified secure-save boundary, all profile inputs, structured draft then confirmation, manual override, required meal photo and consent, explicit portion confirmation, failed drafts retain active config, auth/rate/malformed/cancel/delete states",
+    "Verified secure-save boundary, all profile inputs, structured draft then confirmation, manual override, persistent scoped grants, multi-photo append/delete/all-image request, independent draft screen and invalidation, one-serving direct meal save, failed drafts retain active config, auth/rate/malformed/cancel/delete states",
   );
   expect(report.errors).toEqual([]);
   report.status = "passed";

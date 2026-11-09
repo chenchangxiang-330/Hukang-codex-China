@@ -12,6 +12,8 @@ export type AiErrorCode =
   | "rate_limit"
   | "model"
   | "image_unsupported"
+  | "image_count"
+  | "image_total_size"
   | "image_invalid"
   | "format"
   | "request"
@@ -22,7 +24,7 @@ const messages: Record<AiErrorCode, string> = {
   native_unavailable:
     "此安装包缺少 AI 网络模块，请使用本次完整 Android 测试包。",
   configuration: "请先在 AI 服务设置中填写有效地址、API Key 和模型。",
-  consent: "请先确认本次发送的内容、服务地址及可能产生的费用。",
+  consent: "请前往 AI 设置授权发送这类资料。",
   busy: "已有 AI 请求进行中，请等待或先取消，避免重复收费。",
   cancelled: "已取消等待，未保存结果。服务商可能已经处理请求并计费。",
   timeout: "请求超时，已停止等待，没有自动重试。服务商可能已经计费。",
@@ -33,6 +35,8 @@ const messages: Record<AiErrorCode, string> = {
   rate_limit: "请求过于频繁，已停止；请稍后手动重试。",
   model: "模型不存在或当前账户无权使用，请核对模型名称。",
   image_unsupported: "当前模型不支持图片，请前往 AI 设置更换模型。",
+  image_count: "一次最多发送 6 张体检照片，请减少后重试。",
+  image_total_size: "照片合计超过本次 6 MB 请求限制，请减少照片或裁剪后重试。",
   image_invalid: "图片无法读取或达到 4 MB 限制，请重新选择照片。",
   format: "模型响应格式异常或内容不完整，没有生成有效结果，也没有自动重试。",
   request:

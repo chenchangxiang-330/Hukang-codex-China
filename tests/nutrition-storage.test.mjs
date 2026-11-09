@@ -315,7 +315,7 @@ test("v8 profile draft survives restart, AI draft does not apply until confirmed
   assert.equal((await s.load()).targets.policies.protein.value, 80);
   await s.targetDraft(d);
   await s.profile({ ...current, heightCm: "171" });
-  await assert.rejects(s.applyDraft(d), /资料已修改/);
+  await assert.rejects(s.applyDraft(d), /资料已修改|草案已失效/);
   assert.equal((await s.load()).targets.policies.protein.value, 80);
   f.db.close();
 });
@@ -500,4 +500,93 @@ test("late preview draft flush after save or deletion cannot recreate a pending 
   await s.intakeDraft(e);
   assert.equal((await s.load()).intakeDraft, undefined);
   assert.equal((await s.load()).entries.length, 0);
+});
+
+test("private multi-photo references survive reopening; deletion and profile changes invalidate only drafts", async () => {
+  const f = fixture(),
+    s = f.store();
+  const one = "file:///app/files/health-private/one/original.source",
+    two = "file:///app/files/health-private/two/original.source";
+  const p = {
+    age: "30",
+    heightCm: "170",
+    weightKg: "65",
+    exerciseDescription: "无",
+    exerciseFrequencyPerWeek: "0",
+    revision: 0,
+    updatedAt: "",
+  };
+  await s.profile(p);
+  await s.targets({ protein: 95 });
+  // Compatible with legacy single-photo state, without resetting the profile.
+  f.db
+    .prepare("INSERT INTO nutrition_state VALUES('healthPhoto',?)")
+    .run(JSON.stringify(one));
+  assert.deepEqual((await f.store().load()).healthPhotos, [one]);
+  await s.healthPhotos([one, two]);
+  const current = await s.load();
+  const draft = {
+    profileRevision: current.profile.revision,
+    healthPhotos: [one, two],
+    policies: {
+      protein: {
+        type: "target",
+        value: 80,
+        unit: "g",
+        source: "fixture",
+        basis: "test",
+        applicability: "test",
+        manual: false,
+        profileRevision: current.profile.revision,
+      },
+    },
+    missing: [],
+    model: "test",
+    generatedAt: "2026-11-09",
+  };
+  await s.targetDraft(draft);
+  assert.deepEqual((await f.store().load()).healthPhotos, [one, two]);
+  await s.healthPhotos([two]);
+  assert.equal((await s.load()).targetDraft, undefined);
+  await assert.rejects(s.targetDraft(draft), /照片已修改/);
+  await assert.rejects(s.applyDraft(draft), /失效/);
+  assert.equal((await s.load()).targets.protein, 95);
+  assert.equal((await s.load()).entries.length, 0);
+  await assert.rejects(
+    s.healthPhotos(["file:///app/food/photo.jpg"]),
+    /路径无效/,
+  );
+  await assert.rejects(
+    s.healthPhotos(["file:///app/health-private/../food/photo"]),
+    /路径无效/,
+  );
+  f.db.close();
+});
+
+test("rapid autosaves queue without losing the last input", async () => {
+  const f = fixture(),
+    a = createNutritionAdapter(async () => f.store());
+  const p = {
+    age: "30",
+    heightCm: "170",
+    weightKg: "65",
+    exerciseDescription: "无",
+    exerciseFrequencyPerWeek: "0",
+    revision: 0,
+    updatedAt: "",
+  };
+  await Promise.all([
+    a.saveProfile({ ...p, heightCm: "1" }),
+    a.saveProfile({ ...p, heightCm: "17" }),
+    a.saveProfile(p),
+  ]);
+  assert.equal(a.getSnapshot().profile.heightCm, "170");
+  const revision = a.getSnapshot().profile.revision;
+  await a.saveProfile(p);
+  assert.equal(
+    a.getSnapshot().profile.revision,
+    revision,
+    "unchanged back/save must not invalidate draft",
+  );
+  f.db.close();
 });

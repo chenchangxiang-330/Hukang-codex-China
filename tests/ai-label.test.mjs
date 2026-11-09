@@ -111,7 +111,14 @@ test("one label request uses current configuration and actual image payload; mod
     async () => image,
   );
   service.update(config);
-  service.consent(true);
+  service.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   const result = await service.readNutritionLabel("file:///compressed.png");
   const payload = JSON.parse(requests[0].body);
   assert.equal(payload.model, config.model);
@@ -128,7 +135,14 @@ test("one label request uses current configuration and actual image payload; mod
     model: "deepseek-flash",
     apiKey: "second-test-fixture",
   });
-  service.consent(true);
+  service.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await service.readNutritionLabel("file:///compressed.png");
   assert.equal(
     requests[1].endpoint,
@@ -159,7 +173,14 @@ for (const [status, code] of [
       async () => image,
     );
     s.update(config);
-    s.consent(true);
+    s.consent(true, [
+      "meal-text",
+      "meal-image",
+      "package-image",
+      "label-image",
+      "profile",
+      "health-image",
+    ]);
     await assert.rejects(
       s.readNutritionLabel("file:///a"),
       (e) => e.code === code,
@@ -190,7 +211,14 @@ test("label timeout, cancellation, stale configuration, malformed response and i
       { connection: 30, meal: 30 },
     );
     s.update(config);
-    s.consent(true);
+    s.consent(true, [
+      "meal-text",
+      "meal-image",
+      "package-image",
+      "label-image",
+      "profile",
+      "health-image",
+    ]);
     const c = new AbortController();
     const promise = s.readNutritionLabel("file:///a", c.signal);
     if (mode === "cancelled") c.abort();

@@ -36,7 +36,14 @@ const ok = (request) =>
 function ready(transport = ok, imageReader, timeouts) {
   const s = new AiService(transport, imageReader, timeouts);
   s.update(config);
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   return s;
 }
 const code = (value) => (error) => error.code === value;
@@ -85,7 +92,14 @@ test("no request until valid configuration, consent and explicit action", async 
   await assert.rejects(s.testConnection(), code("configuration"));
   s.update(config);
   await assert.rejects(s.testConnection(), code("consent"));
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   assert.equal(calls, 0);
   const result = await s.testConnection();
   assert.equal(result.response, "OK");
@@ -133,7 +147,14 @@ test("provider/model changes invalidate consent and result; destination changes 
   s.update({ model: "new-model" });
   assert.equal(s.getSnapshot().connection, null);
   await assert.rejects(s.testConnection(), code("consent"));
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await s.testConnection();
   assert.equal(seen.at(-1)[2], "new-model");
   s.update({
@@ -142,10 +163,24 @@ test("provider/model changes invalidate consent and result; destination changes 
     model: "deepseek-flash",
   });
   assert.equal(s.getSnapshot().hasKey, false);
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await assert.rejects(s.testConnection(), code("configuration"));
   s.update({ apiKey: "another-test-only-credential" });
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await s.testConnection();
   assert.deepEqual(seen.at(-1), [
     "https://api.deepseek.com/chat/completions",
@@ -303,7 +338,14 @@ test("only explicit image opt-in + known official vision model reads and sends l
     model: "qwen3-vl-plus",
     apiKey: config.apiKey,
   });
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   await s.estimateMeal({ imageUri: "file:///meal.jpg", description: "面" });
   assert.equal(reads, 0);
   const result = await s.estimateMeal({
@@ -388,7 +430,14 @@ test("package uses separate schema and prompt, explicit image request and curren
     model: "deepseek-flash",
     apiKey: "only-a-test-key",
   });
-  s.consent(true);
+  s.consent(true, [
+    "meal-text",
+    "meal-image",
+    "package-image",
+    "label-image",
+    "profile",
+    "health-image",
+  ]);
   const result = await s.identifyPackage("file:///upload.jpg");
   assert.equal(result.candidates[0].name, "可见名称");
   const body = JSON.parse(requests[0].body);

@@ -9,10 +9,27 @@ const state = async () => ({ entries, targets, ...metadata });
 export const productionNutrition = createNutritionAdapter(async () => ({
   load: state,
   profile: async (p) => {
-    metadata.profile = {
-      ...p,
-      revision: (metadata.profile?.revision ?? 0) + 1,
-    };
+    if (
+      [
+        "age",
+        "heightCm",
+        "weightKg",
+        "exerciseDescription",
+        "exerciseFrequencyPerWeek",
+        "sex",
+      ].some((k) => (metadata.profile?.[k] ?? "") !== ((p as any)[k] ?? ""))
+    ) {
+      metadata.profile = {
+        ...p,
+        revision: (metadata.profile?.revision ?? 0) + 1,
+      };
+      metadata.targetDraft = null;
+    }
+    return state();
+  },
+  healthPhotos: async (uris) => {
+    metadata.healthPhotos = [...uris];
+    metadata.targetDraft = null;
     return state();
   },
   targetDraft: async (d) => {

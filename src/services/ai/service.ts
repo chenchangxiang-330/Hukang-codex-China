@@ -1,3 +1,5 @@
+import { aiDisclosure, validScopes, type AiScope } from "./disclosure";
+import { imageLimits } from "./config";
 import { parseLabel, type LabelResult } from "./label";
 import {
   TARGET_PROMPT,
@@ -46,6 +48,7 @@ export type AiSnapshot = {
   hasKey: boolean;
   revision: number;
   consent: boolean;
+  authorizedScopes: readonly AiScope[];
   supportsImage: boolean;
   operation: "connection" | "meal" | "package" | "targets" | "label" | null;
   connection: ConnectionResult | null;
@@ -78,6 +81,7 @@ export class AiService {
     hasKey: false,
     revision: 0,
     consent: false,
+    authorizedScopes: [],
     supportsImage: false,
     operation: null,
     connection: null,
@@ -132,20 +136,32 @@ export class AiService {
       hasKey: !!this.#config.apiKey.trim(),
       revision: this.#revision,
       consent: false,
+      authorizedScopes: [],
       supportsImage: supportsMealImage(this.#config),
       connection: null,
     });
   };
-  activate = (config: AiConfiguration, connection: ConnectionResult) => {
+  activate = (
+    config: AiConfiguration,
+    connection: ConnectionResult,
+    scopes: readonly AiScope[] = [],
+  ) => {
     this.update(config);
-    this.#publish({ connection });
+    this.#publish({
+      connection,
+      consent: true,
+      authorizedScopes: validScopes(scopes),
+    });
   };
   clear = () => {
     this.update({ provider: "custom", baseUrl: "", model: "", apiKey: "" });
   };
-  consent = (accepted: boolean) => {
+  consent = (accepted: boolean, scopes?: readonly AiScope[]) => {
     if (!accepted) this.cancel();
-    this.#publish({ consent: accepted });
+    this.#publish({
+      consent: accepted,
+      ...(scopes ? { authorizedScopes: validScopes(scopes) } : {}),
+    });
   };
   cancel = (reason: AiErrorCode = "cancelled") => {
     const active = this.#active;
@@ -226,13 +242,13 @@ export class AiService {
     meal: boolean | "package" | "targets" | "label",
     signal: AbortSignal,
     timeoutMs: number,
-    image?: MealImage,
+    image?: MealImage | readonly MealImage[],
   ) {
     if (signal.aborted) throw new AiError("cancelled");
     const endpoint = chatEndpoint(config);
     const body = JSON.stringify(requestBody(config, text, meal, image));
     if (requestByteLength(body) > REQUEST_LIMIT_BYTES)
-      throw new AiError("image_invalid");
+      throw new AiError("image_total_size");
     const response = await this.#transport({
       endpoint,
       apiKey: config.apiKey,
@@ -278,6 +294,13 @@ export class AiService {
   ): Promise<MealEstimate> =>
     this.#run("meal", signal, async (config, abort, ms) => {
       const includeImage = request.includeImage === true;
+      if (
+        !aiDisclosure.allows(
+          this.#snapshot,
+          includeImage ? "meal-image" : "meal-text",
+        )
+      )
+        throw new AiError("consent");
       if (includeImage && !supportsMealImage(config))
         throw new AiError("image_unsupported");
       if (
@@ -328,18 +351,37 @@ export class AiService {
     });
   recommendTargets = (
     profile: PersonalProfile,
-    healthImageUri?: string,
+    healthImageUri?: string | readonly string[],
     signal?: AbortSignal,
   ) =>
     this.#run("targets", signal, async (config, abort, ms) => {
       if (Object.keys(profileIssues(profile)).length)
         throw new AiError("request");
-      if (healthImageUri && !supportsMealImage(config))
-        throw new AiError("image_unsupported");
-      const image = healthImageUri
-        ? await this.#readImage(healthImageUri)
-        : undefined;
-      if (image) validateImage(image);
+      const uris =
+        typeof healthImageUri === "string"
+          ? [healthImageUri]
+          : [...(healthImageUri ?? [])];
+      if (
+        !aiDisclosure.allows(
+          this.#snapshot,
+          uris.length ? "health-image" : "profile",
+        )
+      )
+        throw new AiError("consent");
+      const limits = imageLimits(config);
+      if (uris.length && !limits) throw new AiError("image_unsupported");
+      if (uris.length > (limits?.count ?? 0)) throw new AiError("image_count");
+      const image: MealImage[] = [];
+      let encodedBytes = 0;
+      for (const uri of uris) {
+        if (abort.aborted) throw new AiError("cancelled");
+        const item = await this.#readImage(uri);
+        validateImage(item);
+        encodedBytes += item.base64.length;
+        if (encodedBytes > REQUEST_LIMIT_BYTES)
+          throw new AiError("image_total_size");
+        image.push(item);
+      }
       const text = JSON.stringify({
         age: Number(profile.age),
         heightCm: Number(profile.heightCm),
@@ -367,6 +409,8 @@ export class AiService {
     signal?: AbortSignal,
   ): Promise<LabelResult> =>
     this.#run("label", signal, async (config, abort, ms) => {
+      if (!aiDisclosure.allows(this.#snapshot, "label-image"))
+        throw new AiError("consent");
       if (!supportsMealImage(config)) throw new AiError("image_unsupported");
       const image = await this.#readImage(imageUri);
       validateImage(image);
@@ -390,6 +434,8 @@ export class AiService {
     signal?: AbortSignal,
   ): Promise<PackageIdentityEstimate> =>
     this.#run("package", signal, async (config, abort, ms) => {
+      if (!aiDisclosure.allows(this.#snapshot, "package-image"))
+        throw new AiError("consent");
       if (!supportsMealImage(config)) throw new AiError("image_unsupported");
       let image: MealImage;
       try {

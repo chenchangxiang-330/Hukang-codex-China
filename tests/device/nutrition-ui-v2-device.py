@@ -151,9 +151,9 @@ def launch():
     # navigate to setup. Require two settled reads and handle setup throughout.
     for attempt in range(30):
         root = tree()
-        if find('设置个人参考', root) is not None:
+        if find('^个人资料$', root) is not None:
             shot('android-first-setup-empty')
-            tap('^保存草稿，稍后继续$', True)
+            tap('^返回$', attribute='content-desc')
             stable = 0
         elif find('^今日$', root, 'content-desc') is not None:
             stable += 1
@@ -323,9 +323,9 @@ def camera_and_recovery():
     for _ in range(7):swipe(True)
     tap('^拍照$',True);press(require(r':id/permission_allow_foreground_only_button$',attribute='resource-id'))
     shutter=require(r':id/shutter_button$',attribute='resource-id',attempts=20);shot('android-system-camera-virtual-scene');press(shutter)
-    press(require(r':id/done_button$',attribute='resource-id',attempts=15));require('原图已保存在本机',True,attempts=20)
+    press(require(r':id/done_button$',attribute='resource-id',attempts=15));require('^餐食原图预览$',True,'content-desc',attempts=20)
     for _ in range(7):swipe(True)
-    require('^餐食原图预览$',True,'content-desc');shot('android-camera-meal-original');estimate=require('^估算这餐营养$',True,'content-desc');assert estimate.get('enabled')=='false';require('当前模型不支持图片',True);shot('android-camera-no-api-state')
+    require('^餐食原图预览$',True,'content-desc');shot('android-camera-meal-original');estimate=require('^估算这餐营养$',True,'content-desc');assert estimate.get('enabled')=='false';require('请先保存 AI 连接',True);shot('android-camera-no-api-state')
     for _ in range(7):swipe(True)
     tap('^删除这张照片$',True,'content-desc');tap('^返回$',attribute='content-desc');tap('^包装食品$',attribute='content-desc');require('对准包装条形码',True);require('等待条码进入取景框',True);shot('android-barcode-entry')
     shell('input','keyevent','KEYCODE_BACK');require('^今日$',attribute='content-desc')
@@ -361,14 +361,56 @@ def gesture_safe_area():
     finally:
         for overlay in original:shell('cmd','overlay','enable-exclusive','--category','--user','0',overlay,check=False)
 
+def push_diet_db(name, c):
+    c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
+    path=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').strip()
+    for suffix in ('-wal','-shm'):shell('rm','-f',path+suffix)
+    adb('push',str(OUT/(name+'.db')),path);shell('chmod','666',path)
+
+
+def choose_health_photos(count):
+    from picker_selectors import actionable_nodes,MEDIA
+    tap('^从相册选择$',True)
+    for _ in range(20):
+        root=tree();nodes=[n for n in actionable_nodes(root,MEDIA) if re.match(r'^(?:Photo|GIF) taken on ',n.get('content-desc',''))]
+        if len(nodes)==2:break
+        time.sleep(.5)
+    else:raise AssertionError('Two isolated health fixtures not in system picker')
+    for index in range(count):
+        root=tree();nodes=[n for n in actionable_nodes(root,MEDIA) if re.match(r'^(?:Photo|GIF) taken on ',n.get('content-desc',''))]
+        press(nodes[index])
+    shot('android-health-system-multiselect-'+str(count))
+    tap(r'^(?:Add|添加|完成)(?:[ (（].*)?$',attribute='text')
+    require('^预览体检照片 '+str(count)+'$',True,'content-desc',attempts=20)
+
+
 def profile_and_targets():
-    configure();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc');tap('^个人资料，',True)
+    from PIL import Image,ImageDraw
+    configure();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True,'content-desc');tap('^个人资料与目标推荐$',True)
     for label,value in [('年龄（岁）','30'),('身高（cm）','170'),('体重（kg）','65'),('运动状况','Walking'),('每周运动频率（次/周）','3')]: enter(label,value)
-    tap('^保存资料草稿$',True);require('资料草稿已保存',True);shot('android-profile-saved')
-    tap('^手动修改目标，编辑$',True);enter('目标或下限（g）','100');tap('^加入目标草案$',True);shot('android-target-draft')
-    for _ in range(8):swipe(True)
-    tap('^确认应用目标$',True);require('已应用核对后的目标',True);shot('android-target-confirmed')
-    c=diet_db('profile-targets');p=json.loads(c.execute("SELECT json FROM nutrition_state WHERE key='profile'").fetchone()[0]);assert [p[k] for k in ['age','heightCm','weightKg','exerciseDescription','exerciseFrequencyPerWeek']]==['30','170','65','Walking','3'];targets=json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0]);assert targets['policies']['protein']['value']==100 and targets['policies']['protein']['manual'];assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0;c.close();launch();require('目标 100',True)
+    assert find('保存草稿，稍后继续|保存资料草稿|手动修改目标|当前参考|拍摄体检照片|跳过体检照片') is None
+    shot('android-profile-autosaved')
+    # Synthetic pages, not medical documents; isolated disposable emulator only.
+    for index in (1,2):
+        file=OUT/f'health-test-{index}.jpg';im=Image.new('RGB',(800,1100),(235,245,255));draw=ImageDraw.Draw(im);draw.text((40,60),f'ISOLATED TEST REPORT {index}',fill=(25,50,90));im.save(file);im.close()
+        remote=f'/sdcard/Pictures/HukangHealth/{file.name}';shell('mkdir','-p','/sdcard/Pictures/HukangHealth');adb('push',str(file),remote);shell('am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote)
+    time.sleep(3)
+    rows=shell('content','query','--uri','content://media/external/images/media','--projection','_id:_display_name:_data');assert rows.count('Row:')==2 and 'health-test-1.jpg' in rows and 'health-test-2.jpg' in rows
+    choose_health_photos(2);require('^预览体检照片 2$',True,'content-desc');choose_health_photos(1);require('^预览体检照片 3$',True,'content-desc')
+    tap('^预览体检照片 1$',True,'content-desc');shot('android-health-photo-preview');tap('^关闭照片预览$',attribute='content-desc')
+    tap('^删除照片 2$',True);assert find('^预览体检照片 3$',attribute='content-desc') is None;shot('android-profile-two-photos')
+    tap('^返回$',attribute='content-desc');tap('^个人资料与目标推荐$',True);require('^预览体检照片 2$',True,'content-desc')
+    c=diet_db('profile-autosaved');profile=json.loads(c.execute("SELECT json FROM nutrition_state WHERE key='profile'").fetchone()[0]);photos=json.loads(c.execute("SELECT json FROM nutrition_state WHERE key='healthPhotos'").fetchone()[0]);assert len(photos)==2
+    assert [profile[k] for k in ['age','heightCm','weightKg','exerciseDescription','exerciseFrequencyPerWeek']]==['30','170','65','Walking','3']
+    assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0
+    assert not c.execute('SELECT * FROM nutrition_settings').fetchone()
+    draft={'profileRevision':profile['revision'],'healthPhotos':photos,'generatedAt':'2026-11-09','model':'ISOLATED UI FIXTURE','missing':[],'policies':{'protein':{'type':'target','value':100,'unit':'g','source':'ISOLATED TEST','basis':'UI test','applicability':'Disposable emulator','manual':False,'profileRevision':profile['revision']}}}
+    c.execute("INSERT INTO nutrition_state VALUES('targetDraft',?)",(json.dumps(draft),));push_diet_db('profile-autosaved',c)
+    launch();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True);tap('^查看目标草案$',True);require('^目标草案$');assert find('年龄（岁）|从相册选择|手动修改目标|当前参考') is None;shot('android-goal-draft-isolated')
+    tap('^返回$',attribute='content-desc');require('^个人资料$');require('^预览体检照片 2$',True,'content-desc');tap('^返回$',attribute='content-desc');tap('^查看目标草案$',True);tap('^确认应用目标$',True);require('目标 100 g',True);shot('android-goal-applied-isolated')
+    c=diet_db('profile-targets');targets=json.loads(c.execute('SELECT targets_json FROM nutrition_settings').fetchone()[0]);assert targets['policies']['protein']['value']==100;assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0;c.close()
+    launch();tap('^我的$',attribute='content-desc');tap('^个人参考目标$',True);tap('^个人资料与目标推荐$',True);require('^预览体检照片 2$',True,'content-desc');shot('android-health-photos-after-restart')
+    report['profileFlow']={'autoSave':True,'multiSelectAppendDeletePreviewRestart':True,'privatePhotos':2,'separateDraftScreen':True,'targetsAppliedOnlyOnConfirm':True,'draftIsInjectedTestFixture':True,'realProviderTested':False}
 
 def secure_storage():
     probe=Path('artifacts/build/secure-storage-probe.apk');assert probe.exists()
@@ -445,6 +487,26 @@ def diet_closed_loop():
     launch();tap('^记录$',attribute='content-desc');tap('^‹ 前一天$',True);tap('^查看食物 TEST reusable meal$',True);tap('^删除这条饮食记录$',True);tap('^确定删除这次食用$',True);c=diet_db('after-delete');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;assert c.execute('SELECT COUNT(*) FROM nutrition_operations').fetchone()[0]==2;assert c.execute('SELECT COUNT(*) FROM nutrition_catalogue').fetchone()[0]==1;c.close()
     launch();tap('^食品库$',attribute='content-desc');tap('^餐食 TEST reusable meal$',True);tap('^加入库存，不计摄入$',True);enter('购入数量','2');tap('^确认加入库存$',True);require('已加入库存，未计入摄入',True);shot('android-meal-inventory-isolated');c=diet_db('after-meal-stock');assert c.execute('SELECT SUM(quantity) FROM nutrition_stock').fetchone()[0]==2;assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==1;c.close();report['nutritionRecordsInserted']=2
 
+def simplified_meal_save():
+    configure();c=diet_db('meal-result-fixture');before=c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]
+    today=shell('date','+%F')
+    fact=lambda value,unit='g':{'value':value,'unit':unit,'status':'estimated' if value is not None else 'unknown','source':'ISOLATED MOCK RESPONSE'}
+    food={'id':'isolated-ai-meal','version':'one','kind':'meal','name':'TEST estimated meal','basis':{'amount':1,'unit':'份'},'source':'ISOLATED MOCK RESPONSE','provenance':{'kind':'ai','model':'TEST ONLY','uncertainties':['fixture uncertainty retained']},'nutrients':{'energy':{**fact(None,'kcal'),'range':[400,600],'status':'estimated'},'protein':fact(20),'carbohydrate':fact(55),'fat':{**fact(None),'range':[10,20],'status':'estimated'},'sodium':fact(None,'mg')}}
+    draft={'id':'isolated-meal-confirm','date':today,'meal':'lunch','food':food,'amount':1,'unit':'份','consumedTime':'12:20','timezone':'UTC'}
+    c.execute("INSERT INTO nutrition_state VALUES('intakeDraft',?) ON CONFLICT(key) DO UPDATE SET json=excluded.json",(json.dumps(draft),));push_diet_db('meal-result-fixture',c)
+    launch();tap('^继续上次食用确认$',True);require('^餐食名称$',True,'content-desc');require('AI 估算.*1 份',True);require('400–600',True);require('55 g',True)
+    assert find('食物与来源|吃半份|自己填写吃多少|吃一份|我已确认日期') is None
+    shot('android-meal-direct-nutrients-isolated')
+    tap('^核对或修改营养数值，编辑$',True);enter('蛋白质（g / 基准）','21');tap('^核对或修改营养数值，编辑$',True)
+    enter('食用时间','12:34');enter('食用日期',today);shot('android-meal-time-save-isolated');tap('^确认保存$',True);require('已保存这次食用',True);shot('android-meal-saved-isolated')
+    assert require('^已保存$',True,'content-desc').get('enabled')=='false'
+    c=diet_db('meal-result-saved');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==before+1
+    entry=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-meal-confirm'").fetchone()[0]);assert entry['amount']==1 and entry['unit']=='份' and entry['consumedTime']=='12:34';assert entry['food']['nutrients']['protein']['value']==21 and entry['food']['nutrients']['protein']['status']=='estimated';assert entry['food']['nutrients']['sodium']['value'] is None
+    assert c.execute("SELECT COUNT(*) FROM nutrition_operations WHERE entry_id='isolated-meal-confirm'").fetchone()[0]==1
+    assert not c.execute("SELECT json FROM nutrition_state WHERE key='intakeDraft'").fetchone();c.close()
+    launch();assert find('继续上次食用确认') is None;tap('^记录$',attribute='content-desc');tap('^查看食物 TEST estimated meal$',True);enter('修改实际食用份量（份）','2');tap('^确认调整份量$',True);require('饮食记录已更新',True)
+    c=diet_db('meal-result-edited');entry=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-meal-confirm'").fetchone()[0]);assert entry['amount']==2;c.close();report['directMealResult']={'defaultOneServing':True,'unknownRemainsUnknown':True,'rangePreserved':True,'editableNutrientsAndTime':True,'singleSaveAndRestart':True,'savedRecordPortionEditing':True,'responseIsInjectedFixture':True,'realProviderTested':False}
+
 def image_case():
     from PIL import Image,ImageDraw
     from archive_checks import jpeg_has_exif
@@ -463,7 +525,7 @@ def image_case():
     if kind in ('image-gif','image-oversize'):
         require('此图片格式无法|原图超过本机 50 MB',True,attempts=20);shot('android-'+kind+'-error');assert not shell('find',f'/data/user/0/{PKG}/files/meal-drafts','-name','original.source',check=False);report['imageErrorRecovery']=True
     else:
-        require('原图已保存在本机',True,attempts=20);shot('android-'+kind+'-original-preview');paths=shell('find',f'/data/user/0/{PKG}/cache/ai-upload-v1','-name','upload.jpg').splitlines();assert len(paths)==1
+        require('^餐食原图预览$',True,'content-desc',attempts=20);shot('android-'+kind+'-original-preview');paths=shell('find',f'/data/user/0/{PKG}/cache/ai-upload-v1','-name','upload.jpg').splitlines();assert len(paths)==1
         payload=adb('exec-out','cat',paths[0]);assert 0<len(payload)<=4000000 and not jpeg_has_exif(payload);processed=OUT/'processed.jpg';processed.write_bytes(payload)
         with Image.open(processed) as im:
             assert max(im.size)<=2048
@@ -492,7 +554,7 @@ try:
     suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
     cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
     if suite=='ui':cases += [('fresh-label-entry-discard',fresh_label_entry),('four-known-progress-isolated',known_progress)]
-    if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
+    if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop),('direct-meal-result-save',simplified_meal_save)]
     if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]
     for name, action in cases:
         check(name, action)

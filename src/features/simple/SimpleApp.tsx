@@ -1,6 +1,10 @@
 import { CatalogueDetail } from "../nutrition-v2/CatalogueDetail";
 import { ModelScreen } from "../nutrition-v2/ModelScreen";
-import { GoalsScreen } from "../nutrition-v2/GoalsScreen";
+import {
+  GoalsScreen,
+  TargetDraftScreen,
+  TargetManagementScreen,
+} from "../nutrition-v2/GoalsScreen";
 import { productionNutrition } from "../../services/nutrition/runtime";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -96,7 +100,10 @@ type Page =
   | "capture-hub"
   | "food-detail"
   | "targets"
+  | "personal-profile"
+  | "target-draft"
   | "intake"
+  | "meal-result"
   | "ai-settings"
   | "setup"
   | "catalogue"
@@ -161,7 +168,10 @@ export function SimpleAppView({
   const close = () => {
     if (p.busy || snapshot.saving) return true;
     if (page === "capture-hub" && captureBack.current?.()) return true;
-    if ((page === "setup" || page === "targets") && goalsSave.current) {
+    if (
+      (page === "setup" || page === "personal-profile") &&
+      goalsSave.current
+    ) {
       if (closingGoals.current) return true;
       closingGoals.current = true;
       void goalsSave
@@ -262,29 +272,35 @@ export function SimpleAppView({
     return () => animation.stop();
   }, [activeTab, dockWidth, reduced, lens]);
   const title =
-    page === "setup"
-      ? "首次设置"
-      : page === "catalogue"
-        ? "食品详情"
-        : page === "models"
-          ? "本地抠图"
-          : page === "nutrition-detail"
-            ? "营养详情"
-            : page === "capture-hub"
-              ? "拍一拍"
-              : page === "food-detail"
-                ? "食用份量"
-                : page === "targets"
-                  ? "个人目标"
-                  : page === "intake"
-                    ? "拟食用预览"
-                    : p.screen === "ai-settings" || page === "ai-settings"
-                      ? "AI 服务设置"
-                      : p.screen === "profile"
-                        ? "本机用户"
-                        : p.screen === "about"
-                          ? "关于护康"
-                          : p.stepTitle;
+    page === "personal-profile"
+      ? "个人资料"
+      : page === "target-draft"
+        ? "目标草案"
+        : page === "meal-result"
+          ? "确认这一餐"
+          : page === "setup"
+            ? "首次设置"
+            : page === "catalogue"
+              ? "食品详情"
+              : page === "models"
+                ? "本地抠图"
+                : page === "nutrition-detail"
+                  ? "营养详情"
+                  : page === "capture-hub"
+                    ? "拍一拍"
+                    : page === "food-detail"
+                      ? "食用份量"
+                      : page === "targets"
+                        ? "个人目标"
+                        : page === "intake"
+                          ? "拟食用预览"
+                          : p.screen === "ai-settings" || page === "ai-settings"
+                            ? "AI 服务设置"
+                            : p.screen === "profile"
+                              ? "本机用户"
+                              : p.screen === "about"
+                                ? "关于护康"
+                                : p.stepTitle;
   const detail = page === "nutrition-detail",
     showDock = p.screen === "home" && !page && !keyboard;
   const currentFood = food
@@ -443,7 +459,13 @@ export function SimpleAppView({
                               onPress={() => {
                                 setIntakeFood(snapshot.intakeDraft!.food);
                                 setDetailDate(snapshot.intakeDraft!.date);
-                                go("intake");
+                                go(
+                                  snapshot.intakeDraft!.food.provenance
+                                    ?.kind === "ai" &&
+                                    snapshot.intakeDraft!.food.kind === "meal"
+                                    ? "meal-result"
+                                    : "intake",
+                                );
                               }}
                             />
                           )}
@@ -492,11 +514,10 @@ export function SimpleAppView({
                     registerSave={(fn) => {
                       goalsSave.current = fn;
                     }}
-                    initial
                     adapter={adapter}
                     snapshot={snapshot}
                     onSettings={() => go("ai-settings")}
-                    onDone={() => setPages([])}
+                    onDraft={() => go("target-draft")}
                   />
                 </View>
               )}
@@ -537,23 +558,45 @@ export function SimpleAppView({
                   onClose={close}
                 />
               )}{" "}
-              {pages.includes("targets") && (
+              {page === "targets" && (
+                <TargetManagementScreen
+                  adapter={adapter}
+                  snapshot={snapshot}
+                  onProfile={() => go("personal-profile")}
+                  onDraft={() => {
+                    go("personal-profile");
+                    go("target-draft");
+                  }}
+                />
+              )}
+              {pages.includes("personal-profile") && (
                 <View
                   style={{
-                    display: page === "targets" ? "flex" : "none",
+                    display: page === "personal-profile" ? "flex" : "none",
                     gap: 12,
                   }}
                 >
                   <GoalsScreen
+                    adapter={adapter}
+                    snapshot={snapshot}
                     registerSave={(fn) => {
                       goalsSave.current = fn;
                     }}
-                    adapter={adapter}
-                    snapshot={snapshot}
                     onSettings={() => go("ai-settings")}
-                    onDone={close}
+                    onDraft={() => go("target-draft")}
                   />
                 </View>
+              )}
+              {page === "target-draft" && (
+                <TargetDraftScreen
+                  adapter={adapter}
+                  snapshot={snapshot}
+                  onDone={() => {
+                    setPages(pages.includes("setup") ? [] : ["targets"]);
+                    returnOffsets.current = [];
+                    p.scroll.current?.scrollTo({ y: 0, animated: false });
+                  }}
+                />
               )}
               {page === "models" && <ModelScreen snapshot={snapshot} />}
               {page === "catalogue" && catalogueFood && (
@@ -574,22 +617,25 @@ export function SimpleAppView({
                   }}
                 />
               )}
-              {page === "intake" && (intakeFood || p.product) && (
-                <ImpactPreview
-                  key={
-                    intakeFood?.version ?? p.product!.id + p.product!.updatedAt
-                  }
-                  food={
-                    intakeFood ??
-                    foodFromRecord(p.product!, p.cover ?? undefined)
-                  }
-                  snapshot={snapshot}
-                  date={detailDate}
-                  meal="lunch"
-                  adapter={adapter}
-                  onStock={() => handoff(p.showStock)}
-                />
-              )}
+              {(page === "intake" || page === "meal-result") &&
+                (intakeFood || p.product) && (
+                  <ImpactPreview
+                    key={
+                      intakeFood?.version ??
+                      p.product!.id + p.product!.updatedAt
+                    }
+                    mealResult={page === "meal-result"}
+                    food={
+                      intakeFood ??
+                      foodFromRecord(p.product!, p.cover ?? undefined)
+                    }
+                    snapshot={snapshot}
+                    date={detailDate}
+                    meal="lunch"
+                    adapter={adapter}
+                    onStock={() => handoff(p.showStock)}
+                  />
+                )}
               <CaptureScreen
                 key={captureSession}
                 registerBack={(back) => {

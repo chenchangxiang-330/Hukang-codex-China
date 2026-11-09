@@ -1,3 +1,4 @@
+import { type AiScope } from "../../services/ai/disclosure";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Text, View } from "react-native";
 import { Button, Check, Choices, Field, S } from "../simple/ui";
@@ -29,20 +30,27 @@ export function AiSettingsScreen() {
   }));
   const [advanced, setAdvanced] = useState(false),
     [details, setDetails] = useState(false);
+  const [scopes, setScopes] = useState<readonly AiScope[]>(
+    session.authorizedScopes,
+  );
   const [consent, setConsent] = useState(false),
     [message, setMessage] = useState("");
   useEffect(() => () => savedConnection.cancel(), []);
   useEffect(() => {
-    if (stored.ready && session.hasKey)
+    if (stored.ready && session.hasKey) {
+      setScopes(session.authorizedScopes);
       setDraft({
         provider: session.provider,
         baseUrl: session.baseUrl,
         model: session.model,
         apiKey: "",
       });
+    }
   }, [stored.ready]);
   function change(patch: Partial<AiConfiguration>) {
     savedConnection.cancel();
+    if (patch.baseUrl !== undefined || patch.provider !== undefined)
+      setScopes([]);
     setDraft((v) => ({ ...v, ...patch }));
     setConsent(false);
     setMessage("");
@@ -62,7 +70,7 @@ export function AiSettingsScreen() {
       return;
     }
     try {
-      await savedConnection.save(draft, consent);
+      await savedConnection.save(draft, consent, scopes);
       setDraft((v) => ({ ...v, apiKey: "" }));
       setMessage("连接已验证并安全保存。");
     } catch (e) {
@@ -144,6 +152,36 @@ export function AiSettingsScreen() {
         营养表和餐食照片会先在本机压缩，上传副本小于 4
         MB，再发送至这里配置的服务；营养表仅读取包装实际标注。
       </Text>
+      <Text style={N.caption}>
+        选择允许发送的资料，仅在你主动生成或识别时发送；体检照片仅用于目标推荐，不进入普通导出。授权保存在本机，地址不变时无需重复确认。
+      </Text>
+      {(
+        [
+          ["meal-image", "餐食照片与描述：估算营养"],
+          ["label-image", "包装与营养表照片：读取包装信息"],
+          ["profile", "个人资料：推荐营养目标"],
+          ["health-image", "体检照片（可选）：辅助目标推荐"],
+        ] as const
+      ).map(([scope, label]) => (
+        <Check
+          key={scope}
+          label={label}
+          value={scopes.includes(scope)}
+          onChange={(value) => {
+            const group: AiScope[] =
+              scope === "meal-image"
+                ? [scope, "meal-text"]
+                : scope === "label-image"
+                  ? [scope, "package-image"]
+                  : [scope];
+            setScopes((old) =>
+              value
+                ? [...new Set([...old, ...group])]
+                : old.filter((s) => !group.includes(s)),
+            );
+          }}
+        />
+      ))}
       <Check label="同意本次连接测试" value={consent} onChange={setConsent} />
       <Button
         title={stored.saving ? "正在验证与保存…" : "保存连接"}
@@ -184,6 +222,7 @@ export function AiSettingsScreen() {
                 .then(() => {
                   setDraft((v) => ({ ...v, apiKey: "" }));
                   setConsent(false);
+                  setScopes([]);
                   setMessage("已删除连接。");
                 })
                 .catch((e) => setMessage(e.message))
