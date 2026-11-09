@@ -1,0 +1,9 @@
+{
+  "kind": "browser-shared-RN-UI-mock-HTTP",
+  "nativeDevice": false,
+  "sourceCommit": "f705f120f238f0152470d104e268c7f107ad1270",
+  "runtimeSource": "f705f120f238f0152470d104e268c7f107ad1270",
+  "run": 42598666521,
+  "artifact": 13665265658,
+  "artifactSha256": "0b47e4ad2ddd7a71ae1e55c20dab61dc3babfc7e18d40cb553060afb0cce38be"
+}
