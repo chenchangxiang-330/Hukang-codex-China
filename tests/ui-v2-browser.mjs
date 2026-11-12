@@ -89,13 +89,13 @@ async function unclipped(label) {
 try {
   await open();
   await expect(page.getByText(/2000 kcal|1285/)).toHaveCount(0);
-  for (const k of ["蛋白质", "今日卡路里", "脂肪", "膳食纤维"]) {
+  for (const k of ["今日卡路里", "蛋白质", "碳水化合物", "脂肪", "膳食纤维"]) {
     await expect(page.getByTestId(`nutrient-${k}`)).toBeVisible();
-    await expect(page.getByTestId(`nutrient-track-${k}`)).toBeVisible();
+    await expect(page.getByTestId(`nutrient-track-${k}`)).toHaveCount(0);
     await expect(page.getByTestId(`nutrient-fill-${k}`)).toHaveCount(0);
   }
   await expect(page.getByRole("progressbar")).toHaveCount(0);
-  await expect(page.getByText("未设目标").first()).toBeVisible();
+  await expect(page.getByText("未设目标")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 693 });
   const mainAction = await button("拍一拍").boundingBox(),
     dockTab = await tab("今日").boundingBox();
@@ -114,7 +114,7 @@ try {
   ).toBeVisible();
   await page.getByRole("button", { name: "矿物质，展开", exact: true }).click();
   await page.getByRole("button", { name: /^钠，/ }).click();
-  await expect(page.getByText("未设目标").first()).toBeVisible();
+  await expect(page.getByText("未设目标")).toHaveCount(0);
   await shot("browser-nutrition-minerals");
   await button("返回").click();
   await button("查看完整营养").click();
@@ -146,29 +146,35 @@ try {
   await expect(button("直接识别营养成分表")).toBeVisible();
   await button("返回").click();
   report.checks.push(
-    "Four ordered metrics, true empty data, two entry paths, photo required, one text box and retained draft",
+    "Five right-column metrics, true empty data, two entry paths, photo required, one text box and retained draft",
   );
   for (const [scenario, expectedFill, label] of [
     ["nutrition-empty", null, "—"],
-    ["protein-unset", null, "未设目标"],
+    ["protein-unset", null, "50"],
     ["protein-partial", 0.5, "小计"],
     ["protein-unknown", null, "—"],
-    ["protein-range", 0.4, "40–60"],
+    ["protein-range", 0.5, "约 50"],
     ["protein-confirmed", 0.5, "50"],
     ["protein-zero", 0, "0"],
-    ["protein-exceeded", 1, "超出目标 20 g"],
+    ["protein-exceeded", 1, "120 g"],
+    ["protein-equal", 1, "100 g"],
     ["protein-estimated", 0.5, "约 50"],
   ]) {
     await open(scenario);
     const row = page.getByTestId("nutrient-蛋白质"),
       track = page.getByTestId("nutrient-track-蛋白质"),
       fill = page.getByTestId("nutrient-fill-蛋白质");
-    await expect(track).toBeVisible();
+    if (scenario === "protein-unset") {
+      await expect(track).toHaveCount(0);
+      await expect(row).not.toContainText(/目标|参考/);
+    } else await expect(track).toBeVisible();
     await expect(row).toContainText(label);
     if (expectedFill === null) {
       await expect(fill).toHaveCount(0);
-      await expect(track).not.toHaveAttribute("role", "progressbar");
-      await expect(track).toHaveAttribute("aria-label", /暂不计算进度/);
+      if (scenario !== "protein-unset") {
+        await expect(track).not.toHaveAttribute("role", "progressbar");
+        await expect(track).toHaveAttribute("aria-label", /暂不计算进度/);
+      }
       await expect(row).not.toContainText(/\d+%/);
     } else {
       await expect(track).toHaveAttribute("role", "progressbar");
@@ -183,20 +189,21 @@ try {
         )
         .toBeCloseTo(expectedFill, 2);
     }
-    if (scenario === "protein-range") {
-      const range = page.getByTestId("nutrient-range-蛋白质");
-      await expect
-        .poll(() =>
-          range.evaluate(
-            (el) =>
-              el.getBoundingClientRect().width /
-              el.parentElement.getBoundingClientRect().width,
-          ),
-        )
-        .toBeCloseTo(0.6, 2);
+    if (["protein-exceeded", "protein-equal"].includes(scenario)) {
+      const color = await fill.evaluate(
+        (el) => getComputedStyle(el).backgroundColor,
+      );
+      if (scenario === "protein-exceeded")
+        expect(color).toBe("rgb(163, 79, 67)");
+      else expect(color).not.toBe("rgb(163, 79, 67)");
     }
+    const photo = await page.getByTestId("daily-table-photo").boundingBox();
+    const nutrient = await row.boundingBox();
+    expect(nutrient.x).toBeGreaterThanOrEqual(photo.x + photo.width);
     await shot(`browser-progress-${scenario}`);
-    report.checks.push(`Nutrition tracks remain visible: ${scenario}`);
+    report.checks.push(
+      `Midpoint, right-column layout and conditional target track: ${scenario}`,
+    );
   }
   await open("demo");
   await tab("记录").click();
@@ -251,13 +258,41 @@ try {
     "protein-exceeded",
   ]) {
     await open(scenario);
-    await unclipped(`320dp ${scenario} four metrics`);
+    await unclipped(`320dp ${scenario} five metrics`);
     await shot(`browser-320-${scenario}`);
   }
   await tab("我的").click();
   await button("个人参考目标").click();
   await expect(page.getByText("个人参考目标", { exact: true })).toBeVisible();
   await shot("browser-goals");
+  await open("demo");
+  await page.setViewportSize({ width: 390, height: 600 });
+  await tab("我的").click();
+  await page.waitForTimeout(320); // Let route restoration settle before simulating a user scroll.
+  const scroll = page.getByTestId("app-content-scroll");
+  await scroll.evaluate((el) => {
+    el.scrollTop = 150;
+  });
+  await page.waitForTimeout(250);
+  const savedOffset = await scroll.evaluate((el) => el.scrollTop);
+  expect(savedOffset).toBeGreaterThan(30);
+  await tab("今日").click();
+  await page.waitForTimeout(300);
+  await tab("我的").click();
+  await expect
+    .poll(() => scroll.evaluate((el) => el.scrollTop))
+    .toBeCloseTo(savedOffset, 0);
+  await tab("我的").click();
+  expect(await scroll.evaluate((el) => el.scrollTop)).toBeCloseTo(
+    savedOffset,
+    0,
+  );
+  for (const name of ["食品库", "记录", "今日", "我的", "今日"])
+    await tab(name).click();
+  await expect(page.getByTestId("daily-table-photo")).toBeVisible();
+  report.checks.push(
+    "Tab scroll position survives return and repeated selection; rapid switching remains usable",
+  );
   expect(report.errors).toEqual([]);
   expect(report.externalRequests).toEqual([]);
   report.status = "passed";

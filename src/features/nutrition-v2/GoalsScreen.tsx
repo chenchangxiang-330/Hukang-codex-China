@@ -329,7 +329,7 @@ export function GoalsScreen({
         <View
           style={{
             flex: 1,
-            backgroundColor: "#172F43EE",
+            backgroundColor: "#42382DEE",
             padding: 24,
             paddingTop: 60,
             paddingBottom: 50,

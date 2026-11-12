@@ -4,13 +4,16 @@ import { FoodEditor } from "./FoodEditor";
 import { useState, useRef, useEffect } from "react";
 import {
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { colors as c } from "../../ui/tokens";
+import { Surface } from "../../ui/components";
 import { Field, Choices } from "../simple/ui";
 import { shiftDateKey } from "../ui-v1/contracts";
 import {
@@ -80,33 +83,101 @@ export function TodayScreen({
     ],
     ["时间未记录", entries.filter((e) => !e.consumedTime)],
   ] as const;
-  const metrics = ["protein", "energy", "fat", "fiber"] as const;
-  const firstUnset = metrics.find((k) => !policyFor(s.targets, k));
+  const { width, fontScale } = useWindowDimensions();
+  const metrics = ["protein", "carbohydrate", "fat", "fiber"] as const;
+  const metricColors = {
+    protein: c.protein,
+    carbohydrate: c.carbohydrate,
+    fat: c.fat,
+    fiber: c.fiber,
+  };
+  const largeText = fontScale > 1.25;
   return (
     <>
-      <View style={V.brandRow}>
-        <Text style={V.brand}>护康 · 今天</Text>
-        <Text style={N.caption}>{dateLabel(date).replace(/^\d+年/, "")}</Text>
+      <View style={{ gap: 12 }}>
+        <View style={V.brandRow}>
+          <Text style={V.brand}>护康</Text>
+          <Text style={N.caption}>{dateLabel(date).replace(/^\d+年/, "")}</Text>
+        </View>
+        <View style={V.greeting}>
+          <Text accessibilityRole="header" style={V.greetingTitle}>
+            好好吃饭。
+          </Text>
+          <Text style={N.caption}>慢慢生活。</Text>
+        </View>
+        <Surface style={V.tableCard}>
+          <View
+            testID="daily-table-photo"
+            style={[
+              V.tablePhoto,
+              { width: largeText || width < 360 ? "29%" : "36%" },
+            ]}
+          >
+            <Image
+              source={require("../../../assets/warm-table-breakfast.png")}
+              style={[
+                StyleSheet.absoluteFill,
+                { width: "100%", height: "100%" },
+              ]}
+              resizeMode="cover"
+              accessible={false}
+            />
+            <View style={V.photoCaption} pointerEvents="none">
+              <Text style={V.photoCaptionTitle}>日常食光</Text>
+              <Text style={V.photoCaptionText}>生活配图</Text>
+            </View>
+          </View>
+          <View testID="daily-table-nutrition" style={V.tableNutrition}>
+            <NutrientProgress
+              compact
+              energyHero
+              title="今日卡路里"
+              color={c.energy}
+              total={total(s.entries, date, "energy")}
+              policy={policyFor(s.targets, "energy")}
+            />
+            <View style={V.divider} />
+            {metrics.map((k) => (
+              <NutrientProgress
+                compact
+                key={k}
+                title={nutrientInfo[k][0]}
+                color={metricColors[k]}
+                total={total(s.entries, date, k)}
+                policy={policyFor(s.targets, k)}
+                showTargetHint={false}
+              />
+            ))}
+          </View>
+        </Surface>
+        <View style={V.summaryFooter}>
+          <Text style={[N.caption, { flex: 1 }]}>把每一餐，过得有滋味。</Text>
+          <Link title="查看完整营养" onPress={onNutrition} />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="拍一拍"
+          onPress={onCapture}
+          style={({ pressed }) => [
+            V.captureAction,
+            pressed && { opacity: 0.8 },
+          ]}
+        >
+          <View style={V.captureIcon}>
+            <Text style={V.captureIconText}>＋</Text>
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={V.captureTitle}>记录这一餐</Text>
+            <Text style={V.captureHint}>拍餐食 · 营养表 · 扫码</Text>
+          </View>
+          <Text style={V.captureArrow}>→</Text>
+        </Pressable>
       </View>
-      <Card>
-        {metrics.map((k) => (
-          <NutrientProgress
-            compact
-            key={k}
-            title={k === "energy" ? "今日卡路里" : nutrientInfo[k][0]}
-            total={total(s.entries, date, k)}
-            policy={policyFor(s.targets, k)}
-            showTargetHint={k === firstUnset}
-          />
-        ))}
-        <Link title="查看完整营养" onPress={onNutrition} />
-      </Card>
-      <Action title="拍一拍" onPress={onCapture} />
       {s.status === "error" && (
         <Feedback>{s.message || "读取失败，请重试。"}</Feedback>
       )}
       <View style={V.sectionRow}>
-        <Text style={N.heading}>今天时间线</Text>
+        <Text style={N.heading}>饮食日记</Text>
         <Link title="查看全部记录" onPress={onDiary} />
       </View>
       {!entries.length && (
@@ -676,6 +747,102 @@ export function TargetsScreen({
   );
 }
 const V = StyleSheet.create({
+  greeting: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 6,
+    paddingVertical: 2,
+  },
+  greetingTitle: {
+    fontSize: 28,
+    lineHeight: 38,
+    color: c.ink,
+    fontWeight: "400",
+    fontFamily: Platform.select({
+      ios: "Songti SC",
+      android: "serif",
+      default: "serif",
+    }),
+  },
+  tableCard: {
+    flexDirection: "row",
+    padding: 0,
+    gap: 0,
+    borderRadius: 28,
+    overflow: "hidden",
+    backgroundColor: "#F1E7D8",
+  },
+  tablePhoto: {
+    alignSelf: "stretch",
+    minHeight: 300,
+    overflow: "hidden",
+    backgroundColor: "#E4D7C1",
+  },
+  photoCaption: {
+    position: "absolute",
+    left: 12,
+    right: 8,
+    bottom: 16,
+    gap: 4,
+  },
+  photoCaptionTitle: {
+    fontSize: 17,
+    color: "#FFFFFF",
+    fontWeight: "500",
+    textShadowColor: "#594532",
+    textShadowRadius: 5,
+  },
+  photoCaptionText: {
+    fontSize: 11,
+    color: "#FFFFFF",
+    textShadowColor: "#594532",
+    textShadowRadius: 4,
+  },
+  tableNutrition: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 17,
+    gap: 11,
+  },
+  summaryFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: -8,
+  },
+  captureAction: {
+    minHeight: 70,
+    borderRadius: 25,
+    borderCurve: "continuous",
+    backgroundColor: c.oliveStrong,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  captureIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "#FFFFFF55",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  captureIconText: { color: "#FFFFFF", fontSize: 28, fontWeight: "300" },
+  captureTitle: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: "600",
+  },
+  captureHint: { color: "#FFFFFF", fontSize: 12, lineHeight: 18 },
+  captureArrow: { color: "#FFFFFF", fontSize: 22 },
   brandRow: {
     flexDirection: "row",
     flexWrap: "wrap",

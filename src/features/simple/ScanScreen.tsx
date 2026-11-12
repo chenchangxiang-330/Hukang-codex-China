@@ -206,7 +206,7 @@ const scan = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
   },
-  scanLine: { height: 1, backgroundColor: "#96CAE9", marginHorizontal: 12 },
+  scanLine: { height: 1, backgroundColor: C.teal, marginHorizontal: 12 },
   caption: {
     position: "absolute",
     bottom: 0,

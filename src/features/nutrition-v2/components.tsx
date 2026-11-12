@@ -9,11 +9,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { colors as c } from "../../ui/tokens";
+import { colors as c, tokens } from "../../ui/tokens";
 import { Surface } from "../../ui/components";
 import {
   formatNumber,
   formatTotal,
+  formatEstimateRange,
   reliability,
   targetProgress,
   type Total,
@@ -170,7 +171,11 @@ export function Action({
       style={({ pressed }) => [
         N.action,
         secondary && N.actionSecondary,
-        (pressed || disabled) && { opacity: 0.55 },
+        pressed &&
+          !disabled && {
+            backgroundColor: secondary ? c.neutralSoft : c.brandPressed,
+          },
+        disabled && { opacity: 0.48 },
       ]}
     >
       <Text style={[N.actionText, secondary && { color: c.brand }]}>
@@ -399,14 +404,14 @@ export function Accordion({
     }
   }, [open, reduced, fade]);
   return (
-    <View style={[N.accordion, open && N.accordionOpen]}>
+    <Surface style={[N.accordion, open && N.accordionOpen]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}，${value}`}
         accessibilityState={{ expanded: open }}
         aria-expanded={open}
         onPress={onToggle}
-        style={[N.accordionHead, open && { backgroundColor: "#E0EDF6" }]}
+        style={[N.accordionHead, open && { backgroundColor: c.detailHeader }]}
       >
         <View style={N.grow}>
           <Text style={N.heading}>{title}</Text>
@@ -425,7 +430,7 @@ export function Accordion({
           {children}
         </Animated.View>
       )}
-    </View>
+    </Surface>
   );
 }
 export function NutrientLine({
@@ -435,20 +440,28 @@ export function NutrientLine({
   title: string;
   total: Total;
 }) {
+  const originalRange = formatEstimateRange(total);
   return (
     <View style={N.metricRow}>
       <View style={N.grow}>
         <Text style={N.body}>{title}</Text>
       </View>
-      <Text style={N.metric}>
-        {total.estimated ? "约 " : ""}
-        {total.value === null && !total.range
-          ? "—"
-          : `${formatTotal(total)} ${total.unit}`}
-        {total.missing && (total.value !== null || total.range)
-          ? " · 小计"
-          : ""}
-      </Text>
+      <View style={N.metricValue}>
+        <Text style={N.metric}>
+          {total.estimated ? "约 " : ""}
+          {total.value === null && !total.range
+            ? "—"
+            : `${formatTotal(total)} ${total.unit}`}
+          {total.missing && (total.value !== null || total.range)
+            ? " · 小计"
+            : ""}
+        </Text>
+        {originalRange && (
+          <Text style={[N.caption, { textAlign: "right" }]}>
+            原估算范围 {originalRange}
+          </Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -468,11 +481,12 @@ export const N = StyleSheet.create({
   caption: { color: c.muted, fontSize: 13, lineHeight: 21 },
   tiny: { color: c.muted, fontSize: 11, lineHeight: 18 },
   card: {
-    borderRadius: 22,
+    borderRadius: tokens.radius.lg,
+    borderCurve: "continuous",
     padding: 20,
     gap: 14,
-    borderColor: "#E2EAF0",
-    shadowColor: "#4B7591",
+    borderColor: c.line,
+    shadowColor: c.shadow,
     shadowOpacity: 0.035,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -482,8 +496,9 @@ export const N = StyleSheet.create({
     minHeight: 50,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 17,
-    backgroundColor: c.sky,
+    borderRadius: tokens.radius.md,
+    borderCurve: "continuous",
+    backgroundColor: c.brand,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -493,7 +508,7 @@ export const N = StyleSheet.create({
     borderColor: c.line,
   },
   actionText: {
-    color: c.onSky,
+    color: c.onBrand,
     fontSize: 15,
     lineHeight: 23,
     fontWeight: "600",
@@ -517,6 +532,7 @@ export const N = StyleSheet.create({
   feedback: {
     padding: 14,
     borderRadius: 16,
+    borderCurve: "continuous",
     backgroundColor: c.brandSoft,
     borderWidth: 1,
     borderColor: c.line,
@@ -541,14 +557,14 @@ export const N = StyleSheet.create({
     color: c.brand,
     fontWeight: "500",
   },
-  track: { height: 7, borderRadius: 4, backgroundColor: "#E6EDF2" },
+  track: { height: 7, borderRadius: 4, backgroundColor: c.track },
   fill: { position: "absolute", height: 7, borderRadius: 4 },
   rangeBand: {
     position: "absolute",
     top: -3,
     height: 13,
     borderRadius: 4,
-    backgroundColor: "#B8D5E5",
+    backgroundColor: c.rangeBand,
   },
   marker: {
     position: "absolute",
@@ -560,11 +576,14 @@ export const N = StyleSheet.create({
   accordion: {
     backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: "#D0DFEB",
-    borderRadius: 21,
+    borderColor: c.line,
+    borderRadius: 24,
+    borderCurve: "continuous",
+    padding: 0,
+    gap: 0,
     overflow: "hidden",
   },
-  accordionOpen: { borderColor: "#A8C5DA" },
+  accordionOpen: { borderColor: c.lineStrong },
   accordionHead: {
     flexDirection: "row",
     gap: 10,
@@ -599,12 +618,15 @@ export const N = StyleSheet.create({
     fontWeight: "500",
     color: c.ink,
     fontVariant: ["tabular-nums"],
+    textAlign: "right",
   },
+  metricValue: { maxWidth: "60%", alignItems: "flex-end", gap: 3 },
   art: {
     width: 54,
     height: 54,
-    backgroundColor: "#EFF5F7",
+    backgroundColor: c.neutralSoft,
     borderRadius: 17,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -613,18 +635,23 @@ export const N = StyleSheet.create({
     height: 8,
     borderRadius: 10,
     borderWidth: 1.3,
-    borderColor: "#98B9CC",
-    backgroundColor: "#D4E5CF",
+    borderColor: c.lineStrong,
+    backgroundColor: c.oliveSoft,
   },
   bowl: {
     width: 28,
     height: 16,
     borderBottomLeftRadius: 14,
     borderBottomRightRadius: 14,
-    backgroundColor: "#D6E7F3",
+    backgroundColor: c.brandSoft,
     borderWidth: 1.2,
-    borderColor: "#98B9CC",
+    borderColor: c.lineStrong,
     marginTop: -3,
   },
-  bowlFoot: { width: 14, height: 2, backgroundColor: "#98B9CC", marginTop: 2 },
+  bowlFoot: {
+    width: 14,
+    height: 2,
+    backgroundColor: c.lineStrong,
+    marginTop: 2,
+  },
 });

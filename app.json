@@ -2,14 +2,14 @@
   "expo": {
     "name": "护康",
     "slug": "hukang-codex-china",
-    "version": "0.5.7",
+    "version": "0.5.8",
     "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "scheme": "hukangchina",
     "android": {
       "package": "com.hukang.china",
-      "versionCode": 18,
+      "versionCode": 19,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.ACCESS_NETWORK_STATE",
@@ -38,7 +38,7 @@
           "image": "./assets/icon.png",
           "imageWidth": 120,
           "resizeMode": "contain",
-          "backgroundColor": "#f3faf8"
+          "backgroundColor": "#F7F3EC"
         }
       ],
       [

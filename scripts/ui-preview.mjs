@@ -17,6 +17,10 @@ export async function buildPreview() {
     path.join(out, "assets/icon.png"),
   );
   await copyFile(
+    path.join(root, "assets/warm-table-breakfast.png"),
+    path.join(out, "assets/warm-table-breakfast.png"),
+  );
+  await copyFile(
     path.join(root, "tests/fixtures/china-food/6923644266066.jpg"),
     path.join(out, "assets/archived-milk.jpg"),
   );
@@ -92,6 +96,11 @@ export async function buildPreview() {
           b.onLoad({ filter: /assets\/icon\.png$/ }, () => ({
             contents:
               'module.exports = { uri: "/assets/icon.png", width: 1024, height: 1024 };',
+            loader: "js",
+          }));
+          b.onLoad({ filter: /assets\/warm-table-breakfast\.png$/ }, () => ({
+            contents:
+              'module.exports = { uri: "/assets/warm-table-breakfast.png", width: 1024, height: 1536 };',
             loader: "js",
           }));
         },

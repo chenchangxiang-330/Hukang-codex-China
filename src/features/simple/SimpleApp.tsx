@@ -6,17 +6,23 @@ import {
   TargetManagementScreen,
 } from "../nutrition-v2/GoalsScreen";
 import { productionNutrition } from "../../services/nutrition/runtime";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   ActivityIndicator,
   Animated,
   BackHandler,
+  Easing,
   Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -154,13 +160,27 @@ export function SimpleAppView({
   const page = pages.at(-1),
     activeTab = p.tab === "stock" ? "library" : p.tab;
   const offset = useRef(0),
+    tabOffsets = useRef<Partial<Record<Tab, number>>>({}),
     returnOffsets = useRef<number[]>([]),
     restore = useRef<number | null>(null),
     content = useRef<View>(null!),
     target = useRef<View>(null);
   const reduced = useReducedMotion(),
     lens = useRef(new Animated.Value(0)).current,
+    pageOpacity = useRef(new Animated.Value(1)).current,
     [dockWidth, setDockWidth] = useState(300);
+  const routeKey = `${p.tab}/${p.screen}/${page ?? "home"}`;
+  const previousRoute = useRef({ tab: p.tab, screen: p.screen, page });
+  const previousMotionKey = useRef(routeKey);
+  const pendingScrollRestore = useRef<{ key: string; y: number } | null>(null);
+  const selectTab = (next: Tab) => {
+    if (next === p.tab || p.busy || snapshot.saving) return;
+    tabOffsets.current[p.tab] = offset.current;
+    restore.current = tabOffsets.current[next] ?? 0;
+    p.setTab(next);
+    p.setError(null);
+    p.setNotice(null);
+  };
   const go = (next: Page) => {
     returnOffsets.current.push(offset.current);
     setPages((a) => [...a, next]);
@@ -241,10 +261,52 @@ export function SimpleAppView({
       },
     );
   };
-  useEffect(() => {
-    p.scroll.current?.scrollTo({ y: restore.current ?? 0, animated: false });
+  useLayoutEffect(() => {
+    const previous = previousRoute.current;
+    if (previous.screen === "home" && !previous.page) {
+      tabOffsets.current[previous.tab] = offset.current;
+    }
+    const y =
+      restore.current ??
+      (p.screen === "home" && !page ? (tabOffsets.current[p.tab] ?? 0) : 0);
+    offset.current = y;
+    p.scroll.current?.scrollTo({ y, animated: false });
+    pendingScrollRestore.current = { key: routeKey, y };
     restore.current = null;
+    previousRoute.current = { tab: p.tab, screen: p.screen, page };
   }, [p.tab, p.screen, page, p.scroll]);
+  useEffect(() => {
+    const planned = pendingScrollRestore.current;
+    // The legacy controller also resets the scroll position in a passive
+    // screen/error effect. Restore after that effect, without scroll animation.
+    const frame = requestAnimationFrame(() => {
+      if (!planned || pendingScrollRestore.current !== planned) return;
+      offset.current = planned.y;
+      p.scroll.current?.scrollTo({ y: planned.y, animated: false });
+      pendingScrollRestore.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [routeKey, p.scroll]);
+  useLayoutEffect(() => {
+    const changed = previousMotionKey.current !== routeKey;
+    previousMotionKey.current = routeKey;
+    pageOpacity.stopAnimation();
+    if (!changed || reduced) {
+      pageOpacity.setValue(1);
+      return;
+    }
+    // One quiet surface transition. Existing figures and cards never replay
+    // their own entrance, and page changes do not move the layout.
+    pageOpacity.setValue(0.88);
+    const animation = Animated.timing(pageOpacity, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [routeKey, reduced, pageOpacity]);
   useEffect(() => {
     if (!page) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", close);
@@ -262,10 +324,12 @@ export function SimpleAppView({
     };
   }, []);
   useEffect(() => {
+    const tabIndex = tabs.findIndex((t) => t.key === activeTab);
+    const cellIndex = tabIndex < 2 ? tabIndex : tabIndex + 1;
     const animation = Animated.timing(lens, {
-      toValue:
-        (tabs.findIndex((t) => t.key === activeTab) * (dockWidth - 12)) / 4,
+      toValue: (cellIndex * (dockWidth - 14)) / 5,
       duration: reduced ? 0 : 280,
+      easing: Easing.inOut(Easing.quad),
       useNativeDriver: true,
     });
     animation.start();
@@ -366,8 +430,10 @@ export function SimpleAppView({
                 importantForAccessibility="no-hide-descendants"
               />
             </View>
-            <ScrollView
+            <Animated.ScrollView
+              testID="app-content-scroll"
               ref={p.scroll}
+              style={{ opacity: pageOpacity }}
               {...(Platform.OS === "android" ? { innerViewRef: content } : {})}
               onLayout={revealFocusedInput}
               onFocus={revealFocusedInput}
@@ -413,6 +479,8 @@ export function SimpleAppView({
                 <>
                   <HomeScreens
                     {...p}
+                    onTabChange={selectTab}
+                    onProfile={() => go("personal-profile")}
                     onTargets={() => go("targets")}
                     onModel={() => go("models")}
                     nutrition={snapshot}
@@ -443,7 +511,7 @@ export function SimpleAppView({
                       onCapture={() => capture()}
                       onDiary={() => {
                         setDate(today);
-                        p.setTab("diary");
+                        selectTab("diary");
                       }}
                       onFood={(e) => {
                         setFood(e);
@@ -659,7 +727,7 @@ export function SimpleAppView({
                   })
                 }
               />
-            </ScrollView>
+            </Animated.ScrollView>
           </BlurTargetView>
           {showDock && (
             <View
@@ -670,7 +738,7 @@ export function SimpleAppView({
               <BlurView
                 blurTarget={target}
                 blurMethod="dimezisBlurViewSdk31Plus"
-                intensity={42}
+                intensity={24}
                 tint="light"
                 style={nav.dock}
                 onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}
@@ -681,42 +749,58 @@ export function SimpleAppView({
                   style={[
                     nav.lens,
                     {
-                      width: (dockWidth - 12) / 4,
+                      width: (dockWidth - 14) / 5,
                       transform: [{ translateX: lens }],
                     },
                   ]}
                 />
-                {tabs.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    accessibilityRole="tab"
-                    accessibilityLabel={item.label}
-                    accessibilityState={{ selected: activeTab === item.key }}
-                    aria-selected={activeTab === item.key}
-                    onPress={() => {
-                      p.setTab(item.key);
-                      p.setError(null);
-                      p.setNotice(null);
-                    }}
-                    style={({ pressed }) => [
-                      nav.tab,
-                      pressed && { opacity: 0.6 },
-                    ]}
-                  >
-                    <TabMark
-                      kind={item.key}
-                      selected={activeTab === item.key}
-                    />
-                    <Text
-                      style={[
-                        nav.tabLabel,
-                        activeTab === item.key && nav.tabLabelActive,
+                {[tabs[0], tabs[1], null, tabs[2], tabs[3]].map((item) =>
+                  item ? (
+                    <Pressable
+                      key={item.key}
+                      accessibilityRole="tab"
+                      accessibilityLabel={item.label}
+                      accessibilityState={{ selected: activeTab === item.key }}
+                      aria-selected={activeTab === item.key}
+                      onPress={() => selectTab(item.key)}
+                      style={({ pressed }) => [
+                        nav.tab,
+                        pressed && { opacity: 0.8 },
                       ]}
                     >
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                ))}
+                      <TabMark
+                        kind={item.key}
+                        selected={activeTab === item.key}
+                      />
+                      <Text
+                        style={[
+                          nav.tabLabel,
+                          activeTab === item.key && nav.tabLabelActive,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <View key="capture" style={nav.addSlot}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="记录这一餐"
+                        accessibilityHint="打开现有餐食与包装食品录入"
+                        onPress={() => {
+                          if (!p.busy && !snapshot.saving) capture();
+                        }}
+                        style={({ pressed }) => [
+                          nav.addButton,
+                          pressed && nav.addPressed,
+                        ]}
+                      >
+                        <View accessible={false} style={nav.plusHorizontal} />
+                        <View accessible={false} style={nav.plusVertical} />
+                      </Pressable>
+                    </View>
+                  ),
+                )}
               </BlurView>
             </View>
           )}
@@ -748,18 +832,7 @@ const nav = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: 32,
   },
-  captureFloat: {
-    position: "absolute",
-    left: 52,
-    right: 52,
-    bottom: 100,
-    shadowColor: "#6388A3",
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  demo: { backgroundColor: "#EAF4FB", padding: 8, borderRadius: 12 },
+  demo: { backgroundColor: colors.warmSoft, padding: 8, borderRadius: 12 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -780,7 +853,8 @@ const nav = StyleSheet.create({
     minHeight: 50,
     borderRadius: 16,
     paddingHorizontal: 16,
-    backgroundColor: C.teal,
+    borderCurve: "continuous",
+    backgroundColor: colors.brandSoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -788,31 +862,33 @@ const nav = StyleSheet.create({
     fontSize: 17,
     lineHeight: 25,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: colors.brand,
   },
   dockShadow: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    left: 16,
+    right: 16,
     bottom: 12,
     maxWidth: 640,
     alignSelf: "center",
-    borderRadius: 38,
-    shadowColor: "#456986",
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 5,
+    borderRadius: 28,
+    borderCurve: "continuous",
+    shadowColor: colors.ink,
+    shadowOpacity: 0.09,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
   dock: {
     flexDirection: "row",
     padding: 6,
-    minHeight: 74,
-    borderRadius: 38,
+    minHeight: 72,
+    borderRadius: 28,
+    borderCurve: "continuous",
     overflow: "hidden",
-    backgroundColor: "rgba(255,254,250,0.76)",
+    backgroundColor: "rgba(255,252,247,0.95)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.95)",
+    borderColor: colors.surface,
   },
   glassHighlight: {
     position: "absolute",
@@ -820,23 +896,23 @@ const nav = StyleSheet.create({
     left: 20,
     right: 20,
     height: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
   },
   lens: {
     position: "absolute",
     top: 6,
     bottom: 6,
-    left: 5,
-    borderRadius: 30,
-    backgroundColor: "rgba(189,222,242,0.65)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.8)",
+    left: 6,
+    borderRadius: 21,
+    borderCurve: "continuous",
+    backgroundColor: colors.brandSoft,
   },
   tab: {
     flex: 1,
-    minHeight: 60,
+    minHeight: 58,
     paddingVertical: 6,
-    borderRadius: 30,
+    borderRadius: 21,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
@@ -848,6 +924,31 @@ const nav = StyleSheet.create({
     textAlign: "center",
   },
   tabLabelActive: { color: C.teal, fontWeight: "600" },
+  addSlot: { flex: 1, alignItems: "center", justifyContent: "center" },
+  addButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 19,
+    borderCurve: "continuous",
+    backgroundColor: colors.brand,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addPressed: { backgroundColor: colors.brandPressed },
+  plusHorizontal: {
+    position: "absolute",
+    width: 20,
+    height: 1.8,
+    borderRadius: 1,
+    backgroundColor: colors.surface,
+  },
+  plusVertical: {
+    position: "absolute",
+    width: 1.8,
+    height: 20,
+    borderRadius: 1,
+    backgroundColor: colors.surface,
+  },
   glyph: { width: 21, height: 21, alignItems: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 3 },
   square: { width: 9, height: 9, borderRadius: 2, borderWidth: 1.6 },

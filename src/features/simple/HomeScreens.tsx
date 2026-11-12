@@ -3,7 +3,7 @@ import { useState, type ReactNode } from "react";
 import { Alert, Image, Pressable, Switch, Text, View } from "react-native";
 import { C, S, Button, Field } from "./ui";
 import { H } from "./HomeScreenStyles";
-import { type AppController } from "./useSimpleApp";
+import { type AppController, type Tab } from "./useSimpleApp";
 import type { FoodSummary } from "../../domain/food/scan";
 import { expiryLabel } from "../../domain/inventory/rules";
 import { reduceStock, removeStock } from "./store";
@@ -40,11 +40,13 @@ function MenuRow({
   title,
   description,
   trailing,
+  mark,
   onPress,
 }: {
   title: string;
   description?: string;
   trailing?: ReactNode;
+  mark?: string;
   onPress: () => void;
 }) {
   return (
@@ -54,6 +56,11 @@ function MenuRow({
       onPress={onPress}
       style={({ pressed }) => [H.menuRow, pressed && H.pressed]}
     >
+      {mark && (
+        <View accessible={false} style={H.menuMark}>
+          <Text style={H.menuMarkText}>{mark}</Text>
+        </View>
+      )}
       <View style={H.grow}>
         <Text style={S.rowTitle}>{title}</Text>
         {description && <Text style={S.small}>{description}</Text>}
@@ -75,6 +82,8 @@ function recordedDate(value: string): string {
 export function HomeScreens(
   p: AppController & {
     onTargets?: () => void;
+    onProfile?: () => void;
+    onTabChange?: (tab: Tab) => void;
     onModel?: () => void;
     onMeal?: (food: Food) => void;
     nutrition?: Snapshot;
@@ -182,6 +191,7 @@ export function HomeScreens(
         <>
           <PageIntro
             title={screen === "library" ? "选择一件食品" : "我的食品库"}
+            description="常吃的食物，留在这里。"
           />
           {screen === "home" && (
             <View style={H.segmented} accessibilityRole="tablist">
@@ -197,8 +207,10 @@ export function HomeScreens(
                   accessibilityLabel={label}
                   accessibilityState={{ selected: tab === key }}
                   onPress={() => {
+                    if (tab === key) return;
                     clearSearch();
-                    setTab(key);
+                    if (p.onTabChange) p.onTabChange(key);
+                    else setTab(key);
                   }}
                   style={({ pressed }) => [
                     H.segment,
@@ -251,7 +263,7 @@ export function HomeScreens(
                 />
               ) : (
                 filteredStock.map((item) => (
-                  <Surface key={item.id}>
+                  <Surface key={item.id} style={H.stockSurface}>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`查看${item.name}`}
@@ -395,15 +407,20 @@ export function HomeScreens(
                       onPress={() => p.onMeal?.(f)}
                       style={H.foodRow}
                     >
-                      {(p.nutrition?.covers?.[f.id]?.cover || f.image) && (
-                        <Image
-                          source={{
-                            uri: p.nutrition?.covers?.[f.id]?.cover || f.image,
-                          }}
-                          resizeMode="contain"
-                          style={{ width: 64, height: 64 }}
-                        />
-                      )}
+                      <View style={H.foodThumbnail}>
+                        {p.nutrition?.covers?.[f.id]?.cover || f.image ? (
+                          <Image
+                            source={{
+                              uri:
+                                p.nutrition?.covers?.[f.id]?.cover || f.image,
+                            }}
+                            resizeMode="contain"
+                            style={H.thumbnailImage}
+                          />
+                        ) : (
+                          <Text style={H.foodInitial}>餐</Text>
+                        )}
+                      </View>
                       <View style={H.grow}>
                         <Text style={S.rowTitle}>{f.name}</Text>
                         <Text style={S.small}>
@@ -439,22 +456,52 @@ export function HomeScreens(
           <Text accessibilityRole="header" style={S.title}>
             我的
           </Text>
+          <Text style={S.note}>照顾身体，也照顾自己的节奏。</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="个人资料与体检照片"
+            onPress={() => (p.onProfile ?? p.onTargets)?.()}
+            style={({ pressed }) => [H.profile, pressed && H.pressed]}
+          >
+            <View accessible={false} style={H.profileAvatar}>
+              <Text style={H.profileAvatarText}>我</Text>
+            </View>
+            <View style={H.grow}>
+              <Text style={H.profileName}>我的资料</Text>
+              <Text style={S.small}>个人资料与体检照片</Text>
+            </View>
+            <Text style={H.chevron}>›</Text>
+          </Pressable>
           <Surface style={H.menuSurface}>
-            <MenuRow title="个人参考目标" onPress={() => p.onTargets?.()} />
+            <MenuRow
+              title="个人参考目标"
+              mark="◎"
+              onPress={() => p.onTargets?.()}
+            />
             <View style={H.menuDivider} />
             <MenuRow
               title="AI 服务设置"
+              mark="✦"
               onPress={() => navigate("ai-settings")}
             />
             <View style={H.menuDivider} />
             <MenuRow
               title="数据导出"
+              mark="↓"
               onPress={() => setExportOpen(!exportOpen)}
             />
             <View style={H.menuDivider} />
-            <MenuRow title="本地抠图模型" onPress={() => p.onModel?.()} />
+            <MenuRow
+              title="本地抠图模型"
+              mark="⌁"
+              onPress={() => p.onModel?.()}
+            />
             <View style={H.menuDivider} />
-            <MenuRow title="关于 Hukang" onPress={() => navigate("about")} />
+            <MenuRow
+              title="关于 Hukang"
+              mark="i"
+              onPress={() => navigate("about")}
+            />
           </Surface>
           {exportOpen && (
             <>
@@ -474,8 +521,8 @@ export function HomeScreens(
                     accessibilityLabel="包含食品与饮食照片"
                     value={photos}
                     onValueChange={setPhotos}
-                    trackColor={{ true: "#B7D8EB", false: C.line }}
-                    thumbColor={photos ? C.teal : "#FFF"}
+                    trackColor={{ true: C.pale, false: C.line }}
+                    thumbColor={photos ? C.teal : C.white}
                   />
                 </View>
                 <Button

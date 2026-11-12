@@ -1,7 +1,13 @@
 import { Text } from "react-native";
 import { Field } from "../simple/ui";
 import { Accordion, N } from "./components";
-import { nutrientInfo, type Food, type Nutrient } from "./model";
+import {
+  nutrientInfo,
+  rangeMidpoint,
+  editedFact,
+  type Food,
+  type Nutrient,
+} from "./model";
 
 export function FoodEditor({
   food,
@@ -100,14 +106,18 @@ function NutrientInput({
 }) {
   const f = food.nutrients[k];
   const [value, setValue] = useState(
-    f?.range || f?.value == null ? "" : String(f.value),
+    f?.range
+      ? String(rangeMidpoint(f.range) ?? "")
+      : f?.value == null
+        ? ""
+        : String(f.value),
   );
   const [error, setError] = useState("");
   return (
     <>
       {f?.range && (
         <Text style={N.caption}>
-          原估算 {f.range.join("–")} {f.unit} · 未修改时保留区间
+          原估算 {f.range.join("–")} {f.unit} · 以中间值展示，未修改时保留原范围
         </Text>
       )}
       <Field
@@ -118,16 +128,17 @@ function NutrientInput({
           setValue(v);
           const valid = /^\d+(\.\d{0,3})?$/.test(v) && Number(v) <= 10000000;
           setError(v.trim() && !valid ? "请输入非负数；保存前请修正。" : "");
+          const next = editedFact(
+            f,
+            valid ? Number(v) : v.trim() ? Number.NaN : null,
+            f?.unit ?? nutrientInfo[k][1],
+          );
+          if (next === f) return;
           onChange({
             ...food,
             nutrients: {
               ...food.nutrients,
-              [k]: {
-                value: valid ? Number(v) : v.trim() ? Number.NaN : null,
-                unit: f?.unit ?? nutrientInfo[k][1],
-                status: valid ? "estimated" : "unknown",
-                source: "用户修改 · 未经独立验证",
-              },
+              [k]: next,
             },
           });
         }}

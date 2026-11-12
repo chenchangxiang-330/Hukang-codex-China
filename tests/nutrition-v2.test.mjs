@@ -65,7 +65,7 @@ test("unknown, confirmed zero, ranges, missing subtotals and date isolation stay
     source: "test",
   };
   assert.deepEqual(m.total([entry(f, 0.5)], date, "energy").range, [50, 100]);
-  assert.equal(m.total([entry(f, 0.5)], date, "energy").value, null);
+  assert.equal(m.total([entry(f, 0.5)], date, "energy").value, 75);
 });
 test("demo portion changes propagate through one snapshot without changing another date or food version", () => {
   const d = new DemoNutritionAdapter(date);
@@ -195,7 +195,8 @@ test("protein progress uses personal goals and preserves incomplete, zero, estim
     date,
     "protein",
   );
-  assert.equal(m.targetProgress(missing, 100).fraction, null);
+  assert.equal(m.targetProgress(missing, 100).fraction, 0.5);
+  assert.equal(m.targetProgress(missing, 100).percent, null);
   assert.match(m.targetProgress(missing, 100).status, /已知小计.*数据不完整/);
   assert.equal(
     m.targetProgress(m.total([unknown], date, "protein"), 100).fraction,
@@ -211,6 +212,101 @@ test("protein progress uses personal goals and preserves incomplete, zero, estim
   assert.equal(
     m.targetProgress({ ...estimated, value: null, range: [40, 60] }, 100)
       .fraction,
-    null,
+    0.5,
   );
+});
+
+test("AI midpoint scales and sums without changing stored bounds, source or unknown fields", async () => {
+  const { snapshotEntry } = await import(
+    "../src/services/nutrition/validation.ts"
+  );
+  const food = demoFood("estimate", "餐食", {});
+  food.nutrients.energy = {
+    value: null,
+    range: [560, 630],
+    unit: "kcal",
+    status: "estimated",
+    source: "AI 估算 · 原始来源",
+  };
+  const original = JSON.stringify(food),
+    saved = snapshotEntry(entry(food, 1.5));
+  const intake = m.contribution(saved, "energy");
+  assert.equal(intake.value, 892.5);
+  assert.deepEqual(intake.range, [840, 945]);
+  assert.equal(m.formatTotal(intake), "892.5");
+  assert.equal(m.formatEstimateRange(intake), "840–945 kcal");
+  assert.equal(saved.food.nutrients.energy.value, null);
+  assert.deepEqual(saved.food.nutrients.energy.range, [560, 630]);
+  assert.equal(saved.food.nutrients.energy.source, "AI 估算 · 原始来源");
+  assert.equal(JSON.stringify(food), original);
+  const known = entry(demoFood("confirmed", "确认食品", { energy: 100 }));
+  const unknown = entry(demoFood("unknown", "缺资料", { energy: null }));
+  const sum = m.total([saved, known, unknown], date, "energy");
+  assert.equal(sum.value, 992.5);
+  assert.deepEqual(sum.range, [940, 1045]);
+  assert.equal(sum.missing, 1);
+  assert.equal(sum.count, 3);
+  assert.equal(sum.estimated, true);
+  assert.equal(m.formatTotal(sum), "992.5");
+  assert.match(m.reliability(sum), /已知小计/);
+});
+
+test("range midpoint converts kJ once and unknown status remains unknown even with stray bounds", () => {
+  const food = demoFood("kj-range", "能量范围", {});
+  food.nutrients.energy = {
+    value: null,
+    range: [418.4, 836.8],
+    unit: "kJ",
+    status: "estimated",
+    source: "原范围",
+  };
+  const intake = m.contribution(entry(food, 0.5), "energy");
+  assert.ok(Math.abs(intake.value - 75) < 1e-9);
+  assert.ok(Math.abs(intake.range[0] - 50) < 1e-9);
+  assert.ok(Math.abs(intake.range[1] - 100) < 1e-9);
+  food.nutrients.energy.status = "unknown";
+  assert.equal(m.contribution(entry(food), "energy").value, null);
+  assert.equal(m.contribution(entry(food), "energy").range, undefined);
+  assert.equal(
+    m.formatTotal({
+      value: null,
+      range: [-1, 10],
+      unit: "g",
+      count: 1,
+      missing: 0,
+      estimated: true,
+    }),
+    "—",
+  );
+});
+
+test("editing an AI midpoint preserves its range until a real override, then retains evidence through save", async () => {
+  const { snapshotEntry } = await import(
+    "../src/services/nutrition/validation.ts"
+  );
+  const fact = {
+    value: null,
+    range: [560, 630],
+    unit: "kcal",
+    status: "estimated",
+    source: "AI 估算 · 测试模型",
+  };
+  assert.equal(m.editedFact(fact, 595, "kcal"), fact);
+  const changed = m.editedFact(fact, 600, "kcal");
+  assert.equal(changed.value, 600);
+  assert.equal(changed.range, undefined);
+  assert.match(changed.source, /原估算 560–630 kcal/);
+  assert.match(changed.source, /AI 估算 · 测试模型/);
+  const again = m.editedFact(changed, 610, "kcal");
+  assert.equal(again.source, changed.source);
+  const food = demoFood("manual-ai", "修改餐食", {});
+  food.nutrients.energy = again;
+  const saved = snapshotEntry(entry(food, 1.5));
+  assert.equal(m.contribution(saved, "energy").value, 915);
+  assert.equal(saved.food.nutrients.energy.source, changed.source);
+  const cleared = m.editedFact(fact, null, "kcal");
+  assert.equal(cleared.status, "unknown");
+  assert.match(cleared.source, /原估算 560–630/);
+  assert.equal(fact.value, null);
+  assert.deepEqual(fact.range, [560, 630]);
 });

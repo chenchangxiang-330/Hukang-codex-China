@@ -163,9 +163,11 @@ export class DemoNutritionAdapter implements NutritionAdapter {
             ? null
             : scenario === "protein-exceeded"
               ? 120
-              : scenario === "protein-zero"
-                ? 0
-                : 50,
+              : scenario === "protein-equal"
+                ? 100
+                : scenario === "protein-zero"
+                  ? 0
+                  : 50,
       });
       if (scenario === "protein-estimated")
         food.nutrients.protein!.status = "estimated";

@@ -181,6 +181,50 @@ export type Total = {
   estimated: boolean;
 };
 const validNumber = (n: number) => Number.isFinite(n) && n >= 0;
+/** A display value only: saved AI facts retain their original range. */
+export function rangeMidpoint(
+  range?: readonly [number, number],
+): number | null {
+  return range &&
+    validNumber(range[0]) &&
+    validNumber(range[1]) &&
+    range[1] >= range[0]
+    ? range[0] + (range[1] - range[0]) / 2
+    : null;
+}
+export function totalValue(t: Total): number | null {
+  return t.range
+    ? rangeMidpoint(t.range)
+    : t.value !== null && validNumber(t.value)
+      ? t.value
+      : null;
+}
+/** Preserve AI evidence in the existing source field when a user overrides it. */
+export function editedFact(
+  fact: Fact | undefined,
+  value: number | null,
+  unit: string,
+): Fact {
+  if (
+    fact?.range &&
+    value !== null &&
+    validNumber(value) &&
+    value === rangeMidpoint(fact.range)
+  )
+    return fact;
+  const originalSource = fact?.range
+    ? `${fact.source}；原估算 ${fact.range.join("–")} ${fact.unit}`
+    : fact?.source;
+  const source = originalSource?.startsWith("用户修改 · 未经独立验证")
+    ? originalSource
+    : `用户修改 · 未经独立验证${originalSource ? `；${originalSource}` : ""}`;
+  return {
+    value,
+    unit,
+    status: value !== null && validNumber(value) ? "estimated" : "unknown",
+    source,
+  };
+}
 export function parsePortion(text: string): number {
   if (!/^\d+(\.\d{1,3})?$/.test(text.trim()))
     throw new Error("请填写有效份量，最多三位小数。");
@@ -229,14 +273,10 @@ export function contribution(entry: Entry, key: Nutrient): Total {
         : null;
   if (conversion == null) return empty;
   const scale = factor * conversion;
-  if (
-    f.range &&
-    validNumber(f.range[0]) &&
-    validNumber(f.range[1]) &&
-    f.range[1] >= f.range[0]
-  )
+  const midpoint = rangeMidpoint(f.range);
+  if (f.range && midpoint !== null)
     return {
-      value: null,
+      value: midpoint * scale,
       range: [f.range[0] * scale, f.range[1] * scale],
       unit,
       missing: 0,
@@ -275,7 +315,7 @@ export function total(
     }
   }
   return {
-    value: !known || values.some((v) => v.range) ? null : low,
+    value: !known ? null : low + (high - low) / 2,
     ...(known && values.some((v) => v.range)
       ? { range: [low, high] as const }
       : {}),
@@ -292,11 +332,14 @@ export function formatTotal(t: Total): string {
   // Preserve quarter-gram portions of confirmed label data (50 + 8.5 / 2).
   // Estimated results retain their coarser display and visible source status.
   const digits = t.estimated ? 1 : 2;
-  return t.range
-    ? `${formatNumber(t.range[0], digits)}–${formatNumber(t.range[1], digits)}`
-    : t.value === null
-      ? "—"
-      : formatNumber(t.value, digits);
+  const value = totalValue(t);
+  return value === null ? "—" : formatNumber(value, digits);
+}
+/** Detail views can disclose the scaled bounds without using them as intake. */
+export function formatEstimateRange(t: Total): string | null {
+  return t.range && rangeMidpoint(t.range) !== null
+    ? `${formatNumber(t.range[0])}–${formatNumber(t.range[1])} ${t.unit}`
+    : null;
 }
 export function reliability(t: Total): string {
   return !t.count
@@ -312,16 +355,17 @@ export function reliability(t: Total): string {
 /** Shared presentation semantics, always derived from saved records via total(). */
 export function targetProgress(t: Total, target?: number) {
   const goal = target && Number.isFinite(target) && target > 0 ? target : null;
-  const known = t.value !== null || !!t.range;
-  const completePoint =
-    t.count > 0 && !t.missing && t.value !== null && !t.range;
-  const ratio = goal && completePoint ? t.value! / goal : null;
-  const minimum = t.range?.[0] ?? t.value;
+  const value = totalValue(t);
+  const known = t.count > 0 && value !== null;
+  const ratio = goal && known ? value / goal : null;
   return {
     goal,
     fraction: ratio === null ? null : Math.min(1, Math.max(0, ratio)),
-    percent: ratio === null || t.estimated ? null : Math.round(ratio * 100),
-    excess: goal && minimum !== null && minimum > goal ? minimum - goal : null,
+    percent:
+      ratio === null || t.estimated || t.range || t.missing
+        ? null
+        : Math.round(ratio * 100),
+    excess: goal && known && value > goal ? value - goal : null,
     status: !t.count
       ? "尚未记录"
       : !known
@@ -351,13 +395,15 @@ export function findings(
     [sodium, "钠", targets.sodium ?? 2000],
     [added, "添加糖", 50],
   ] as const) {
-    const min = v.range?.[0] ?? v.value;
-    if (min !== null && min > limit)
+    const value = totalValue(v);
+    if (value !== null && value > limit)
       out.push(
-        `目前记录显示，${label}${v.missing ? "已知小计" : "摄入"}已超参考上限 ${formatNumber(min - limit)} ${v.unit}${v.missing ? "，仍有资料缺失" : ""}。`,
+        `目前记录显示，${label}${v.missing ? "已知小计" : "摄入"}${v.estimated ? "估算" : ""}已超参考上限 ${formatNumber(value - limit)} ${v.unit}${v.missing ? "，仍有资料缺失" : ""}。`,
       );
-    else if (min !== null && !v.missing && min >= limit * 0.8)
-      out.push(`目前记录显示，${label}接近参考上限。`);
+    else if (value !== null && !v.missing && value >= limit * 0.8)
+      out.push(
+        `目前记录显示，${label}${v.estimated ? "估算摄入" : ""}接近参考上限。`,
+      );
   }
   if (added.missing) out.push("部分食品缺少添加糖数据，暂不能判断全天摄入。");
   if (fiber.missing) out.push("部分食品缺少膳食纤维数据。");

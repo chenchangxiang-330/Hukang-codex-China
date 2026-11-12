@@ -19,6 +19,10 @@ from emulator_setup import ensure_root
 OUT = Path('artifacts/device/nutrition-ui-v2')
 OUT.mkdir(parents=True, exist_ok=True)
 PKG = 'com.hukang.china'
+HOME_METRICS = ('今日卡路里', '蛋白质', '碳水化合物', '脂肪', '膳食纤维')
+OVER_TARGET_RGB = (163, 79, 67)
+METRIC_RGB = {'今日卡路里': (197, 109, 81), '蛋白质': (127, 148, 121),
+              '碳水化合物': (196, 154, 97), '脂肪': (191, 134, 115), '膳食纤维': (130, 148, 138)}
 ADB = ['adb', '-s', 'emulator-5554']
 report = {'status': 'running', 'platform': 'Android emulator',
           'physicalDevice': False, 'nutritionRecordsInserted': 0, 'checks': []}
@@ -288,32 +292,50 @@ def select_isolated_fixture(stem):
     raise AssertionError('The verified single image was not selectable: ' + stem)
 
 
+def assert_unset_home(expected=None):
+    # Missing goals remove the targets and tracks, never the intake labels/values.
+    root = tree()
+    for title in HOME_METRICS:
+        require('^' + title + '$', attribute='text')
+    assert not any('nutrient-track-' in n.get('resource-id', '') or
+                   'nutrient-fill-' in n.get('resource-id', '') for n in root.iter('node'))
+    assert find('未设目标|参考待完善|目标 [0-9]|参考 [0-9]|上限 [0-9]', root) is None
+    if expected:
+        for value in expected:
+            require(value, attribute='text')
+    else:
+        unknown = [n for n in root.iter('node') if n.get('text', '').strip() == '—']
+        assert len(unknown) >= len(HOME_METRICS), ('Missing intake placeholders', len(unknown))
+    return root
+
+
+def track_pixels(title, screenshot, ratios=(.1, .3, .5, .7, .9)):
+    from PIL import Image
+    node = require('^nutrient-track-' + title + '$', attribute='resource-id')
+    box = bounds(node)
+    assert box[2] > box[0] and box[3] > box[1], box
+    with Image.open(OUT / screenshot) as image:
+        pixels = image.convert('RGB')
+        samples = [pixels.getpixel((round(box[0] + (box[2] - box[0]) * ratio),
+                                   (box[1] + box[3]) // 2)) for ratio in ratios]
+    return node, samples
+
+
 def home_and_navigation():
     configure()
     action=bounds(require('^拍一拍$',attribute='content-desc'));dock_top=bounds(require('^今日$',attribute='content-desc'))[1]
     assert action[3] < dock_top and action[3]-action[1] >= 48*(443/160), ('Primary action covered by Dock',action,dock_top)
-    report['primaryActionBounds']={'bounds':action,'dockTop':dock_top,'unobscured':True}
-    require('护康 · 今天'); require('今天还没有记录', True)
+    report['primaryActionBounds']={'bounds':action,'dockTop':dock_top,'unobscured':True,
+        'accessibilityLabel':'拍一拍','visualTextForScreenshotReview':'记录这一餐'}
+    require('^好好吃饭。$'); require('今天还没有记录', True)
     for _ in range(5): swipe(True)
-    dock(); shot('android-today-empty')
-    from PIL import Image
-    empty_pixels=Image.open(OUT/'android-today-empty.png').convert('RGB')
-    tracks = []
-    for title in ['蛋白质', '今日卡路里', '脂肪', '膳食纤维']:
-        # Android combines the accessible label and value text. Locate the
-        # stable native testID, then verify state and actual empty-track pixels.
-        n = require('^nutrient-track-' + title + '$', attribute='resource-id')
-        assert n.get('content-desc','').startswith(title+'营养条，—，未设目标，暂不计算进度')
-        b = bounds(n)
-        assert b[2] - b[0] > 300 and b[3] > b[1], b
-        colors=[empty_pixels.getpixel((round(b[0]+(b[2]-b[0])*f),(b[1]+b[3])//2)) for f in (.2,.5,.8)]
-        assert colors[0]==colors[1]==colors[2], ('Empty track must not claim filled intake',title,colors)
-        tracks.append({'title': title, 'bounds': b, 'state': 'unset; no fabricated percentage','pixels':colors})
-    report['emptyNutrientTracks'] = tracks
+    dock(); assert_unset_home(); shot('android-today-empty')
+    report['emptyNutrientMetrics']=[{'title':title,'intake':'—','targetTextHidden':True,'trackAbsent':True} for title in HOME_METRICS]
     for label,title in [('记录','饮食记录'),('食品库','我的食品库'),('我的','个人参考目标')]:
         tap('^'+label+'$', attribute='content-desc');require(title,True);dock();shot('android-'+{'记录':'diary','食品库':'library','我的':'mine'}[label]+'-empty')
     tap('^今日$',attribute='content-desc');tap('^查看完整营养$',True);require('^营养详情$');b=bounds(require('^返回$',attribute='content-desc'));assert (b[3]-b[1])/(443/160)>=48
-    shot('android-nutrition-empty');tap('^矿物质，展开$',True);tap('^钠，',True);shot('android-mineral-detail');tap('^维生素，展开$',True);shot('android-vitamin-detail');tap('^返回$',attribute='content-desc')
+    detail=shot('android-nutrition-empty');assert not any('nutrient-track-' in n.get('resource-id','') for n in detail.iter('node'))
+    tap('^矿物质，展开$',True);tap('^钠，',True);shot('android-mineral-detail');tap('^维生素，展开$',True);shot('android-vitamin-detail');tap('^返回$',attribute='content-desc')
     tap('^拍一拍$',True);require('^餐食估算$',attribute='content-desc');assert find('^文字描述$|^手动填写$') is None;shot('android-two-entries');tap('^餐食估算$',attribute='content-desc');require('^餐食补充描述$',True,'content-desc');shot('android-meal-single-input');tap('^返回$',attribute='content-desc')
 
 def camera_and_recovery():
@@ -441,9 +463,9 @@ def seed_food(visual=False):
     prior={'id':'isolated-prior','date':today,'meal':'breakfast','consumedTime':'08:30','timezone':'UTC','amount':1,'unit':'份','confirmedAt':now,'food':{**food,'id':'prior-food','name':'TEST prior meal','nutrients':{'protein':fact(50),'energy':fact(400,'kcal')}}}
     if visual:
         assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==0, 'Only append visual fixture after empty UI evidence'
-        prior['food']['nutrients'].update(fat=fact(20),fiber=fact(12.5))
+        prior['food']['nutrients'].update(carbohydrate=fact(75),fat=fact(20),fiber=fact(12.5))
         common={'source':'ISOLATED TEST FIXTURE','basis':'UI rendering only','applicability':'Disposable emulator only','profileRevision':0,'manual':True}
-        policies={k:{**common,'unit':u,**p} for k,u,p in [('protein','g',{'type':'target','value':100}),('energy','kcal',{'type':'range','range':[1600,2000]}),('fat','g',{'type':'range','range':[40,70]}),('fiber','g',{'type':'target','value':25})]}
+        policies={k:{**common,'unit':u,**p} for k,u,p in [('protein','g',{'type':'target','value':100}),('energy','kcal',{'type':'range','range':[1600,2000]}),('carbohydrate','g',{'type':'upper_limit','value':150}),('fat','g',{'type':'range','range':[40,70]}),('fiber','g',{'type':'target','value':25})]}
         c.execute('INSERT INTO nutrition_settings(id,targets_json) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET targets_json=excluded.targets_json',(json.dumps({'policies':policies}),))
     c.execute('INSERT INTO nutrition_catalogue(food_id,json,asset_id) VALUES(?,?,NULL)',(food['id'],json.dumps(food)));c.execute('INSERT INTO nutrition_entries VALUES(?,?,?,?,?,?)',(prior['id'],today,prior['meal'],json.dumps(prior),now,now));c.execute('INSERT INTO nutrition_operations VALUES(?,?,?)',(prior['id'],prior['id'],now));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
     paths=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').splitlines();assert len(paths)==1
@@ -452,27 +474,52 @@ def seed_food(visual=False):
 
 def known_progress():
     configure();seed_food(visual=True)
-    for title in ['蛋白质','今日卡路里','脂肪','膳食纤维']:
-        node=require('^'+title+'营养条，',attribute='content-desc')
+    for title in HOME_METRICS:
+        node=require('^nutrient-track-'+title+'$',attribute='resource-id')
+        assert node.get('content-desc','').startswith(title+'，')
         assert '暂不计算进度' not in node.get('content-desc','')
-    require('50 g');require('目标 100 g');require('12.5 g')
+    require('50 g');require('75 g');require('12.5 g')
+    require('^蛋白质，50 g，目标 100 g',attribute='content-desc')
     action=bounds(require('^拍一拍$',attribute='content-desc'));assert action[3] < bounds(require('^今日$',attribute='content-desc'))[1]
-    shot('android-four-progress-isolated');report['nutritionRecordsInserted']=1;report['visualFixtureAfterEmptyEvidence']=True
-    # Range and partial records only in this disposable emulator; never embedded in the App.
-    c=diet_db('range-source');row=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-prior'").fetchone()[0])
-    for key,ends,unit in [('protein',[29,52],'g'),('energy',[1250,2200],'kcal'),('fat',[49,115],'g'),('fiber',[2,7],'g')]: row['food']['nutrients'][key]={'value':None,'range':ends,'unit':unit,'status':'estimated','source':'ISOLATED RANGE FIXTURE'}
-    c.execute("UPDATE nutrition_entries SET snapshot_json=? WHERE id='isolated-prior'",(json.dumps(row),));c.commit();c.execute('PRAGMA wal_checkpoint(TRUNCATE)');c.close()
-    path=shell('find',f'/data/user/0/{PKG}','-name','hukang-china-food.db').strip()
-    for suffix in ('-wal','-shm'):shell('rm','-f',path+suffix)
-    adb('push',str(OUT/'range-source.db'),path);shell('chmod','666',path);launch()
-    require('29–52',True);node=require('^蛋白质营养条，约 29–52 g',attribute='content-desc');box=bounds(node)
+    shot('android-five-progress-isolated');report['nutritionRecordsInserted']=1;report['visualFixtureAfterEmptyEvidence']=True
+    # Remove only this isolated fixture's goals; the known intake must stay visible.
+    c=diet_db('unset-known-source')
+    saved_targets=c.execute('SELECT targets_json FROM nutrition_settings WHERE id=1').fetchone()[0]
+    c.execute("UPDATE nutrition_settings SET targets_json='{}' WHERE id=1")
+    push_diet_db('unset-known-source',c);launch()
+    assert_unset_home([r'^400\s*kcal$',r'^50 g$',r'^75 g$',r'^20 g$',r'^12.5 g$'])
+    shot('android-known-intake-no-target-isolated')
+    report['knownIntakeWithoutTargets']={'metrics':list(HOME_METRICS),'valuesRetained':True,'targetsAndTracksAbsent':True}
+    # AI ranges stay in the saved snapshot; only their midpoints drive the visible bars.
+    c=diet_db('range-source');c.execute('UPDATE nutrition_settings SET targets_json=? WHERE id=1',(saved_targets,))
+    row=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-prior'").fetchone()[0])
+    for key,ends,unit in [('protein',[29,52],'g'),('energy',[1250,2200],'kcal'),('carbohydrate',[100,150],'g'),('fat',[49,115],'g'),('fiber',[2,7],'g')]:
+        row['food']['nutrients'][key]={'value':None,'range':ends,'unit':unit,'status':'estimated','source':'ISOLATED RANGE FIXTURE'}
+    c.execute("UPDATE nutrition_entries SET snapshot_json=? WHERE id='isolated-prior'",(json.dumps(row),))
+    push_diet_db('range-source',c);launch()
+    require('^蛋白质，约 40.5 g，目标 100 g',attribute='content-desc')
+    assert find('29–52',attribute='text') is None, 'Home intake must show midpoint, not the raw interval'
     shot('android-range-progress-isolated')
-    from PIL import Image
-    pixels=Image.open(OUT/'android-range-progress-isolated.png').convert('RGB');y=(box[1]+box[3])//2
-    actual=[pixels.getpixel((round(box[0]+(box[2]-box[0])*ratio),y)) for ratio in (.2,.4,.8)]
-    assert actual[0] != actual[1] and actual[1] != actual[2], ('Range fill must have lower/upper/track pixels',actual)
-    report['rangeFillPixels']={'lowerUpperTrack':actual,'midpointNotUsed':True}
-    tap('^查看完整营养$',True);tap('^蛋白质，',True);shot('android-range-detail-expanded-isolated')
+    _,actual=track_pixels('蛋白质','android-range-progress-isolated.png',(.2,.35,.5,.8))
+    assert actual[0] == actual[1] == METRIC_RGB['蛋白质'] and actual[2] == actual[3] and actual[1] != actual[2], ('AI midpoint must have one 40.5% fill',actual)
+    _,fat_pixels=track_pixels('脂肪','android-range-progress-isolated.png')
+    assert all(pixel == OVER_TARGET_RGB for pixel in fat_pixels), ('82 g midpoint exceeds 70 g upper bound',fat_pixels)
+    report['rangeFillPixels']={'proteinSamples':actual,'midpointUsed':40.5,'rawRangePreserved':[29,52],'fatMidpoint':82,'fatUpperBound':70,'fatFullRed':fat_pixels}
+    tap('^查看完整营养$',True);tap('^蛋白质，',True);require('29–52',True);shot('android-range-detail-expanded-isolated')
+    # Strict boundaries across target, range and upper_limit policies, still in this fixture only.
+    for boundary,delta in [('equal',0),('above',1)]:
+        c=diet_db('boundary-'+boundary)
+        for key,upper,unit in [('protein',100,'g'),('energy',2000,'kcal'),('carbohydrate',150,'g'),('fat',70,'g'),('fiber',25,'g')]:
+            row['food']['nutrients'][key]={'value':upper+delta,'unit':unit,'status':'confirmed','source':'ISOLATED BOUNDARY FIXTURE'}
+        c.execute("UPDATE nutrition_entries SET snapshot_json=? WHERE id='isolated-prior'",(json.dumps(row),))
+        push_diet_db('boundary-'+boundary,c);launch();shot('android-target-'+boundary+'-isolated')
+        samples={}
+        for title in HOME_METRICS:
+            _,actual=track_pixels(title,'android-target-'+boundary+'-isolated.png')
+            expected=METRIC_RGB[title] if boundary=='equal' else OVER_TARGET_RGB
+            assert all(pixel == expected for pixel in actual), (boundary,title,'Full bar color mismatch',actual,expected)
+            samples[title]=actual
+        report.setdefault('strictTargetBoundaries',{})[boundary]={'pixels':samples,'allFiveBarsFull':True,'red':boundary=='above'}
 
 
 def preview_amount(value):
@@ -498,18 +545,21 @@ def simplified_meal_save():
     food={'id':'isolated-ai-meal','version':'one','kind':'meal','name':'TEST estimated meal','basis':{'amount':1,'unit':'份'},'source':'ISOLATED MOCK RESPONSE','provenance':{'kind':'ai','model':'TEST ONLY','uncertainties':['fixture uncertainty retained']},'nutrients':{'energy':{**fact(None,'kcal'),'range':[400,600],'status':'estimated'},'protein':fact(20),'carbohydrate':fact(55),'fat':{**fact(None),'range':[10,20],'status':'estimated'},'sodium':fact(None,'mg')}}
     draft={'id':'isolated-meal-confirm','date':today,'meal':'lunch','food':food,'amount':1,'unit':'份','consumedTime':'12:20','timezone':'UTC'}
     c.execute("INSERT INTO nutrition_state VALUES('intakeDraft',?) ON CONFLICT(key) DO UPDATE SET json=excluded.json",(json.dumps(draft),));push_diet_db('meal-result-fixture',c)
-    launch();tap('^继续上次食用确认$',True);require('^餐食名称$',True,'content-desc');require('AI 估算.*1 份',True);require('400–600',True);require('55 g',True)
+    launch();tap('^继续上次食用确认$',True);require('^餐食名称$',True,'content-desc');require('AI 估算.*1 份',True);require('^约 500 kcal$',True);require('^约 15 g$',True);require('55 g',True)
     assert find('食物与来源|吃半份|自己填写吃多少|吃一份|我已确认日期') is None
     shot('android-meal-direct-nutrients-isolated')
-    tap('^核对或修改营养数值，编辑$',True);enter('蛋白质（g / 基准）','21');tap('^核对或修改营养数值，编辑$',True)
+    tap('^核对或修改营养数值，编辑$',True);assert require('^能量（kcal / 基准）$',True,'content-desc').get('text')=='500';require('原估算 400–600 kcal',True);enter('蛋白质（g / 基准）','21');tap('^核对或修改营养数值，编辑$',True)
     enter('食用时间','12:34');enter('食用日期',today);shot('android-meal-time-save-isolated');tap('^确认保存$',True);require('已保存这次食用',True);shot('android-meal-saved-isolated')
     assert require('^已保存$',True,'content-desc').get('enabled')=='false'
     c=diet_db('meal-result-saved');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==before+1
     entry=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-meal-confirm'").fetchone()[0]);assert entry['amount']==1 and entry['unit']=='份' and entry['consumedTime']=='12:34';assert entry['food']['nutrients']['protein']['value']==21 and entry['food']['nutrients']['protein']['status']=='estimated';assert entry['food']['nutrients']['sodium']['value'] is None
+    assert entry['food']['nutrients']['energy']['value'] is None and entry['food']['nutrients']['energy']['range']==[400,600]
+    assert entry['food']['nutrients']['fat']['value'] is None and entry['food']['nutrients']['fat']['range']==[10,20]
+    assert entry['food']['nutrients']['energy']['source']=='ISOLATED MOCK RESPONSE'
     assert c.execute("SELECT COUNT(*) FROM nutrition_operations WHERE entry_id='isolated-meal-confirm'").fetchone()[0]==1
     assert not c.execute("SELECT json FROM nutrition_state WHERE key='intakeDraft'").fetchone();c.close()
     launch();assert find('继续上次食用确认') is None;tap('^记录$',attribute='content-desc');tap('^查看食物 TEST estimated meal$',True);enter('修改实际食用份量（份）','2');tap('^确认调整份量$',True);require('饮食记录已更新',True)
-    c=diet_db('meal-result-edited');entry=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-meal-confirm'").fetchone()[0]);assert entry['amount']==2;c.close();report['directMealResult']={'defaultOneServing':True,'unknownRemainsUnknown':True,'rangePreserved':True,'editableNutrientsAndTime':True,'singleSaveAndRestart':True,'savedRecordPortionEditing':True,'responseIsInjectedFixture':True,'realProviderTested':False}
+    c=diet_db('meal-result-edited');entry=json.loads(c.execute("SELECT snapshot_json FROM nutrition_entries WHERE id='isolated-meal-confirm'").fetchone()[0]);assert entry['amount']==2;c.close();report['directMealResult']={'defaultOneServing':True,'unknownRemainsUnknown':True,'rangePreserved':True,'midpointPrimaryValue':500,'untouchedMidpointInputRetainsRange':True,'editableNutrientsAndTime':True,'singleSaveAndRestart':True,'savedRecordPortionEditing':True,'responseIsInjectedFixture':True,'realProviderTested':False}
 
 def image_case():
     from PIL import Image,ImageDraw
@@ -556,8 +606,8 @@ try:
     report['install'] = adb('install', '-r', str(apk.resolve()), timeout=180).decode()
     assert 'Success' in report['install']
     suite=os.environ.get('HUKANG_DEVICE_SUITE','ui')
-    cases=[('four-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
-    if suite=='ui':cases += [('fresh-label-entry-discard',fresh_label_entry),('four-known-progress-isolated',known_progress)]
+    cases=[('five-metrics-navigation',home_and_navigation),('camera-permission-and-recovery',camera_and_recovery),('small-large-keyboard',small_large_keyboard),('gesture-safe-area',gesture_safe_area)]
+    if suite=='ui':cases += [('fresh-label-entry-discard',fresh_label_entry),('five-known-progress-isolated',known_progress)]
     if suite=='flows':cases=[('profile-goal-confirmation',profile_and_targets),('secure-connection-storage',secure_storage),('deterministic-intake-stock',diet_closed_loop)]
     if suite=='meal':cases=[('direct-meal-result-save',simplified_meal_save)]
     if suite.startswith('image-'):cases=[('original-and-upload-isolation',image_case)]

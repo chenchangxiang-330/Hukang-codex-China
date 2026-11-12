@@ -417,7 +417,7 @@ export function ProductScreens(p: AppController & { onIntake?: () => void }) {
 const productStyle = StyleSheet.create({
   cover: {
     borderRadius: 24,
-    backgroundColor: "#EAF4FB",
+    backgroundColor: C.pale,
     overflow: "hidden",
     minHeight: 240,
   },
@@ -460,7 +460,7 @@ const productStyle = StyleSheet.create({
     width: 64,
     height: 76,
     borderRadius: 12,
-    backgroundColor: "#FFFDF7",
+    backgroundColor: C.bg,
   },
   quantityRow: {
     flexDirection: "row",
@@ -476,7 +476,7 @@ const productStyle = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#EDF5FA",
+    backgroundColor: C.pale,
   },
   quantitySign: {
     color: C.teal,
