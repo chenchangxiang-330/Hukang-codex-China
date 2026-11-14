@@ -1,0 +1,682 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 1,
+  "checks": [
+    {
+      "name": "five-metrics-navigation",
+      "status": "passed"
+    },
+    {
+      "name": "camera-permission-and-recovery",
+      "status": "passed"
+    },
+    {
+      "name": "small-large-keyboard",
+      "status": "passed"
+    },
+    {
+      "name": "gesture-safe-area",
+      "status": "passed"
+    },
+    {
+      "name": "fresh-label-entry-discard",
+      "status": "passed"
+    },
+    {
+      "name": "five-known-progress-isolated",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "sourceCommit": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "primaryActionBounds": {
+    "bounds": [
+      55,
+      1400,
+      1025,
+      1588
+    ],
+    "dockTop": 1640,
+    "unobscured": true,
+    "accessibilityLabel": "拍一拍",
+    "visualTextForScreenshotReview": "记录这一餐"
+  },
+  "dockBounds": [
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 540",
+      "fontScale": "1.5",
+      "bounds": [
+        [
+          78,
+          1567,
+          263,
+          1775
+        ],
+        [
+          263,
+          1567,
+          448,
+          1775
+        ],
+        [
+          632,
+          1567,
+          817,
+          1775
+        ],
+        [
+          817,
+          1567,
+          1002,
+          1775
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    },
+    {
+      "density": "Physical density: 420\nOverride density: 443",
+      "fontScale": "1.0",
+      "bounds": [
+        [
+          63,
+          1640,
+          253,
+          1800
+        ],
+        [
+          254,
+          1640,
+          445,
+          1800
+        ],
+        [
+          635,
+          1640,
+          826,
+          1800
+        ],
+        [
+          825,
+          1640,
+          1015,
+          1800
+        ]
+      ]
+    }
+  ],
+  "emptyNutrientMetrics": [
+    {
+      "title": "今日卡路里",
+      "intake": "—",
+      "targetTextHidden": true,
+      "trackAbsent": true
+    },
+    {
+      "title": "蛋白质",
+      "intake": "—",
+      "targetTextHidden": true,
+      "trackAbsent": true
+    },
+    {
+      "title": "碳水化合物",
+      "intake": "—",
+      "targetTextHidden": true,
+      "trackAbsent": true
+    },
+    {
+      "title": "脂肪",
+      "intake": "—",
+      "targetTextHidden": true,
+      "trackAbsent": true
+    },
+    {
+      "title": "膳食纤维",
+      "intake": "—",
+      "targetTextHidden": true,
+      "trackAbsent": true
+    }
+  ],
+  "camera": {
+    "permissionDeniedAndGranted": true,
+    "mealPhotoAndDelete": true,
+    "source": "Android emulator virtual scene",
+    "physicalCamera": false,
+    "liveBarcodeDecoded": false
+  },
+  "navigationOverlayBefore": [
+    "com.android.internal.systemui.navbar.gestural"
+  ],
+  "freshLabelEntry": {
+    "withoutBarcode": true,
+    "noResumeDialog": true,
+    "oldDraftRemoved": true,
+    "unreferencedTemporaryFileRemoved": true,
+    "savedCountsUnchanged": {
+      "foods": 0,
+      "nutrition_entries": 0,
+      "simple_inventory": 0,
+      "nutrition_stock": 0
+    },
+    "realProviderVerified": false
+  },
+  "fixtureIsolation": "Only a fresh disposable emulator, explicit TEST labels, never production app data",
+  "visualFixtureAfterEmptyEvidence": true,
+  "knownIntakeWithoutTargets": {
+    "metrics": [
+      "今日卡路里",
+      "蛋白质",
+      "碳水化合物",
+      "脂肪",
+      "膳食纤维"
+    ],
+    "valuesRetained": true,
+    "targetsAndTracksAbsent": true
+  },
+  "rangeFillPixels": {
+    "proteinSamples": [
+      [
+        127,
+        148,
+        121
+      ],
+      [
+        127,
+        148,
+        121
+      ],
+      [
+        229,
+        216,
+        199
+      ],
+      [
+        229,
+        216,
+        199
+      ]
+    ],
+    "midpointUsed": 40.5,
+    "rawRangePreserved": [
+      29,
+      52
+    ],
+    "fatMidpoint": 82,
+    "fatUpperBound": 70,
+    "fatFullRed": [
+      [
+        163,
+        79,
+        67
+      ],
+      [
+        163,
+        79,
+        67
+      ],
+      [
+        163,
+        79,
+        67
+      ],
+      [
+        163,
+        79,
+        67
+      ],
+      [
+        163,
+        79,
+        67
+      ]
+    ]
+  },
+  "strictTargetBoundaries": {
+    "equal": {
+      "pixels": {
+        "今日卡路里": [
+          [
+            197,
+            109,
+            81
+          ],
+          [
+            197,
+            109,
+            81
+          ],
+          [
+            197,
+            109,
+            81
+          ],
+          [
+            197,
+            109,
+            81
+          ],
+          [
+            197,
+            109,
+            81
+          ]
+        ],
+        "蛋白质": [
+          [
+            127,
+            148,
+            121
+          ],
+          [
+            127,
+            148,
+            121
+          ],
+          [
+            127,
+            148,
+            121
+          ],
+          [
+            127,
+            148,
+            121
+          ],
+          [
+            127,
+            148,
+            121
+          ]
+        ],
+        "碳水化合物": [
+          [
+            196,
+            154,
+            97
+          ],
+          [
+            196,
+            154,
+            97
+          ],
+          [
+            196,
+            154,
+            97
+          ],
+          [
+            196,
+            154,
+            97
+          ],
+          [
+            196,
+            154,
+            97
+          ]
+        ],
+        "脂肪": [
+          [
+            191,
+            134,
+            115
+          ],
+          [
+            191,
+            134,
+            115
+          ],
+          [
+            191,
+            134,
+            115
+          ],
+          [
+            191,
+            134,
+            115
+          ],
+          [
+            191,
+            134,
+            115
+          ]
+        ],
+        "膳食纤维": [
+          [
+            130,
+            148,
+            138
+          ],
+          [
+            130,
+            148,
+            138
+          ],
+          [
+            130,
+            148,
+            138
+          ],
+          [
+            130,
+            148,
+            138
+          ],
+          [
+            130,
+            148,
+            138
+          ]
+        ]
+      },
+      "allFiveBarsFull": true,
+      "red": false
+    },
+    "above": {
+      "pixels": {
+        "今日卡路里": [
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ]
+        ],
+        "蛋白质": [
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ]
+        ],
+        "碳水化合物": [
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ]
+        ],
+        "脂肪": [
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ]
+        ],
+        "膳食纤维": [
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ],
+          [
+            163,
+            79,
+            67
+          ]
+        ]
+      },
+      "allFiveBarsFull": true,
+      "red": true
+    }
+  }
+}

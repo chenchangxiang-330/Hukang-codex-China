@@ -1,0 +1,15 @@
+{
+  "suite": "meal",
+  "run": 43557837714,
+  "apkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "direct-meal-result-save",
+      "status": "failed",
+      "error": "AssertionError('Unobscured Android control missing: ^核对或修改营养数值，编辑$')",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 183, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 551, in simplified_meal_save\n    tap('^核对或修改营养数值，编辑$',True);assert require('^能量（kcal / 基准）$',True,'content-desc').get('text')=='500';require('原估算 400–600 kcal',True);enter('蛋白质（g / 基准）','21');tap('^核对或修改营养数值，编辑$',True)\n                                                                                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 137, in tap\n    raise AssertionError(f'Unobscured Android control missing: {pattern}')\nAssertionError: Unobscured Android control missing: ^核对或修改营养数值，编辑$\n"
+    }
+  ],
+  "error": null
+}

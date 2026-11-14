@@ -1,0 +1,8 @@
+{
+  "suite": "offline",
+  "run": 43557837714,
+  "apkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "status": "failed",
+  "checks": null,
+  "error": "RuntimeError(\"Focused field not fully visible above keyboard: ('本次购入数量', [260, 922, 822, 1059], 1164)\")"
+}
