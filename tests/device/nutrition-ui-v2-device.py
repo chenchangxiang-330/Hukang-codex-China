@@ -548,7 +548,11 @@ def simplified_meal_save():
     launch();tap('^继续上次食用确认$',True);require('^餐食名称$',True,'content-desc');require('AI 估算.*1 份',True);require('^约 500 kcal$',True);require('^约 15 g$',True);require('55 g',True)
     assert find('食物与来源|吃半份|自己填写吃多少|吃一份|我已确认日期') is None
     shot('android-meal-direct-nutrients-isolated')
-    tap('^核对或修改营养数值，编辑$',True);assert require('^能量（kcal / 基准）$',True,'content-desc').get('text')=='500';require('原估算 400–600 kcal',True);enter('蛋白质（g / 基准）','21');tap('^核对或修改营养数值，编辑$',True)
+    tap('^核对或修改营养数值，编辑$',True);assert require('^能量（kcal / 基准）$',True,'content-desc').get('text')=='500';require('原估算 400–600 kcal',True);enter('蛋白质（g / 基准）','21')
+    # Midpoint explanations make this form taller. The accordion header is
+    # above the edited field; searching only downwards can never reach it.
+    for _ in range(7):swipe(True)
+    tap('^核对或修改营养数值，编辑$',True)
     enter('食用时间','12:34');enter('食用日期',today);shot('android-meal-time-save-isolated');tap('^确认保存$',True);require('已保存这次食用',True);shot('android-meal-saved-isolated')
     assert require('^已保存$',True,'content-desc').get('enabled')=='false'
     c=diet_db('meal-result-saved');assert c.execute('SELECT COUNT(*) FROM nutrition_entries').fetchone()[0]==before+1

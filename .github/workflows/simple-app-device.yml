@@ -27,9 +27,18 @@ env:
   VERIFIED_BUILD_RUN: '38703696958'
 jobs:
   device:
-    # Runtime commits marked [fresh-apk] await workflow_run for their new APK.
-    # Test-only pushes may replay the inspected binary guarded below.
-    if: (github.event_name == 'push' && !contains(github.event.head_commit.message, '[fresh-apk]')) || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
+    # workflow_run uses the workflow on the default branch. Until this change
+    # reaches that branch, dispatch development-branch acceptance explicitly.
+    # Only successful push builds from this repository's release branches qualify.
+    # Test-only main pushes may replay the inspected binary guarded below.
+    if: >-
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[fresh-apk]')) ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       contains(fromJSON('["main","codex/ui-v1","codex/nutrition-ui-v2"]'), github.event.workflow_run.head_branch) &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:

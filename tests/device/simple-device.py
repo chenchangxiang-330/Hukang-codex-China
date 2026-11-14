@@ -83,15 +83,26 @@ def field(label,value):
  pattern='^'+re.escape(label)+'$'
  dismiss_keyboard()
  nutrient=next((name for name in NUTRIENTS if label in (name+'含量',name+' NRV%')),None)
- tap(pattern,True,'android.widget.EditText',nutrient);previous=None
- for _ in range(6):
-  f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
-  (O/'focused-input-window.txt').write_text(window)
-  box=f[1] if f else None
-  signature=(tuple(box),top) if box else None
-  if f and f[0].get('focused')=='true' and top is not None and box[3]<=top-12 and box[1]>=250 and box[3]-box[1]>=80 and signature==previous:break
-  previous=signature;time.sleep(.3)
- else:raise RuntimeError('Focused field not fully visible above keyboard: '+repr((label,box,top)))
+ for focus_attempt in range(3):
+  tap(pattern,True,'android.widget.EditText',nutrient);previous=None
+  for _ in range(6):
+   f=find(pattern,'android.widget.EditText');window=shell('dumpsys','window');top=keyboard_top(window)
+   (O/'focused-input-window.txt').write_text(window)
+   box=f[1] if f else None
+   signature=(tuple(box),top) if box else None
+   visible=f and top is not None and box[3]<=top-12 and box[1]>=250 and box[3]-box[1]>=80
+   if visible and f[0].get('focused')=='true' and signature==previous:break
+   previous=signature;time.sleep(.3)
+  else:
+   # IME resize can consume the first tap after scrolling. Recover only a
+   # fully visible, unfocused field; never mask actual keyboard obstruction.
+   if visible and f[0].get('focused')=='false' and focus_attempt<2:
+    name='input-focus-retry-'+str(len(report.get('inputFocusRetries',[]))+1)
+    shot(name);(O/(name+'.xml')).write_bytes((O/'last-window.xml').read_bytes())
+    report.setdefault('inputFocusRetries',[]).append({'label':label,'bounds':box,'keyboardTop':top,'evidence':name})
+    continue
+   raise RuntimeError('Focused field not fully visible above keyboard: '+repr((label,box,top,f[0].get('focused') if f else None)))
+  break
  report.setdefault('inputVisibility',[]).append({'label':label,'bounds':box,'keyboardTop':top,'fullyVisible':True})
  if label=='脂肪含量':shot('review-fat-keyboard')
  steps.append({'focusedField':label,'node':f[0].attrib})
