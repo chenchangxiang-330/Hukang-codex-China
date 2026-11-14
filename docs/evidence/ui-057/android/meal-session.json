@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "direct-meal-result-save",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "027ad64c8a4dbac4997a703c0a827b30b12e21b1eca2ce357592c52bbbcb2089",
+  "sourceCommit": "f705f120f238f0152470d104e268c7f107ad1270",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "directMealResult": {
+    "defaultOneServing": true,
+    "unknownRemainsUnknown": true,
+    "rangePreserved": true,
+    "editableNutrientsAndTime": true,
+    "singleSaveAndRestart": true,
+    "savedRecordPortionEditing": true,
+    "responseIsInjectedFixture": true,
+    "realProviderTested": false
+  }
+}

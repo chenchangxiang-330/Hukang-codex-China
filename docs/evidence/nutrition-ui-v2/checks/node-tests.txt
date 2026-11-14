@@ -1,0 +1,159 @@
+
+> hukang-codex-china@0.4.0 test
+> node --test tests/*.test.mjs
+
+(node:90788) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/domain/barcode/normalize.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ scan gate accepts one valid result, rejects in-flight frames, then suppresses duplicates (0.835667ms)
+✔ invalid and unsupported scan results never create a gate task (0.126666ms)
+✔ latest lookup drops a stale result after the user scans another product (0.0965ms)
+✔ cancelling latest lookup prevents a route result from updating an unmounted screen (0.059583ms)
+✔ a stale lookup error is suppressed just like a stale success (0.070583ms)
+(node:90789) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/domain/barcode/normalize.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ EAN-13 keeps the scanned string and leading zero while producing a GTIN-14 lookup key (1.306125ms)
+✔ EAN-8 validates its check digit and does not silently pad the raw value (0.579584ms)
+✔ UPC-A remains a 12-digit GTIN while lookup uses an equivalent GTIN-14 key (0.294958ms)
+✔ UPC-E expands only when the scanner explicitly reports UPC-E (0.38325ms)
+✔ bad check digits are invalid, not a local-food miss (0.302625ms)
+✔ QR and unsupported formats are not guessed as food barcodes (0.948166ms)
+✔ whitespace is rejected without altering the original scanner value (0.071667ms)
+✔ camera-frame gate allows one task, rejects in-flight and repeated frames (0.507291ms)
+✔ latest-only local lookup cannot let a slow product A overwrite product B (0.11825ms)
+(node:90790) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ barcode association closes miss → save → repeat local hit without OCR (4.965542ms)
+✔ duplicate lookup key cannot silently move to another food and deletion removes index (1.811208ms)
+✔ schema v1 upgrade creates barcode index while retaining food rows and evidence (24.05625ms)
+(node:90791) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ product identity is stored separately, with provider source and confirmation revisions (6.867791ms)
+✔ provider identity with unknown cache authorization is not persisted (2.179708ms)
+✔ new nutrition record may atomically carry a pending product identity (2.152041ms)
+✔ pending identity survives restart lookup until nutrition is saved (2.983792ms)
+✔ v2 to v3 migration preserves foods and creates empty identity tables (3.834291ms)
+✔ deleting food cascades identity and identity revision rows (3.130667ms)
+(node:90792) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/domain/food/parseNutrition.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ geometry parser associates shuffled Chinese nutrition cells by row and column (27.227ms)
+✔ ambiguous OCR is retained as a confirmation candidate instead of being repaired (0.356875ms)
+✔ draft review keeps blanks and confirmed validation requires every core row (0.393792ms)
+✔ per-100g keeps five core nutrients, units, decimals and NRV geometry (0.222709ms)
+✔ per-serving size is preserved and split digits remain confirmation-only (0.588375ms)
+✔ wrong units and missing NRV cannot become confirmed without explicit correction (0.478333ms)
+✔ service rejects arbitrary routes and malformed or forged barcode identity (97.907583ms)
+✔ service calls only the injected vendor with canonical identity and strips unsupported fields (8.477459ms)
+✔ not configured and not found remain distinct business results (5.309625ms)
+✔ vendor errors map to safe status codes without exposing details (1.3265ms)
+(node:90794) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/infrastructure/food/sqliteFoodStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ SQLite store persists draft, immutable evidence, revisions and cascade delete (66.544417ms)
+✔ new package OCR appends an evidence version without replacing history (7.651459ms)
+✔ nutrition evidence and edited identity commit together (4.352834ms)
+✔ synthetic v5 database migrates to v6 without changing food, OCR or revision snapshots (6.195958ms)
+(node:90795) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/food/draftStore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ identity draft travels into the nutrition draft without marking nutrition confirmed (24.280583ms)
+(node:90796) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/infrastructure/food/providers/ConfiguredChinaFoodProvider.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ provider fails closed without an endpoint and never invokes fetch (3.506292ms)
+✔ disabled provider is an explicit status and does not fall back to a network call (0.153083ms)
+✔ provider rejects arbitrary origins and paths before sending a request (0.084708ms)
+✔ found response sends only validated identity fields and maps the result (0.317166ms)
+✔ duplicate identity calls for one barcode share a single in-flight request (0.138417ms)
+✔ provider maps business errors separately from transport errors (0.258625ms)
+✔ invalid response and barcode identity conflict fail closed (0.135667ms)
+✔ local-first lookup never calls provider for a local hit (0.107542ms)
+✔ local-first lookup exposes configured provider status on a miss (0.071459ms)
+✔ stale provider result cannot overwrite a later barcode lookup (5.188125ms)
+(node:90797) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/nutrition-v2/model.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production nutrition starts unavailable with no sample foods or targets and refuses writes (2.005833ms)
+✔ per-serving energy preserves raw kJ and converts once; package is not a serving; no g/mL guessing (0.496375ms)
+✔ unknown, confirmed zero, ranges, missing subtotals and date isolation stay distinct (0.408875ms)
+✔ demo portion changes propagate through one snapshot without changing another date or food version (0.585167ms)
+✔ preview has no write side effect and repeated confirmation is idempotent (1.82475ms)
+✔ known subtotal exceeding added-sugar limit is reported with missing-data qualification (0.626ms)
+✔ meal estimate preserves photo-plus-text request and ranges after portion scaling (0.62875ms)
+✔ existing food-label adapter maps sugar and fiber without inventing added sugar or mutating evidence (0.35825ms)
+✔ preserves low-confidence decoder text rather than treating it as absent (1.412083ms)
+✔ rejects image/result mismatch and manually replaced raw text (2.125834ms)
+✔ rejects unpinned models, NaN confidence and inverted boxes (0.741042ms)
+(node:90799) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/ocr-lab/geometry.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ letterboxed portrait bounding box maps into actual image area rather than viewport origin (0.626667ms)
+✔ landscape image maps with vertical letterboxing (0.068042ms)
+✔ percent crop emits native left/top/right/bottom pixels including right edge (0.134167ms)
+✔ out-of-bounds, zero, invalid text and subpixel-empty crops reject instead of silently clamping (0.124209ms)
+✔ invalid viewport dimensions are rejected before creating overlay NaN coordinates (0.053625ms)
+✔ a blank crop origin is invalid rather than silently treated as a full-image OCR request (0.072375ms)
+(node:90800) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/infrastructure/ocr/validateNativeResult.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native bridge validator preserves zero-confidence text and does not clamp detector geometry (1.160917ms)
+✔ no-text native result is preserved without substituting text or a fallback model (0.139667ms)
+✔ rejects remote image files, nonfinite dimensions, missing lineage and invalid EXIF metadata (0.205333ms)
+✔ rejects old-image results, unpinned model identity and overwritten OCR raw text (0.155084ms)
+✔ rejects NaN score, malformed geometry, duplicate IDs and wrong page before overlay rendering (0.204708ms)
+✔ rejects invalid native durations and sampled memory rather than displaying fake measurements (0.141125ms)
+(node:90801) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/domain/inventory/rules.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ inventory quantities are positive whole package counts, not nutrition amounts (0.452583ms)
+✔ expiry dates validate actual calendar days and preserve unknown (0.749333ms)
+✔ shared catalogue includes only confirmed foods and preserves raw leading zeros (0.198834ms)
+✔ schema v6 adds independent inventory with foreign key protection and idempotency (1.431792ms)
+✔ production entry is the simple app, not OCR Lab or the network identity screen (0.770792ms)
+(node:90802) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/simple/imageSelection.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ crop touch selection handles contain letterboxing, reverse drag and bounds (1.102917ms)
+✔ capture retry after cover failure keeps same food and does not create redundant revisions (0.181291ms)
+✔ capture retry preserves corrections made after the first save failed (0.096708ms)
+✔ rephotographed recovery draft creates an evidence revision, not an overwrite (1.10375ms)
+✔ recovery refuses a different barcode instead of silently binding it (0.232875ms)
+(node:90803) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/simple/exportPaths.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ personal export remaps image paths without changing source evidence or OCR text (1.647208ms)
+✔ catalogue sharing excludes unlicensed legacy provider data without altering local foods (0.527917ms)
+(node:90804) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/yangbing/GPT/%E6%88%91%E5%BC%80%E5%8F%91%E7%9A%84app/%E6%8A%A4%E5%BA%B7/Hukang-codex-China/src/features/ui-v1/contracts.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/yangbing/GPT/我开发的app/护康/Hukang-codex-China/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ diary dates preserve calendar boundaries and reject invented dates (1.2725ms)
+✔ diary totals preserve unknown rather than present a partial daily total as complete (0.472584ms)
+✔ AI configuration rejects unsafe or incomplete input without echoing keys (0.238833ms)
+✔ unavailable AI gateway refuses analysis and never reports a successful connection (0.187792ms)
+ℹ tests 87
+ℹ suites 0
+ℹ pass 87
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 304.55525

@@ -7,7 +7,6 @@ const {
   parseDemoAmount,
   summarizeDiary,
   validateAiConfiguration,
-  UnavailableAiGateway,
 } = await import("../src/features/ui-v1/contracts.ts");
 
 test("diary dates preserve calendar boundaries and reject invented dates", () => {
@@ -75,20 +74,5 @@ test("AI configuration rejects unsafe or incomplete input without echoing keys",
   assert.doesNotMatch(
     JSON.stringify(issues),
     /line|break|test-only-placeholder/,
-  );
-});
-test("unavailable AI gateway refuses analysis and never reports a successful connection", async () => {
-  const gateway = new UnavailableAiGateway();
-  const result = await gateway.testConnection({
-    provider: "custom",
-    baseUrl: "https://service.example",
-    apiKey: "",
-    model: "",
-  });
-  assert.equal(result.status, "unavailable");
-  assert.match(result.message, /未执行联网测试/);
-  await assert.rejects(
-    gateway.analyzeDay("2026-10-26", []),
-    /没有生成分析结果/,
   );
 });

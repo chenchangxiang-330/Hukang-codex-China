@@ -1,0 +1,20 @@
+{
+  "checkedOn": "2026-11-14",
+  "apkHashLocallyVerified": true,
+  "newCertificateIndependentlyParsedFromApkV2": true,
+  "newVersion": "0.5.8",
+  "newApkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "newCertificateSha256": "8137a7d267b5c125ff059adeeccafd21f3c84f069eb1790e4cd5070417135cb9",
+  "oldVersion": "0.5.7",
+  "oldApkSha256": "027ad64c8a4dbac4997a703c0a827b30b12e21b1eca2ce357592c52bbbcb2089",
+  "oldCertificateSha256": "23eabf4455b83a1b94b664b1443a0738d1b73ad32e114cd08c8bfb573f53b356",
+  "compatibleWithArchived057": false,
+  "rotationLineagePresent": false,
+  "signingMode": "ephemeral-test",
+  "repositoryReleaseSecretsConfigured": false,
+  "userPhoneCertificateChecked": false,
+  "decision": "The user confirmed that the app is in development and no test data needs preserving. A clean reinstall of the test app is authorized; this is not a data-preserving upgrade. Future real-user data must still be protected.",
+  "userConfirmedNoDataToPreserveOn": "2026-11-14",
+  "cleanReinstallAuthorizedForThisTestDevice": true,
+  "fixedSigningDecision": "User explicitly deferred fixed signing on 2026-11-14; deliver the current ephemeral test APK. No signing key or GitHub secret was created."
+}

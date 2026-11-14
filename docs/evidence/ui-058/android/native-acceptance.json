@@ -1,0 +1,255 @@
+{
+  "verifiedOn": "2026-11-14",
+  "platform": "Android 15 emulator; ARM64 APK via native bridge",
+  "physicalDevice": false,
+  "buildRun": 43176900380,
+  "runtimeSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+  "apkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "allEightSuitesPassed": true,
+  "resultsAcrossRuns": true,
+  "reports": {
+    "ui": {
+      "status": "passed",
+      "run": 43557837714,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43557837714",
+      "testSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "ui-session.json",
+      "checks": [
+        {
+          "name": "five-metrics-navigation",
+          "status": "passed"
+        },
+        {
+          "name": "camera-permission-and-recovery",
+          "status": "passed"
+        },
+        {
+          "name": "small-large-keyboard",
+          "status": "passed"
+        },
+        {
+          "name": "gesture-safe-area",
+          "status": "passed"
+        },
+        {
+          "name": "fresh-label-entry-discard",
+          "status": "passed"
+        },
+        {
+          "name": "five-known-progress-isolated",
+          "status": "passed"
+        }
+      ]
+    },
+    "flows": {
+      "status": "passed",
+      "run": 43558914792,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43558914792",
+      "testSource": "9f965d07b473738693fadb24af8acbd7d58b0c36",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "flows-session.json",
+      "checks": [
+        {
+          "name": "profile-goal-confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "secure-connection-storage",
+          "status": "passed"
+        },
+        {
+          "name": "deterministic-intake-stock",
+          "status": "passed"
+        }
+      ]
+    },
+    "meal": {
+      "status": "passed",
+      "run": 43558909446,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43558909446",
+      "testSource": "9f965d07b473738693fadb24af8acbd7d58b0c36",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "meal-session.json",
+      "checks": [
+        {
+          "name": "direct-meal-result-save",
+          "status": "passed"
+        }
+      ]
+    },
+    "offline": {
+      "status": "passed",
+      "run": 43559207469,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43559207469",
+      "testSource": "310c1790c4225709dee3c23252a90b61c4824ac1",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "offline-session.json",
+      "checks": [
+        "imageBarcodeDecode",
+        "freshCaptureDiscardsOldDraft",
+        "photoPreparedWithoutApiDoesNotSaveFood",
+        "isolatedApiTableEditAndSave",
+        "unknownSodiumNotZero",
+        "imageRescanHitsWithoutOcr",
+        "separateInventoryPurchases",
+        "consumeAndRemoveInventory",
+        "manualEditPreservesApiEvidenceAndRevisions",
+        "catalogueExportExcludesInventory",
+        "cataloguePhotoExportHasNoExif",
+        "personalExportContainsPhotosAndHashedEvidence",
+        "exportsPreserveOriginalImageBytes"
+      ]
+    },
+    "image-large": {
+      "status": "passed",
+      "run": 43557837714,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43557837714",
+      "testSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "image-large-session.json",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "image-transparent": {
+      "status": "passed",
+      "run": 43557837714,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43557837714",
+      "testSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "image-transparent-session.json",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "image-gif": {
+      "status": "passed",
+      "run": 43557837714,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43557837714",
+      "testSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "image-gif-session.json",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "image-oversize": {
+      "status": "passed",
+      "run": 43557837714,
+      "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/43557837714",
+      "testSource": "51ed117fc0ab6f1762eb1ee9009b7c794a58439b",
+      "runtimeFilesMatchBuiltSource": true,
+      "report": "image-oversize-session.json",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "initialRun": {
+    "id": 43557837714,
+    "conclusion": "failure",
+    "passedSuites": [
+      "ui",
+      "image-large",
+      "image-transparent",
+      "image-gif",
+      "image-oversize"
+    ],
+    "failedSuites": [
+      "meal",
+      "offline",
+      "flows"
+    ],
+    "evidence": "../initial-failures/"
+  },
+  "additionalFailedRun": {
+    "id": 43558912112,
+    "suite": "offline",
+    "reason": "Incomplete UIAutomator hierarchy during emulator cold start; bounded fresh-file retry added."
+  },
+  "unverified": [
+    "Physical phone installation, camera, performance and sharing",
+    "Real-provider meal, nutrition-label and health-photo recognition",
+    "Cross-signature data-preserving upgrade; user authorized clean reinstall of disposable test app"
+  ],
+  "fixedSigning": "Explicitly deferred by user; no long-term key or repository secrets created.",
+  "artifacts": [
+    {
+      "id": 14099735941,
+      "name": "simple-device-43557837714-ui-attempt-1",
+      "sizeBytes": 15612670,
+      "zipSha256": "31df93d690e39e37aa86b056eec60fd3778f4379703410f270897a581cd833b6",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43557837714
+    },
+    {
+      "id": 14099540291,
+      "name": "simple-device-43557837714-image-large-attempt-1",
+      "sizeBytes": 23188930,
+      "zipSha256": "c95448e65327546292777b63aa3e8e1509badde271bb04e34135a37344df3e80",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43557837714
+    },
+    {
+      "id": 14099415160,
+      "name": "simple-device-43557837714-image-transparent-attempt-1",
+      "sizeBytes": 2020318,
+      "zipSha256": "9d11a6357290d20b474c9331d30212c07922f64b2ec22ed46f6dcf11924b61e6",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43557837714
+    },
+    {
+      "id": 14099400295,
+      "name": "simple-device-43557837714-image-oversize-attempt-1",
+      "sizeBytes": 2098971,
+      "zipSha256": "dac5c1a41480ed55b7a3cef3331b7ec5f76b5b9f35082a31f4aa3ea999eb940c",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43557837714
+    },
+    {
+      "id": 14098494891,
+      "name": "simple-device-43557837714-image-gif-attempt-1",
+      "sizeBytes": 2000153,
+      "zipSha256": "b25fd547c868bebca40af87d09eb51d10760f6ee1d3b8a69522aaacf7bb8d0d6",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43557837714
+    },
+    {
+      "id": 14100021819,
+      "name": "simple-device-43558909446-meal-attempt-1",
+      "sizeBytes": 2383848,
+      "zipSha256": "7141ce8845be00f004179d8edc5481f21dc3ba60d09e5d5188e968fffad2368e",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43558909446
+    },
+    {
+      "id": 14099249592,
+      "name": "simple-device-43559207469-offline-attempt-1",
+      "sizeBytes": 14076489,
+      "zipSha256": "059e49877ff36a6d1b21b6003ecdc15f37fd85fb635879c4e83c3d527ac8bffa",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43559207469
+    },
+    {
+      "id": 14099414152,
+      "name": "simple-device-43558914792-flows-attempt-1",
+      "sizeBytes": 7489318,
+      "zipSha256": "963dde499bb1481df32f6c78723b5845578bd9b3378ca89a665053b5acad9bb6",
+      "zipHashVerifiedBeforeExtraction": true,
+      "run": 43558914792
+    }
+  ]
+}

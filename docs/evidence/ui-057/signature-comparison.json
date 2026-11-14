@@ -1,0 +1,31 @@
+{
+  "new": {
+    "file": "hukang-0.5.7-arm64.apk",
+    "bytes": 61106257,
+    "sha256": "027ad64c8a4dbac4997a703c0a827b30b12e21b1eca2ce357592c52bbbcb2089",
+    "certificateSha256": "23eabf4455b83a1b94b664b1443a0738d1b73ad32e114cd08c8bfb573f53b356",
+    "signatureBlockIds": [
+      "0x7109871a",
+      "0x504b4453",
+      "0x42726577"
+    ],
+    "method": "independent APK v2 certificate extraction; signature validity separately checked by CI apksigner"
+  },
+  "previousArchive": {
+    "file": "hukang-0.5.6-arm64.apk",
+    "bytes": 61092825,
+    "sha256": "1d837b51d74951fdd3f07108e6b1993d625f57ceaadcf217b50ffe4aab80d07e",
+    "certificateSha256": "1304a4c0706d0f49d4a2fbd99ce1d8c860d6decc6e3045962fa183a9ebd8015e",
+    "signatureBlockIds": [
+      "0x7109871a",
+      "0x504b4453",
+      "0x42726577"
+    ],
+    "method": "independent APK v2 certificate extraction; signature validity separately checked by CI apksigner"
+  },
+  "sameCertificate": false,
+  "rotationLineage": false,
+  "canReplaceArchived056": false,
+  "phoneInstalledCertificateRead": false,
+  "action": "Keep existing app and data. Use only an independent test device without an old install. No uninstall, clear-data, or package rename."
+}

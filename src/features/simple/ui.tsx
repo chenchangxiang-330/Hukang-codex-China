@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { colors, tokens } from "../../ui/tokens";
 
-/** Compatibility names keep existing screens on the shared UI V1 palette. */
+/** Compatibility names keep every existing flow on the shared Warm Table palette. */
 export const C = {
   bg: colors.background,
   ink: colors.ink,
@@ -101,6 +101,8 @@ export function Field({
         }
         autoCorrect={!secureTextEntry}
         secureTextEntry={secureTextEntry}
+        autoComplete={secureTextEntry ? "off" : undefined}
+        importantForAutofill={secureTextEntry ? "no" : "auto"}
         editable={editable}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -147,6 +149,7 @@ export function Choices({
           accessibilityLabel={
             accessibilityPrefix ? `${accessibilityPrefix} ${label}` : label
           }
+          aria-checked={value === key}
           onPress={() => onChange(key)}
           style={({ pressed }) => [
             S.chip,
@@ -177,6 +180,7 @@ export function Check({
       accessibilityRole="checkbox"
       accessibilityLabel={label}
       accessibilityState={{ checked: value }}
+      aria-checked={value}
       onPress={() => onChange(!value)}
       style={({ pressed }) => [S.checkRow, pressed && S.controlPressed]}
     >
@@ -211,11 +215,17 @@ export const S = StyleSheet.create({
   },
   brand: { ...tokens.type.title, color: C.ink },
   tagline: { ...tokens.type.body, color: C.muted, marginTop: tokens.space.xs },
-  logo: { width: 48, height: 48, borderRadius: tokens.radius.md },
+  logo: {
+    width: 48,
+    height: 48,
+    borderCurve: "continuous",
+    borderRadius: tokens.radius.md,
+  },
   eyebrow: { ...tokens.type.label, color: C.teal },
   date: { ...tokens.type.display, color: C.ink },
   hero: {
     backgroundColor: C.teal,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     padding: tokens.space.xxl,
     gap: tokens.space.md,
@@ -228,9 +238,10 @@ export const S = StyleSheet.create({
   cameraIcon: {
     width: 44,
     height: 34,
+    borderCurve: "continuous",
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#DCEBDF",
+    borderColor: colors.onBrand,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -239,11 +250,11 @@ export const S = StyleSheet.create({
     height: 15,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#DCEBDF",
+    borderColor: colors.onBrand,
   },
   heroArrow: { color: C.white, fontSize: 26 },
   heroTitle: { ...tokens.type.display, color: C.white },
-  heroNote: { ...tokens.type.body, color: "#EDF5EE" },
+  heroNote: { ...tokens.type.body, color: colors.onBrand },
   heroBottom: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -252,13 +263,14 @@ export const S = StyleSheet.create({
     paddingTop: tokens.space.lg,
     marginTop: tokens.space.xs,
     borderTopWidth: 1,
-    borderTopColor: "#72917E",
+    borderTopColor: colors.warmAccent,
   },
   stats: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: tokens.space.lg,
     backgroundColor: C.white,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     borderWidth: 1,
     borderColor: C.line,
@@ -302,6 +314,7 @@ export const S = StyleSheet.create({
     padding: tokens.space.xxl,
     borderWidth: 1,
     borderColor: C.line,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     gap: tokens.space.sm,
   },
@@ -314,12 +327,14 @@ export const S = StyleSheet.create({
     backgroundColor: C.white,
     borderColor: C.line,
     borderWidth: 1,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.md,
     minHeight: 80,
   },
   smallMark: {
     width: 44,
     height: 44,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
     alignItems: "center",
     justifyContent: "center",
@@ -375,12 +390,14 @@ export const S = StyleSheet.create({
     backgroundColor: C.white,
     borderColor: C.line,
     borderWidth: 1,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     padding: tokens.space.xl,
     gap: tokens.space.lg,
   },
   button: {
     backgroundColor: C.teal,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
     paddingVertical: 14,
     paddingHorizontal: tokens.space.lg,
@@ -392,8 +409,8 @@ export const S = StyleSheet.create({
     borderColor: "transparent",
   },
   buttonPressed: { backgroundColor: C.brandPressed },
-  secondary: { backgroundColor: C.pale, borderColor: "#D8E5D9" },
-  secondaryPressed: { backgroundColor: "#D4E5D7" },
+  secondary: { backgroundColor: C.pale, borderColor: colors.line },
+  secondaryPressed: { backgroundColor: colors.neutralSoft },
   buttonText: {
     fontSize: 16,
     lineHeight: 24,
@@ -410,6 +427,7 @@ export const S = StyleSheet.create({
     minHeight: tokens.control.fieldMinHeight,
     borderWidth: 1,
     borderColor: C.line,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
     paddingHorizontal: 14,
     paddingVertical: tokens.space.md,
@@ -418,7 +436,7 @@ export const S = StyleSheet.create({
     color: C.ink,
     backgroundColor: C.white,
   },
-  inputFocused: { borderColor: C.teal, backgroundColor: "#FCFEFC" },
+  inputFocused: { borderColor: C.teal, backgroundColor: colors.surface },
   inputError: { borderColor: C.red },
   fieldError: { ...tokens.type.caption, color: C.red },
   wrap: {
@@ -431,6 +449,7 @@ export const S = StyleSheet.create({
     minHeight: tokens.control.minimumTouchSize,
     paddingVertical: tokens.space.md,
     paddingHorizontal: 14,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
     backgroundColor: C.pale,
     maxWidth: "100%",
@@ -455,6 +474,7 @@ export const S = StyleSheet.create({
     height: 24,
     borderWidth: 1.5,
     borderColor: C.muted,
+    borderCurve: "continuous",
     borderRadius: 7,
     alignItems: "center",
     justifyContent: "center",
@@ -475,19 +495,22 @@ export const S = StyleSheet.create({
   },
   error: {
     padding: tokens.space.lg,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.md,
     borderWidth: 1,
-    borderColor: "#F0D0CB",
+    borderColor: colors.dangerLine,
     backgroundColor: colors.dangerSoft,
   },
   notice: {
     padding: tokens.space.lg,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.md,
     backgroundColor: C.pale,
   },
   scanner: {
     height: 330,
-    backgroundColor: "#172C23",
+    backgroundColor: colors.scanner,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     overflow: "hidden",
     alignItems: "stretch",
@@ -500,24 +523,28 @@ export const S = StyleSheet.create({
     top: 105,
     height: 115,
     borderWidth: 2,
-    borderColor: "#E2F1E1",
+    borderColor: colors.onBrand,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
   },
   photo: {
     height: 260,
     width: "100%",
     backgroundColor: C.white,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.md,
   },
   nutritionPhoto: {
     height: 290,
     width: "100%",
     backgroundColor: C.white,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.md,
   },
   productPhoto: {
     height: 280,
     width: "100%",
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     backgroundColor: C.white,
   },
@@ -525,6 +552,7 @@ export const S = StyleSheet.create({
   progressItem: {
     flex: 1,
     minWidth: 0,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.sm,
     alignItems: "center",
     justifyContent: "center",
@@ -534,6 +562,7 @@ export const S = StyleSheet.create({
   },
   tablePlaceholder: {
     backgroundColor: C.white,
+    borderCurve: "continuous",
     borderRadius: tokens.radius.lg,
     padding: tokens.space.xl,
     gap: tokens.space.lg,
@@ -563,6 +592,6 @@ export const S = StyleSheet.create({
     justifyContent: "center",
     gap: tokens.space.lg,
     padding: tokens.space.xxl,
-    backgroundColor: "rgba(247,248,245,0.97)",
+    backgroundColor: colors.overlay,
   },
 });

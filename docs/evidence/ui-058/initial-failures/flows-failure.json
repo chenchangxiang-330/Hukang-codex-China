@@ -1,0 +1,23 @@
+{
+  "suite": "flows",
+  "run": 43557837714,
+  "apkSha256": "b49e2ef880913b2c0060e5d5329ac462e6f1152ce48e28975071c725f24c03cc",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "profile-goal-confirmation",
+      "status": "passed"
+    },
+    {
+      "name": "secure-connection-storage",
+      "status": "passed"
+    },
+    {
+      "name": "deterministic-intake-stock",
+      "status": "failed",
+      "error": "AssertionError('Unobscured Android control missing: ^今日营养摘要$')",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 183, in check\n    action()\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 534, in diet_closed_loop\n    launch();require('54.25 g',True);shot('android-four-progress-isolated');tap('^记录$',attribute='content-desc');tap('^查看食物 TEST reusable meal$',True);enter('修改实际食用份量（份）','1');tap('^确认调整份量$',True);require('饮食记录已更新',True);tap('^返回饮食记录$',True);tap('^今日营养摘要$',True);tap('^蛋白质，',True);require('58.5',True);shot('android-nutrition-updated-isolated')\n                                                                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Hukang-codex-China/Hukang-codex-China/tests/device/nutrition-ui-v2-device.py\", line 137, in tap\n    raise AssertionError(f'Unobscured Android control missing: {pattern}')\nAssertionError: Unobscured Android control missing: ^今日营养摘要$\n"
+    }
+  ],
+  "error": null
+}

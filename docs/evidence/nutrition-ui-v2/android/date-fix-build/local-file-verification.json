@@ -1,0 +1,10 @@
+{
+  "downloadedArtifactId": 13037949348,
+  "artifactZipSha256": "01a79de5890a9a96f58dffc29548a287b600bd6ab4541e4803c9ad66efa1c9ed",
+  "apkSha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
+  "apkBytes": 60926377,
+  "certificateSha256FromApkV2Der": "f4a0f6446b3d980ee24c6148bfd43de897a0bfc761214db8d0b4e162915a23a8",
+  "matchesBuildInspection": true,
+  "signatureCryptoVerification": "Android apksigner v2 verification transcript in apk-inspection.json",
+  "apkSource": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a"
+}

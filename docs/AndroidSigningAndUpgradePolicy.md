@@ -34,21 +34,33 @@ OCR 原文、图片 SHA-256 和 revision 历史。以下是验收要求，不代
 ## 数据库安全
 
 - 数据库文件名固定为 `hukang-china-food.db`。
-- 当前 schema 为 `user_version=6`。未知版本会拒绝打开且不修改现有数据库；v1
+- 当前 0.5.8 schema 为 `user_version=8`，本轮无数据库迁移。未知版本会拒绝打开且不修改现有数据库；v1
   到 v2 新增 `food_barcodes`，v3 分离商品身份，v4 保存不可变营养证据版本，v5
   保存待补营养表的身份草稿，v6 增加 `simple_product_photos`、
   `simple_capture_drafts` 和 `simple_inventory`。所有增量迁移均保留食品、条码、
   OCR 证据、身份和修订历史。这里的
-  数据库 schema 版本与设备证据 JSON 的 `schemaVersion` 独立，不能混用。
+  数据库 schema 版本与设备证据 JSON 的 `schemaVersion` 独立，不能混用。后续 v7 饮食快照、目标与操作记录和 v8 个人资料、目标草案、餐食资料、封面及库存均为增量添加；详见 [数据库迁移](DatabaseMigrations.md)。
 - 未来 schema 必须提供显式迁移和迁移前备份测试，不能依赖 SQLite 自动重建。
 - `allowBackup=false` 保持开启，避免系统备份恢复造成未审计的数据覆盖。
 
 当前 CI 若未配置稳定 Secrets，只能验证实验 APK 的应用行为和同一 APK 的 `install -r`；
 不能把该包当作正式发布签名，也不能声称跨版本、跨构建覆盖安装已完成。
 
-## 当前交付与一次性配置
+## 0.5.8 开发测试决定（2026-11-14）
 
-本轮已构建并核验版本为 0.3.3 / versionCode 8；实际证书及文件哈希见 [简易版验收记录](SimpleAppAcceptance.md)。
+当前 0.5.8 / versionCode 19 沿用构建 43176900380 的临时测试签名，证书 SHA-256 为
+`8137a7d267b5c125ff059adeeccafd21f3c84f069eb1790e4cd5070417135cb9`。
+它与归档 0.5.7 不同且没有签名轮换链，不能覆盖那份旧包；本地已核对 APK 文件哈希，
+并独立解析 APK v2 签名证书，详见 [签名比对](evidence/ui-058/signature-comparison.json)。
+
+用户明确确认本轮仍处于开发测试、没有需要保留的数据，并选择“暂不配置，先交付当前测试包”。
+仅在这种已明确放弃旧测试数据的情形，可卸载旧测试版后全新安装；必须标记为干净重装，
+不能声称保留了旧数据或完成了覆盖升级。有真实数据需要保留时，继续遵循上面的保留与升级要求。
+本轮未生成长期私钥、未修改系统钥匙串、未创建 GitHub 签名 Secrets。
+
+## 历史 0.3.3 交付与签名配置
+
+历史 0.3.3 / versionCode 8 的实际证书及文件哈希见 [简易版验收记录](SimpleAppAcceptance.md)。当前版本见 [0.5.8 交付说明](evidence/ui-058/README.md)。
 构建只读取已提交源码，不在 CI 内修改、提交或推送业务文件。签名 Secrets
 未配置时仍可构建隔离测试包，但每次临时证书不同；证书不匹配不能覆盖既有
 安装，不能通过卸载绕过，尤其有本地数据时。

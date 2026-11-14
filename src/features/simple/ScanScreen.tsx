@@ -78,7 +78,7 @@ export function ScanScreen(p: AppController) {
             </View>
             <Text style={scan.permissionTitle}>让护康看见条码</Text>
             <Text style={scan.permissionText}>
-              开启相机权限即可实时扫描。也可以使用下方的相册或手动输入。
+              开启相机权限即可实时扫描。也可以使用下方的相册。
             </Text>
           </View>
         )}
@@ -130,7 +130,7 @@ export function ScanScreen(p: AppController) {
             }
           />
           <Text style={S.small}>
-            从设置返回后，点「开启相机权限」重新检查。未授权也不影响手动查询。
+            从设置返回后，点「开启相机权限」重新检查。也可以从相册选择。
           </Text>
         </>
       )}
@@ -139,32 +139,11 @@ export function ScanScreen(p: AppController) {
         secondary
         onPress={() => void pickBarcode()}
       />
-      <Surface>
-        <SectionHeading
-          title="也可以手动输入"
-          description="保留所有数字和前导零，选择包装对应的条码格式。"
-        />
-        <Field
-          label="条码数字（保留前导零）"
-          value={manual}
-          numeric
-          onChange={setManual}
-          placeholder="输入完整食品条码"
-        />
-        <Choices
-          value={manualFormat}
-          options={["EAN_13", "EAN_8", "UPC_A", "UPC_E"].map((v) => [
-            v,
-            v.replace("_", "-"),
-          ])}
-          onChange={setManualFormat}
-        />
-        <Button
-          title="查询本机食品"
-          disabled={!manual}
-          onPress={() => void lookup(manual, manualFormat, "manual")}
-        />
-      </Surface>
+      <Button
+        title="直接识别营养成分表"
+        secondary
+        onPress={() => void p.startLabel()}
+      />
       <Text style={S.footer}>
         支持 EAN-13、EAN-8、UPC-A、UPC-E\n二维码与药品追溯码不用于食品查询。
       </Text>
@@ -177,7 +156,7 @@ const scan = StyleSheet.create({
     height: 320,
     overflow: "hidden",
     borderRadius: 24,
-    backgroundColor: "#172D25",
+    backgroundColor: "#213C50",
   },
   permission: {
     flex: 1,
@@ -194,7 +173,7 @@ const scan = StyleSheet.create({
     textAlign: "center",
   },
   permissionText: {
-    color: "#D5E4DB",
+    color: "#D5E5F0",
     fontSize: 14,
     lineHeight: 23,
     textAlign: "center",
@@ -204,7 +183,7 @@ const scan = StyleSheet.create({
     height: 36,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#AACDBB",
+    borderColor: "#AACDDF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 6,
@@ -214,7 +193,7 @@ const scan = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#AACDBB",
+    borderColor: "#AACDDF",
   },
   frame: {
     position: "absolute",
@@ -223,11 +202,11 @@ const scan = StyleSheet.create({
     top: 100,
     height: 118,
     borderWidth: 2,
-    borderColor: "#DEEDD9",
+    borderColor: "#DEEDF8",
     borderRadius: 12,
     justifyContent: "center",
   },
-  scanLine: { height: 1, backgroundColor: "#C2DFB6", marginHorizontal: 12 },
+  scanLine: { height: 1, backgroundColor: C.teal, marginHorizontal: 12 },
   caption: {
     position: "absolute",
     bottom: 0,
@@ -238,11 +217,11 @@ const scan = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     padding: 16,
-    backgroundColor: "#172D25E6",
+    backgroundColor: "#213C50E6",
   },
   captionText: {
     flexShrink: 1,
-    color: "#F5F8F5",
+    color: "#F7FBFF",
     fontSize: 13,
     lineHeight: 20,
     textAlign: "center",
@@ -251,7 +230,7 @@ const scan = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#AFD3B3",
+    backgroundColor: "#AFD3ED",
   },
   statusRow: {
     flexDirection: "row",

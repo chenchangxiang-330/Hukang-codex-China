@@ -1,0 +1,98 @@
+{
+  "status": "passed",
+  "reviewedAtUtc": "2026-10-31 12:07:32 UTC",
+  "platform": "Android 15 API 35 emulator; ARM64 release APK on x86_64 with ARM64 translation",
+  "physicalDevice": false,
+  "apkSource": "aae421f0dc80635450b98206c9575dffaf7a82f7",
+  "apkSha256": "7dd3fd4be1eb576cdd1c9275af3566b93df7d5db5a52506692380832d66fa3d8",
+  "method": "逐张打开最终产物中的原始 PNG 人工复核，并结合原生点击、滚动、输入框完整高度及系统键盘边界断言；没有修改或重绘图片。",
+  "imagesEdited": false,
+  "screenshotsReviewed": [
+    "actual-catalogue-share-sheet.png",
+    "actual-catalogue-with-photos-share-sheet.png",
+    "actual-personal-with-photos-share-sheet.png",
+    "crop-modal-before-drag.png",
+    "crop-selected.png",
+    "draft-resumed.png",
+    "edited-product.png",
+    "home.png",
+    "inventory-reduced.png",
+    "inventory.png",
+    "mine.png",
+    "nutrition-ui-v2/android-ai-unavailable-feedback.png",
+    "nutrition-ui-v2/android-camera-permission-denied.png",
+    "nutrition-ui-v2/android-camera-permission-request.png",
+    "nutrition-ui-v2/android-capture-empty-photo-feedback.png",
+    "nutrition-ui-v2/android-capture-keyboard-repeat1.png",
+    "nutrition-ui-v2/android-capture-keyboard-repeat2.png",
+    "nutrition-ui-v2/android-capture-keyboard.png",
+    "nutrition-ui-v2/android-capture-meal-empty.png",
+    "nutrition-ui-v2/android-capture-package-empty.png",
+    "nutrition-ui-v2/android-captured-meal-original-photo.png",
+    "nutrition-ui-v2/android-captured-package-original-photo.png",
+    "nutrition-ui-v2/android-diary-320-empty.png",
+    "nutrition-ui-v2/android-diary-320-font150-empty.png",
+    "nutrition-ui-v2/android-diary-390-empty.png",
+    "nutrition-ui-v2/android-diary-390-font150-empty.png",
+    "nutrition-ui-v2/android-diary-scroll-end-gesture-safe-area.png",
+    "nutrition-ui-v2/android-library-390-empty.png",
+    "nutrition-ui-v2/android-live-barcode-scanner.png",
+    "nutrition-ui-v2/android-mine-390-empty.png",
+    "nutrition-ui-v2/android-nutrition-320-empty.png",
+    "nutrition-ui-v2/android-nutrition-320-font150-empty.png",
+    "nutrition-ui-v2/android-nutrition-390-empty.png",
+    "nutrition-ui-v2/android-nutrition-390-font150-empty.png",
+    "nutrition-ui-v2/android-nutrition-carbohydrate-empty.png",
+    "nutrition-ui-v2/android-nutrition-fat-empty.png",
+    "nutrition-ui-v2/android-nutrition-fiber-empty.png",
+    "nutrition-ui-v2/android-nutrition-from-selected-diary-date.png",
+    "nutrition-ui-v2/android-nutrition-minerals-empty.png",
+    "nutrition-ui-v2/android-nutrition-protein-empty.png",
+    "nutrition-ui-v2/android-nutrition-scroll-end-320-font150.png",
+    "nutrition-ui-v2/android-nutrition-scroll-end-320.png",
+    "nutrition-ui-v2/android-nutrition-scroll-end-390-font150.png",
+    "nutrition-ui-v2/android-nutrition-vitamins-empty.png",
+    "nutrition-ui-v2/android-nutrition-water-empty.png",
+    "nutrition-ui-v2/android-system-camera-virtual-scene.png",
+    "nutrition-ui-v2/android-today-320-empty.png",
+    "nutrition-ui-v2/android-today-320-font150-empty.png",
+    "nutrition-ui-v2/android-today-390-empty.png",
+    "nutrition-ui-v2/android-today-390-font150-empty.png",
+    "nutrition-ui-v2/android-today-gesture-safe-area.png",
+    "ocr-review-before-corrections.png",
+    "review-fat-keyboard.png",
+    "review.png",
+    "scanner.png"
+  ],
+  "screenshotCount": 55,
+  "findings": [
+    "正式今日、记录、营养详情保持真实空饮食记录，未知数值使用破折号及单位，没有假的 0% 或达标结论。",
+    "奶白与雾蓝配色、加深的营养页背景、显眼返回按钮、纸感及玻璃 Dock 在当前模拟器正常渲染。",
+    "320/390dp、系统字号 1.0/1.5 下日期导航完整可见。长内容保留纵向滚动，固定 Dock 上方的末尾餐次添加入口可触达。",
+    "餐食描述框连续三次键盘开合均完整可见；原营养表脂肪字段截图无键盘遮挡。其余 17 次字段输入位置与值由原生报告验证。",
+    "两个拍一拍入口、空照片和 AI 未接入反馈、相机拒绝/授权、虚拟场景照片返回及原扫码相机预览可见。",
+    "营养七类展开的未知状态、日期联动、离线 OCR 核对、裁剪、食品详情、库存减少及系统导出分享面板符合对应操作状态。"
+  ],
+  "evidenceCaveats": [
+    {
+      "paths": [
+        "home.png",
+        "mine.png",
+        "scanner.png"
+      ],
+      "note": "离线业务组禁用 Google 服务后，模拟器出现系统通知覆盖。这三张保留为流程原始证据，不用作无干扰页面外观验收；页面组有对应干净截图。scanner.png 为既有文件名，图中是包装食品入口，真正相机预览见 nutrition-ui-v2/android-live-barcode-scanner.png。"
+    },
+    {
+      "note": "滚动截图是当时视口，不是拼接长图；视口边缘被截出的卡片可继续滚动。"
+    },
+    {
+      "note": "食品库与库存的 Test Milk 由独立离线测试设备执行真实 OCR 和人工录入创建，不是正式饮食记录，也未写入用户手机。"
+    }
+  ],
+  "remainingPhoneChecks": [
+    "实体手机镜头对焦、低光实物拍摄、镜头实时条码解码。",
+    "厂商系统、中文输入法、三键导航、旧 Android 的玻璃效果及 TalkBack。",
+    "用户现有安装证书及旧版本原地升级；当前临时签名与已核实旧包不同。",
+    "真机性能和发热。AI、自动抠图、真实饮食存储及个人目标持久化尚未接入，不在本轮验收范围。"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "2216421eaac34144bf3892c0cfae37a110eafbaa",
+  "buildRun": 41684222473,
+  "apkSha256": "50b12772c3bf6d4628ed025b000ecb15a9e1c6fb1c0a4fdb0c94dad2ae7fa56a",
+  "mainRun": 41686823162,
+  "mainRunConclusion": "failure",
+  "passedMainSuites": ["ui", "flows", "offline", "image-large", "image-transparent", "image-oversize"],
+  "failedInitialSuite": "image-gif",
+  "initialFailurePhase": "sdkmanager installing Android Emulator, before emulator boot or APK execution",
+  "errorExcerpt": "Android Emulator: Error on ZipFile unknown archive",
+  "retryRun": 41687576897,
+  "retrySuite": "image-gif",
+  "retryConclusion": "success",
+  "sameApkUsed": true,
+  "rebuiltForRetry": false,
+  "physicalDeviceTested": false
+}

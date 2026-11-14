@@ -1,0 +1,191 @@
+{
+  "platform": "Android 15 emulator; ARM64 APK via native bridge",
+  "physicalDevice": false,
+  "run": 42600295847,
+  "url": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/42600295847",
+  "apkSha256": "027ad64c8a4dbac4997a703c0a827b30b12e21b1eca2ce357592c52bbbcb2089",
+  "runtimeSource": "f705f120f238f0152470d104e268c7f107ad1270",
+  "testSource": "e6ec0e8252c4bcaed53d4708150bb716998afaf1",
+  "allEightSuitesPassed": true,
+  "reports": {
+    "image-gif-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "ui-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "four-metrics-navigation",
+          "status": "passed"
+        },
+        {
+          "name": "camera-permission-and-recovery",
+          "status": "passed"
+        },
+        {
+          "name": "small-large-keyboard",
+          "status": "passed"
+        },
+        {
+          "name": "gesture-safe-area",
+          "status": "passed"
+        },
+        {
+          "name": "fresh-label-entry-discard",
+          "status": "passed"
+        },
+        {
+          "name": "four-known-progress-isolated",
+          "status": "passed"
+        }
+      ]
+    },
+    "offline-session.json": {
+      "status": "passed",
+      "checks": [
+        "imageBarcodeDecode",
+        "freshCaptureDiscardsOldDraft",
+        "photoPreparedWithoutApiDoesNotSaveFood",
+        "isolatedApiTableEditAndSave",
+        "unknownSodiumNotZero",
+        "imageRescanHitsWithoutOcr",
+        "separateInventoryPurchases",
+        "consumeAndRemoveInventory",
+        "manualEditPreservesApiEvidenceAndRevisions",
+        "catalogueExportExcludesInventory",
+        "cataloguePhotoExportHasNoExif",
+        "personalExportContainsPhotosAndHashedEvidence",
+        "exportsPreserveOriginalImageBytes"
+      ]
+    },
+    "image-transparent-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "flows-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "profile-goal-confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "secure-connection-storage",
+          "status": "passed"
+        },
+        {
+          "name": "deterministic-intake-stock",
+          "status": "passed"
+        }
+      ]
+    },
+    "image-large-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    },
+    "meal-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "direct-meal-result-save",
+          "status": "passed"
+        }
+      ]
+    },
+    "image-oversize-session.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "original-and-upload-isolation",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "artifacts": [
+    {
+      "id": 13666515211,
+      "name": "simple-device-42600295847-ui-attempt-1",
+      "size": 10324100,
+      "sha256": "sha256:a47fb806e79360e1732676dc8004b0eae5993d499ac17722354092fd6870dd07",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13666430264,
+      "name": "simple-device-42600295847-offline-attempt-1",
+      "size": 14094516,
+      "sha256": "sha256:47562b19dc6a15ae8fc66bedd162f5eb14a78d42e6d4e91a33ca3f333841c3d7",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13666227331,
+      "name": "simple-device-42600295847-flows-attempt-1",
+      "size": 6437881,
+      "sha256": "sha256:0a617b0a47d936fd97d744de5184404dbf0d8c68fa3ac288625a0067f52260e4",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13665442985,
+      "name": "simple-device-42600295847-image-transparent-attempt-1",
+      "size": 2110918,
+      "sha256": "sha256:30479777e7c97548bf1f1309dfbde4af1f0030d0b31a78bf94ccbdb7dd2b651f",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13664969272,
+      "name": "simple-device-42600295847-meal-attempt-1",
+      "size": 2397070,
+      "sha256": "sha256:c4c1fd401c393f3dfd0c653855eeb752aa62b3c6426d52763862c6f64d4c3bdf",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13664963290,
+      "name": "simple-device-42600295847-image-gif-attempt-1",
+      "size": 1910183,
+      "sha256": "sha256:e3440d584e5c566569049239ef5979123050f4ec99b6a92be3712bddd22ff9b8",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13664798565,
+      "name": "simple-device-42600295847-image-large-attempt-1",
+      "size": 23246150,
+      "sha256": "sha256:9ed7215b25e7d9893b01a78a3a0e7a18b3bd4303b88e8e3bc1a3ae93cf01872d",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    },
+    {
+      "id": 13664519781,
+      "name": "simple-device-42600295847-image-oversize-attempt-1",
+      "size": 1969665,
+      "sha256": "sha256:6cab6531b40f2e16a3a5b11299a30c5075118e749116ee2c4b6a1206a9a8695f",
+      "run": 42600295847,
+      "source": "e6ec0e8252c4bcaed53d4708150bb716998afaf1"
+    }
+  ],
+  "realProviderTested": false,
+  "aiResults": "Isolated injected response fixtures; actual HTTPS multi-image transport tested separately",
+  "sameApkReinstallDataPreserved": true,
+  "archived056SignatureCompatible": false
+}

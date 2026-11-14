@@ -1,0 +1,12 @@
+{
+  "source": "1fb7a8f8974d1c4513725a698777194408da8a03",
+  "kind": "browser-shared-react-native-not-Android",
+  "run": "https://github.com/chenchangxiang-330/Hukang-codex-China/actions/runs/42469106949",
+  "artifactId": 13613110762,
+  "artifactSha256": "82e9a41b903f23ce8c87795f09dd583544d84d15e9ceebb6bfd98236d63884df",
+  "screenshotsUseIsolatedMockData": true,
+  "uiChecks": 35,
+  "nutritionChecks": 18,
+  "aiBrowserChecks": 1,
+  "realProviderVerified": false
+}

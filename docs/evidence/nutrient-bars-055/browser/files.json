@@ -1,0 +1,58 @@
+[
+  {
+    "file": "browser-home-empty.png",
+    "sha256": "252fd5670ac706ce9bf698810f4070e4bdf4cf8417c8e8804befc9aa3afd3b95",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-progress-protein-confirmed.png",
+    "sha256": "d42f6a6ba06e0148ae1d8391c2ccf676a7df097867bee2c1efb21ad28de99308",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-progress-protein-partial.png",
+    "sha256": "e9b12a490ff83d038f989d5487746f9d3cb104e8ddd1505d1b1e3ed5cb079723",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-progress-protein-unset.png",
+    "sha256": "172dc3b408d15fe770801dfc9b415d5d508b19ad184f0b0ad73f2768f89694b3",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-progress-protein-range.png",
+    "sha256": "ea53765dd34ad517402436d5cabe2fd56d02c79516dc7afc4b35585d287e3938",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-progress-protein-exceeded.png",
+    "sha256": "eaeb3321595c98751b9d17d96c2295da722c7d2ac375063b88bd7960bf746b8b",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-320-empty.png",
+    "sha256": "5d995d721e3b9b0cd103e23464610757ff418c4a0a5e11799cb0905097f843c2",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  },
+  {
+    "file": "browser-390-short-primary-visible.png",
+    "sha256": "ebbd807efc795cb57acee3d9a0c6527222fe10c526b64ed7941ccae70b178985",
+    "sourceCommit": "5da1f5fe8bd6241b87d31a1734f80c261f8f2ab5",
+    "platform": "browser shared React Native; native APIs mocked",
+    "productionRecords": false
+  }
+]

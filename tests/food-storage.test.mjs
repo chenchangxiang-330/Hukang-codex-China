@@ -149,7 +149,7 @@ test('synthetic v5 database migrates to v6 without changing food, OCR or revisio
   const before = tables.map(name => database.prepare(`SELECT * FROM ${name}`).all());
   const upgraded = createSQLiteFoodStore(driver, files, () => clock, () => 'after-migration');
   assert.equal((await upgraded.getFood(saved.id)).review.name, '旧版食品及人工修订');
-  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 6);
+  assert.equal(database.prepare('PRAGMA user_version').get().user_version, 8);
   assert.deepEqual(tables.map(name => database.prepare(`SELECT * FROM ${name}`).all()), before);
   clock = '2026-10-15T00:00:03.000Z';
   const edited = await upgraded.saveFood({ ...(await upgraded.getFood(saved.id)), review: { ...saved.review, name: '迁移后仍可编辑' } });
@@ -157,4 +157,54 @@ test('synthetic v5 database migrates to v6 without changing food, OCR or revisio
   assert.equal(edited.revisions.length, 3);
   assert.deepEqual(database.prepare('SELECT * FROM food_evidence').all(), before[1]);
   database.close();
+});
+
+test('v6 to v7 migration preserves every food, inventory, photo and evidence row; failed migration rolls back and retries', async()=>{
+ const database=new DatabaseSync(':memory:'); const base=driverFor(database);
+ const files={async materialize(input){return {sourceEvidence:input.evidence,evidence:input.evidence,parsed:input.parsed,folderUri:`food://${input.id}`};},async validateStored(){},async writeRevision(){},async removeRevision(){},async removeFood(){}};
+ const store=createSQLiteFoodStore(base,files);const original=await store.saveFood(record());
+ database.exec("INSERT INTO simple_product_photos VALUES('food-test','{\"uri\":\"file:///original-cover.jpg\"}',NULL); INSERT INTO simple_inventory VALUES('stock1','food-test',2,'瓶',NULL,'2026-11-01');");
+ const oldTables=['foods','food_evidence','food_revisions','food_evidence_versions','simple_inventory','simple_product_photos'];
+ const before=Object.fromEntries(oldTables.map(t=>[t,database.prepare('SELECT * FROM '+t).all()]));
+ database.exec('DROP TABLE nutrition_entries; DROP TABLE nutrition_operations; DROP TABLE nutrition_settings; DROP TABLE nutrition_photo_cleanup; DROP TABLE simple_package_hints; PRAGMA user_version=6;');
+ let fail=true;
+ const wrap = driver => ({...driver, exec:async sql=>{await driver.exec(sql);if(fail && sql.includes('nutrition_entries'))throw Error('migration interrupted');},transaction:task=>driver.transaction(tx=>task(wrap(tx)))});
+ const upgraded=createSQLiteFoodStore(wrap(base),files);
+ await assert.rejects(upgraded.listFoods(),/migration interrupted/);
+ assert.equal(database.prepare('PRAGMA user_version').get().user_version,6);
+ assert.equal(database.prepare("SELECT count(*) n FROM sqlite_master WHERE name='nutrition_entries'").get().n,0);
+ fail=false;await upgraded.listFoods();assert.equal(database.prepare('PRAGMA user_version').get().user_version,8);
+ for(const t of oldTables)assert.deepEqual(database.prepare('SELECT * FROM '+t).all(),before[t]);
+ assert.deepEqual((await upgraded.getFood(original.id)).evidence,original.evidence);
+ const {createNutritionStore}=await import('../src/services/nutrition/store.ts');
+ const diet=createNutritionStore(base,{copy:async()=>'',remove:async()=>{},exists:async()=>true});
+ await diet.record({id:'history1',date:'2026-11-01',meal:'lunch',amount:100,unit:'g',food:{id:original.id,version:original.updatedAt,name:'historical name',source:'library',basis:{amount:100,unit:'g'},nutrients:{energy:{value:100,unit:'kcal',status:'confirmed',source:'label'}}}},'op-hist');
+ await upgraded.saveFood({...await upgraded.getFood(original.id),review:{...original.review,name:'new library name'}});
+ assert.equal((await diet.load()).entries[0].food.name,'historical name');
+ database.exec("DELETE FROM simple_inventory WHERE food_id='food-test'");
+ await upgraded.deleteFood(original.id);assert.equal((await diet.load()).entries[0].food.name,'historical name');database.close();
+});
+
+
+test('API label saves without barcode; blank sodium remains unknown and edits do not rewrite evidence', async()=>{
+ const {parseLabel,labelEvidence}=await import('../src/services/ai/label.ts');
+ const {foodFromRecord,contribution}=await import('../src/features/nutrition-v2/model.ts');
+ const database=new DatabaseSync(':memory:');const driver=driverFor(database);
+ const files={async materialize(input){return {sourceEvidence:input.evidence,evidence:input.evidence,parsed:input.parsed,folderUri:`food://${input.id}`};},async validateStored(){},async writeRevision(){},async removeRevision(){},async removeFood(){}};
+ let revision=0;const store=createSQLiteFoodStore(driver,files,()=>new Date().toISOString(),()=>String(++revision));
+ const raw=JSON.stringify({name:'TEST API milk',columns:[{basis:'per_100ml',rows:[{nutrient:'energy',label:'能量',amount:'418.4',unit:'kJ'},{nutrient:'protein',label:'蛋白质',amount:'3.6',unit:'g'},{nutrient:'sodium',label:'钠',amount:null,unit:'mg'}]}]});
+ const review=parseLabel(raw);review.columns.forEach(c=>{c.reviewed=true;c.rows.forEach(r=>r.reviewed=true)});
+ const base=record();const bundle=labelEvidence(base.evidence.image,{review,rawResponse:raw,model:'fixture',endpoint:'https://mock.example/v1/chat/completions'});
+ const saved=await store.saveFood({...base,...bundle,review,status:'confirmed',barcodes:[]});
+ assert.equal((await store.listFoods()).length,1);assert.equal(database.prepare('SELECT count(*) n FROM food_barcodes').get().n,0);
+ const food=foodFromRecord(saved);assert.equal(contribution({food,amount:250,unit:'mL'},'protein').value,9);assert.equal(contribution({food,amount:250,unit:'mL'},'sodium').value,null);
+ const changed={...saved,review:structuredClone(saved.review)};changed.review.columns[0].rows[1].amount='3.8';const updated=await store.saveFood(changed);
+ assert.equal(updated.evidence.ocr.api.rawResponse,raw);assert.equal(updated.review.columns[0].rows[1].amount,'3.8');database.close();
+});
+test('fresh capture removes only unfinished new-food rows and protects saved foods, inventory and history',async()=>{
+ const {discardNewFoodDraftRows}=await import('../src/features/simple/draftFiles.ts');
+ const database=new DatabaseSync(':memory:');const driver=driverFor(database);const store=createSQLiteFoodStore(driver,{});await store.listFoods();
+ database.exec("INSERT INTO foods VALUES('saved','a','a','confirmed','TEST','','{}');INSERT INTO simple_inventory VALUES('stock','saved',2,'瓶',NULL,'a');INSERT INTO simple_capture_drafts VALUES('old','{}','a');INSERT INTO simple_capture_drafts VALUES('saved','{}','a');");
+ const rows=await driver.transaction(tx=>discardNewFoodDraftRows({getAllAsync:tx.all,runAsync:tx.run}));
+ assert.deepEqual(rows.map(r=>r.id),['old']);assert.equal(database.prepare('SELECT id FROM simple_capture_drafts').get().id,'saved');assert.equal(database.prepare('SELECT quantity FROM simple_inventory').get().quantity,2);assert.equal(database.prepare('SELECT count(*) n FROM foods').get().n,1);database.close();
 });

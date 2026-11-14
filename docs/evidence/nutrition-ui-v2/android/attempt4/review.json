@@ -1,0 +1,18 @@
+{
+  "run": 41193660053,
+  "uiArtifact": 13040350202,
+  "apkSource": "fd1b391bfa4d2a52c49a64f3851666a8b76a26fc",
+  "originalUiStatus": "failed",
+  "cause": "Parser did not allow optional visibleFrame between frame and visible=true.",
+  "manualKeyboardReview": "passed",
+  "inputBounds": [
+    55,
+    671,
+    1025,
+    982
+  ],
+  "keyboardTop": 1092,
+  "correctedParserCheckedAgainstActualDump": true,
+  "appRuntimeChangeRequired": false,
+  "offlineInitialFailure": "Emulator adb connection closed before APK install; only failed offline job retried."
+}

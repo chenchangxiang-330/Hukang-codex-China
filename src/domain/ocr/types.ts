@@ -61,6 +61,7 @@ export interface OcrStageTimings {
 
 /** Immutable OCR evidence. Parsed or user-confirmed values belong in separate records. */
 export interface OcrDocument {
+  readonly api?: { readonly endpoint: string; readonly model: string; readonly rawResponse: string; readonly recordedAt: string };
   readonly imageUri: string;
   readonly evidenceUri: string;
   readonly sourceImageHash: string;

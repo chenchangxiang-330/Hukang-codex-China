@@ -1,0 +1,102 @@
+{
+  "run": 41215968187,
+  "job": 124580441239,
+  "artifact": 13048283811,
+  "artifactSha256": "553e9d6edd52e30a965f9e895bf180576504d39c3b4b2ca4a0445ac7106bae1f",
+  "selectedFiles": [
+    {
+      "file": "review.png",
+      "sha256": "290999482174ed816bbe6fac7fa372f79b16ceabd1eacb8079bcdb81a6920598"
+    },
+    {
+      "file": "inventory.png",
+      "sha256": "cc46d3778428084deb90636d1ae6d356428a2ca588e7ef9a1bee9c149544c637"
+    },
+    {
+      "file": "edited-product.png",
+      "sha256": "09901b8024c3ca6a93ea4a27cc8e8599b3e9bfafaa98c6e39f788d363dff995f"
+    },
+    {
+      "file": "actual-personal-with-photos-share-sheet.png",
+      "sha256": "6024e7cd8e9b88b63636135bf20e4ccd9b16f399914322b1a773aeaa0544e27c"
+    }
+  ],
+  "exportsVerifiedAfterDownload": [
+    {
+      "file": "actual-catalogue.zip",
+      "sha256": "26f5edf4dfceebb4528b166cfd5f26620f0ecc6877d0dd64eb0076d922e3ba9b",
+      "bytes": 1253,
+      "entries": [
+        "data.json",
+        "files.json"
+      ],
+      "dataKeys": [
+        "schemaVersion",
+        "format",
+        "exportedAt",
+        "notice",
+        "products",
+        "images",
+        "photosIncluded",
+        "photoMetadataRemoved",
+        "mergePolicy"
+      ],
+      "verified": true
+    },
+    {
+      "file": "actual-catalogue-with-photos.zip",
+      "sha256": "8ff46dd2b78572a3212df8ae2ceebcbc198be6f00846239f467919a65c2e7439",
+      "bytes": 842684,
+      "entries": [
+        "data.json",
+        "photos/product-1-front.jpg",
+        "photos/product-1-nutrition.jpg",
+        "files.json"
+      ],
+      "dataKeys": [
+        "schemaVersion",
+        "format",
+        "exportedAt",
+        "notice",
+        "products",
+        "images",
+        "photosIncluded",
+        "photoMetadataRemoved",
+        "mergePolicy"
+      ],
+      "verified": true
+    },
+    {
+      "file": "actual-personal-with-photos.zip",
+      "sha256": "52be965bc7c8aad9cc169798c8c8eff317c8567f49f7fc9409f3d7c152f58ea6",
+      "bytes": 4500146,
+      "entries": [
+        "data.json",
+        "photos/food-mvwkln26-d-8knn3iw-front.jpg",
+        "photos/food-mvwkln26-d-8knn3iw-nutrition.jpg",
+        "photos/food-mvwkln26-d-8knn3iw-front-original.source",
+        "photos/food-mvwkln26-d-8knn3iw-original.source",
+        "evidence/food-mvwkln26-d-8knn3iw/current-ocr.json",
+        "evidence/food-mvwkln26-d-8knn3iw/current-parsed.json",
+        "evidence/food-mvwkln26-d-8knn3iw/current-evidence.json",
+        "evidence/food-mvwkln26-d-8knn3iw/revisions.json",
+        "evidence/food-mvwkln26-d-8knn3iw/current-source-document.json",
+        "evidence/food-mvwkln26-d-8knn3iw/current-source-ocr.json",
+        "files.json"
+      ],
+      "dataKeys": [
+        "schemaVersion",
+        "format",
+        "exportedAt",
+        "photosIncluded",
+        "notice",
+        "products",
+        "images",
+        "packageEvidence",
+        "inventory",
+        "pending"
+      ],
+      "verified": true
+    }
+  ]
+}

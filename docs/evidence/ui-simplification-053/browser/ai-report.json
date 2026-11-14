@@ -1,0 +1,27 @@
+{
+  "kind": "browser-shared-RN-UI-mock-HTTP",
+  "liveProviderTested": false,
+  "nativeDevice": false,
+  "checks": [
+    "Explicit minimal test succeeds only after valid model content; actual endpoint/model visible; key masked and not reloaded.",
+    "Meal uses settings config; text-only preview, unknown sodium and half-portion recomputation before confirmation.",
+    "Date/meal edits move intake to the correct date; save feedback stays beside the clicked button and clears on further edits.",
+    "Isolated browser store: explicit confirm, duplicate guard, record editor, shared nutrition summary and confirmed deletion; no user database touched.",
+    "Changed model used by next meal; unsupported/custom vision never uploads photo.",
+    "Authentication/rate/malformed responses fail visibly once; cancel restores controls; clear prevents reuse of old credentials.",
+    "Known official vision model sends image only after opt-in using documented multimodal payload (provider response mocked).",
+    "Package image uses separate prompt/schema; human-confirmed name becomes a library search, never an automatic match or nutrition fact."
+  ],
+  "screenshots": [
+    "browser-settings-mock-success.png",
+    "browser-meal-mock-preview.png",
+    "browser-confirmed-meal-nutrition.png",
+    "browser-edit-date-visible-feedback.png",
+    "browser-settings-auth-rate-format.png",
+    "browser-package-candidate-mock.png",
+    "browser-ai-settings-320.png"
+  ],
+  "errors": [],
+  "requestCount": 10,
+  "status": "passed"
+}

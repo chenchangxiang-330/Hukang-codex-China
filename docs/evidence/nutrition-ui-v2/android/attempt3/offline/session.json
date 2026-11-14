@@ -1,0 +1,3159 @@
+{
+  "status": "passed",
+  "steps": [
+    {
+      "tap": "^我的$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "我的",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[775,1649][1009,1806]"
+      }
+    },
+    {
+      "tap": "^今日$",
+      "node": {
+        "index": "0",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "今日",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[71,1649][305,1806]"
+      }
+    },
+    {
+      "tap": "^拍一拍$",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "拍一拍",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[137,1463][944,1595]"
+      }
+    },
+    {
+      "tap": "^包装食品$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "包装食品",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[554,592][1029,807]"
+      }
+    },
+    {
+      "tap": "^扫描 / 输入条码$",
+      "node": {
+        "index": "11",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "扫描 / 输入条码",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1418][972,1550]"
+      }
+    },
+    {
+      "tap": "^从相册识别条码$",
+      "node": {
+        "index": "9",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册识别条码",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1162][1028,1304]"
+      }
+    },
+    {
+      "pickerStage": "initial",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "media_menu",
+      "evidence": "picker-1-6"
+    },
+    {
+      "pickerAction": "media_menu",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,922][1080,1048]"
+      }
+    },
+    {
+      "pickerStage": "media_menu",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "browse",
+      "evidence": "picker-1-8"
+    },
+    {
+      "pickerAction": "browse",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,978][1028,1035]"
+      }
+    },
+    {
+      "pickerStage": "browse",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": null,
+      "evidence": "picker-1-10"
+    },
+    {
+      "pickerStage": "browse",
+      "packages": [
+        "com.google.android.documentsui"
+      ],
+      "nextAction": "fixture",
+      "evidence": "picker-1-11"
+    },
+    {
+      "pickerAction": "fixture",
+      "node": {
+        "index": "0",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "00-barcode.png, 4.74 kB, 9:57 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[64,795][366,1098]"
+      }
+    },
+    {
+      "photoReady": "从相册识别条码",
+      "nodes": [
+        {
+          "index": "10",
+          "text": "先记下它的样子",
+          "resource-id": "",
+          "class": "android.view.View",
+          "package": "com.hukang.china",
+          "content-desc": "",
+          "checkable": "false",
+          "checked": "false",
+          "clickable": "false",
+          "enabled": "true",
+          "focusable": "false",
+          "focused": "false",
+          "scrollable": "false",
+          "long-clickable": "false",
+          "password": "false",
+          "selected": "false",
+          "bounds": "[53,943][1028,1043]"
+        }
+      ]
+    },
+    {
+      "tap": "^从相册选择包装$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册选择包装",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,438][1028,580]"
+      }
+    },
+    {
+      "pickerStage": "initial",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "media_menu",
+      "evidence": "picker-2-15"
+    },
+    {
+      "pickerAction": "media_menu",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,922][1080,1048]"
+      }
+    },
+    {
+      "pickerStage": "media_menu",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "browse",
+      "evidence": "picker-2-17"
+    },
+    {
+      "pickerAction": "browse",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,978][1028,1035]"
+      }
+    },
+    {
+      "pickerStage": "browse",
+      "packages": [
+        "com.google.android.documentsui"
+      ],
+      "nextAction": "fixture",
+      "evidence": "picker-2-19"
+    },
+    {
+      "pickerAction": "fixture",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "01-milk.jpg, 233 kB, 9:55 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[388,795][691,1098]"
+      }
+    },
+    {
+      "photoReady": "从相册选择包装",
+      "nodes": [
+        {
+          "index": "14",
+          "text": "",
+          "resource-id": "",
+          "class": "android.widget.Button",
+          "package": "com.hukang.china",
+          "content-desc": "重新拍包装",
+          "checkable": "false",
+          "checked": "false",
+          "clickable": "true",
+          "enabled": "true",
+          "focusable": "true",
+          "focused": "false",
+          "scrollable": "false",
+          "long-clickable": "false",
+          "password": "false",
+          "selected": "false",
+          "bounds": "[53,457][1028,599]"
+        },
+        {
+          "index": "0",
+          "text": "重新拍包装",
+          "resource-id": "",
+          "class": "android.widget.TextView",
+          "package": "com.hukang.china",
+          "content-desc": "",
+          "checkable": "false",
+          "checked": "false",
+          "clickable": "false",
+          "enabled": "true",
+          "focusable": "false",
+          "focused": "false",
+          "scrollable": "false",
+          "long-clickable": "false",
+          "password": "false",
+          "selected": "false",
+          "bounds": "[435,496][645,559]"
+        }
+      ]
+    },
+    {
+      "tap": "^商品名称$",
+      "node": {
+        "index": "20",
+        "text": "例如：纯牛奶",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "商品名称",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1391][974,1529]"
+      }
+    },
+    {
+      "focusedField": "商品名称",
+      "node": {
+        "index": "20",
+        "text": "例如：纯牛奶",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "商品名称",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1391][974,1529]"
+      }
+    },
+    {
+      "tap": "^品牌（选填）$",
+      "node": {
+        "index": "22",
+        "text": "包装上的品牌",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "品牌（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1359][974,1496]"
+      }
+    },
+    {
+      "focusedField": "品牌（选填）",
+      "node": {
+        "index": "22",
+        "text": "包装上的品牌",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "品牌（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1359][974,1496]"
+      }
+    },
+    {
+      "tap": "^整包净含量\\ /\\ 规格（选填）$",
+      "node": {
+        "index": "24",
+        "text": "例如：250 mL",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "整包净含量 / 规格（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1172][974,1310]"
+      }
+    },
+    {
+      "focusedField": "整包净含量 / 规格（选填）",
+      "node": {
+        "index": "24",
+        "text": "例如：250 mL",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "整包净含量 / 规格（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1172][974,1310]"
+      }
+    },
+    {
+      "tap": "^下一步，拍营养表$",
+      "node": {
+        "index": "26",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "下一步，拍营养表",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1508][1028,1650]"
+      }
+    },
+    {
+      "tap": "^继续上次未完成的录入$",
+      "node": {
+        "index": "26",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "继续上次未完成的录入",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1105][1028,1247]"
+      }
+    },
+    {
+      "tap": "^从相册选择营养表$",
+      "node": {
+        "index": "25",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册选择营养表",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1329][1028,1471]"
+      }
+    },
+    {
+      "pickerStage": "initial",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "media_menu",
+      "evidence": "picker-3-31"
+    },
+    {
+      "pickerAction": "media_menu",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,922][1080,1048]"
+      }
+    },
+    {
+      "pickerStage": "media_menu",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "browse",
+      "evidence": "picker-3-33"
+    },
+    {
+      "pickerAction": "browse",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,978][1028,1035]"
+      }
+    },
+    {
+      "pickerStage": "browse",
+      "packages": [
+        "com.google.android.documentsui"
+      ],
+      "nextAction": "fixture",
+      "evidence": "picker-3-35"
+    },
+    {
+      "pickerAction": "fixture",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "01-milk.jpg, 233 kB, 9:55 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[388,795][691,1098]"
+      }
+    },
+    {
+      "photoReady": "从相册选择营养表",
+      "nodes": [
+        {
+          "index": "11",
+          "text": "最后，核对一下",
+          "resource-id": "",
+          "class": "android.view.View",
+          "package": "com.hukang.china",
+          "content-desc": "",
+          "checkable": "false",
+          "checked": "false",
+          "clickable": "false",
+          "enabled": "true",
+          "focusable": "false",
+          "focused": "false",
+          "scrollable": "false",
+          "long-clickable": "false",
+          "password": "false",
+          "selected": "false",
+          "bounds": "[53,1025][1028,1125]"
+        }
+      ]
+    },
+    {
+      "tap": "^调整照片方向或裁剪$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "调整照片方向或裁剪",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1378][1028,1519]"
+      }
+    },
+    {
+      "tap": "^右转90°$",
+      "node": {
+        "index": "16",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "右转90°",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,869][972,1011]"
+      }
+    },
+    {
+      "tap": "^左转90°$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "左转90°",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,869][524,1011]"
+      }
+    },
+    {
+      "tap": "^选择裁剪区域$",
+      "node": {
+        "index": "17",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "选择裁剪区域",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1052][972,1193]"
+      }
+    },
+    {
+      "zeroAreaCropApplyEnabled": false
+    },
+    {
+      "tap": "^应用裁剪$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "应用裁剪",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[63,1239][1017,1381]"
+      }
+    },
+    {
+      "tap": "^使用当前照片重新识别$",
+      "node": {
+        "index": "18",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "使用当前照片重新识别",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1236][972,1378]"
+      }
+    },
+    {
+      "tap": "^每100mL$",
+      "node": {
+        "index": "29",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "每100mL",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[325,879][552,1005]"
+      }
+    },
+    {
+      "tap": "^能量含量$",
+      "node": {
+        "index": "34",
+        "text": "309",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "能量含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1276][526,1414]"
+      }
+    },
+    {
+      "focusedField": "能量含量",
+      "node": {
+        "index": "34",
+        "text": "309",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "能量含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1276][526,1414]"
+      }
+    },
+    {
+      "tap": "^能量\\ NRV%$",
+      "node": {
+        "index": "35",
+        "text": "4",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "能量 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1276][974,1414]"
+      }
+    },
+    {
+      "focusedField": "能量 NRV%",
+      "node": {
+        "index": "35",
+        "text": "4",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "能量 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1276][974,1414]"
+      }
+    },
+    {
+      "manualUnit": "能量",
+      "unit": "kJ",
+      "node": {
+        "index": "36",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "能量单位 kJ",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[108,1444][222,1570]"
+      }
+    },
+    {
+      "tap": "^蛋白质含量$",
+      "node": {
+        "index": "42",
+        "text": "3.6",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,257][526,356]"
+      }
+    },
+    {
+      "focusedField": "蛋白质含量",
+      "node": {
+        "index": "42",
+        "text": "3.6",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,257][526,394]"
+      }
+    },
+    {
+      "tap": "^蛋白质\\ NRV%$",
+      "node": {
+        "index": "43",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,257][974,394]"
+      }
+    },
+    {
+      "focusedField": "蛋白质 NRV%",
+      "node": {
+        "index": "43",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,257][974,394]"
+      }
+    },
+    {
+      "manualUnit": "蛋白质",
+      "unit": "g",
+      "node": {
+        "index": "43",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质单位 g",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[108,422][203,548]"
+      }
+    },
+    {
+      "tap": "^脂肪含量$",
+      "node": {
+        "index": "50",
+        "text": "4.4",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "脂肪含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,833][526,970]"
+      }
+    },
+    {
+      "focusedField": "脂肪含量",
+      "node": {
+        "index": "50",
+        "text": "4.4",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "脂肪含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,833][526,971]"
+      }
+    },
+    {
+      "tap": "^脂肪\\ NRV%$",
+      "node": {
+        "index": "51",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "脂肪 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,833][974,970]"
+      }
+    },
+    {
+      "focusedField": "脂肪 NRV%",
+      "node": {
+        "index": "51",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "脂肪 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,833][974,971]"
+      }
+    },
+    {
+      "manualUnit": "脂肪",
+      "unit": "g",
+      "node": {
+        "index": "51",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "脂肪单位 g",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[108,987][203,1113]"
+      }
+    },
+    {
+      "tap": "^碳水化合物含量$",
+      "node": {
+        "index": "58",
+        "text": "5.0",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "碳水化合物含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1399][526,1537]"
+      }
+    },
+    {
+      "focusedField": "碳水化合物含量",
+      "node": {
+        "index": "58",
+        "text": "5.0",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "碳水化合物含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1399][526,1536]"
+      }
+    },
+    {
+      "tap": "^碳水化合物\\ NRV%$",
+      "node": {
+        "index": "59",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "碳水化合物 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1399][974,1537]"
+      }
+    },
+    {
+      "focusedField": "碳水化合物 NRV%",
+      "node": {
+        "index": "59",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "碳水化合物 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1399][974,1536]"
+      }
+    },
+    {
+      "manualUnit": "碳水化合物",
+      "unit": "g",
+      "node": {
+        "index": "59",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "碳水化合物单位 g",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[108,1553][203,1679]"
+      }
+    },
+    {
+      "tap": "^钠含量$",
+      "node": {
+        "index": "66",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "钠含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1069][526,1207]"
+      }
+    },
+    {
+      "focusedField": "钠含量",
+      "node": {
+        "index": "66",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "钠含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1069][526,1206]"
+      }
+    },
+    {
+      "tap": "^钠\\ NRV%$",
+      "node": {
+        "index": "67",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "钠 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1069][974,1207]"
+      }
+    },
+    {
+      "focusedField": "钠 NRV%",
+      "node": {
+        "index": "67",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "钠 NRV%",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[556,1069][974,1206]"
+      }
+    },
+    {
+      "manualUnit": "钠",
+      "unit": "g",
+      "node": {
+        "index": "67",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "钠单位 g",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[108,1223][203,1349]"
+      }
+    },
+    {
+      "manualUnit": "钠",
+      "unit": "mg",
+      "node": {
+        "index": "68",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "钠单位 mg",
+        "checkable": "true",
+        "checked": "true",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "true",
+        "bounds": "[225,1223][353,1349]"
+      }
+    },
+    {
+      "tap": "我已对照照片",
+      "node": {
+        "index": "70",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.CheckBox",
+        "package": "com.hukang.china",
+        "content-desc": "我已对照照片，逐项核对以上数值、单位、NRV% 和计量基准",
+        "checkable": "true",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1523][972,1708]"
+      }
+    },
+    {
+      "tap": "^确认并保存食品$",
+      "node": {
+        "index": "71",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "确认并保存食品",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1750][972,1857]"
+      }
+    },
+    {
+      "tap": "^加入我的库存$",
+      "node": {
+        "index": "43",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "加入我的库存",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,877][972,1018]"
+      }
+    },
+    {
+      "tap": "^本次购入数量$",
+      "node": {
+        "index": "10",
+        "text": "1",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "本次购入数量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[260,1471][822,1608]"
+      }
+    },
+    {
+      "focusedField": "本次购入数量",
+      "node": {
+        "index": "10",
+        "text": "1",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "本次购入数量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[260,1471][822,1608]"
+      }
+    },
+    {
+      "tap": "^瓶$",
+      "node": {
+        "index": "14",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "瓶",
+        "checkable": "true",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[240,1749][351,1857]"
+      }
+    },
+    {
+      "tap": "^确认加入库存$",
+      "node": {
+        "index": "23",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "确认加入库存",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1734][1028,1857]"
+      }
+    },
+    {
+      "tap": "^拍一拍$",
+      "node": {
+        "index": "1",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "拍一拍",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[137,1463][944,1595]"
+      }
+    },
+    {
+      "tap": "^包装食品$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "包装食品",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[554,592][1029,807]"
+      }
+    },
+    {
+      "tap": "^扫描 / 输入条码$",
+      "node": {
+        "index": "11",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "扫描 / 输入条码",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1418][972,1550]"
+      }
+    },
+    {
+      "tap": "^从相册识别条码$",
+      "node": {
+        "index": "9",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从相册识别条码",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,468][1028,610]"
+      }
+    },
+    {
+      "pickerStage": "initial",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "media_menu",
+      "evidence": "picker-4-83"
+    },
+    {
+      "pickerAction": "media_menu",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.ImageView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "More options",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[954,280][1080,406]"
+      }
+    },
+    {
+      "pickerStage": "media_menu",
+      "packages": [
+        "com.google.android.providers.media.module"
+      ],
+      "nextAction": "browse",
+      "evidence": "picker-4-85"
+    },
+    {
+      "pickerAction": "browse",
+      "node": {
+        "index": "0",
+        "text": "Browse…",
+        "resource-id": "com.google.android.providers.media.module:id/title",
+        "class": "android.widget.TextView",
+        "package": "com.google.android.providers.media.module",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "false",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[597,336][1028,393]"
+      }
+    },
+    {
+      "pickerStage": "browse",
+      "packages": [
+        "com.google.android.documentsui"
+      ],
+      "nextAction": "fixture",
+      "evidence": "picker-4-87"
+    },
+    {
+      "pickerAction": "fixture",
+      "node": {
+        "index": "0",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.LinearLayout",
+        "package": "com.google.android.documentsui",
+        "content-desc": "00-barcode.png, 4.74 kB, 9:57 AM",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "false",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[64,795][366,1098]"
+      }
+    },
+    {
+      "photoReady": "从相册识别条码",
+      "nodes": [
+        {
+          "index": "1",
+          "text": "护康 › 商品详情",
+          "resource-id": "",
+          "class": "android.widget.TextView",
+          "package": "com.hukang.china",
+          "content-desc": "",
+          "checkable": "false",
+          "checked": "false",
+          "clickable": "false",
+          "enabled": "true",
+          "focusable": "false",
+          "focused": "false",
+          "scrollable": "false",
+          "long-clickable": "false",
+          "password": "false",
+          "selected": "false",
+          "bounds": "[330,133][1028,186]"
+        }
+      ]
+    },
+    {
+      "tap": "^加入我的库存$",
+      "node": {
+        "index": "41",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "加入我的库存",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,893][972,1034]"
+      }
+    },
+    {
+      "tap": "^本次购入数量$",
+      "node": {
+        "index": "10",
+        "text": "1",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "本次购入数量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[260,1471][822,1608]"
+      }
+    },
+    {
+      "focusedField": "本次购入数量",
+      "node": {
+        "index": "10",
+        "text": "1",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "本次购入数量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[260,1471][822,1608]"
+      }
+    },
+    {
+      "tap": "^瓶$",
+      "node": {
+        "index": "14",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.RadioButton",
+        "package": "com.hukang.china",
+        "content-desc": "瓶",
+        "checkable": "true",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[240,1749][351,1857]"
+      }
+    },
+    {
+      "tap": "^确认加入库存$",
+      "node": {
+        "index": "23",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "确认加入库存",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1244][1028,1386]"
+      }
+    },
+    {
+      "tap": "^食品库$",
+      "node": {
+        "index": "2",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "食品库",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[541,1649][776,1806]"
+      }
+    },
+    {
+      "tap": "^我的库存$",
+      "node": {
+        "index": "5",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "我的库存",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[546,498][1018,624]"
+      }
+    },
+    {
+      "tap": "^用掉1瓶$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "用掉1瓶",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[576,973][815,1115]"
+      }
+    },
+    {
+      "tap": "^用掉1瓶$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "用掉1瓶",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[576,973][815,1114]"
+      }
+    },
+    {
+      "tap": "^从已有食品添加$",
+      "node": {
+        "index": "9",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "从已有食品添加",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[554,216][1029,358]"
+      }
+    },
+    {
+      "tap": "^Test Milk$",
+      "node": {
+        "index": "10",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "Test Milk",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1337][1028,1657]"
+      }
+    },
+    {
+      "tap": "^核对或修改商品资料$",
+      "node": {
+        "index": "43",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "核对或修改商品资料",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1296][1028,1438]"
+      }
+    },
+    {
+      "tap": "^整包净含量\\ /\\ 规格（选填）$",
+      "node": {
+        "index": "15",
+        "text": "250 mL",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "整包净含量 / 规格（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,400][974,538]"
+      }
+    },
+    {
+      "focusedField": "整包净含量 / 规格（选填）",
+      "node": {
+        "index": "15",
+        "text": "250 mL",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "整包净含量 / 规格（选填）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,400][974,538]"
+      }
+    },
+    {
+      "tap": "^蛋白质含量$",
+      "node": {
+        "index": "34",
+        "text": "3.6",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1430][526,1567]"
+      }
+    },
+    {
+      "focusedField": "蛋白质含量",
+      "node": {
+        "index": "34",
+        "text": "3.6",
+        "resource-id": "",
+        "class": "android.widget.EditText",
+        "package": "com.hukang.china",
+        "content-desc": "蛋白质含量",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "true",
+        "scrollable": "false",
+        "long-clickable": "true",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1430][526,1567]"
+      }
+    },
+    {
+      "tap": "我已对照照片",
+      "node": {
+        "index": "63",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.CheckBox",
+        "package": "com.hukang.china",
+        "content-desc": "我已对照照片，逐项核对以上数值、单位、NRV% 和计量基准",
+        "checkable": "true",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1061][972,1246]"
+      }
+    },
+    {
+      "tap": "^确认并保存食品$",
+      "node": {
+        "index": "64",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "确认并保存食品",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1288][972,1430]"
+      }
+    },
+    {
+      "tap": "^暂不入库，返回首页$",
+      "node": {
+        "index": "46",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "暂不入库，返回首页",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[53,1719][1028,1857]"
+      }
+    },
+    {
+      "tap": "^我的$",
+      "node": {
+        "index": "3",
+        "text": "",
+        "resource-id": "",
+        "class": "android.view.View",
+        "package": "com.hukang.china",
+        "content-desc": "我的",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[775,1649][1009,1806]"
+      }
+    },
+    {
+      "tap": "^导出食品资料包$",
+      "node": {
+        "index": "15",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "导出食品资料包",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1422][972,1564]"
+      }
+    },
+    {
+      "tap": "^生成文件$",
+      "node": {
+        "index": "1",
+        "text": "生成文件",
+        "resource-id": "android:id/button1",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[768,1053][978,1195]"
+      }
+    },
+    {
+      "tap": ".*",
+      "node": {
+        "index": "16",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Switch",
+        "package": "com.hukang.china",
+        "content-desc": "包含包装与营养表照片",
+        "checkable": "true",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[850,1452][972,1523]"
+      }
+    },
+    {
+      "tap": "^导出食品资料包$",
+      "node": {
+        "index": "17",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "导出食品资料包",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,823][972,965]"
+      }
+    },
+    {
+      "tap": "^生成文件$",
+      "node": {
+        "index": "1",
+        "text": "生成文件",
+        "resource-id": "android:id/button1",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[768,1084][978,1226]"
+      }
+    },
+    {
+      "tap": "^导出个人数据（含库存）$",
+      "node": {
+        "index": "19",
+        "text": "",
+        "resource-id": "",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "导出个人数据（含库存）",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[108,1160][972,1302]"
+      }
+    },
+    {
+      "tap": "^生成文件$",
+      "node": {
+        "index": "1",
+        "text": "生成文件",
+        "resource-id": "android:id/button1",
+        "class": "android.widget.Button",
+        "package": "com.hukang.china",
+        "content-desc": "",
+        "checkable": "false",
+        "checked": "false",
+        "clickable": "true",
+        "enabled": "true",
+        "focusable": "true",
+        "focused": "false",
+        "scrollable": "false",
+        "long-clickable": "false",
+        "password": "false",
+        "selected": "false",
+        "bounds": "[768,1114][978,1256]"
+      }
+    }
+  ],
+  "physicalCameraVerified": false,
+  "limitation": "Emulator, not OPPO hardware; package identity text is entered manually.",
+  "apkSha256": "fb43730d96c4299c10fd7fff3ec0aacd9c61aed61b1e17c99221f385f6f80928",
+  "sourceCommit": "e7e0dae22dca1b9f1b253761b990908aa64b6b1a",
+  "offlineRules": [
+    "-P OUTPUT ACCEPT\n-A OUTPUT -j DROP\n-A OUTPUT -j oem_out\n-A OUTPUT -j fw_OUTPUT\n-A OUTPUT -j st_OUTPUT\n-A OUTPUT -j bw_OUTPUT",
+    "-P OUTPUT ACCEPT\n-A OUTPUT -j DROP\n-A OUTPUT -j oem_out\n-A OUTPUT -j fw_OUTPUT\n-A OUTPUT -j st_OUTPUT\n-A OUTPUT -j bw_OUTPUT"
+  ],
+  "disabledEmulatorPackages": {
+    "com.google.android.apps.wellbeing": "Package com.google.android.apps.wellbeing new state: disabled-user",
+    "com.google.android.googlequicksearchbox": "Package com.google.android.googlequicksearchbox new state: disabled-user",
+    "com.google.android.gms": "Package com.google.android.gms new state: disabled-user",
+    "com.google.android.gsf": "Package com.google.android.gsf new state: disabled-user",
+    "com.google.android.apps.photos": "Package com.google.android.apps.photos new state: disabled-user"
+  },
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "fixtures": {
+    "syntheticBarcode": "e50aae0bea21973855dd94ef4426a90b1bacc81a647d16ec4b5e6a4290baac58",
+    "packagingPhoto": "dc87cc54d0a8a4a547d642f46ffb5ab2cbbaa677e2d8316dd4934690332d7103",
+    "source": {
+      "dataset": "Open Food Facts",
+      "productUrl": "https://world.openfoodfacts.org/product/6923644266066",
+      "imageUrl": "https://images.openfoodfacts.org/images/products/692/364/426/6066/nutrition_zh.15.full.jpg",
+      "imageId": "4",
+      "uploader": "macrofactor",
+      "license": "CC-BY-SA-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "termsUrl": "https://world.openfoodfacts.org/terms-of-use",
+      "changes": "Unmodified source image; manual transcription and separate ROI coordinates added.",
+      "verifiedOn": "2026-09-26"
+    },
+    "limitation": "Archived real nutrition-side package photo reused for cover input; not a new front-facing camera photo. Synthetic barcode and manual identity are test-only."
+  },
+  "pickerInvocations": [
+    {
+      "button": "从相册识别条码",
+      "fixture": "00-barcode"
+    },
+    {
+      "button": "从相册选择包装",
+      "fixture": "01-milk"
+    },
+    {
+      "button": "从相册选择营养表",
+      "fixture": "01-milk"
+    },
+    {
+      "button": "从相册识别条码",
+      "fixture": "00-barcode"
+    }
+  ],
+  "pendingDraftId": "food-mvw89w4m-d-ebf74vd",
+  "nativeOcrMeasurements": {
+    "52df55f3-87bc-457f-95b5-f284498dab76.json": {
+      "sha256": "3f6aa5fefd863605437327cb7c7bbe93eda1f933050b75225f59313bfb46cadd",
+      "modelLoadMs": 1889,
+      "modelColdLoadMs": 1300,
+      "imageDecodeMs": 50,
+      "ocrMs": 89181,
+      "totalMs": 91206,
+      "timings": {
+        "detPreprocessMs": 158,
+        "detInferenceMs": 9266,
+        "detPostprocessMs": 47,
+        "recPreprocessMs": 115,
+        "recInferenceMs": 79345,
+        "recPostprocessMs": 60,
+        "pipelineOverheadMs": 190,
+        "detInputShape": [
+          1,
+          3,
+          960,
+          736
+        ],
+        "recInputShapes": [
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            354
+          ],
+          [
+            1,
+            3,
+            48,
+            377
+          ],
+          [
+            1,
+            3,
+            48,
+            396
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            509
+          ],
+          [
+            1,
+            3,
+            48,
+            427
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            333
+          ],
+          [
+            1,
+            3,
+            48,
+            428
+          ],
+          [
+            1,
+            3,
+            48,
+            415
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            401
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ]
+        ]
+      },
+      "memory": {
+        "observedPeakPssKb": 560027,
+        "observedPeakJavaHeapBytes": 47512784,
+        "observedPeakNativeHeapBytes": 295478528,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1824
+      }
+    },
+    "12e020d8-f490-4a3b-be46-bec9890a30a8.json": {
+      "sha256": "879148cede603214e89092c5d969475d931eea7446175ca0115b8f0870edfdb6",
+      "modelLoadMs": 0,
+      "modelColdLoadMs": 1300,
+      "imageDecodeMs": 55,
+      "ocrMs": 85330,
+      "totalMs": 85442,
+      "timings": {
+        "detPreprocessMs": 177,
+        "detInferenceMs": 8653,
+        "detPostprocessMs": 33,
+        "recPreprocessMs": 93,
+        "recInferenceMs": 76258,
+        "recPostprocessMs": 33,
+        "pipelineOverheadMs": 83,
+        "detInputShape": [
+          1,
+          3,
+          960,
+          736
+        ],
+        "recInputShapes": [
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            350
+          ],
+          [
+            1,
+            3,
+            48,
+            358
+          ],
+          [
+            1,
+            3,
+            48,
+            388
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            520
+          ],
+          [
+            1,
+            3,
+            48,
+            429
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            337
+          ],
+          [
+            1,
+            3,
+            48,
+            440
+          ],
+          [
+            1,
+            3,
+            48,
+            429
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ],
+          [
+            1,
+            3,
+            48,
+            391
+          ],
+          [
+            1,
+            3,
+            48,
+            320
+          ]
+        ]
+      },
+      "memory": {
+        "observedPeakPssKb": 709750,
+        "observedPeakJavaHeapBytes": 44691296,
+        "observedPeakNativeHeapBytes": 472480736,
+        "samplingIntervalMs": 50,
+        "sampleCount": 1708
+      }
+    }
+  },
+  "cropGesture": {
+    "previewBounds": [
+      63,
+      409,
+      1017,
+      1196
+    ],
+    "sourceDimensions": [
+      1280,
+      1700
+    ],
+    "start": [
+      245,
+      410
+    ],
+    "end": [
+      835,
+      1195
+    ]
+  },
+  "imageTransformUi": {
+    "rotationsDegrees": [
+      90,
+      -90
+    ],
+    "crop": "near-full image selected by touch; empty selection disabled",
+    "actualNativeCrop": {
+      "kind": "crop",
+      "left": 3,
+      "top": 2,
+      "right": 1277,
+      "bottom": 1698
+    },
+    "actualDimensions": [
+      1274,
+      1696
+    ],
+    "physicalCameraVerified": false
+  },
+  "manualReviewExpected": [
+    [
+      "能量",
+      "309",
+      "kJ",
+      "4"
+    ],
+    [
+      "蛋白质",
+      "3.6",
+      "g",
+      "6"
+    ],
+    [
+      "脂肪",
+      "4.4",
+      "g",
+      "7"
+    ],
+    [
+      "碳水化合物",
+      "5.0",
+      "g",
+      "2"
+    ],
+    [
+      "钠",
+      "58",
+      "mg",
+      "3"
+    ]
+  ],
+  "manualUnitCorrection": {
+    "nutrient": "钠",
+    "from": "g",
+    "to": "mg",
+    "reason": "deliberately selected wrong unit in UI, then corrected; not claimed as an OCR error"
+  },
+  "savedProduct": {
+    "id": "food-mvw89w4m-d-ebf74vd",
+    "created_at": "2026-10-31T10:05:55.781Z",
+    "updated_at": "2026-10-31T10:05:56.050Z",
+    "status": "confirmed",
+    "name": "Test Milk",
+    "brand": "Test Brand",
+    "review_json": "{\"name\":\"Test Milk\",\"brand\":\"Test Brand\",\"ingredients\":\"\",\"columns\":[{\"id\":\"column-1\",\"basisKind\":\"per_100ml\",\"basisRawText\":\"每100mL\",\"servingAmount\":\"\",\"servingUnit\":\"unknown\",\"servingSizeNotDeclared\":false,\"reviewed\":true,\"rows\":[{\"nutrient\":\"energy\",\"label\":\"能量\",\"amount\":\"309\",\"unit\":\"kJ\",\"nrvPercent\":\"4\",\"nrvNotDeclared\":false,\"reviewed\":true},{\"nutrient\":\"protein\",\"label\":\"蛋白质\",\"amount\":\"3.6\",\"unit\":\"g\",\"nrvPercent\":\"6\",\"nrvNotDeclared\":false,\"reviewed\":true},{\"nutrient\":\"fat\",\"label\":\"脂肪\",\"amount\":\"4.4\",\"unit\":\"g\",\"nrvPercent\":\"7\",\"nrvNotDeclared\":false,\"reviewed\":true},{\"nutrient\":\"carbohydrate\",\"label\":\"碳水化合物\",\"amount\":\"5.0\",\"unit\":\"g\",\"nrvPercent\":\"2\",\"nrvNotDeclared\":false,\"reviewed\":true},{\"nutrient\":\"sodium\",\"label\":\"钠\",\"amount\":\"58\",\"unit\":\"mg\",\"nrvPercent\":\"3\",\"nrvNotDeclared\":false,\"reviewed\":true}]}],\"specification\":\"250 mL\"}"
+  },
+  "twoPurchases": {
+    "foodCount": 1,
+    "purchaseRows": 2,
+    "totalPackages": 3
+  },
+  "exports": [
+    {
+      "file": "actual-catalogue.zip",
+      "sha256": "e06da8da4a0633c9cc45b25738ad2dc29a77de1d65ff234302897d6dced18012",
+      "bytes": 1252,
+      "entries": [
+        "data.json",
+        "files.json"
+      ]
+    },
+    {
+      "file": "actual-catalogue-with-photos.zip",
+      "sha256": "1d7f8cdcc7f193ffbae70fb227efb76385e994be6458a85506c05c4ab297dcb2",
+      "bytes": 842682,
+      "entries": [
+        "data.json",
+        "photos/product-1-front.jpg",
+        "photos/product-1-nutrition.jpg",
+        "files.json"
+      ]
+    },
+    {
+      "file": "actual-personal-with-photos.zip",
+      "sha256": "df0bc7a1198c5b9b190eb355894529488bd0816f3c9acddac4129437ca9a06ca",
+      "bytes": 4500063,
+      "entries": [
+        "data.json",
+        "photos/food-mvw89w4m-d-ebf74vd-front.jpg",
+        "photos/food-mvw89w4m-d-ebf74vd-nutrition.jpg",
+        "photos/food-mvw89w4m-d-ebf74vd-front-original.source",
+        "photos/food-mvw89w4m-d-ebf74vd-original.source",
+        "evidence/food-mvw89w4m-d-ebf74vd/current-ocr.json",
+        "evidence/food-mvw89w4m-d-ebf74vd/current-parsed.json",
+        "evidence/food-mvw89w4m-d-ebf74vd/current-evidence.json",
+        "evidence/food-mvw89w4m-d-ebf74vd/revisions.json",
+        "evidence/food-mvw89w4m-d-ebf74vd/current-source-document.json",
+        "evidence/food-mvw89w4m-d-ebf74vd/current-source-ocr.json",
+        "files.json"
+      ]
+    }
+  ],
+  "sameApkReinstall": {
+    "result": "Performing Streamed Install\nSuccess",
+    "databaseDumpSha256": "730c5222e3e0109a69a9a14a0a19ec33e66ec8b43fc62cfc14f7f341d5082756",
+    "allTablesPreserved": true,
+    "olderSignedAppUpgradeVerified": false
+  },
+  "verifiedFlow": [
+    "imageBarcodeDecode",
+    "draftResumeAfterForceStop",
+    "realPackagingPhotoLocalOcr",
+    "rotateAndCropThenLocalOcr",
+    "allFiveManualValuesUnitsNrvAndBasisPersisted",
+    "wrongUnitSelectedThenCorrected",
+    "imageRescanHitsWithoutOcr",
+    "separateInventoryPurchases",
+    "consumeAndRemoveInventory",
+    "editDecimalPreservesOcrAndRevisions",
+    "catalogueExportExcludesInventory",
+    "cataloguePhotoExportHasNoExif",
+    "personalExportContainsPhotosAndHashedEvidence",
+    "exportsPreserveOriginalImageBytes"
+  ],
+  "deviceExecutionVerified": true
+}

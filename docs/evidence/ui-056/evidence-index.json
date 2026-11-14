@@ -1,0 +1,116 @@
+{
+  "apkSource": "1fb7a8f8974d1c4513725a698777194408da8a03",
+  "apkSha256": "1d837b51d74951fdd3f07108e6b1993d625f57ceaadcf217b50ffe4aab80d07e",
+  "uiTestSource": "cbcdd07a36731e9935d1770ecbba9ad74171232b",
+  "uiRun": 42475540642,
+  "flowsRun": 42474337573,
+  "offlineRun": 42474339843,
+  "imageLargeRun": 42474342359,
+  "allSuitesPassed": true,
+  "realProviderVerified": false,
+  "physicalDeviceVerified": false,
+  "screenshots": [
+    {
+      "file": "android-320-font150-empty.png",
+      "sha256": "65fa4aff41718a97ac088d9e4973bbc204e60473f15e58bff3a5c8b4a4d121a0",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-320-font150-keyboard.png",
+      "sha256": "f33c0f82b106be5ad57dbeacebfb16d837e3d4413012e5491b3bed0d275a56cb",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-api-label-edit-MOCK.png",
+      "sha256": "2f3bbe1968c7ec1332cec6329f819f4ae57dfe496a04b09cbaebe74bc2169774",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-api-label-table-MOCK.png",
+      "sha256": "1aeb178c2810bf1075795da5d6efa578e137175484a5ea92b499d10256a6d57c",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-confirmed-intake-isolated.png",
+      "sha256": "3333912a9b78aa0cf70341fffedaafbc38d85274d95d5895bba425ad2270cc8d",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-diary-empty.png",
+      "sha256": "a8771df061e92218be57f81316a2aa533aece3e7f13307c2464bb186be09fbd4",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-label-direct-no-api.png",
+      "sha256": "a27eaa730760ae57a60debcacc1464d21e5bdb545f9c5ef55955c22772a42451",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-library-empty.png",
+      "sha256": "2c98a952de042d1d4f91b99b6bbf3e5284186feac4aa9ab508d24047d998bf0a",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-mine-empty.png",
+      "sha256": "6d39b270ee8c2dccf94306af297cc0b20bbfbea13af93322b63135552e7b922c",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-nutrition-empty.png",
+      "sha256": "2b2381b4bae8683036fc7c638787e25cebbe01673a261affd11d0cf04b808bfc",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-nutrition-updated-isolated.png",
+      "sha256": "23d5fa984d51356c85729f9879999f157bdabd33657f47c6d5b51ac6aac0ed94",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-range-detail-expanded-isolated.png",
+      "sha256": "8ee7f6784d22b1dc1b7568bc75fecbbccdfb8ed00012621c82642086dbe614d3",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-range-progress-isolated.png",
+      "sha256": "9c654bd5c7ded7578148a33b94b6552da24c56bcc5f50b036d78fe5397f7a329",
+      "platform": "Android emulator",
+      "testDataOnly": true
+    },
+    {
+      "file": "android-today-empty.png",
+      "sha256": "15a187de83f36bb325bbb556b6f93568de4f26c18ceb59387181a219e666770a",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "android-two-entries.png",
+      "sha256": "f0c429ed42a7cfdb60b8f13b8f9b8928ba59201684d8f32a21765245b5177ac2",
+      "platform": "Android emulator",
+      "testDataOnly": false
+    },
+    {
+      "file": "browser-label-table-MOCK.png",
+      "sha256": "9e90b4f74adb7028e8e8dfca7a21e76998875c3d1a50335f5a94244d285a54a6",
+      "platform": "browser preview",
+      "testDataOnly": true
+    },
+    {
+      "file": "browser-range-progress-MOCK.png",
+      "sha256": "4e152412a25e3002969dc55af4a5e294a2f46449ff6a5bea4b793be39c0449b5",
+      "platform": "browser preview",
+      "testDataOnly": true
+    }
+  ]
+}

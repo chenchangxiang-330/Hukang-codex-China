@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "platform": "Android emulator",
+  "physicalDevice": false,
+  "nutritionRecordsInserted": 0,
+  "checks": [
+    {
+      "name": "local-upload-images",
+      "status": "passed"
+    }
+  ],
+  "apkSha256": "2fb4689cd26d404f59294176c6fa5840ff83368f84a847b50c1d9bcd1888872e",
+  "sourceCommit": "328a2dca96d3df104ec484522ea686e63b88e39c",
+  "emulatorRootSetup": [
+    {
+      "attempt": 1,
+      "rootExitCode": 0,
+      "rootOutput": "",
+      "uid": "0"
+    }
+  ],
+  "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "abis": "x86_64,arm64-v8a",
+  "screen": "Physical size: 1080x1920",
+  "originalDensity": "Physical density: 420",
+  "originalFontScale": "1.0",
+  "install": "Performing Streamed Install\nSuccess\n",
+  "fixtureMediaRows": [
+    "Row: 0 _id=1000000020, _display_name=03-ai-transparent.png, _size=4775, bucket_display_name=HukangAi03"
+  ],
+  "ownedMediaFixtures": [
+    {
+      "id": "1000000020",
+      "path": "/sdcard/Pictures/HukangAi03/03-ai-transparent.png",
+      "file": "03-ai-transparent.png",
+      "bytes": 4775,
+      "onlyMediaStoreImage": true
+    }
+  ],
+  "localUploadImages": {
+    "nativeAndroidProcessing": true,
+    "inputs": [
+      {
+        "source": "03-ai-transparent",
+        "sourceBytes": 4775,
+        "originalSha256": "540baaaca22cc6ed721c429ccf14cc3a770b49058ba5249f19a4bde72b971d98",
+        "originalUnchanged": true,
+        "size": [
+          1200,
+          800
+        ],
+        "bytes": 9835,
+        "exifRemoved": true,
+        "sha256": "9ed649aa2eaf94715986aea840151d92c521827624ecb1620dadae6c23cd8621"
+      }
+    ],
+    "originalsUnchanged": true,
+    "explicitlyClearedCopyRemoved": true,
+    "networkRequests": 0
+  }
+}

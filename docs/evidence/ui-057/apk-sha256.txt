@@ -1,0 +1,1 @@
+027ad64c8a4dbac4997a703c0a827b30b12e21b1eca2ce357592c52bbbcb2089  artifacts/hukang-0.5.7-arm64.apk

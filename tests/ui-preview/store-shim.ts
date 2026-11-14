@@ -8,3 +8,8 @@ export const reduceStock = (...args: any[]) => actions.reduceStock?.(...args);
 export const removeStock = (...args: any[]) => actions.removeStock?.(...args);
 export const deleteProduct = (...args: any[]) =>
   actions.deleteProduct?.(...args);
+
+export const newId = (prefix: string) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+export const addCatalogueStock = (...args: any[]) =>
+  actions.addStock?.(...args);

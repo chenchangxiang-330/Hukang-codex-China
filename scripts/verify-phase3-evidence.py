@@ -92,6 +92,8 @@ def main():
         permissions = apk.get("permissions")
         if not isinstance(permissions, list):
             fail("APK permission list is missing")
+        # Historical Phase 3 offline-only binary contract. Current optional-AI
+        # builds use verify-apk.py and simple-app-device.yml instead.
         forbidden = {"android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE"}
         leaked = forbidden.intersection(str(value) for value in permissions)
         if leaked:

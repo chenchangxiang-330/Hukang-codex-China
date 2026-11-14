@@ -12,7 +12,7 @@ import {
   Surface,
 } from "../../ui/components";
 
-export function ProductScreens(p: AppController) {
+export function ProductScreens(p: AppController & { onIntake?: () => void }) {
   const {
     setTab,
     screen,
@@ -85,7 +85,13 @@ export function ProductScreens(p: AppController) {
             />
             <View style={S.wrap}>
               <StatusPill
-                label={product.status === "confirmed" ? "已人工核对" : "待确认"}
+                label={
+                  product.status === "confirmed"
+                    ? "已人工核对"
+                    : product.review.inputMethod === "api_label"
+                      ? "—"
+                      : "待确认"
+                }
                 tone={product.status === "confirmed" ? "brand" : "warning"}
               />
               <Text style={S.small}>资料保存在这台设备</Text>
@@ -150,7 +156,10 @@ export function ProductScreens(p: AppController) {
                     <Text style={[S.small, productStyle.nrvCell]}>NRV%</Text>
                   </View>
                   {column.rows.map((row) => (
-                    <View style={productStyle.tableRow} key={row.nutrient}>
+                    <View
+                      style={productStyle.tableRow}
+                      key={`${row.nutrient}:${row.label}`}
+                    >
                       <Text style={[S.label, productStyle.labelCell]}>
                         {row.label}
                       </Text>
@@ -163,7 +172,9 @@ export function ProductScreens(p: AppController) {
                           ? `${row.nrvPercent}%`
                           : row.nrvNotDeclared
                             ? "未标注"
-                            : "待确认"}
+                            : product.review.inputMethod === "api_label"
+                              ? "—"
+                              : "待确认"}
                       </Text>
                     </View>
                   ))}
@@ -195,6 +206,39 @@ export function ProductScreens(p: AppController) {
               <Text style={S.small}>先核对商品资料，再加入库存。</Text>
             )}
           </Surface>
+          {p.onIntake && (
+            <Button title="食用这份食品" secondary onPress={p.onIntake} />
+          )}
+          <Button
+            title="营养成分表不正确"
+            secondary
+            onPress={() => {
+              const barcode = product.barcodes?.[0];
+              const draft: CaptureDraft = {
+                id: product.id,
+                barcode: normalizeBarcode({
+                  rawValue: barcode?.rawValue ?? "",
+                  format: barcode?.format ?? "EAN_13",
+                  decodedAt: new Date().toISOString(),
+                }),
+                acquiredBy: barcode?.acquiredBy ?? "manual",
+                step: "nutrition",
+                name: product.review.name,
+                brand: product.review.brand,
+                specification: product.review.specification ?? "",
+                nutrition: product.evidence,
+                review: JSON.parse(
+                  JSON.stringify(product.review),
+                ) as FoodReviewValues,
+              };
+              setEditing(product);
+              draftRef.current = draft;
+              setDraft(draft);
+              setReview(draft.review!);
+              setConfirmed(false);
+              navigate("nutrition");
+            }}
+          />
           <Button
             title="核对或修改商品资料"
             secondary
@@ -373,7 +417,7 @@ export function ProductScreens(p: AppController) {
 const productStyle = StyleSheet.create({
   cover: {
     borderRadius: 24,
-    backgroundColor: "#EEF2EC",
+    backgroundColor: C.pale,
     overflow: "hidden",
     minHeight: 240,
   },
@@ -416,7 +460,7 @@ const productStyle = StyleSheet.create({
     width: 64,
     height: 76,
     borderRadius: 12,
-    backgroundColor: "#F7F8F5",
+    backgroundColor: C.bg,
   },
   quantityRow: {
     flexDirection: "row",
@@ -432,7 +476,7 @@ const productStyle = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F1F5EF",
+    backgroundColor: C.pale,
   },
   quantitySign: {
     color: C.teal,

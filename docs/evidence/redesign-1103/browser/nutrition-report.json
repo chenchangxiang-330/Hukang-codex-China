@@ -1,0 +1,34 @@
+{
+  "kind": "shared-react-native-web",
+  "nativeDeviceVerified": false,
+  "cameraOcrSqliteMocked": true,
+  "generatedAt": "2026-11-03T17:28:28.389Z",
+  "checks": [
+    "Four ordered metrics, true empty data, two entry paths, photo required, one text box and retained draft",
+    "Shared totals after portion edit, history date propagation and preserved return date",
+    "Valid portion required before confirmation; deterministic preview then one successful save",
+    "320dp empty four metrics",
+    "320dp demo four metrics",
+    "320dp protein-partial four metrics",
+    "320dp protein-unknown four metrics",
+    "320dp protein-exceeded four metrics"
+  ],
+  "screenshots": [
+    "browser-home-empty.png",
+    "browser-nutrition-minerals.png",
+    "browser-two-entries.png",
+    "browser-meal-photo-required.png",
+    "browser-home-isolated-data.png",
+    "browser-portion-preview.png",
+    "browser-isolated-confirmed.png",
+    "browser-320-empty.png",
+    "browser-320-demo.png",
+    "browser-320-protein-partial.png",
+    "browser-320-protein-unknown.png",
+    "browser-320-protein-exceeded.png",
+    "browser-goals.png"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "status": "passed"
+}

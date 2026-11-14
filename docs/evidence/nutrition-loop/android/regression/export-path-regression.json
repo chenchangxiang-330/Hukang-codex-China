@@ -1,0 +1,12 @@
+{
+  "observedApkVersion": "0.5.1 (12)",
+  "observedApkSource": "70540e4f797a368deddb10c89bef5a59e3415895",
+  "run": 41299147602,
+  "artifact": 13080503013,
+  "artifactSha256": "fbdd1b30e04ced603eda42e34993ff02734b8e6441a04bd16ae336da312114e7",
+  "observedFeedback": "导出文件名无效或重复。",
+  "cause": "Native ZIP allowlist omitted the new nutrition-photos directory. Persistent photo save and hash comparison already passed.",
+  "fixedSource": "3940c6daa284951511d1c8074c044aa5d58c2114",
+  "regressionTests": "ExportPathPolicyTest.kt",
+  "note": "Historical failure from isolated test data; not the delivered APK."
+}

@@ -38,8 +38,7 @@ object LocalExport {
           // Only generated relative paths are allowed.  Keep this boundary in
           // native code so a future caller cannot turn the archive writer into
           // an arbitrary filesystem exporter.
-          require(!path.split('/').any { it == "." || it == ".." } &&
-            Regex("(photos|evidence|drafts)/[A-Za-z0-9_-]+(?:/[A-Za-z0-9_.-]+)*\\.(jpg|png|source|json)").matches(path) && names.add(path)) { "导出文件名无效或重复。" }
+          require(ExportPathPolicy.permits(path) && names.add(path)) { "导出文件名无效或重复。" }
           zip.putNextEntry(ZipEntry(path))
           val digest = MessageDigest.getInstance("SHA-256")
           var count = 0L

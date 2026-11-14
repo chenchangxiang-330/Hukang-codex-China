@@ -1,9 +1,9 @@
+import type { Food, Snapshot } from "../nutrition-v2/model";
 import { useState, type ReactNode } from "react";
-import Constants from "expo-constants";
 import { Alert, Image, Pressable, Switch, Text, View } from "react-native";
 import { C, S, Button, Field } from "./ui";
 import { H } from "./HomeScreenStyles";
-import { type AppController } from "./useSimpleApp";
+import { type AppController, type Tab } from "./useSimpleApp";
 import type { FoodSummary } from "../../domain/food/scan";
 import { expiryLabel } from "../../domain/inventory/rules";
 import { reduceStock, removeStock } from "./store";
@@ -11,12 +11,11 @@ import {
   EmptyState,
   PageIntro,
   SectionHeading,
-  StatTile,
   StatusPill,
   Surface,
 } from "../../ui/components";
 
-type FoodFilter = "all" | "confirmed" | "draft";
+type FoodFilter = "meal" | "packaged";
 
 function TextAction({
   title,
@@ -41,22 +40,30 @@ function MenuRow({
   title,
   description,
   trailing,
+  mark,
   onPress,
 }: {
   title: string;
-  description: string;
+  description?: string;
   trailing?: ReactNode;
+  mark?: string;
   onPress: () => void;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={title}
       onPress={onPress}
       style={({ pressed }) => [H.menuRow, pressed && H.pressed]}
     >
+      {mark && (
+        <View accessible={false} style={H.menuMark}>
+          <Text style={H.menuMarkText}>{mark}</Text>
+        </View>
+      )}
       <View style={H.grow}>
         <Text style={S.rowTitle}>{title}</Text>
-        <Text style={S.small}>{description}</Text>
+        {description && <Text style={S.small}>{description}</Text>}
       </View>
       {trailing}
       <Text style={H.chevron}>›</Text>
@@ -72,7 +79,17 @@ function recordedDate(value: string): string {
 }
 
 /** Presentation only: existing controller/store still own all food and inventory writes. */
-export function HomeScreens(p: AppController) {
+export function HomeScreens(
+  p: AppController & {
+    onTargets?: () => void;
+    onProfile?: () => void;
+    onTabChange?: (tab: Tab) => void;
+    onModel?: () => void;
+    onMeal?: (food: Food) => void;
+    nutrition?: Snapshot;
+  },
+) {
+  const [exportOpen, setExportOpen] = useState(false);
   const {
     tab,
     setTab,
@@ -97,7 +114,7 @@ export function HomeScreens(p: AppController) {
     setReview,
     setConfirmed,
   } = p;
-  const [filter, setFilter] = useState<FoodFilter>("all");
+  const [filter, setFilter] = useState<FoodFilter>("meal");
   const stockByUnit = stock.reduce<Record<string, number>>((totals, item) => {
     totals[item.unit] = (totals[item.unit] ?? 0) + item.quantity;
     return totals;
@@ -106,10 +123,11 @@ export function HomeScreens(p: AppController) {
     .map(([unit, quantity]) => `${quantity}${unit}`)
     .join(" · ");
   const query = search.trim().toLocaleLowerCase();
-  const filteredFoods = foods.filter(
-    (food) =>
-      `${food.name} ${food.brand}`.toLocaleLowerCase().includes(query) &&
-      (filter === "all" || food.status === filter),
+  const filteredFoods = foods.filter((food) =>
+    `${food.name} ${food.brand}`.toLocaleLowerCase().includes(query),
+  );
+  const mealFoods = (p.nutrition?.catalogue ?? []).filter(
+    (f) => f.kind === "meal" && f.name.toLowerCase().includes(query),
   );
   const filteredStock = stock.filter((item) =>
     `${item.name} ${item.brand}`.toLocaleLowerCase().includes(query),
@@ -120,7 +138,7 @@ export function HomeScreens(p: AppController) {
   const inventoryVisible = screen === "home" && tab === "stock";
   const clearSearch = () => {
     setSearch("");
-    setFilter("all");
+    setFilter("meal");
   };
   const showLibrary = () => {
     clearSearch();
@@ -169,166 +187,30 @@ export function HomeScreens(p: AppController) {
 
   return (
     <>
-      {screen === "home" && tab === "today" && (
-        <>
-          <View style={H.brandRow}>
-            <View style={H.brandIdentity}>
-              <Image
-                source={require("../../../assets/icon.png")}
-                style={H.logo}
-                accessibilityLabel="护康 Logo"
-              />
-              <View>
-                <Text style={H.brandName}>护康</Text>
-                <Text style={H.brandEnglish}>HUKANG</Text>
-              </View>
-            </View>
-            <Text style={H.date}>
-              {date.getMonth() + 1}月{date.getDate()}日 · 周
-              {"日一二三四五六"[date.getDay()]}
-            </Text>
-          </View>
-          <PageIntro
-            title="今天，吃得更从容。"
-            description="认识每一份食物，慢慢养成自己的节奏。"
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="拍一拍"
-            onPress={() => void startScan()}
-            style={({ pressed }) => [H.scanHero, pressed && H.scanHeroPressed]}
-          >
-            <View style={H.heroCopy}>
-              <Text style={H.heroEyebrow}>从手边的一件食品开始</Text>
-              <Text style={H.heroTitle}>拍一拍</Text>
-              <Text style={H.heroDescription}>扫条码 · 拍包装 · 记录营养</Text>
-            </View>
-            <View
-              style={H.heroCamera}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              <View style={H.cameraBody}>
-                <View style={H.cameraLens} />
-              </View>
-              <Text style={H.heroArrow}>→</Text>
-            </View>
-          </Pressable>
-          <Surface>
-            <SectionHeading
-              title="今日饮食"
-              action={
-                <TextAction title="查看记录" onPress={() => setTab("diary")} />
-              }
-            />
-            <View style={H.energyRow}>
-              <View>
-                <Text style={H.energyValue}>
-                  — <Text style={H.energyUnit}>kcal</Text>
-                </Text>
-                <Text style={S.small}>今日摄入 · 尚未记录</Text>
-              </View>
-              <StatusPill label="饮食记录待接入" tone="neutral" />
-            </View>
-            <View style={H.nutrientGrid}>
-              {["蛋白质", "碳水化合物", "脂肪"].map((label) => (
-                <View key={label} style={H.nutrientItem}>
-                  <Text style={H.nutrientValue}>
-                    — <Text style={H.nutrientUnit}>g</Text>
-                  </Text>
-                  <Text style={S.small}>{label}</Text>
-                </View>
-              ))}
-            </View>
-            <Text style={S.small}>
-              还没有真实饮食记录。食品入库不会计入摄入量。
-            </Text>
-          </Surface>
-          <View style={H.statGrid}>
-            <View style={H.statCell}>
-              <StatTile label="我的食品" value={foods.length} unit="种" />
-            </View>
-            <View style={H.statCell}>
-              <StatTile
-                label="库存批次"
-                value={stock.length}
-                unit="笔"
-                tone="neutral"
-              />
-            </View>
-          </View>
-          {!!stockSummary && (
-            <Text style={S.small}>
-              现有库存：{stockSummary} · 不同单位分别计数
-            </Text>
-          )}
-          {resume && (
-            <Surface>
-              <StatusPill label="继续上次录入" tone="warning" />
-              <Text style={S.rowTitle}>
-                {resume.name || "有一件食品等你完成"}
-              </Text>
-              <Text style={S.note}>照片和条码已保存在本机，不必重新开始。</Text>
-              <Button
-                title="继续上次未完成的录入"
-                secondary
-                onPress={() => {
-                  draftRef.current = resume;
-                  setDraft(resume);
-                  setReview(resume.review ?? null);
-                  setConfirmed(false);
-                  navigate(resume.step);
-                }}
-              />
-            </Surface>
-          )}
-          <SectionHeading
-            title="最近保存"
-            description="属于你的食品小档案"
-            action={<TextAction title="全部食品 →" onPress={showLibrary} />}
-          />
-          {foods.length ? (
-            foods.slice(0, 4).map(renderFood)
-          ) : (
-            <EmptyState
-              title="从第一件食品开始"
-              description="拍下包装和营养表，核对后保存。以后再次扫描，就能直接找到它。"
-              action={
-                <Button
-                  title="录入第一件食品"
-                  secondary
-                  onPress={() => void startScan()}
-                />
-              }
-            />
-          )}
-          <Text style={S.footer}>本地识别 · 本机保存 · 数据由你掌握</Text>
-        </>
-      )}
-
       {libraryVisible && (
         <>
           <PageIntro
-            eyebrow="MY FOOD COLLECTION"
             title={screen === "library" ? "选择一件食品" : "我的食品库"}
-            description="商品资料只存一份，每次购买单独记一笔。"
+            description="常吃的食物，留在这里。"
           />
           {screen === "home" && (
             <View style={H.segmented} accessibilityRole="tablist">
               {(
                 [
-                  ["library", "食品资料", foods.length],
-                  ["stock", "我的库存", stock.length],
+                  ["library", "食品资料"],
+                  ["stock", "我的库存"],
                 ] as const
-              ).map(([key, label, count]) => (
+              ).map(([key, label]) => (
                 <Pressable
                   key={key}
                   accessibilityRole="tab"
                   accessibilityLabel={label}
                   accessibilityState={{ selected: tab === key }}
                   onPress={() => {
+                    if (tab === key) return;
                     clearSearch();
-                    setTab(key);
+                    if (p.onTabChange) p.onTabChange(key);
+                    else setTab(key);
                   }}
                   style={({ pressed }) => [
                     H.segment,
@@ -342,7 +224,7 @@ export function HomeScreens(p: AppController) {
                       tab === key && H.segmentTextSelected,
                     ]}
                   >
-                    {label} <Text style={H.segmentCount}>{count}</Text>
+                    {label}
                   </Text>
                 </Pressable>
               ))}
@@ -358,21 +240,6 @@ export function HomeScreens(p: AppController) {
           />
           {inventoryVisible ? (
             <>
-              <View style={H.libraryActions}>
-                <View style={H.flexButton}>
-                  <Button
-                    title="拍一拍，添加食品"
-                    onPress={() => void startScan()}
-                  />
-                </View>
-                <View style={H.flexButton}>
-                  <Button
-                    title="从已有食品添加"
-                    secondary
-                    onPress={showLibrary}
-                  />
-                </View>
-              </View>
               <SectionHeading
                 title="库存清单"
                 description={
@@ -384,7 +251,7 @@ export function HomeScreens(p: AppController) {
               {!stock.length ? (
                 <EmptyState
                   title="给食品留一个位置"
-                  description="先保存商品资料，再选择购入数量。库存与食品档案会分别保存。"
+                  description="从食品详情加入库存。"
                 />
               ) : !filteredStock.length ? (
                 <EmptyState
@@ -396,11 +263,17 @@ export function HomeScreens(p: AppController) {
                 />
               ) : (
                 filteredStock.map((item) => (
-                  <Surface key={item.id}>
+                  <Surface key={item.id} style={H.stockSurface}>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`查看${item.name}`}
-                      onPress={() => void openProduct(item.food_id)}
+                      onPress={() => {
+                        const food = p.nutrition?.catalogue?.find(
+                          (f) => f.id === item.food_id && f.kind === "meal",
+                        );
+                        if (food) p.onMeal?.(food);
+                        else void openProduct(item.food_id);
+                      }}
                       style={({ pressed }) => [
                         H.stockHeading,
                         pressed && H.pressed,
@@ -486,9 +359,8 @@ export function HomeScreens(p: AppController) {
               <View style={H.filters} accessibilityRole="radiogroup">
                 {(
                   [
-                    ["all", "全部"],
-                    ["confirmed", "已核对"],
-                    ["draft", "待确认"],
+                    ["meal", "餐食"],
+                    ["packaged", "包装食品"],
                   ] as const
                 ).map(([value, label]) => (
                   <Pressable
@@ -516,38 +388,63 @@ export function HomeScreens(p: AppController) {
               </View>
               <View style={H.collectionHeading}>
                 <Text style={S.small}>
-                  显示 {filteredFoods.length} / {foods.length} 份食品资料
+                  显示{" "}
+                  {filter === "meal" ? mealFoods.length : filteredFoods.length}{" "}
+                  份食品资料
                 </Text>
                 <TextAction
                   title="拍一拍添加"
                   onPress={() => void startScan()}
                 />
               </View>
-              {!foods.length ? (
-                <EmptyState
-                  title="把喜欢的食品收进来"
-                  description="扫一扫手边的包装。自己的食品库，从一件开始。"
-                  action={
-                    <Button
-                      title="录入第一件食品"
-                      onPress={() => void startScan()}
-                    />
-                  }
-                />
-              ) : !filteredFoods.length ? (
-                <EmptyState
-                  title="暂时没有符合条件的食品"
-                  description="换个关键词，或查看全部确认状态。已保存的资料不会被删除。"
-                  action={
-                    <Button
-                      title="清除筛选与搜索"
-                      secondary
-                      onPress={clearSearch}
-                    />
-                  }
-                />
-              ) : (
+              {filter === "meal" ? (
+                mealFoods.length ? (
+                  mealFoods.map((f) => (
+                    <Pressable
+                      key={f.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`餐食 ${f.name}`}
+                      onPress={() => p.onMeal?.(f)}
+                      style={H.foodRow}
+                    >
+                      <View style={H.foodThumbnail}>
+                        {p.nutrition?.covers?.[f.id]?.cover || f.image ? (
+                          <Image
+                            source={{
+                              uri:
+                                p.nutrition?.covers?.[f.id]?.cover || f.image,
+                            }}
+                            resizeMode="contain"
+                            style={H.thumbnailImage}
+                          />
+                        ) : (
+                          <Text style={H.foodInitial}>餐</Text>
+                        )}
+                      </View>
+                      <View style={H.grow}>
+                        <Text style={S.rowTitle}>{f.name}</Text>
+                        <Text style={S.small}>
+                          {f.provenance?.kind === "ai"
+                            ? "AI 估算 · 已确认保存"
+                            : "本机餐食资料"}
+                        </Text>
+                      </View>
+                      <Text style={H.chevron}>›</Text>
+                    </Pressable>
+                  ))
+                ) : (
+                  <EmptyState
+                    title="还没有餐食资料"
+                    description="餐食确认食用后会保存在这里，方便下次复用。"
+                  />
+                )
+              ) : filteredFoods.length ? (
                 filteredFoods.map(renderFood)
+              ) : (
+                <EmptyState
+                  title="还没有匹配的包装食品"
+                  description="扫描条码后补全营养标签，核对后保存。"
+                />
               )}
             </>
           )}
@@ -556,104 +453,98 @@ export function HomeScreens(p: AppController) {
 
       {screen === "home" && tab === "mine" && (
         <>
-          <PageIntro
-            eyebrow="YOUR SPACE"
-            title="我的"
-            description="让记录简单，让数据留在自己手里。"
-          />
+          <Text accessibilityRole="header" style={S.title}>
+            我的
+          </Text>
+          <Text style={S.note}>照顾身体，也照顾自己的节奏。</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="查看本机用户信息"
-            onPress={() => navigate("profile")}
+            accessibilityLabel="个人资料与体检照片"
+            onPress={() => (p.onProfile ?? p.onTargets)?.()}
             style={({ pressed }) => [H.profile, pressed && H.pressed]}
           >
-            <Image
-              source={require("../../../assets/icon.png")}
-              style={H.profileAvatar}
-            />
+            <View accessible={false} style={H.profileAvatar}>
+              <Text style={H.profileAvatarText}>我</Text>
+            </View>
             <View style={H.grow}>
-              <Text style={H.profileName}>本机用户</Text>
-              <Text style={S.small}>无需注册，也能好好记录</Text>
-              <View style={H.pillWrap}>
-                <StatusPill label="资料仅保存在这台设备" tone="brand" />
-              </View>
+              <Text style={H.profileName}>我的资料</Text>
+              <Text style={S.small}>个人资料与体检照片</Text>
             </View>
             <Text style={H.chevron}>›</Text>
           </Pressable>
-          <View style={H.statGrid}>
-            <View style={H.statCell}>
-              <StatTile label="食品资料" value={foods.length} unit="份" />
-            </View>
-            <View style={H.statCell}>
-              <StatTile
-                label="库存记录"
-                value={stock.length}
-                unit="笔"
-                tone="neutral"
-              />
-            </View>
-          </View>
           <Surface style={H.menuSurface}>
             <MenuRow
-              title="查看我的食品"
-              description="食品资料与库存分开管理"
-              onPress={showLibrary}
+              title="个人参考目标"
+              mark="◎"
+              onPress={() => p.onTargets?.()}
             />
             <View style={H.menuDivider} />
             <MenuRow
               title="AI 服务设置"
-              description="配置界面已准备好，暂不发起请求"
-              trailing={<StatusPill label="未接入" tone="neutral" />}
+              mark="✦"
               onPress={() => navigate("ai-settings")}
             />
-          </Surface>
-          <Surface>
-            <SectionHeading
-              title="导出与分享"
-              description="选择需要的资料，再决定分享给谁。"
+            <View style={H.menuDivider} />
+            <MenuRow
+              title="数据导出"
+              mark="↓"
+              onPress={() => setExportOpen(!exportOpen)}
             />
-            <View style={H.photoOption}>
-              <View style={H.grow}>
-                <Text style={S.label}>包含包装与营养表照片</Text>
-                <Text style={S.small}>
-                  默认不包含。分享前请检查照片中的私人信息。
-                </Text>
-              </View>
-              <Switch
-                accessibilityLabel="包含包装与营养表照片"
-                value={photos}
-                onValueChange={setPhotos}
-                trackColor={{ true: "#B7D6C8", false: C.line }}
-                thumbColor={photos ? C.teal : "#FFF"}
-              />
-            </View>
-            <Button
-              title="导出食品资料包"
-              onPress={() => exportData("catalogue")}
+            <View style={H.menuDivider} />
+            <MenuRow
+              title="本地抠图模型"
+              mark="⌁"
+              onPress={() => p.onModel?.()}
             />
-            <Text style={S.small}>
-              仅含已确认食品资料，不含个人库存、购买时间或到期日。
-            </Text>
-            <Button
-              title="导出个人数据（含库存）"
-              secondary
-              onPress={() => exportData("personal")}
-            />
-            <Text style={S.small}>
-              包含库存、OCR 和修订。文件在本机生成，不会自动上传；当前尚不支持
-              App 内一键恢复。
-            </Text>
-          </Surface>
-          <Surface style={H.menuSurface}>
+            <View style={H.menuDivider} />
             <MenuRow
               title="关于 Hukang"
-              description={`${Constants.expoConfig?.version ?? "版本未知"} · 国产 OCR，本地识别`}
+              mark="i"
               onPress={() => navigate("about")}
             />
           </Surface>
-          <Text style={S.footer}>
-            删除应用可能删除本机资料，请及时导出妥善保管。
-          </Text>
+          {exportOpen && (
+            <>
+              <Surface>
+                <SectionHeading
+                  title="导出与分享"
+                  description="选择需要的资料，再决定分享给谁。"
+                />
+                <View style={H.photoOption}>
+                  <View style={H.grow}>
+                    <Text style={S.label}>包含食品与饮食照片</Text>
+                    <Text style={S.small}>
+                      默认不包含。分享前请检查照片中的私人信息。
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="包含食品与饮食照片"
+                    value={photos}
+                    onValueChange={setPhotos}
+                    trackColor={{ true: C.pale, false: C.line }}
+                    thumbColor={photos ? C.teal : C.white}
+                  />
+                </View>
+                <Button
+                  title="导出食品资料包"
+                  onPress={() => exportData("catalogue")}
+                />
+                <Text style={S.small}>
+                  仅含已确认食品资料，不含个人库存、购买时间或到期日。
+                </Text>
+                <Button
+                  title="导出个人数据（含库存）"
+                  secondary
+                  onPress={() => exportData("personal")}
+                />
+                <Text style={S.small}>
+                  包含饮食、个人目标、食品、库存、OCR
+                  和修订。文件在本机生成，不会自动上传；当前尚不支持 App
+                  内一键恢复。
+                </Text>
+              </Surface>
+            </>
+          )}
         </>
       )}
     </>

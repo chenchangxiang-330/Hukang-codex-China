@@ -7,6 +7,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { colors, tokens } from "./tokens";
+import { ContinuousView } from "./ContinuousView";
 
 type Tone = "brand" | "neutral" | "warning" | "danger";
 const tones = {
@@ -134,7 +135,9 @@ export function Surface({
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  return <View style={[styles.surface, style]}>{children}</View>;
+  return (
+    <ContinuousView style={[styles.surface, style]}>{children}</ContinuousView>
+  );
 }
 
 export function Divider() {
@@ -182,6 +185,7 @@ const styles = StyleSheet.create({
   },
   pill: {
     borderRadius: tokens.radius.pill,
+    borderCurve: "continuous",
     paddingHorizontal: tokens.space.md,
     paddingVertical: 5,
     alignSelf: "flex-start",
@@ -194,6 +198,7 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderWidth: 1,
     borderRadius: tokens.radius.lg,
+    borderCurve: "continuous",
     padding: tokens.space.xxl,
     gap: tokens.space.md,
   },
@@ -229,6 +234,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 104,
     borderRadius: tokens.radius.md,
+    borderCurve: "continuous",
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
@@ -251,6 +257,7 @@ const styles = StyleSheet.create({
   surface: {
     backgroundColor: colors.surface,
     borderRadius: tokens.radius.lg,
+    borderCurve: "continuous",
     padding: tokens.space.xl,
     gap: tokens.space.lg,
     borderColor: colors.line,
