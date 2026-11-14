@@ -24,8 +24,20 @@ def shot(name):
   assert len(headers)<=1,('Stale native headers',headers)
 
 def tree():
- shell('uiautomator','dump','--compressed','/sdcard/simple-window.xml')
- b=run(['exec-out','cat','/sdcard/simple-window.xml']);(O/'last-window.xml').write_bytes(b);root=ET.fromstring(b)
+ # Cold-start UIAutomator may finish before a valid hierarchy file is ready.
+ # Match the bounded fresh-file retry used by the other native suites, and
+ # preserve invalid output rather than reading a previous screen's hierarchy.
+ for attempt in range(3):
+  shell('rm','-f','/sdcard/simple-window.xml')
+  output=shell('uiautomator','dump','--compressed','/sdcard/simple-window.xml')
+  b=run(['exec-out','cat','/sdcard/simple-window.xml'],check=False);(O/'last-window.xml').write_bytes(b)
+  try:
+   root=ET.fromstring(b);break
+  except ET.ParseError:
+   retries=report.setdefault('uiDumpRetries',[]);name='invalid-ui-dump-'+str(len(retries)+1)
+   (O/(name+'.txt')).write_bytes(b);retries.append({'attempt':attempt+1,'output':output,'evidence':name})
+   if attempt==2:raise
+   time.sleep(.5)
  # API 35's unrelated Pixel Launcher can ANR during cold emulator boot before
  # our App starts. Preserve evidence and close only that exact system dialog.
  # Never dismiss a Hukang ANR/crash or an unknown dialog.
